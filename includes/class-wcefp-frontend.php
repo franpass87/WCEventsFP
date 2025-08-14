@@ -9,6 +9,9 @@ class WCEFP_Frontend {
         $pid = intval($a['product_id']);
         if (!$pid) return '<p>'.__('Seleziona un prodotto valido.','wceventsfp').'</p>';
 
+        $price_adult = floatval(get_post_meta($pid, '_wcefp_price_adult', true));
+        $price_child = floatval(get_post_meta($pid, '_wcefp_price_child', true));
+
         $extras = [];
         $raw = get_post_meta($pid, '_wcefp_extras_json', true);
         if ($raw) {
@@ -17,7 +20,7 @@ class WCEFP_Frontend {
         }
 
         ob_start(); ?>
-        <div class="wcefp-widget" data-product="<?php echo esc_attr($pid); ?>">
+        <div class="wcefp-widget" data-product="<?php echo esc_attr($pid); ?>" data-price-adult="<?php echo esc_attr($price_adult); ?>" data-price-child="<?php echo esc_attr($price_child); ?>">
             <div class="wcefp-row">
                 <label><?php _e('Data','wceventsfp'); ?></label>
                 <input type="date" class="wcefp-date" />
@@ -39,14 +42,20 @@ class WCEFP_Frontend {
                 <label><?php _e('Extra','wceventsfp'); ?></label>
                 <div class="wcefp-extras">
                     <?php foreach ($extras as $i=>$ex): ?>
-                        <label style="margin-right:12px;">
+                        <label class="wcefp-extra-item">
                             <input type="checkbox" class="wcefp-extra" data-name="<?php echo esc_attr($ex['name']); ?>" data-price="<?php echo esc_attr($ex['price']); ?>" />
-                            <?php echo esc_html($ex['name']); ?> (+€<?php echo esc_html($ex['price']); ?>)
+                            <span><?php echo esc_html($ex['name']); ?> (+€<?php echo esc_html($ex['price']); ?>)</span>
                         </label>
                     <?php endforeach; ?>
                 </div>
             </div>
             <?php endif; ?>
+
+            <div class="wcefp-row wcefp-total-row">
+                <strong><?php _e('Totale stimato','wceventsfp'); ?>:</strong>
+                <span class="wcefp-total">€ 0,00</span>
+            </div>
+
             <div class="wcefp-row">
                 <button class="wcefp-add button"><?php _e('Aggiungi al carrello','wceventsfp'); ?></button>
                 <span class="wcefp-feedback" style="margin-left:8px;"></span>
@@ -55,6 +64,85 @@ class WCEFP_Frontend {
         <script>window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'view_item',ecommerce:{items:[{item_id:'<?php echo esc_js($pid); ?>',item_name:'<?php echo esc_js(get_the_title($pid)); ?>',item_category:'event'}]}});</script>
         <?php
         return ob_get_clean();
+    }
+
+    /* ---------- Render automatico su pagina prodotto ---------- */
+    public static function render_booking_widget_auto() {
+        global $product;
+        if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
+        echo self::shortcode_booking(['product_id' => $product->get_id()]);
+    }
+
+    public static function render_product_details() {
+        global $product;
+        if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
+        $pid = $product->get_id();
+
+        $duration = intval(get_post_meta($pid, '_wcefp_duration_minutes', true));
+        $languages = sanitize_text_field(get_post_meta($pid, '_wcefp_languages', true));
+        $meeting = sanitize_text_field(get_post_meta($pid, '_wcefp_meeting_point', true));
+        $includes = wp_kses_post(get_post_meta($pid, '_wcefp_includes', true));
+        $excludes = wp_kses_post(get_post_meta($pid, '_wcefp_excludes', true));
+        $cxl      = wp_kses_post(get_post_meta($pid, '_wcefp_cancellation', true));
+
+        // Next upcoming occurrence
+        global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
+        $now = current_time('mysql');
+        $next = $wpdb->get_row($wpdb->prepare("SELECT start_datetime,end_datetime FROM $tbl WHERE product_id=%d AND status='active' AND start_datetime >= %s ORDER BY start_datetime ASC LIMIT 1", $pid, $now));
+        $next_start = $next ? $next->start_datetime : '';
+        $next_end   = $next ? $next->end_datetime   : '';
+
+        // JSON-LD semplice (Event) se esiste occorrenza futura
+        if ($next_start) {
+            $price_adult = floatval(get_post_meta($pid, '_wcefp_price_adult', true));
+            $currency = get_woocommerce_currency();
+            $json = [
+                "@context" => "https://schema.org",
+                "@type" => "Event",
+                "name"  => get_the_title($pid),
+                "startDate" => date('c', strtotime($next_start)),
+                "endDate"   => date('c', strtotime($next_end ?: $next_start)),
+                "eventStatus" => "https://schema.org/EventScheduled",
+                "eventAttendanceMode" => "https://schema.org/OfflineEventAttendanceMode",
+                "location" => [
+                    "@type" => "Place",
+                    "name"  => get_bloginfo('name')
+                ],
+                "offers" => [
+                    "@type" => "Offer",
+                    "price" => $price_adult,
+                    "priceCurrency" => $currency,
+                    "availability" => "https://schema.org/InStock",
+                    "url" => get_permalink($pid)
+                ]
+            ];
+            echo '<script type="application/ld+json">'.wp_json_encode($json).'</script>';
+        }
+
+        // Box info
+        echo '<div class="wcefp-details">';
+        echo '<h3>'.esc_html__('Dettagli esperienza','wceventsfp').'</h3>';
+        echo '<ul class="wcefp-details-list">';
+        if ($duration)  echo '<li><strong>'.esc_html__('Durata','wceventsfp').':</strong> '.intval($duration).' '.esc_html__('minuti','wceventsfp').'</li>';
+        if ($languages) echo '<li><strong>'.esc_html__('Lingue','wceventsfp').':</strong> '.esc_html($languages).'</li>';
+        if ($meeting)   echo '<li><strong>'.esc_html__('Meeting point','wceventsfp').':</strong> '.esc_html($meeting).'</li>';
+        if ($next_start) echo '<li><strong>'.esc_html__('Prossima data','wceventsfp').':</strong> '.esc_html(date_i18n('d/m/Y H:i', strtotime($next_start))).'</li>';
+        echo '</ul>';
+
+        if ($includes) {
+            echo '<h4>'.esc_html__('Cosa è incluso','wceventsfp').'</h4>';
+            echo '<div class="wcefp-rich">'.wpautop($includes).'</div>';
+        }
+        if ($excludes) {
+            echo '<h4>'.esc_html__('Cosa non è incluso','wceventsfp').'</h4>';
+            echo '<div class="wcefp-rich">'.wpautop($excludes).'</div>';
+        }
+        if ($cxl) {
+            echo '<h4>'.esc_html__('Cancellazione','wceventsfp').'</h4>';
+            echo '<div class="wcefp-rich">'.wpautop($cxl).'</div>';
+        }
+
+        echo '</div>';
     }
 
     /* ---------- AJAX: occorrenze pubbliche per data ---------- */
@@ -66,7 +154,7 @@ class WCEFP_Frontend {
         if (!$pid || !$date) wp_send_json_success(['slots'=>[]]);
 
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT id,start_datetime,capacity,booked FROM $tbl WHERE product_id=%d AND DATE(start_datetime)=%s ORDER BY start_datetime ASC",
+            "SELECT id,start_datetime,capacity,booked,status FROM $tbl WHERE product_id=%d AND status='active' AND DATE(start_datetime)=%s ORDER BY start_datetime ASC",
             $pid, $date
         ), ARRAY_A);
 
@@ -84,7 +172,7 @@ class WCEFP_Frontend {
         wp_send_json_success(['slots'=>$slots]);
     }
 
-    /* ---------- AJAX: add to cart con check capienza ---------- */
+    /* ---------- AJAX: add to cart con check capienza e stato ---------- */
     public static function ajax_add_to_cart() {
         check_ajax_referer('wcefp_public','nonce');
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
@@ -99,9 +187,10 @@ class WCEFP_Frontend {
 
         $qty = max(1, $ad + $ch);
 
-        // Check capienza attuale
-        $row = $wpdb->get_row($wpdb->prepare("SELECT capacity, booked FROM $tbl WHERE id=%d AND product_id=%d", $occ, $pid), ARRAY_A);
+        // Check capienza e stato
+        $row = $wpdb->get_row($wpdb->prepare("SELECT capacity, booked, status FROM $tbl WHERE id=%d AND product_id=%d", $occ, $pid), ARRAY_A);
         if (!$row) wp_send_json_error(['msg'=>'Slot non trovato.']);
+        if (($row['status'] ?? '') !== 'active') wp_send_json_error(['msg'=>__('Lo slot non è più disponibile','wceventsfp')]);
         $available = max(0, intval($row['capacity']) - intval($row['booked']));
         if ($available < $qty) {
             wp_send_json_error(['msg'=> sprintf(__('Posti disponibili insufficienti. Rimasti: %d','wceventsfp'), $available)]);
@@ -117,7 +206,7 @@ class WCEFP_Frontend {
         $added = WC()->cart->add_to_cart($pid, $qty, 0, [], $meta);
         if (!$added) wp_send_json_error(['msg'=>'Impossibile aggiungere al carrello']);
 
-        // GA4 add_to_cart (session bridge opzionale)
+        // GA4 add_to_cart (bridge opzionale)
         $product = wc_get_product($pid);
         $dl = [
             'event'=>'add_to_cart',
@@ -172,6 +261,6 @@ class WCEFP_Frontend {
             $item->add_meta_data('Extra', implode(', ', array_filter($names)), true);
         }
 
-        // NIENTE aggiornamento booked qui (si fa su cambio stato ordine con update atomico)
+        // booked aggiornato solo a cambio stato ordine (anti-overbooking)
     }
 }
