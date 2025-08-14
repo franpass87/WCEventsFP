@@ -48,4 +48,37 @@
       $date.on('change', function(){ loadSlots(); });
       $ad.on('input', updateTotal);
       $ch.on('input', updateTotal);
-      $
+      $w.on('change', '.wcefp-extra', updateTotal);
+      updateTotal();
+
+      $btn.on('click', function(e){
+        e.preventDefault();
+        $fb.text('');
+        const occ = $slot.val();
+        const ad = parseInt($ad.val()||'0',10);
+        const ch = parseInt($ch.val()||'0',10);
+        const extras = [];
+        $w.find('.wcefp-extra:checked').each(function(){
+          extras.push({name: $(this).data('name'), price: $(this).data('price')});
+        });
+
+        if(!occ){ $fb.text('Seleziona uno slot.'); return; }
+        if((ad+ch) <= 0){ $fb.text('Indica almeno 1 partecipante.'); return; }
+
+        $.post(WCEFPData.ajaxUrl, {
+          action:'wcefp_add_to_cart', nonce: WCEFPData.nonce,
+          product_id: pid, occurrence_id: occ, adults: ad, children: ch, extras: extras
+        }, function(r){
+          if(r && r.success){
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({event:'begin_checkout'});
+            window.location.href = r.data.cart_url;
+          } else {
+            $fb.text(r && r.data && r.data.msg ? r.data.msg : 'Errore.');
+          }
+        });
+      });
+    });
+
+  });
+})(jQuery);
