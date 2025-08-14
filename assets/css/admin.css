@@ -1,0 +1,3 @@
+.wcefp-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.wcefp-kpi-grid .card{background:#fff;padding:16px;border:1px solid #e5e5e5;border-radius:8px}
+.wcefp-toolbar{margin:12px 0}
