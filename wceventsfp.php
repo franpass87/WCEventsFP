@@ -162,6 +162,26 @@ class WCEFP_Plugin {
                 </p>
             </div>
             <div class="options_group">
+  <h3><?php _e('Info esperienza', 'wceventsfp'); ?></h3>
+  <?php
+  woocommerce_wp_text_input(['id'=>'_wcefp_meeting_point','label'=>__('Meeting point','wceventsfp')]);
+  woocommerce_wp_text_input(['id'=>'_wcefp_map_embed','label'=>__('Map Embed (iframe URL)','wceventsfp')]);
+  woocommerce_wp_text_input(['id'=>'_wcefp_languages','label'=>__('Lingue (CSV)','wceventsfp'),'placeholder'=>'Italiano, Inglese']);
+  ?>
+  <p class="form-field">
+    <label for="_wcefp_includes"><?php _e('Incluso (uno per riga)','wceventsfp'); ?></label>
+    <textarea id="_wcefp_includes" name="_wcefp_includes" style="width:100%;height:80px"></textarea>
+  </p>
+  <p class="form-field">
+    <label for="_wcefp_excludes"><?php _e('Escluso (uno per riga)','wceventsfp'); ?></label>
+    <textarea id="_wcefp_excludes" name="_wcefp_excludes" style="width:100%;height:80px"></textarea>
+  </p>
+  <?php
+  woocommerce_wp_text_input(['id'=>'_wcefp_cancellation','label'=>__('Policy cancellazione','wceventsfp'),'placeholder'=>'Gratis fino a 24h prima']);
+  woocommerce_wp_text_input(['id'=>'_wcefp_highlights','label'=>__('Punti chiave (CSV)','wceventsfp'),'placeholder'=>'Degustazione 4 vini, Tour cantina, ...']);
+  ?>
+</div>
+            <div class="options_group">
                 <h3><?php _e('Ricorrenze settimanali & Slot', 'wceventsfp'); ?></h3>
                 <p class="form-field">
                     <label><?php _e('Giorni','wceventsfp'); ?></label>
@@ -191,7 +211,8 @@ class WCEFP_Plugin {
 
     public function save_product_fields($product) {
         $pid = $product->get_id();
-        $keys = ['_wcefp_price_adult','_wcefp_price_child','_wcefp_capacity_per_slot','_wcefp_extras_json','_wcefp_time_slots','_wcefp_duration_minutes'];
+        $keys = ['_wcefp_price_adult','_wcefp_price_child','_wcefp_capacity_per_slot','_wcefp_extras_json','_wcefp_time_slots','_wcefp_duration_minutes',
+         '_wcefp_meeting_point','_wcefp_map_embed','_wcefp_languages','_wcefp_includes','_wcefp_excludes','_wcefp_cancellation','_wcefp_highlights'];
         foreach ($keys as $k) if (isset($_POST[$k])) update_post_meta($pid, $k, wp_unslash($_POST[$k]));
         $days = isset($_POST['_wcefp_weekdays']) ? array_map('intval',(array)$_POST['_wcefp_weekdays']) : [];
         update_post_meta($pid, '_wcefp_weekdays', $days);
@@ -220,6 +241,63 @@ class WCEFP_Plugin {
             'nonce'   => wp_create_nonce('wcefp_public'),
         ]);
     }
+add_filter('the_content', function($content){
+    if (!is_singular('product')) return $content;
+    $product = wc_get_product(get_the_ID()); if(!$product) return $content;
+    if (!in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return $content;
+
+    $pid = $product->get_id();
+    $mp   = get_post_meta($pid, '_wcefp_meeting_point', true);
+    $map  = get_post_meta($pid, '_wcefp_map_embed', true);
+    $langs= get_post_meta($pid, '_wcefp_languages', true);
+    $inc  = array_filter(array_map('trim', explode("\n", (string)get_post_meta($pid,'_wcefp_includes',true))));
+    $exc  = array_filter(array_map('trim', explode("\n", (string)get_post_meta($pid,'_wcefp_excludes',true))));
+    $pol  = get_post_meta($pid, '_wcefp_cancellation', true);
+    $hi   = array_filter(array_map('trim', explode(',', (string)get_post_meta($pid,'_wcefp_highlights',true))));
+
+    ob_start(); ?>
+    <section class="wcefp-hero">
+      <h2><?php echo esc_html(get_the_title()); ?></h2>
+      <?php if ($hi): ?>
+        <ul class="wcefp-highlights"><?php foreach ($hi as $h) echo '<li>'.esc_html($h).'</li>'; ?></ul>
+      <?php endif; ?>
+    </section>
+
+    <section class="wcefp-grid">
+      <div class="wcefp-main">
+        <div class="wcefp-desc"><?php echo wpautop(get_the_content()); ?></div>
+
+        <h3><?php _e('Cosa è incluso', 'wceventsfp'); ?></h3>
+        <?php if ($inc): echo '<ul class="wcefp-list">'; foreach($inc as $x) echo '<li>'.esc_html($x).'</li>'; echo '</ul>'; else echo '<p>-</p>'; endif; ?>
+
+        <h3><?php _e('Cosa non è incluso', 'wceventsfp'); ?></h3>
+        <?php if ($exc): echo '<ul class="wcefp-list">'; foreach($exc as $x) echo '<li>'.esc_html($x).'</li>'; echo '</ul>'; else echo '<p>-</p>'; endif; ?>
+
+        <h3><?php _e('Lingue', 'wceventsfp'); ?></h3>
+        <p><?php echo esc_html($langs ?: '-'); ?></p>
+
+        <h3><?php _e('Policy di cancellazione', 'wceventsfp'); ?></h3>
+        <p><?php echo esc_html($pol ?: '-'); ?></p>
+
+        <?php if ($map): ?>
+          <h3><?php _e('Mappa', 'wceventsfp'); ?></h3>
+          <div class="wcefp-map">
+            <iframe src="<?php echo esc_url($map); ?>" width="100%" height="320" style="border:0" loading="lazy"></iframe>
+          </div>
+        <?php endif; ?>
+      </div>
+
+      <aside class="wcefp-sidebar">
+        <div class="wcefp-card">
+          <h3><?php _e('Prenota', 'wceventsfp'); ?></h3>
+          <?php echo do_shortcode('[wcefp_booking product_id="'.intval($pid).'"]'); ?>
+          <?php if ($mp): ?><p style="margin-top:12px"><strong><?php _e('Meeting point:', 'wceventsfp'); ?></strong> <?php echo esc_html($mp); ?></p><?php endif; ?>
+        </div>
+      </aside>
+    </section>
+    <?php
+    return ob_get_clean();
+});
 
     public function push_purchase_event_to_datalayer($order_id) {
         $order = wc_get_order($order_id); if(!$order) return;
