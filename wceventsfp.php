@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: WCEventsFP
- * Description: Eventi & Esperienze per WooCommerce con ricorrenze, slot orari, prezzi A/B, extra, KPI, Calendario, GA4/GTM, Brevo, anti-overbooking e ICS.
- * Version:     1.2.0
+ * Description: Eventi & Esperienze per WooCommerce con ricorrenze, slot orari, prezzi A/B, extra, KPI, Calendario (inline edit), GA4/GTM, Brevo, anti-overbooking, ICS e scheda stile GYG/Viator.
+ * Version:     1.3.0
  * Author:      Francesco Passeri
  * Text Domain: wceventsfp
  * Domain Path: /languages
@@ -10,12 +10,12 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('WCEFP_VERSION', '1.2.0');
+define('WCEFP_VERSION', '1.3.0');
 define('WCEFP_PLUGIN_FILE', __FILE__);
 define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
-/* Tabelle occorrenze */
+/* ---- Attivazione: tabella occorrenze ---- */
 register_activation_hook(__FILE__, function () {
     global $wpdb;
     $charset = $wpdb->get_charset_collate();
@@ -27,10 +27,12 @@ register_activation_hook(__FILE__, function () {
       end_datetime DATETIME NULL,
       capacity INT NOT NULL DEFAULT 0,
       booked INT NOT NULL DEFAULT 0,
+      status VARCHAR(20) NOT NULL DEFAULT 'active',
       meta LONGTEXT NULL,
       UNIQUE KEY uniq_prod_start (product_id, start_datetime),
       INDEX (start_datetime),
-      INDEX (product_id)
+      INDEX (product_id),
+      INDEX (status)
     ) $charset;";
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta($sql);
@@ -44,8 +46,10 @@ add_action('plugins_loaded', function () {
         });
         return;
     }
+    /* Include */
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-recurring.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-frontend.php';
+
     WCEFP()->init();
 });
 
@@ -58,6 +62,8 @@ function WCEFP() {
 class WCEFP_Plugin {
 
     public function init() {
+        $this->ensure_db_schema();
+
         /* Tipi prodotto */
         add_filter('product_type_selector', [$this, 'register_product_types']);
         add_action('init', [$this, 'add_product_classes']);
@@ -68,13 +74,17 @@ class WCEFP_Plugin {
         add_action('woocommerce_product_data_panels', [$this, 'render_product_data_panel']);
         add_action('woocommerce_admin_process_product_object', [$this, 'save_product_fields']);
 
-        /* Escludi da archivi */
+        /* Escludi da archivi WooCommerce */
         add_action('pre_get_posts', [$this, 'hide_from_archives']);
 
-        /* Frontend + GA4 */
+        /* Frontend */
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend']);
         add_action('woocommerce_thankyou', [$this, 'push_purchase_event_to_datalayer'], 20);
         add_action('woocommerce_thankyou', [$this, 'render_ics_downloads'], 30);
+
+        /* Render automatico su pagina prodotto (dettagli + widget) */
+        add_action('woocommerce_single_product_summary', ['WCEFP_Frontend','render_product_details'], 15);
+        add_action('woocommerce_single_product_summary', ['WCEFP_Frontend','render_booking_widget_auto'], 35);
 
         /* Brevo */
         add_action('woocommerce_order_status_completed', [$this, 'send_to_brevo_on_completed']);
@@ -82,14 +92,12 @@ class WCEFP_Plugin {
         /* Admin */
         add_action('admin_menu', [$this, 'admin_menu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin']);
-        add_action('wp_ajax_wcefp_update_occurrence', ['WCEFP_Recurring', 'ajax_update_occurrence']);
-        add_action('wp_ajax_wcefp_bulk_occurrences_csv', ['WCEFP_Recurring', 'ajax_bulk_occurrences_csv']);
-
 
         /* AJAX admin */
         add_action('wp_ajax_wcefp_get_bookings', [$this, 'ajax_get_bookings']);
         add_action('wp_ajax_wcefp_get_calendar', [$this, 'ajax_get_calendar']);
         add_action('wp_ajax_wcefp_generate_occurrences', ['WCEFP_Recurring', 'ajax_generate_occurrences']);
+        add_action('wp_ajax_wcefp_update_occurrence', [$this, 'ajax_update_occurrence']);
 
         /* Shortcode + AJAX pubblici */
         add_shortcode('wcefp_booking', ['WCEFP_Frontend', 'shortcode_booking']);
@@ -102,13 +110,25 @@ class WCEFP_Plugin {
         add_action('woocommerce_before_calculate_totals', ['WCEFP_Frontend', 'apply_dynamic_price']);
         add_action('woocommerce_checkout_create_order_line_item', ['WCEFP_Frontend', 'add_line_item_meta'], 10, 4);
 
-        /* Allocazione posti anti-overbooking: quando l’ordine diventa processing/completed */
+        /* Allocazione / Rilascio posti (anti-overbooking) */
         add_action('woocommerce_order_status_processing', [$this, 'allocate_seats_on_status']);
         add_action('woocommerce_order_status_completed',  [$this, 'allocate_seats_on_status']);
-        /* Rilascio posti se rimborsato/cancellato */
         add_action('woocommerce_order_status_refunded',   [$this, 'release_seats_on_status']);
         add_action('woocommerce_order_status_cancelled',  [$this, 'release_seats_on_status']);
         add_action('woocommerce_order_status_failed',     [$this, 'release_seats_on_status']);
+
+        /* ICS routing */
+        add_action('init', [$this, 'serve_ics']);
+    }
+
+    private function ensure_db_schema(){
+        global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
+        $cols = $wpdb->get_results("SHOW COLUMNS FROM $tbl", ARRAY_A);
+        $names = array_map(function($c){ return $c['Field']; }, (array)$cols);
+        if (!in_array('status', $names, true)) {
+            $wpdb->query("ALTER TABLE $tbl ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active'");
+            $wpdb->query("CREATE INDEX status ON $tbl (status)");
+        }
     }
 
     /* ---------- Product Types ---------- */
@@ -151,6 +171,18 @@ class WCEFP_Plugin {
                 woocommerce_wp_text_input(['id'=>'_wcefp_duration_minutes','label'=>__('Durata slot (minuti)','wceventsfp'),'type'=>'number','custom_attributes'=>['step'=>'5','min'=>'0']]);
                 ?>
             </div>
+
+            <div class="options_group">
+                <h3><?php _e('Info esperienza', 'wceventsfp'); ?></h3>
+                <?php
+                woocommerce_wp_text_input(['id'=>'_wcefp_languages','label'=>__('Lingue (es. IT, EN)','wceventsfp'),'type'=>'text']);
+                woocommerce_wp_text_input(['id'=>'_wcefp_meeting_point','label'=>__('Meeting point','wceventsfp'),'type'=>'text']);
+                woocommerce_wp_textarea_input(['id'=>'_wcefp_includes','label'=>__('Incluso','wceventsfp')]);
+                woocommerce_wp_textarea_input(['id'=>'_wcefp_excludes','label'=>__('Escluso','wceventsfp')]);
+                woocommerce_wp_textarea_input(['id'=>'_wcefp_cancellation','label'=>__('Politica di cancellazione','wceventsfp')]);
+                ?>
+            </div>
+
             <div class="options_group">
                 <h3><?php _e('Extra opzionali', 'wceventsfp'); ?></h3>
                 <p class="form-field">
@@ -161,26 +193,7 @@ class WCEFP_Plugin {
                     <span class="description"><?php _e('Formato JSON: name, price','wceventsfp'); ?></span>
                 </p>
             </div>
-            <div class="options_group">
-  <h3><?php _e('Info esperienza', 'wceventsfp'); ?></h3>
-  <?php
-  woocommerce_wp_text_input(['id'=>'_wcefp_meeting_point','label'=>__('Meeting point','wceventsfp')]);
-  woocommerce_wp_text_input(['id'=>'_wcefp_map_embed','label'=>__('Map Embed (iframe URL)','wceventsfp')]);
-  woocommerce_wp_text_input(['id'=>'_wcefp_languages','label'=>__('Lingue (CSV)','wceventsfp'),'placeholder'=>'Italiano, Inglese']);
-  ?>
-  <p class="form-field">
-    <label for="_wcefp_includes"><?php _e('Incluso (uno per riga)','wceventsfp'); ?></label>
-    <textarea id="_wcefp_includes" name="_wcefp_includes" style="width:100%;height:80px"></textarea>
-  </p>
-  <p class="form-field">
-    <label for="_wcefp_excludes"><?php _e('Escluso (uno per riga)','wceventsfp'); ?></label>
-    <textarea id="_wcefp_excludes" name="_wcefp_excludes" style="width:100%;height:80px"></textarea>
-  </p>
-  <?php
-  woocommerce_wp_text_input(['id'=>'_wcefp_cancellation','label'=>__('Policy cancellazione','wceventsfp'),'placeholder'=>'Gratis fino a 24h prima']);
-  woocommerce_wp_text_input(['id'=>'_wcefp_highlights','label'=>__('Punti chiave (CSV)','wceventsfp'),'placeholder'=>'Degustazione 4 vini, Tour cantina, ...']);
-  ?>
-</div>
+
             <div class="options_group">
                 <h3><?php _e('Ricorrenze settimanali & Slot', 'wceventsfp'); ?></h3>
                 <p class="form-field">
@@ -211,8 +224,11 @@ class WCEFP_Plugin {
 
     public function save_product_fields($product) {
         $pid = $product->get_id();
-        $keys = ['_wcefp_price_adult','_wcefp_price_child','_wcefp_capacity_per_slot','_wcefp_extras_json','_wcefp_time_slots','_wcefp_duration_minutes',
-         '_wcefp_meeting_point','_wcefp_map_embed','_wcefp_languages','_wcefp_includes','_wcefp_excludes','_wcefp_cancellation','_wcefp_highlights'];
+        $keys = [
+            '_wcefp_price_adult','_wcefp_price_child','_wcefp_capacity_per_slot',
+            '_wcefp_extras_json','_wcefp_time_slots','_wcefp_duration_minutes',
+            '_wcefp_languages','_wcefp_meeting_point','_wcefp_includes','_wcefp_excludes','_wcefp_cancellation'
+        ];
         foreach ($keys as $k) if (isset($_POST[$k])) update_post_meta($pid, $k, wp_unslash($_POST[$k]));
         $days = isset($_POST['_wcefp_weekdays']) ? array_map('intval',(array)$_POST['_wcefp_weekdays']) : [];
         update_post_meta($pid, '_wcefp_weekdays', $days);
@@ -241,93 +257,6 @@ class WCEFP_Plugin {
             'nonce'   => wp_create_nonce('wcefp_public'),
         ]);
     }
-add_filter('the_content', function($content){
-    if (!is_singular('product')) return $content;
-    $product = wc_get_product(get_the_ID()); if(!$product) return $content;
-    if (!in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return $content;
-
-    $pid = $product->get_id();
-    $mp   = get_post_meta($pid, '_wcefp_meeting_point', true);
-    $map  = get_post_meta($pid, '_wcefp_map_embed', true);
-    $langs= get_post_meta($pid, '_wcefp_languages', true);
-    $inc  = array_filter(array_map('trim', explode("\n", (string)get_post_meta($pid,'_wcefp_includes',true))));
-    $exc  = array_filter(array_map('trim', explode("\n", (string)get_post_meta($pid,'_wcefp_excludes',true))));
-    $pol  = get_post_meta($pid, '_wcefp_cancellation', true);
-    $hi   = array_filter(array_map('trim', explode(',', (string)get_post_meta($pid,'_wcefp_highlights',true))));
-
-    ob_start(); ?>
-    <section class="wcefp-hero">
-      <h2><?php echo esc_html(get_the_title()); ?></h2>
-      <?php if ($hi): ?>
-        <ul class="wcefp-highlights"><?php foreach ($hi as $h) echo '<li>'.esc_html($h).'</li>'; ?></ul>
-      <?php endif; ?>
-    </section>
-
-    <section class="wcefp-grid">
-      <div class="wcefp-main">
-        <div class="wcefp-desc"><?php echo wpautop(get_the_content()); ?></div>
-
-        <h3><?php _e('Cosa è incluso', 'wceventsfp'); ?></h3>
-        <?php if ($inc): echo '<ul class="wcefp-list">'; foreach($inc as $x) echo '<li>'.esc_html($x).'</li>'; echo '</ul>'; else echo '<p>-</p>'; endif; ?>
-
-        <h3><?php _e('Cosa non è incluso', 'wceventsfp'); ?></h3>
-        <?php if ($exc): echo '<ul class="wcefp-list">'; foreach($exc as $x) echo '<li>'.esc_html($x).'</li>'; echo '</ul>'; else echo '<p>-</p>'; endif; ?>
-
-        <h3><?php _e('Lingue', 'wceventsfp'); ?></h3>
-        <p><?php echo esc_html($langs ?: '-'); ?></p>
-
-        <h3><?php _e('Policy di cancellazione', 'wceventsfp'); ?></h3>
-        <p><?php echo esc_html($pol ?: '-'); ?></p>
-
-        <?php if ($map): ?>
-          <h3><?php _e('Mappa', 'wceventsfp'); ?></h3>
-          <div class="wcefp-map">
-            <iframe src="<?php echo esc_url($map); ?>" width="100%" height="320" style="border:0" loading="lazy"></iframe>
-          </div>
-        <?php endif; ?>
-      </div>
-
-      <aside class="wcefp-sidebar">
-        <div class="wcefp-card">
-          <h3><?php _e('Prenota', 'wceventsfp'); ?></h3>
-          <?php echo do_shortcode('[wcefp_booking product_id="'.intval($pid).'"]'); ?>
-          <?php if ($mp): ?><p style="margin-top:12px"><strong><?php _e('Meeting point:', 'wceventsfp'); ?></strong> <?php echo esc_html($mp); ?></p><?php endif; ?>
-        </div>
-      </aside>
-    </section>
-    <?php
-    return ob_get_clean();
-});
-add_action('wp_head', function(){
-    if (!is_singular('product')) return;
-    $p = wc_get_product(get_the_ID()); if (!$p || !in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
-
-    global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
-    $pid = $p->get_id();
-    $occ = $wpdb->get_row($wpdb->prepare("SELECT start_datetime,end_datetime,capacity,booked FROM $tbl WHERE product_id=%d AND start_datetime>=NOW() ORDER BY start_datetime ASC LIMIT 1", $pid), ARRAY_A);
-
-    $offers = [
-      '@type'=>'Offer',
-      'priceCurrency'=> get_woocommerce_currency(),
-      'price'=> (float) get_post_meta($pid,'_wcefp_price_adult',true) ?: (float)$p->get_price('edit'),
-      'availability'=> 'https://schema.org/'.(($occ && ($occ['capacity']-$occ['booked'])>0)?'InStock':'SoldOut'),
-      'url'=> get_permalink($pid)
-    ];
-    $data = [
-      '@context'=>'https://schema.org',
-      '@type'=>'Event',
-      'name'=> $p->get_name(),
-      'description'=> wp_strip_all_tags(get_post_field('post_content', $pid)),
-      'eventAttendanceMode'=> 'https://schema.org/OfflineEventAttendanceMode',
-      'eventStatus'=> 'https://schema.org/EventScheduled',
-      'offers'=> $offers,
-    ];
-    if ($occ){
-      $data['startDate'] = date('c', strtotime($occ['start_datetime']));
-      $data['endDate']   = date('c', strtotime($occ['end_datetime'] ?: $occ['start_datetime'].' +2 hours'));
-    }
-    echo '<script type="application/ld+json">'.wp_json_encode($data).'</script>';
-});
 
     public function push_purchase_event_to_datalayer($order_id) {
         $order = wc_get_order($order_id); if(!$order) return;
@@ -354,7 +283,7 @@ add_action('wp_head', function(){
         echo "<script>window.dataLayer=window.dataLayer||[];dataLayer.push(".wp_json_encode($data).");</script>";
     }
 
-    /* ---------- ICS in thank-you ---------- */
+    /* ---------- ICS in thank-you e servizio ---------- */
     public function render_ics_downloads($order_id) {
         $order = wc_get_order($order_id); if(!$order) return;
         $ics = [];
@@ -379,8 +308,7 @@ add_action('wp_head', function(){
         echo '</ul></div>';
     }
 
-    /* Servizio ICS semplice */
-    public static function serve_ics() {
+    public function serve_ics() {
         if (!isset($_GET['wcefp_ics'])) return;
         $order_id = intval($_GET['order'] ?? 0);
         $item_id  = intval($_GET['item'] ?? 0);
@@ -407,18 +335,210 @@ add_action('wp_head', function(){
         exit;
     }
     private static function esc_ics($s){ return preg_replace('/([,;])/','\\\$1', str_replace("\n",'\\n', $s)); }
-}
-add_action('init', ['WCEFP_Plugin','serve_ics']);
 
-/* ---------------- ALLOCAZIONE / RILASCIO POSTI ---------------- */
+    /* ---------- Brevo ---------- */
+    public function send_to_brevo_on_completed($order_id) {
+        if (!defined('WCEFP_BREVO_API_KEY') || empty(WCEFP_BREVO_API_KEY)) return;
+        $order = wc_get_order($order_id); if(!$order) return;
+
+        $has_event = false;
+        foreach ($order->get_items() as $item) {
+            $p = $item->get_product();
+            if ($p && in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) { $has_event = true; break; }
+        }
+        if (!$has_event) return;
+
+        $email = $order->get_billing_email();
+        $firstname = $order->get_billing_first_name();
+        $payload = [
+            'email' => $email,
+            'attributes' => [
+                'FIRSTNAME' => $firstname,
+                'ORDER_ID'  => (string)$order->get_order_number(),
+                'TOTAL'     => (float)$order->get_total(),
+            ],
+            'updateEnabled' => true,
+        ];
+        $this->brevo_request('https://api.brevo.com/v3/contacts', 'POST', $payload);
+    }
+    private function brevo_request($url,$method='POST',$body=[]) {
+        $args = [
+            'headers'=>['accept'=>'application/json','api-key'=>WCEFP_BREVO_API_KEY,'content-type'=>'application/json'],
+            'method'=>$method,'body'=>!empty($body)?wp_json_encode($body):null,'timeout'=>15,
+        ];
+        $res = wp_remote_request($url,$args);
+        if (is_wp_error($res)) error_log('WCEFP Brevo error: '.$res->get_error_message());
+        return $res;
+    }
+
+    /* ---------- Admin ---------- */
+    public function admin_menu() {
+        $cap = 'manage_woocommerce';
+        add_menu_page(__('Eventi & Degustazioni','wceventsfp'), __('Eventi & Degustazioni','wceventsfp'), $cap,'wcefp',[$this,'render_kpi_page'],'dashicons-calendar-alt',56);
+        add_submenu_page('wcefp', __('Analisi KPI','wceventsfp'), __('Analisi KPI','wceventsfp'), $cap,'wcefp',[$this,'render_kpi_page']);
+        add_submenu_page('wcefp', __('Calendario & Lista','wceventsfp'), __('Calendario & Lista','wceventsfp'), $cap,'wcefp-calendar',[$this,'render_calendar_page']);
+        add_submenu_page('wcefp', __('Impostazioni','wceventsfp'), __('Impostazioni','wceventsfp'), $cap,'wcefp-settings',[$this,'render_settings_page']);
+    }
+    public function enqueue_admin($hook) {
+        if (strpos($hook,'wcefp') === false) return;
+        wp_enqueue_style('wcefp-admin', WCEFP_PLUGIN_URL.'assets/css/admin.css', [], WCEFP_VERSION);
+
+        // FullCalendar (CDN)
+        wp_enqueue_style('fullcalendar', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css', [], '6.1.15');
+        wp_enqueue_script('fullcalendar', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js', [], '6.1.15', true);
+
+        wp_enqueue_script('wcefp-admin', WCEFP_PLUGIN_URL.'assets/js/admin.js', ['jquery','fullcalendar'], WCEFP_VERSION, true);
+        wp_localize_script('wcefp-admin','WCEFPAdmin',[
+            'ajaxUrl'=> admin_url('admin-ajax.php'),
+            'nonce'  => wp_create_nonce('wcefp_admin'),
+        ]);
+    }
+    public function render_kpi_page() {
+        if (!current_user_can('manage_woocommerce')) return;
+        $kpi = $this->get_kpi_demo(); ?>
+        <div class="wrap">
+            <h1><?php _e('Analisi KPI','wceventsfp'); ?></h1>
+            <div class="wcefp-kpi-grid">
+                <div class="card"><h3><?php _e('Ordini (30gg)','wceventsfp'); ?></h3><p><?php echo esc_html($kpi['orders_30']); ?></p></div>
+                <div class="card"><h3><?php _e('Ricavi (30gg)','wceventsfp'); ?></h3><p>€ <?php echo number_format($kpi['revenue_30'],2,',','.'); ?></p></div>
+                <div class="card"><h3><?php _e('Riempimento medio','wceventsfp'); ?></h3><p><?php echo esc_html($kpi['fill_rate']); ?>%</p></div>
+                <div class="card"><h3><?php _e('Top Esperienza','wceventsfp'); ?></h3><p><?php echo esc_html($kpi['top_product']); ?></p></div>
+            </div>
+        </div><?php
+    }
+    private function get_kpi_demo() {
+        return ['orders_30'=>18,'revenue_30'=>2150.50,'fill_rate'=>63,'top_product'=>'Degustazione Classica'];
+    }
+    public function render_calendar_page() {
+        if (!current_user_can('manage_woocommerce')) return; ?>
+        <div class="wrap">
+            <h1><?php _e('Calendario & Lista Prenotazioni','wceventsfp'); ?></h1>
+            <div class="wcefp-toolbar">
+                <button class="button button-primary" id="wcefp-switch-calendar"><?php _e('Calendario','wceventsfp'); ?></button>
+                <button class="button" id="wcefp-switch-list"><?php _e('Lista','wceventsfp'); ?></button>
+            </div>
+            <div id="wcefp-view" style="min-height:650px;"></div>
+        </div><?php
+    }
+    public function render_settings_page() {
+        if (!current_user_can('manage_woocommerce')) return;
+        if (isset($_POST['wcefp_save']) && check_admin_referer('wcefp_settings')) {
+            update_option('wcefp_default_capacity', intval($_POST['wcefp_default_capacity'] ?? 0));
+            echo '<div class="updated"><p>Salvato.</p></div>';
+        }
+        $cap = get_option('wcefp_default_capacity', 0); ?>
+        <div class="wrap">
+            <h1><?php _e('Impostazioni','wceventsfp'); ?></h1>
+            <form method="post"><?php wp_nonce_field('wcefp_settings'); ?>
+                <table class="form-table">
+                    <tr>
+                        <th><label for="wcefp_default_capacity"><?php _e('Capienza default per slot','wceventsfp'); ?></label></th>
+                        <td><input type="number" name="wcefp_default_capacity" id="wcefp_default_capacity" value="<?php echo esc_attr($cap); ?>" min="0" /></td>
+                    </tr>
+                </table>
+                <p><button class="button button-primary" type="submit" name="wcefp_save" value="1"><?php _e('Salva','wceventsfp'); ?></button></p>
+            </form>
+        </div><?php
+    }
+
+    /* ---------- AJAX admin ---------- */
+    public function ajax_get_bookings() {
+        check_ajax_referer('wcefp_admin','nonce');
+        $orders = wc_get_orders(['limit'=>50,'type'=>'shop_order','status'=>['wc-processing','wc-completed'],'date_created'=>'>='. (new DateTime('-60 days'))->format('Y-m-d')]);
+        $rows = [];
+        foreach ($orders as $order) {
+            foreach ($order->get_items() as $it) {
+                $p = $it->get_product(); if(!$p) continue;
+                if (!in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) continue;
+                $rows[] = [
+                    'order'   => $order->get_order_number(),
+                    'date'    => $order->get_date_created() ? $order->get_date_created()->date('Y-m-d H:i') : '',
+                    'product' => $p->get_name(),
+                    'qty'     => (int)$it->get_quantity(),
+                    'total'   => (float)$order->get_item_total($it, false),
+                ];
+            }
+        }
+        wp_send_json_success(['rows'=>$rows]);
+    }
+
+    public function ajax_get_calendar() {
+        check_ajax_referer('wcefp_admin','nonce');
+        global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
+        $from = isset($_POST['from']) ? sanitize_text_field($_POST['from']) : (new DateTime('-7 days'))->format('Y-m-d');
+        $to   = isset($_POST['to'])   ? sanitize_text_field($_POST['to'])   : (new DateTime('+60 days'))->format('Y-m-d');
+        $evts = $wpdb->get_results($wpdb->prepare("SELECT id,product_id,start_datetime,end_datetime,capacity,booked,status FROM $tbl WHERE start_datetime BETWEEN %s AND %s ORDER BY start_datetime ASC", "$from 00:00:00", "$to 23:59:59"), ARRAY_A);
+        $events = [];
+        foreach ($evts as $e) {
+            $events[] = [
+                'id'    => (int)$e['id'],
+                'title' => get_the_title((int)$e['product_id'])." (".intval($e['booked'])."/".intval($e['capacity']).")",
+                'start' => $e['start_datetime'],
+                'end'   => $e['end_datetime'] ?: null,
+                'color' => ($e['status'] === 'cancelled') ? '#d1d5db' : '',
+                'extendedProps' => [
+                    'product_id' => (int)$e['product_id'],
+                    'capacity'   => (int)$e['capacity'],
+                    'booked'     => (int)$e['booked'],
+                    'status'     => $e['status'],
+                ],
+            ];
+        }
+        wp_send_json_success(['events'=>$events]);
+    }
+
+    public function ajax_update_occurrence() {
+        check_ajax_referer('wcefp_admin','nonce');
+        if (!current_user_can('manage_woocommerce')) wp_send_json_error(['msg'=>'No perms']);
+        $occ = intval($_POST['occ'] ?? 0);
+        $cap = isset($_POST['capacity']) ? max(0, intval($_POST['capacity'])) : null;
+        $status = isset($_POST['status']) ? sanitize_text_field($_POST['status']) : null;
+        if (!$occ) wp_send_json_error(['msg'=>'ID mancante']);
+
+        global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
+        $data = []; $fmt = [];
+        if ($cap !== null) { $data['capacity'] = $cap; $fmt[] = '%d'; }
+        if ($status !== null && in_array($status, ['active','cancelled'], true)) { $data['status'] = $status; $fmt[] = '%s'; }
+        if (!$data) wp_send_json_error(['msg'=>'Nessun dato da aggiornare']);
+
+        $res = $wpdb->update($tbl, $data, ['id'=>$occ], $fmt, ['%d']);
+        if ($res === false) wp_send_json_error(['msg'=>'Errore aggiornamento']);
+        wp_send_json_success(['ok'=>true]);
+    }
+
+    /* ---------- Allocazione / Rilascio posti ---------- */
+    public function allocate_seats_on_status($order_id){
+        $order = wc_get_order($order_id); if(!$order) return;
+        $todo = WCEFP_OrderSeatOps::get_items_to_alloc($order);
+        foreach ($todo as $row){
+            $ok = wcefp_update_booked_atomic($row['occ'], $row['qty']);
+            if ($ok) {
+                $order->add_order_note("Posti allocati per \"{$row['name']}\" ( +{$row['qty']} ).");
+            } else {
+                $order->add_order_note("ATTENZIONE: capienza insufficiente per \"{$row['name']}\". Verificare.");
+                $order->update_status('on-hold');
+            }
+        }
+    }
+    public function release_seats_on_status($order_id){
+        $order = wc_get_order($order_id); if(!$order) return;
+        $todo = WCEFP_OrderSeatOps::get_items_to_alloc($order);
+        foreach ($todo as $row){
+            $ok = wcefp_update_booked_atomic($row['occ'], -$row['qty']);
+            if ($ok) {
+                $order->add_order_note("Posti rilasciati per \"{$row['name']}\" ( -{$row['qty']} ).");
+            }
+        }
+    }
+}
+
+/* ---------- Helper allocazione ---------- */
 if (!function_exists('wcefp_update_booked_atomic')) {
     function wcefp_update_booked_atomic($occ_id, $delta){
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
         if ($delta > 0) {
-            // Aggiungi posti solo se disponibili
-            $sql = $wpdb->prepare("UPDATE $tbl SET booked = booked + %d WHERE id=%d AND (capacity - booked) >= %d", $delta, $occ_id, $delta);
+            $sql = $wpdb->prepare("UPDATE $tbl SET booked = booked + %d WHERE id=%d AND status='active' AND (capacity - booked) >= %d", $delta, $occ_id, $delta);
         } else {
-            // Rilascia posti (delta negativo)
             $sql = $wpdb->prepare("UPDATE $tbl SET booked = GREATEST(0, booked + %d) WHERE id=%d", $delta, $occ_id);
         }
         $res = $wpdb->query($sql);
@@ -441,39 +561,3 @@ class WCEFP_OrderSeatOps {
         return $rows;
     }
 }
-
-if (!method_exists('WCEFP_Plugin','allocate_seats_on_status')) {
-    // (definiti nella classe; questo è a scopo compatibilità)
-}
-
-add_action('plugins_loaded', function(){
-    if (!function_exists('wcefp_plugin_allocate_attach')) {
-        function wcefp_plugin_allocate_attach(){
-            $plugin = WCEFP();
-            $plugin->allocate_seats_on_status = function($order_id){
-                $order = wc_get_order($order_id); if(!$order) return;
-                $todo = WCEFP_OrderSeatOps::get_items_to_alloc($order);
-                foreach ($todo as $row){
-                    $ok = wcefp_update_booked_atomic($row['occ'], $row['qty']);
-                    if ($ok) {
-                        $order->add_order_note("Posti allocati per \"{$row['name']}\" ( +{$row['qty']} ).");
-                    } else {
-                        $order->add_order_note("ATTENZIONE: capienza insufficiente per \"{$row['name']}\". Verificare.");
-                        $order->update_status('on-hold');
-                    }
-                }
-            };
-            $plugin->release_seats_on_status = function($order_id){
-                $order = wc_get_order($order_id); if(!$order) return;
-                $todo = WCEFP_OrderSeatOps::get_items_to_alloc($order);
-                foreach ($todo as $row){
-                    $ok = wcefp_update_booked_atomic($row['occ'], -$row['qty']);
-                    if ($ok) {
-                        $order->add_order_note("Posti rilasciati per \"{$row['name']}\" ( -{$row['qty']} ).");
-                    }
-                }
-            };
-        }
-        wcefp_plugin_allocate_attach();
-    }
-});
