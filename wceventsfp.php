@@ -298,6 +298,36 @@ add_filter('the_content', function($content){
     <?php
     return ob_get_clean();
 });
+add_action('wp_head', function(){
+    if (!is_singular('product')) return;
+    $p = wc_get_product(get_the_ID()); if (!$p || !in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
+
+    global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
+    $pid = $p->get_id();
+    $occ = $wpdb->get_row($wpdb->prepare("SELECT start_datetime,end_datetime,capacity,booked FROM $tbl WHERE product_id=%d AND start_datetime>=NOW() ORDER BY start_datetime ASC LIMIT 1", $pid), ARRAY_A);
+
+    $offers = [
+      '@type'=>'Offer',
+      'priceCurrency'=> get_woocommerce_currency(),
+      'price'=> (float) get_post_meta($pid,'_wcefp_price_adult',true) ?: (float)$p->get_price('edit'),
+      'availability'=> 'https://schema.org/'.(($occ && ($occ['capacity']-$occ['booked'])>0)?'InStock':'SoldOut'),
+      'url'=> get_permalink($pid)
+    ];
+    $data = [
+      '@context'=>'https://schema.org',
+      '@type'=>'Event',
+      'name'=> $p->get_name(),
+      'description'=> wp_strip_all_tags(get_post_field('post_content', $pid)),
+      'eventAttendanceMode'=> 'https://schema.org/OfflineEventAttendanceMode',
+      'eventStatus'=> 'https://schema.org/EventScheduled',
+      'offers'=> $offers,
+    ];
+    if ($occ){
+      $data['startDate'] = date('c', strtotime($occ['start_datetime']));
+      $data['endDate']   = date('c', strtotime($occ['end_datetime'] ?: $occ['start_datetime'].' +2 hours'));
+    }
+    echo '<script type="application/ld+json">'.wp_json_encode($data).'</script>';
+});
 
     public function push_purchase_event_to_datalayer($order_id) {
         $order = wc_get_order($order_id); if(!$order) return;
