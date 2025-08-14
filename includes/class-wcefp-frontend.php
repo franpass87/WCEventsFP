@@ -84,9 +84,11 @@ class WCEFP_Frontend {
         wp_send_json_success(['slots'=>$slots]);
     }
 
-    /* ---------- AJAX: add to cart con meta + prezzo dinamico ---------- */
+    /* ---------- AJAX: add to cart con check capienza ---------- */
     public static function ajax_add_to_cart() {
         check_ajax_referer('wcefp_public','nonce');
+        global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
+
         $pid  = intval($_POST['product_id'] ?? 0);
         $occ  = intval($_POST['occurrence_id'] ?? 0);
         $ad   = max(0, intval($_POST['adults'] ?? 0));
@@ -95,18 +97,27 @@ class WCEFP_Frontend {
 
         if (!$pid || !$occ || ($ad+$ch)<=0) wp_send_json_error(['msg'=>'Dati mancanti']);
 
+        $qty = max(1, $ad + $ch);
+
+        // Check capienza attuale
+        $row = $wpdb->get_row($wpdb->prepare("SELECT capacity, booked FROM $tbl WHERE id=%d AND product_id=%d", $occ, $pid), ARRAY_A);
+        if (!$row) wp_send_json_error(['msg'=>'Slot non trovato.']);
+        $available = max(0, intval($row['capacity']) - intval($row['booked']));
+        if ($available < $qty) {
+            wp_send_json_error(['msg'=> sprintf(__('Posti disponibili insufficienti. Rimasti: %d','wceventsfp'), $available)]);
+        }
+
         $meta = [
             '_wcefp_occurrence_id' => $occ,
             '_wcefp_adults'  => $ad,
             '_wcefp_children'=> $ch,
             '_wcefp_extras'  => $extras,
         ];
-        $qty = max(1, $ad + $ch); // qty per coerenza carrello
 
         $added = WC()->cart->add_to_cart($pid, $qty, 0, [], $meta);
         if (!$added) wp_send_json_error(['msg'=>'Impossibile aggiungere al carrello']);
 
-        // GA4 add_to_cart
+        // GA4 add_to_cart (session bridge opzionale)
         $product = wc_get_product($pid);
         $dl = [
             'event'=>'add_to_cart',
@@ -146,7 +157,7 @@ class WCEFP_Frontend {
             }
             $total = ($ad * $price_adult) + ($ch * $price_child) + $extras_total;
             $qty = max(1, $ad + $ch);
-            $unit = $qty > 0 ? ($total / $qty) : $total; // ripartizione per qty
+            $unit = $qty > 0 ? ($total / $qty) : $total;
 
             if ($unit > 0) $ci['data']->set_price($unit);
         }
@@ -161,12 +172,6 @@ class WCEFP_Frontend {
             $item->add_meta_data('Extra', implode(', ', array_filter($names)), true);
         }
 
-        // Aggiorna booked dell'occorrenza
-        $occ_id = intval($values['_wcefp_occurrence_id'] ?? 0);
-        $qty    = intval($values['_wcefp_adults'] ?? 0) + intval($values['_wcefp_children'] ?? 0);
-        if ($occ_id && $qty>0) {
-            global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
-            $wpdb->query($wpdb->prepare("UPDATE $tbl SET booked = GREATEST(0, booked + %d) WHERE id=%d", $qty, $occ_id));
-        }
+        // NIENTE aggiornamento booked qui (si fa su cambio stato ordine con update atomico)
     }
 }
