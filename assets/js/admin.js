@@ -1,17 +1,58 @@
 (function($){
   $(function(){
+
+    // GENERA OCCORRENZE nel tab prodotto
+    $('#wcefp-generate').on('click', function(){
+      const pid = $(this).data('product');
+      const from = $('#wcefp_generate_from').val();
+      const to = $('#wcefp_generate_to').val();
+      const $out = $('#wcefp-generate-result').html('<em>Generazione in corso…</em>');
+      $.post(ajaxurl, {action:'wcefp_generate_occurrences', nonce: WCEFPAdmin.nonce, product_id: pid, from, to}, function(r){
+        if(r && r.success){
+          $out.html('<span>Occorrenze create: <strong>'+r.data.created+'</strong></span>');
+        } else {
+          $out.html('<span style="color:#b32d2e">Errore: '+(r && r.data && r.data.msg ? r.data.msg : 'unknown')+'</span>');
+        }
+      });
+    });
+
+    // PAGINA CALENDARIO/LISTA
     const $view = $('#wcefp-view');
     $('#wcefp-switch-calendar').on('click', function(){
-      $view.html('<p>Carico calendario…</p>');
-      $.post(ajaxurl, {action:'wcefp_get_calendar', nonce: WCEFPAdmin.nonce}, function(r){
-        if(r.success){ $view.html('<pre>'+JSON.stringify(r.data,null,2)+'</pre>'); }
+      $view.empty();
+      const cal = $('<div id="wcefp-calendar"></div>').appendTo($view);
+      const now = new Date();
+      const from = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString().slice(0,10);
+      const to   = new Date(now.getFullYear(), now.getMonth()+2, 0).toISOString().slice(0,10);
+
+      $.post(WCEFPAdmin.ajaxUrl, {action:'wcefp_get_calendar', nonce: WCEFPAdmin.nonce, from, to}, function(r){
+        const events = (r && r.success) ? r.data.events : [];
+        const calendar = new FullCalendar.Calendar(cal[0], {
+          initialView: 'dayGridMonth',
+          height: 650,
+          events: events
+        });
+        calendar.render();
       });
-    });
+    }).trigger('click');
+
     $('#wcefp-switch-list').on('click', function(){
       $view.html('<p>Carico lista…</p>');
-      $.post(ajaxurl, {action:'wcefp_get_bookings', nonce: WCEFPAdmin.nonce}, function(r){
-        if(r.success){ $view.html('<pre>'+JSON.stringify(r.data,null,2)+'</pre>'); }
+      $.post(WCEFPAdmin.ajaxUrl, {action:'wcefp_get_bookings', nonce: WCEFPAdmin.nonce}, function(r){
+        if(r.success){
+          const rows = r.data.rows || [];
+          if(!rows.length){ $view.html('<p>Nessuna prenotazione.</p>'); return; }
+          let html = '<table class="widefat striped"><thead><tr><th>Ordine</th><th>Data</th><th>Prodotto</th><th>Q.tà</th><th>Totale</th></tr></thead><tbody>';
+          rows.forEach(x=>{
+            html += `<tr><td>${x.order}</td><td>${x.date}</td><td>${x.product}</td><td>${x.qty}</td><td>€ ${Number(x.total).toFixed(2)}</td></tr>`;
+          });
+          html += '</tbody></table>';
+          $view.html(html);
+        } else {
+          $view.html('<p>Errore nel caricamento.</p>');
+        }
       });
     });
+
   });
 })(jQuery);
