@@ -82,6 +82,9 @@ class WCEFP_Plugin {
         /* Admin */
         add_action('admin_menu', [$this, 'admin_menu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin']);
+        add_action('wp_ajax_wcefp_update_occurrence', ['WCEFP_Recurring', 'ajax_update_occurrence']);
+        add_action('wp_ajax_wcefp_bulk_occurrences_csv', ['WCEFP_Recurring', 'ajax_bulk_occurrences_csv']);
+
 
         /* AJAX admin */
         add_action('wp_ajax_wcefp_get_bookings', [$this, 'ajax_get_bookings']);
