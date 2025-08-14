@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: WCEventsFP
- * Description: Eventi & Esperienze per WooCommerce con ricorrenze, slot orari, prezzi A/B, extra, KPI, Calendario (inline edit), GA4/GTM, Brevo, anti-overbooking, ICS e scheda stile GYG/Viator.
- * Version:     1.3.0
+ * Description: Eventi & Esperienze per WooCommerce con ricorrenze, slot orari, prezzi A/B, extra, KPI, Calendario (inline edit + filtro), GA4/GTM, Brevo (solo email), anti-overbooking, ICS e scheda stile GYG/Viator.
+ * Version:     1.4.0
  * Author:      Francesco Passeri
  * Text Domain: wceventsfp
  * Domain Path: /languages
@@ -10,7 +10,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('WCEFP_VERSION', '1.3.0');
+define('WCEFP_VERSION', '1.4.0');
 define('WCEFP_PLUGIN_FILE', __FILE__);
 define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -46,10 +46,8 @@ add_action('plugins_loaded', function () {
         });
         return;
     }
-    /* Include */
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-recurring.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-frontend.php';
-
     WCEFP()->init();
 });
 
@@ -74,7 +72,7 @@ class WCEFP_Plugin {
         add_action('woocommerce_product_data_panels', [$this, 'render_product_data_panel']);
         add_action('woocommerce_admin_process_product_object', [$this, 'save_product_fields']);
 
-        /* Escludi da archivi WooCommerce */
+        /* Esclusione archivi Woo */
         add_action('pre_get_posts', [$this, 'hide_from_archives']);
 
         /* Frontend */
@@ -82,22 +80,33 @@ class WCEFP_Plugin {
         add_action('woocommerce_thankyou', [$this, 'push_purchase_event_to_datalayer'], 20);
         add_action('woocommerce_thankyou', [$this, 'render_ics_downloads'], 30);
 
-        /* Render automatico su pagina prodotto (dettagli + widget) */
+        /* Render su pagina prodotto */
         add_action('woocommerce_single_product_summary', ['WCEFP_Frontend','render_product_details'], 15);
         add_action('woocommerce_single_product_summary', ['WCEFP_Frontend','render_booking_widget_auto'], 35);
 
-        /* Brevo */
-        add_action('woocommerce_order_status_completed', [$this, 'send_to_brevo_on_completed']);
+        /* Brevo (solo email): upsert + transactional */
+        add_action('woocommerce_order_status_completed', [$this, 'brevo_on_completed']);
+        // opzionale: invio anche su 'processing'
+        // add_action('woocommerce_order_status_processing', [$this, 'brevo_on_completed']);
+
+        /* Disattiva email Woo per ordini SOLO-evento (opzione) */
+        add_filter('woocommerce_email_enabled_customer_processing_order', [$this,'maybe_disable_wc_mail'], 10, 2);
+        add_filter('woocommerce_email_enabled_customer_completed_order',  [$this,'maybe_disable_wc_mail'], 10, 2);
+        add_filter('woocommerce_email_enabled_customer_on_hold_order',    [$this,'maybe_disable_wc_mail'], 10, 2);
 
         /* Admin */
         add_action('admin_menu', [$this, 'admin_menu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin']);
 
-        /* AJAX admin */
+        /* AJAX Admin */
         add_action('wp_ajax_wcefp_get_bookings', [$this, 'ajax_get_bookings']);
         add_action('wp_ajax_wcefp_get_calendar', [$this, 'ajax_get_calendar']);
         add_action('wp_ajax_wcefp_generate_occurrences', ['WCEFP_Recurring', 'ajax_generate_occurrences']);
         add_action('wp_ajax_wcefp_update_occurrence', [$this, 'ajax_update_occurrence']);
+
+        /* Export CSV */
+        add_action('admin_post_wcefp_export_occurrences', [$this, 'export_occurrences_csv']);
+        add_action('admin_post_wcefp_export_bookings',    [$this, 'export_bookings_csv']);
 
         /* Shortcode + AJAX pubblici */
         add_shortcode('wcefp_booking', ['WCEFP_Frontend', 'shortcode_booking']);
@@ -110,7 +119,7 @@ class WCEFP_Plugin {
         add_action('woocommerce_before_calculate_totals', ['WCEFP_Frontend', 'apply_dynamic_price']);
         add_action('woocommerce_checkout_create_order_line_item', ['WCEFP_Frontend', 'add_line_item_meta'], 10, 4);
 
-        /* Allocazione / Rilascio posti (anti-overbooking) */
+        /* Anti-overbooking */
         add_action('woocommerce_order_status_processing', [$this, 'allocate_seats_on_status']);
         add_action('woocommerce_order_status_completed',  [$this, 'allocate_seats_on_status']);
         add_action('woocommerce_order_status_refunded',   [$this, 'release_seats_on_status']);
@@ -336,21 +345,25 @@ class WCEFP_Plugin {
     }
     private static function esc_ics($s){ return preg_replace('/([,;])/','\\\$1', str_replace("\n",'\\n', $s)); }
 
-    /* ---------- Brevo ---------- */
-    public function send_to_brevo_on_completed($order_id) {
-        if (!defined('WCEFP_BREVO_API_KEY') || empty(WCEFP_BREVO_API_KEY)) return;
+    /* ---------- Brevo: invio + upsert ---------- */
+    public function brevo_on_completed($order_id) {
         $order = wc_get_order($order_id); if(!$order) return;
 
+        // Se ordine non contiene eventi/esperienze → esci
         $has_event = false;
         foreach ($order->get_items() as $item) {
-            $p = $item->get_product();
-            if ($p && in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) { $has_event = true; break; }
+            $p = $item->get_product(); if(!$p) continue;
+            if (in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) { $has_event = true; break; }
         }
         if (!$has_event) return;
 
+        $api_key = defined('WCEFP_BREVO_API_KEY') && WCEFP_BREVO_API_KEY ? WCEFP_BREVO_API_KEY : trim(get_option('wcefp_brevo_api_key',''));
+        if (!$api_key) return;
+
+        // Upsert contatto
         $email = $order->get_billing_email();
         $firstname = $order->get_billing_first_name();
-        $payload = [
+        $this->brevo_request('https://api.brevo.com/v3/contacts', 'POST', [
             'email' => $email,
             'attributes' => [
                 'FIRSTNAME' => $firstname,
@@ -358,17 +371,70 @@ class WCEFP_Plugin {
                 'TOTAL'     => (float)$order->get_total(),
             ],
             'updateEnabled' => true,
-        ];
-        $this->brevo_request('https://api.brevo.com/v3/contacts', 'POST', $payload);
+        ], $api_key);
+
+        // Invio transazionale: usa Template ID se presente, altrimenti HTML semplice
+        $tpl_id = intval(get_option('wcefp_brevo_template_id', 0));
+        $from_email = sanitize_email(get_option('wcefp_brevo_from_email', get_bloginfo('admin_email')));
+        $from_name  = sanitize_text_field(get_option('wcefp_brevo_from_name', get_bloginfo('name')));
+
+        $items_html = '';
+        foreach ($order->get_items() as $item) {
+            $p = $item->get_product(); if(!$p || !in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) continue;
+            $occ = esc_html($item->get_meta('Occorrenza'));
+            $ad  = intval($item->get_meta('Adulti'));
+            $ch  = intval($item->get_meta('Bambini'));
+            $items_html .= '<li><strong>'.esc_html($item->get_name()).'</strong> – Occorrenza: '.$occ.' – Adulti: '.$ad.' – Bambini: '.$ch.'</li>';
+        }
+        $ics_note = __('Trovi il link per aggiungere al calendario nella pagina di conferma ordine.', 'wceventsfp');
+
+        if ($tpl_id > 0) {
+            $payload = [
+                'to' => [['email'=>$email, 'name'=>$firstname]],
+                'templateId' => $tpl_id,
+                'params' => [
+                    'ORDER_NUMBER' => (string)$order->get_order_number(),
+                    'ORDER_TOTAL'  => (float)$order->get_total(),
+                    'ORDER_ITEMS_HTML' => $items_html,
+                    'ICS_NOTE' => $ics_note,
+                    'FIRSTNAME' => $firstname,
+                ],
+                'sender' => ['email'=>$from_email, 'name'=>$from_name],
+            ];
+        } else {
+            $payload = [
+                'to' => [['email'=>$email, 'name'=>$firstname]],
+                'subject' => sprintf(__('Conferma prenotazione #%s','wceventsfp'), $order->get_order_number()),
+                'htmlContent' => '<h2>'.esc_html__('Grazie per la prenotazione','wceventsfp').'</h2><ul>'.$items_html.'</ul><p>'.$ics_note.'</p>',
+                'sender' => ['email'=>$from_email, 'name'=>$from_name],
+            ];
+        }
+        $this->brevo_request('https://api.brevo.com/v3/smtp/email', 'POST', $payload, $api_key);
     }
-    private function brevo_request($url,$method='POST',$body=[]) {
+
+    private function brevo_request($url,$method='POST',$body=[],$api_key=null) {
+        $key = $api_key ?: (defined('WCEFP_BREVO_API_KEY') ? WCEFP_BREVO_API_KEY : '');
+        if (!$key) return false;
         $args = [
-            'headers'=>['accept'=>'application/json','api-key'=>WCEFP_BREVO_API_KEY,'content-type'=>'application/json'],
-            'method'=>$method,'body'=>!empty($body)?wp_json_encode($body):null,'timeout'=>15,
+            'headers'=>['accept'=>'application/json','api-key'=>$key,'content-type'=>'application/json'],
+            'method'=>$method,'body'=>!empty($body)?wp_json_encode($body):null,'timeout'=>20,
         ];
         $res = wp_remote_request($url,$args);
         if (is_wp_error($res)) error_log('WCEFP Brevo error: '.$res->get_error_message());
         return $res;
+    }
+
+    /* ---------- Disattiva email Woo (se solo eventi) ---------- */
+    public function maybe_disable_wc_mail($enabled, $order) {
+        $flag = get_option('wcefp_disable_wc_emails_for_events', '0') === '1';
+        if (!$flag || !$order instanceof WC_Order) return $enabled;
+
+        $only_events = true;
+        foreach ($order->get_items() as $item) {
+            $p = $item->get_product(); if(!$p) continue;
+            if (!in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) { $only_events = false; break; }
+        }
+        return $only_events ? false : $enabled;
     }
 
     /* ---------- Admin ---------- */
@@ -377,22 +443,48 @@ class WCEFP_Plugin {
         add_menu_page(__('Eventi & Degustazioni','wceventsfp'), __('Eventi & Degustazioni','wceventsfp'), $cap,'wcefp',[$this,'render_kpi_page'],'dashicons-calendar-alt',56);
         add_submenu_page('wcefp', __('Analisi KPI','wceventsfp'), __('Analisi KPI','wceventsfp'), $cap,'wcefp',[$this,'render_kpi_page']);
         add_submenu_page('wcefp', __('Calendario & Lista','wceventsfp'), __('Calendario & Lista','wceventsfp'), $cap,'wcefp-calendar',[$this,'render_calendar_page']);
+        add_submenu_page('wcefp', __('Esporta','wceventsfp'), __('Esporta','wceventsfp'), $cap,'wcefp-export',[$this,'render_export_page']);
         add_submenu_page('wcefp', __('Impostazioni','wceventsfp'), __('Impostazioni','wceventsfp'), $cap,'wcefp-settings',[$this,'render_settings_page']);
     }
+
     public function enqueue_admin($hook) {
         if (strpos($hook,'wcefp') === false) return;
         wp_enqueue_style('wcefp-admin', WCEFP_PLUGIN_URL.'assets/css/admin.css', [], WCEFP_VERSION);
 
-        // FullCalendar (CDN)
-        wp_enqueue_style('fullcalendar', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css', [], '6.1.15');
-        wp_enqueue_script('fullcalendar', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js', [], '6.1.15', true);
+        // FullCalendar (solo nella pagina calendario)
+        if (strpos($hook,'wcefp_page_wcefp-calendar') !== false) {
+            wp_enqueue_style('fullcalendar', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css', [], '6.1.15');
+            wp_enqueue_script('fullcalendar', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js', [], '6.1.15', true);
+        }
 
         wp_enqueue_script('wcefp-admin', WCEFP_PLUGIN_URL.'assets/js/admin.js', ['jquery','fullcalendar'], WCEFP_VERSION, true);
         wp_localize_script('wcefp-admin','WCEFPAdmin',[
             'ajaxUrl'=> admin_url('admin-ajax.php'),
             'nonce'  => wp_create_nonce('wcefp_admin'),
+            'products' => $this->get_events_products_for_filter(),
         ]);
     }
+
+    private function get_events_products_for_filter(){
+        $args = [
+            'post_type' => 'product',
+            'posts_per_page' => 200,
+            'post_status' => 'publish',
+            'tax_query' => [[
+                'taxonomy' => 'product_type',
+                'field'    => 'slug',
+                'terms'    => ['wcefp_event','wcefp_experience'],
+                'operator' => 'IN',
+            ]],
+            'orderby' => 'title',
+            'order'   => 'ASC',
+        ];
+        $q = new WP_Query($args);
+        $out = [];
+        foreach ($q->posts as $p) $out[] = ['id'=>$p->ID,'title'=>$p->post_title];
+        return $out;
+    }
+
     public function render_kpi_page() {
         if (!current_user_can('manage_woocommerce')) return;
         $kpi = $this->get_kpi_demo(); ?>
@@ -409,24 +501,52 @@ class WCEFP_Plugin {
     private function get_kpi_demo() {
         return ['orders_30'=>18,'revenue_30'=>2150.50,'fill_rate'=>63,'top_product'=>'Degustazione Classica'];
     }
+
     public function render_calendar_page() {
         if (!current_user_can('manage_woocommerce')) return; ?>
         <div class="wrap">
             <h1><?php _e('Calendario & Lista Prenotazioni','wceventsfp'); ?></h1>
             <div class="wcefp-toolbar">
+                <label><?php _e('Filtra prodotto','wceventsfp'); ?>:</label>
+                <select id="wcefp-filter-product">
+                    <option value="0"><?php _e('Tutti','wceventsfp'); ?></option>
+                </select>
                 <button class="button button-primary" id="wcefp-switch-calendar"><?php _e('Calendario','wceventsfp'); ?></button>
                 <button class="button" id="wcefp-switch-list"><?php _e('Lista','wceventsfp'); ?></button>
             </div>
             <div id="wcefp-view" style="min-height:650px;"></div>
         </div><?php
     }
+
+    public function render_export_page() {
+        if (!current_user_can('manage_woocommerce')) return; ?>
+        <div class="wrap">
+            <h1><?php _e('Esporta CSV','wceventsfp'); ?></h1>
+            <p><?php _e('Scarica i dati per analisi o backup.','wceventsfp'); ?></p>
+            <p>
+                <a class="button button-primary" href="<?php echo esc_url( wp_nonce_url( admin_url('admin-post.php?action=wcefp_export_occurrences'), 'wcefp_export') ); ?>"><?php _e('Occorrenze','wceventsfp'); ?></a>
+                <a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url('admin-post.php?action=wcefp_export_bookings'), 'wcefp_export') ); ?>"><?php _e('Prenotazioni','wceventsfp'); ?></a>
+            </p>
+        </div><?php
+    }
+
     public function render_settings_page() {
         if (!current_user_can('manage_woocommerce')) return;
         if (isset($_POST['wcefp_save']) && check_admin_referer('wcefp_settings')) {
             update_option('wcefp_default_capacity', intval($_POST['wcefp_default_capacity'] ?? 0));
+            update_option('wcefp_disable_wc_emails_for_events', isset($_POST['wcefp_disable_wc_emails_for_events']) ? '1' : '0');
+            update_option('wcefp_brevo_api_key', sanitize_text_field($_POST['wcefp_brevo_api_key'] ?? ''));
+            update_option('wcefp_brevo_template_id', intval($_POST['wcefp_brevo_template_id'] ?? 0));
+            update_option('wcefp_brevo_from_email', sanitize_email($_POST['wcefp_brevo_from_email'] ?? ''));
+            update_option('wcefp_brevo_from_name', sanitize_text_field($_POST['wcefp_brevo_from_name'] ?? ''));
             echo '<div class="updated"><p>Salvato.</p></div>';
         }
-        $cap = get_option('wcefp_default_capacity', 0); ?>
+        $cap = get_option('wcefp_default_capacity', 0);
+        $dis = get_option('wcefp_disable_wc_emails_for_events','0')==='1';
+        $api = get_option('wcefp_brevo_api_key','');
+        $tpl = intval(get_option('wcefp_brevo_template_id', 0));
+        $from_email = get_option('wcefp_brevo_from_email','');
+        $from_name  = get_option('wcefp_brevo_from_name',''); ?>
         <div class="wrap">
             <h1><?php _e('Impostazioni','wceventsfp'); ?></h1>
             <form method="post"><?php wp_nonce_field('wcefp_settings'); ?>
@@ -434,6 +554,27 @@ class WCEFP_Plugin {
                     <tr>
                         <th><label for="wcefp_default_capacity"><?php _e('Capienza default per slot','wceventsfp'); ?></label></th>
                         <td><input type="number" name="wcefp_default_capacity" id="wcefp_default_capacity" value="<?php echo esc_attr($cap); ?>" min="0" /></td>
+                    </tr>
+                    <tr>
+                        <th><?php _e('Email WooCommerce','wceventsfp'); ?></th>
+                        <td><label><input type="checkbox" name="wcefp_disable_wc_emails_for_events" <?php checked($dis,true); ?> /> <?php _e('Disattiva email Woo per ordini SOLO-evento/esperienza','wceventsfp'); ?></label></td>
+                    </tr>
+                    <tr><th colspan="2"><h3><?php _e('Brevo (API v3)','wceventsfp'); ?></h3></th></tr>
+                    <tr>
+                        <th><label for="wcefp_brevo_api_key"><?php _e('API Key','wceventsfp'); ?></label></th>
+                        <td><input type="text" name="wcefp_brevo_api_key" id="wcefp_brevo_api_key" value="<?php echo esc_attr($api); ?>" style="width:420px" /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="wcefp_brevo_template_id"><?php _e('Template ID (opzionale)','wceventsfp'); ?></label></th>
+                        <td><input type="number" name="wcefp_brevo_template_id" id="wcefp_brevo_template_id" value="<?php echo esc_attr($tpl); ?>" /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="wcefp_brevo_from_email"><?php _e('Mittente email','wceventsfp'); ?></label></th>
+                        <td><input type="email" name="wcefp_brevo_from_email" id="wcefp_brevo_from_email" value="<?php echo esc_attr($from_email); ?>" /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="wcefp_brevo_from_name"><?php _e('Mittente nome','wceventsfp'); ?></label></th>
+                        <td><input type="text" name="wcefp_brevo_from_name" id="wcefp_brevo_from_name" value="<?php echo esc_attr($from_name); ?>" /></td>
                     </tr>
                 </table>
                 <p><button class="button button-primary" type="submit" name="wcefp_save" value="1"><?php _e('Salva','wceventsfp'); ?></button></p>
@@ -444,7 +585,7 @@ class WCEFP_Plugin {
     /* ---------- AJAX admin ---------- */
     public function ajax_get_bookings() {
         check_ajax_referer('wcefp_admin','nonce');
-        $orders = wc_get_orders(['limit'=>50,'type'=>'shop_order','status'=>['wc-processing','wc-completed'],'date_created'=>'>='. (new DateTime('-60 days'))->format('Y-m-d')]);
+        $orders = wc_get_orders(['limit'=>200,'type'=>'shop_order','status'=>['wc-processing','wc-completed','wc-on-hold'],'date_created'=>'>='. (new DateTime('-120 days'))->format('Y-m-d')]);
         $rows = [];
         foreach ($orders as $order) {
             foreach ($order->get_items() as $it) {
@@ -452,6 +593,7 @@ class WCEFP_Plugin {
                 if (!in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) continue;
                 $rows[] = [
                     'order'   => $order->get_order_number(),
+                    'status'  => wc_get_order_status_name( $order->get_status() ),
                     'date'    => $order->get_date_created() ? $order->get_date_created()->date('Y-m-d H:i') : '',
                     'product' => $p->get_name(),
                     'qty'     => (int)$it->get_quantity(),
@@ -467,7 +609,20 @@ class WCEFP_Plugin {
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
         $from = isset($_POST['from']) ? sanitize_text_field($_POST['from']) : (new DateTime('-7 days'))->format('Y-m-d');
         $to   = isset($_POST['to'])   ? sanitize_text_field($_POST['to'])   : (new DateTime('+60 days'))->format('Y-m-d');
-        $evts = $wpdb->get_results($wpdb->prepare("SELECT id,product_id,start_datetime,end_datetime,capacity,booked,status FROM $tbl WHERE start_datetime BETWEEN %s AND %s ORDER BY start_datetime ASC", "$from 00:00:00", "$to 23:59:59"), ARRAY_A);
+        $pid  = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+
+        if ($pid) {
+            $evts = $wpdb->get_results($wpdb->prepare(
+                "SELECT id,product_id,start_datetime,end_datetime,capacity,booked,status FROM $tbl WHERE product_id=%d AND start_datetime BETWEEN %s AND %s ORDER BY start_datetime ASC",
+                $pid, "$from 00:00:00", "$to 23:59:59"
+            ), ARRAY_A);
+        } else {
+            $evts = $wpdb->get_results($wpdb->prepare(
+                "SELECT id,product_id,start_datetime,end_datetime,capacity,booked,status FROM $tbl WHERE start_datetime BETWEEN %s AND %s ORDER BY start_datetime ASC",
+                "$from 00:00:00", "$to 23:59:59"
+            ), ARRAY_A);
+        }
+
         $events = [];
         foreach ($evts as $e) {
             $events[] = [
@@ -504,6 +659,57 @@ class WCEFP_Plugin {
         $res = $wpdb->update($tbl, $data, ['id'=>$occ], $fmt, ['%d']);
         if ($res === false) wp_send_json_error(['msg'=>'Errore aggiornamento']);
         wp_send_json_success(['ok'=>true]);
+    }
+
+    /* ---------- Export CSV ---------- */
+    public function export_occurrences_csv() {
+        if (!current_user_can('manage_woocommerce') || !wp_verify_nonce($_GET['_wpnonce'] ?? '', 'wcefp_export')) wp_die('Not allowed');
+        global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
+        $rows = $wpdb->get_results("SELECT * FROM $tbl ORDER BY start_datetime DESC", ARRAY_A);
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=wcefp_occurrences.csv');
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['id','product_id','product_name','start','end','capacity','booked','available','status']);
+        foreach ($rows as $r) {
+            $avail = max(0, intval($r['capacity']) - intval($r['booked']));
+            fputcsv($out, [
+                $r['id'], $r['product_id'], get_the_title((int)$r['product_id']),
+                $r['start_datetime'], $r['end_datetime'], $r['capacity'], $r['booked'], $avail, $r['status']
+            ]);
+        }
+        fclose($out); exit;
+    }
+
+    public function export_bookings_csv() {
+        if (!current_user_can('manage_woocommerce') || !wp_verify_nonce($_GET['_wpnonce'] ?? '', 'wcefp_export')) wp_die('Not allowed');
+        $orders = wc_get_orders(['limit'=>-1,'type'=>'shop_order','status'=>array_keys(wc_get_order_statuses()),'date_created'=>'>='. (new DateTime('-365 days'))->format('Y-m-d')]);
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=wcefp_bookings.csv');
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['order_number','status','date','customer','email','product','occurrence_id','adults','children','extras','line_total']);
+        foreach ($orders as $order) {
+            foreach ($order->get_items() as $it) {
+                $p = $it->get_product(); if(!$p) continue;
+                if (!in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) continue;
+                $extras = $it->get_meta('Extra');
+                fputcsv($out, [
+                    $order->get_order_number(),
+                    wc_get_order_status_name( $order->get_status() ),
+                    $order->get_date_created() ? $order->get_date_created()->date('Y-m-d H:i') : '',
+                    trim($order->get_billing_first_name().' '.$order->get_billing_last_name()),
+                    $order->get_billing_email(),
+                    $p->get_name(),
+                    $it->get_meta('Occorrenza'),
+                    intval($it->get_meta('Adulti')),
+                    intval($it->get_meta('Bambini')),
+                    is_string($extras) ? $extras : '',
+                    number_format($order->get_item_total($it, false), 2, '.', ''),
+                ]);
+            }
+        }
+        fclose($out); exit;
     }
 
     /* ---------- Allocazione / Rilascio posti ---------- */
