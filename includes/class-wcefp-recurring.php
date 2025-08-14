@@ -15,8 +15,8 @@ class WCEFP_Recurring {
         $slots    = trim((string) get_post_meta($pid, '_wcefp_time_slots', true));
         $capacity = intval(get_post_meta($pid, '_wcefp_capacity_per_slot', true));
         if (!$capacity) $capacity = intval(get_option('wcefp_default_capacity', 0));
-        $duration = max(0, intval(get_post_meta($pid, '_wcefp_duration_minutes', true))); // minuti
-        if ($duration <= 0) $duration = 120; // default 2h
+        $duration = max(0, intval(get_post_meta($pid, '_wcefp_duration_minutes', true)));
+        if ($duration <= 0) $duration = 120;
 
         $slot_list = array_filter(array_map('trim', explode(',', $slots)));
 
@@ -42,11 +42,10 @@ class WCEFP_Recurring {
                     $start = (clone $cur)->setTime($h,$m,0);
                     $end   = (clone $start)->modify('+'.$duration_min.' minutes');
 
-                    // dedup per product_id + start
                     $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM $tbl WHERE product_id=%d AND start_datetime=%s LIMIT 1", $product_id, $start->format('Y-m-d H:i:s')));
                     if ($exists) continue;
 
-                    $ins = $wpdb->insert($tbl, [
+                    $wpdb->insert($tbl, [
                         'product_id'     => $product_id,
                         'start_datetime' => $start->format('Y-m-d H:i:s'),
                         'end_datetime'   => $end->format('Y-m-d H:i:s'),
@@ -55,7 +54,7 @@ class WCEFP_Recurring {
                         'status'         => 'active',
                         'meta'           => null,
                     ], ['%d','%s','%s','%d','%d','%s','%s']);
-                    if ($ins) $created++;
+                    if ($wpdb->insert_id) $created++;
                 }
             }
             $cur->modify('+1 day');
