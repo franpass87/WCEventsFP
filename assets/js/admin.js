@@ -1,6 +1,14 @@
 (function($){
   $(function(){
 
+    // Popola filtro prodotti (calendario)
+    const $filter = $('#wcefp-filter-product');
+    if (window.WCEFPAdmin && Array.isArray(WCEFPAdmin.products)) {
+      WCEFPAdmin.products.forEach(p=>{
+        $filter.append(`<option value="${p.id}">${p.title}</option>`);
+      });
+    }
+
     // GENERA OCCORRENZE nel tab prodotto
     $('#wcefp-generate').on('click', function(){
       const pid = $(this).data('product');
@@ -18,14 +26,15 @@
 
     // PAGINA CALENDARIO/LISTA
     const $view = $('#wcefp-view');
-    $('#wcefp-switch-calendar').on('click', function(){
+    function loadCalendar(){
       $view.empty();
       const cal = $('<div id="wcefp-calendar"></div>').appendTo($view);
       const now = new Date();
       const from = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString().slice(0,10);
       const to   = new Date(now.getFullYear(), now.getMonth()+2, 0).toISOString().slice(0,10);
+      const product_id = $('#wcefp-filter-product').val() || 0;
 
-      $.post(WCEFPAdmin.ajaxUrl, {action:'wcefp_get_calendar', nonce: WCEFPAdmin.nonce, from, to}, function(r){
+      $.post(WCEFPAdmin.ajaxUrl, {action:'wcefp_get_calendar', nonce: WCEFPAdmin.nonce, from, to, product_id}, function(r){
         const events = (r && r.success) ? r.data.events : [];
         const calendar = new FullCalendar.Calendar(cal[0], {
           initialView: 'dayGridMonth',
@@ -39,7 +48,7 @@
             const currentStatus = ep.status || 'active';
 
             const newCapStr = prompt('Nuova capienza per questo slot:', currentCap);
-            if (newCapStr === null) return; // cancel
+            if (newCapStr === null) return;
             const newCap = parseInt(newCapStr, 10);
             if (Number.isNaN(newCap) || newCap < 0) { alert('Valore non valido'); return; }
 
@@ -49,7 +58,7 @@
             $.post(WCEFPAdmin.ajaxUrl, {action:'wcefp_update_occurrence', nonce: WCEFPAdmin.nonce, occ: occ, capacity: newCap, status: nextStatus}, function(res){
               if(res && res.success){
                 alert('Aggiornato.');
-                $('#wcefp-switch-calendar').trigger('click'); // reload
+                loadCalendar();
               } else {
                 alert('Errore aggiornamento.');
               }
@@ -58,7 +67,11 @@
         });
         calendar.render();
       });
-    }).trigger('click');
+    }
+
+    $('#wcefp-switch-calendar').on('click', loadCalendar);
+    $filter.on('change', loadCalendar);
+    $('#wcefp-switch-calendar').trigger('click');
 
     $('#wcefp-switch-list').on('click', function(){
       $view.html('<p>Carico lista…</p>');
@@ -66,9 +79,9 @@
         if(r.success){
           const rows = r.data.rows || [];
           if(!rows.length){ $view.html('<p>Nessuna prenotazione.</p>'); return; }
-          let html = '<table class="widefat striped"><thead><tr><th>Ordine</th><th>Data</th><th>Prodotto</th><th>Q.tà</th><th>Totale</th></tr></thead><tbody>';
+          let html = '<table class="widefat striped"><thead><tr><th>Ordine</th><th>Status</th><th>Data</th><th>Prodotto</th><th>Q.tà</th><th>Totale</th></tr></thead><tbody>';
           rows.forEach(x=>{
-            html += `<tr><td>${x.order}</td><td>${x.date}</td><td>${x.product}</td><td>${x.qty}</td><td>€ ${Number(x.total).toFixed(2)}</td></tr>`;
+            html += `<tr><td>${x.order}</td><td>${x.status}</td><td>${x.date}</td><td>${x.product}</td><td>${x.qty}</td><td>€ ${Number(x.total).toFixed(2)}</td></tr>`;
           });
           html += '</tbody></table>';
           $view.html(html);
