@@ -85,14 +85,14 @@ class WCEFP_Frontend {
         $excludes = wp_kses_post(get_post_meta($pid, '_wcefp_excludes', true));
         $cxl      = wp_kses_post(get_post_meta($pid, '_wcefp_cancellation', true));
 
-        // Next upcoming occurrence
+        // Next upcoming occurrence con posti disponibili
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
         $now = current_time('mysql');
-        $next = $wpdb->get_row($wpdb->prepare("SELECT start_datetime,end_datetime FROM $tbl WHERE product_id=%d AND status='active' AND start_datetime >= %s ORDER BY start_datetime ASC LIMIT 1", $pid, $now));
+        $next = $wpdb->get_row($wpdb->prepare("SELECT start_datetime,end_datetime FROM $tbl WHERE product_id=%d AND status='active' AND (capacity - booked) > 0 AND start_datetime >= %s ORDER BY start_datetime ASC LIMIT 1", $pid, $now));
         $next_start = $next ? $next->start_datetime : '';
         $next_end   = $next ? $next->end_datetime   : '';
 
-        // JSON-LD semplice (Event) se esiste occorrenza futura
+        // JSON-LD Event
         if ($next_start) {
             $price_adult = floatval(get_post_meta($pid, '_wcefp_price_adult', true));
             $currency = get_woocommerce_currency();
@@ -119,7 +119,12 @@ class WCEFP_Frontend {
             echo '<script type="application/ld+json">'.wp_json_encode($json).'</script>';
         }
 
-        // Box info
+        // Prossime 5 date disponibili
+        $next_rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, start_datetime, capacity, booked FROM $tbl WHERE product_id=%d AND status='active' AND (capacity - booked) > 0 AND start_datetime >= %s ORDER BY start_datetime ASC LIMIT 5",
+            $pid, $now
+        ), ARRAY_A);
+
         echo '<div class="wcefp-details">';
         echo '<h3>'.esc_html__('Dettagli esperienza','wceventsfp').'</h3>';
         echo '<ul class="wcefp-details-list">';
@@ -128,6 +133,15 @@ class WCEFP_Frontend {
         if ($meeting)   echo '<li><strong>'.esc_html__('Meeting point','wceventsfp').':</strong> '.esc_html($meeting).'</li>';
         if ($next_start) echo '<li><strong>'.esc_html__('Prossima data','wceventsfp').':</strong> '.esc_html(date_i18n('d/m/Y H:i', strtotime($next_start))).'</li>';
         echo '</ul>';
+
+        if (!empty($next_rows)) {
+            echo '<h4>'.esc_html__('Prossime disponibilità','wceventsfp').'</h4><ul>';
+            foreach ($next_rows as $r) {
+                $avail = max(0, intval($r['capacity']) - intval($r['booked']));
+                echo '<li>'.esc_html(date_i18n('d/m/Y H:i', strtotime($r['start_datetime']))).' — '.sprintf(_n('%d posto', '%d posti', $avail, 'wceventsfp'), $avail).'</li>';
+            }
+            echo '</ul>';
+        }
 
         if ($includes) {
             echo '<h4>'.esc_html__('Cosa è incluso','wceventsfp').'</h4>';
@@ -154,19 +168,22 @@ class WCEFP_Frontend {
         if (!$pid || !$date) wp_send_json_success(['slots'=>[]]);
 
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT id,start_datetime,capacity,booked,status FROM $tbl WHERE product_id=%d AND status='active' AND DATE(start_datetime)=%s ORDER BY start_datetime ASC",
+            "SELECT id,start_datetime,capacity,booked,status FROM $tbl WHERE product_id=%d AND DATE(start_datetime)=%s ORDER BY start_datetime ASC",
             $pid, $date
         ), ARRAY_A);
 
         $slots = [];
         foreach ($rows as $r) {
             $time = (new DateTime($r['start_datetime']))->format('H:i');
+            $avail = max(0, (int)$r['capacity'] - (int)$r['booked']);
             $slots[] = [
                 'id' => (int)$r['id'],
                 'time' => $time,
                 'capacity' => (int)$r['capacity'],
                 'booked' => (int)$r['booked'],
-                'available' => max(0, (int)$r['capacity'] - (int)$r['booked']),
+                'available' => $avail,
+                'status' => $r['status'],
+                'soldout' => ($r['status']!=='active' || $avail<=0)
             ];
         }
         wp_send_json_success(['slots'=>$slots]);
@@ -260,7 +277,5 @@ class WCEFP_Frontend {
             $names = array_map(function($e){ return $e['name'] ?? ''; }, $values['_wcefp_extras']);
             $item->add_meta_data('Extra', implode(', ', array_filter($names)), true);
         }
-
-        // booked aggiornato solo a cambio stato ordine (anti-overbooking)
     }
 }
