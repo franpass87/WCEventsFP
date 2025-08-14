@@ -15,16 +15,16 @@ class WCEFP_Recurring {
         $slots    = trim((string) get_post_meta($pid, '_wcefp_time_slots', true));
         $capacity = intval(get_post_meta($pid, '_wcefp_capacity_per_slot', true));
         if (!$capacity) $capacity = intval(get_option('wcefp_default_capacity', 0));
+        $duration = max(0, intval(get_post_meta($pid, '_wcefp_duration_minutes', true))); // minuti
+        if ($duration <= 0) $duration = 120; // default 2h
+
         $slot_list = array_filter(array_map('trim', explode(',', $slots)));
 
-        $count = self::generate($pid, $from, $to, $weekdays, $slot_list, $capacity);
+        $count = self::generate($pid, $from, $to, $weekdays, $slot_list, $capacity, $duration);
         wp_send_json_success(['created'=>$count]);
     }
 
-    /**
-     * Genera righe in tabella wcefp_occurrences (dedup su product_id+start_datetime)
-     */
-    public static function generate($product_id, $from, $to, array $weekdays, array $slot_list, $capacity) {
+    public static function generate($product_id, $from, $to, array $weekdays, array $slot_list, $capacity, $duration_min) {
         if (empty($weekdays) || empty($slot_list)) return 0;
         $fromDt = new DateTime($from.' 00:00:00');
         $toDt   = new DateTime($to.' 23:59:59');
@@ -40,7 +40,7 @@ class WCEFP_Recurring {
                     if (!preg_match('/^\d{2}:\d{2}$/', $hhmm)) continue;
                     [$h,$m] = array_map('intval', explode(':',$hhmm));
                     $start = (clone $cur)->setTime($h,$m,0);
-                    $end   = (clone $start)->modify('+2 hours'); // durata standard 2h (estendibile)
+                    $end   = (clone $start)->modify('+'.$duration_min.' minutes');
 
                     // dedup
                     $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM $tbl WHERE product_id=%d AND start_datetime=%s LIMIT 1", $product_id, $start->format('Y-m-d H:i:s')));
