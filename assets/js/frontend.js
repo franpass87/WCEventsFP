@@ -38,14 +38,15 @@
         $.post(WCEFPData.ajaxUrl, {action:'wcefp_public_occurrences', nonce: WCEFPData.nonce, product_id: pid, date: d}, function(r){
           if(r && r.success){
             (r.data.slots || []).forEach(s=>{
-              const disabled = s.available<=0 ? 'disabled' : '';
-              $slot.append(`<option value="${s.id}" ${disabled}>${s.time} (${s.available} posti)</option>`);
+              const disabled = s.soldout ? 'disabled' : '';
+              const label = s.soldout ? `${s.time} (sold‑out)` : `${s.time} (${s.available} posti)`;
+              $slot.append(`<option value="${s.id}" ${disabled}>${label}</option>`);
             });
           }
         });
       }
 
-      $date.on('change', function(){ loadSlots(); });
+      $date.on('change', loadSlots);
       $ad.on('input', updateTotal);
       $ch.on('input', updateTotal);
       $w.on('change', '.wcefp-extra', updateTotal);
