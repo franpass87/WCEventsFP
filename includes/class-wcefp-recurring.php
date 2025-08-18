@@ -11,6 +11,10 @@ class WCEFP_Recurring {
         $to   = sanitize_text_field($_POST['to'] ?? '');
         if (!$pid || !$from || !$to) wp_send_json_error(['msg'=>'Parametri mancanti']);
 
+        $fromDt = DateTime::createFromFormat('Y-m-d', $from);
+        $toDt   = DateTime::createFromFormat('Y-m-d', $to);
+        if (!$fromDt || !$toDt) wp_send_json_error(['msg'=>'Formato data non valido']);
+
         $weekdays = (array) get_post_meta($pid, '_wcefp_weekdays', true);
         $slots    = trim((string) get_post_meta($pid, '_wcefp_time_slots', true));
         $capacity = intval(get_post_meta($pid, '_wcefp_capacity_per_slot', true));
@@ -26,8 +30,13 @@ class WCEFP_Recurring {
 
     public static function generate($product_id, $from, $to, array $weekdays, array $slot_list, $capacity, $duration_min) {
         if (empty($weekdays) || empty($slot_list)) return 0;
-        $fromDt = new DateTime($from.' 00:00:00');
-        $toDt   = new DateTime($to.' 23:59:59');
+
+        $fromDt = DateTime::createFromFormat('Y-m-d', $from);
+        $toDt   = DateTime::createFromFormat('Y-m-d', $to);
+        if (!$fromDt || !$toDt) return 0;
+
+        $fromDt->setTime(0,0,0);
+        $toDt->setTime(23,59,59);
         $cur = clone $fromDt;
 
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';

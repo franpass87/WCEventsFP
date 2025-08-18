@@ -228,7 +228,10 @@ class WCEFP_Frontend {
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
         $pid  = intval($_POST['product_id'] ?? 0);
         $date = sanitize_text_field($_POST['date'] ?? '');
-        if (!$pid || !$date) wp_send_json_success(['slots'=>[]]);
+        if (!$pid || !$date) wp_send_json_error(['msg'=>'Parametri mancanti']);
+
+        $dateDt = DateTime::createFromFormat('Y-m-d', $date);
+        if (!$dateDt) wp_send_json_error(['msg'=>'Formato data non valido']);
 
         // Blocca se giorno chiuso (globale o specifico)
         if (class_exists('WCEFP_Closures') && WCEFP_Closures::is_date_closed($pid, $date)) {
