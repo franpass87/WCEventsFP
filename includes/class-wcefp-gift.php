@@ -161,7 +161,29 @@ class WCEFP_Gift {
             'method'=>'POST','body'=>wp_json_encode($payload),'timeout'=>20,
         ];
         $res = wp_remote_request('https://api.brevo.com/v3/smtp/email', $args);
-        if (is_wp_error($res)) error_log('WCEFP Gift Brevo error: '.$res->get_error_message());
+        if (is_wp_error($res)) {
+            error_log('WCEFP Gift Brevo error: '.$res->get_error_message());
+            return;
+        }
+
+        $code = wp_remote_retrieve_response_code($res);
+        if ($code < 200 || $code >= 300) {
+            $body    = wp_remote_retrieve_body($res);
+            $message = '';
+            if ($body) {
+                $data = json_decode($body, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    if (isset($data['message'])) {
+                        $message = $data['message'];
+                    } else {
+                        $message = wp_json_encode($data);
+                    }
+                } else {
+                    $message = $body;
+                }
+            }
+            error_log(sprintf('WCEFP Gift Brevo HTTP %d: %s', $code, $message));
+        }
     }
 
     /* ---------------- Voucher view (pubblico) ---------------- */
