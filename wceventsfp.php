@@ -1107,4 +1107,3 @@ function wcefp_save_days_metabox($post_id){
     }
 }
 add_action('save_post_product', 'wcefp_save_days_metabox');
-
