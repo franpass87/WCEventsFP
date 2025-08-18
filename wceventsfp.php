@@ -514,6 +514,8 @@ class WCEFP_Plugin {
             'nonce'   => wp_create_nonce('wcefp_public'),
             'ga4_enabled' => (get_option('wcefp_ga4_enable', '1') === '1'),
             'meta_pixel_id' => sanitize_text_field(get_option('wcefp_meta_pixel_id','')),
+            'locale' => str_replace('_', '-', get_locale()),
+            'currency' => get_woocommerce_currency(),
         ]);
 
         wp_enqueue_style('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
