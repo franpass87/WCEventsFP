@@ -507,8 +507,8 @@ class WCEFP_Plugin {
 
     /* ---------- Frontend & GA4 ---------- */
     public function enqueue_frontend() {
-        wp_enqueue_style('wcefp-frontend', WCEFP_PLUGIN_URL.'assets/css/frontend.css', [], WCEFP_VERSION);
-        wp_enqueue_script('wcefp-frontend', WCEFP_PLUGIN_URL.'assets/js/frontend.js', ['jquery'], WCEFP_VERSION, true);
+        wp_register_style('wcefp-frontend', WCEFP_PLUGIN_URL.'assets/css/frontend.css', [], WCEFP_VERSION);
+        wp_register_script('wcefp-frontend', WCEFP_PLUGIN_URL.'assets/js/frontend.js', ['jquery'], WCEFP_VERSION, true);
         wp_localize_script('wcefp-frontend', 'WCEFPData', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('wcefp_public'),
@@ -518,8 +518,16 @@ class WCEFP_Plugin {
             'currency' => get_woocommerce_currency(),
         ]);
 
-        wp_enqueue_style('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
-        wp_enqueue_script('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', [], '1.9.4', true);
+        $leaflet_css_url = apply_filters('wcefp_leaflet_url', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', 'css');
+        $leaflet_js_url  = apply_filters('wcefp_leaflet_url', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', 'js');
+
+        wp_register_style('leaflet', $leaflet_css_url, [], '1.9.4');
+        wp_register_script('leaflet', $leaflet_js_url, [], '1.9.4', true);
+
+        wp_enqueue_style('wcefp-frontend');
+        wp_enqueue_script('wcefp-frontend');
+        wp_enqueue_style('leaflet');
+        wp_enqueue_script('leaflet');
     }
 
     /* Iniezione GA4/GTM (se impostati) */
