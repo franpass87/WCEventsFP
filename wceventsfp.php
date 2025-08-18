@@ -498,6 +498,16 @@ class WCEFP_Plugin {
             'ga4_enabled' => (get_option('wcefp_ga4_enable', '1') === '1'),
             'meta_pixel_id' => sanitize_text_field(get_option('wcefp_meta_pixel_id','')),
         ]);
+
+        if (is_singular('product')) {
+            $pid = get_the_ID();
+            $meeting = $pid ? sanitize_text_field(get_post_meta($pid, '_wcefp_meeting_point', true)) : '';
+            if ($meeting) {
+                wp_enqueue_style('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
+                wp_enqueue_script('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', [], '1.9.4', true);
+                wp_enqueue_script('wcefp-map', WCEFP_PLUGIN_URL.'assets/js/map.js', ['jquery','leaflet'], WCEFP_VERSION, true);
+            }
+        }
     }
 
     /* Iniezione GA4/GTM (se impostati) */

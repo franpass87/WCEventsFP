@@ -11,6 +11,7 @@ class WCEFP_Frontend {
 
         $price_adult = floatval(get_post_meta($pid, '_wcefp_price_adult', true));
         $price_child = floatval(get_post_meta($pid, '_wcefp_price_child', true));
+        $languages   = sanitize_text_field(get_post_meta($pid, '_wcefp_languages', true));
 
         global $wpdb;
         $tbl = $wpdb->prefix.'wcefp_product_extras';
@@ -41,6 +42,13 @@ class WCEFP_Frontend {
         <div class="wcefp-widget" data-product="<?php echo esc_attr($pid); ?>" data-price-adult="<?php echo esc_attr($price_adult); ?>" data-price-child="<?php echo esc_attr($price_child); ?>" data-voucher="<?php echo $voucherActive?'1':'0'; ?>">
             <?php if ($voucherActive): ?>
                 <div class="wcefp-voucher-banner"><?php _e('Voucher attivo: questa prenotazione sarà a costo 0€','wceventsfp'); ?></div>
+            <?php endif; ?>
+            <?php if ($languages): ?>
+            <div class="wcefp-languages">
+                <?php foreach (array_filter(array_map('trim', explode(',', strtoupper($languages)))) as $lang): ?>
+                    <span class="wcefp-lang-badge"><?php echo esc_html($lang); ?></span>
+                <?php endforeach; ?>
+            </div>
             <?php endif; ?>
             <div class="wcefp-row">
                 <label><?php _e('Data','wceventsfp'); ?></label>
@@ -156,8 +164,19 @@ class WCEFP_Frontend {
         echo '<h3>'.esc_html__('Dettagli esperienza','wceventsfp').'</h3>';
         echo '<ul class="wcefp-details-list">';
         if ($duration)  echo '<li><strong>'.esc_html__('Durata','wceventsfp').':</strong> '.intval($duration).' '.esc_html__('minuti','wceventsfp').'</li>';
-        if ($languages) echo '<li><strong>'.esc_html__('Lingue','wceventsfp').':</strong> '.esc_html($languages).'</li>';
-        if ($meeting)   echo '<li><strong>'.esc_html__('Meeting point','wceventsfp').':</strong> '.esc_html($meeting).'</li>';
+        if ($languages) {
+            $lang_html = '';
+            foreach (array_filter(array_map('trim', explode(',', strtoupper($languages)))) as $lang) {
+                $lang_html .= '<span class="wcefp-lang-badge">'.esc_html($lang).'</span> ';
+            }
+            echo '<li><strong>'.esc_html__('Lingue','wceventsfp').':</strong> '.$lang_html.'</li>';
+        }
+        if ($meeting) {
+            $map_id = 'wcefp-map-'.uniqid();
+            $link = 'https://www.google.com/maps?daddr='.urlencode($meeting);
+            echo '<li><strong>'.esc_html__('Meeting point','wceventsfp').':</strong> '.esc_html($meeting).' <a href="'.esc_url($link).'" target="_blank">'.esc_html__('Ottieni indicazioni','wceventsfp').'</a></li>';
+            echo '<div id="'.$map_id.'" class="wcefp-map" data-address="'.esc_attr($meeting).'"></div>';
+        }
         if ($next_start) echo '<li><strong>'.esc_html__('Prossima data','wceventsfp').':</strong> '.esc_html(date_i18n('d/m/Y H:i', strtotime($next_start))).'</li>';
         echo '</ul>';
 
