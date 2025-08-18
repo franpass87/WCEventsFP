@@ -412,15 +412,10 @@ class WCEFP_Plugin {
                     $days = get_post_meta($post->ID, '_wcefp_weekdays', true);
                     $days = is_array($days) ? array_map('intval', $days) : [];
 
-                    $labels = [
-                        1 => esc_html__('Lunedì', 'wceventsfp'),
-                        2 => esc_html__('Martedì', 'wceventsfp'),
-                        3 => esc_html__('Mercoledì', 'wceventsfp'),
-                        4 => esc_html__('Giovedì', 'wceventsfp'),
-                        5 => esc_html__('Venerdì', 'wceventsfp'),
-                        6 => esc_html__('Sabato', 'wceventsfp'),
-                        0 => esc_html__('Domenica', 'wceventsfp'),
-                    ];
+                    $labels = wcefp_get_weekday_labels();
+                    foreach ($labels as $k => $lbl) {
+                        $labels[$k] = esc_html($lbl);
+                    }
                     ?>
                     <div class="wcefp-weekdays-grid">
                         <?php foreach ($labels as $val => $label): ?>
@@ -1054,6 +1049,23 @@ class WCEFP_OrderExtraOps {
         }
         return $rows;
     }
+}
+
+/**
+ * Return weekday labels indexed by PHP's date('w') value.
+ *
+ * @return array<int,string>
+ */
+function wcefp_get_weekday_labels() {
+    return [
+        1 => __('Lunedì', 'wceventsfp'),
+        2 => __('Martedì', 'wceventsfp'),
+        3 => __('Mercoledì', 'wceventsfp'),
+        4 => __('Giovedì', 'wceventsfp'),
+        5 => __('Venerdì', 'wceventsfp'),
+        6 => __('Sabato', 'wceventsfp'),
+        0 => __('Domenica', 'wceventsfp'),
+    ];
 }
 
 /* ---- Meta box: Giorni disponibili ---- */
