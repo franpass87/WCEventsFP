@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WCEventsFP
  * Description: Eventi & Esperienze per WooCommerce con ricorrenze, slot, prezzi A/B, extra, KPI, Calendario (inline edit + filtro), Chiusure straordinarie, GA4/Tag Manager, Meta Pixel, Brevo (liste IT/EN), anti-overbooking, ICS, gift "Regala un'esperienza" e scheda stile GYG/Viator.
- * Version:     1.6.1
+ * Version:     1.7.1
  * Author:      Francesco Passeri
  * Text Domain: wceventsfp
  * Domain Path: /languages
@@ -10,7 +10,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('WCEFP_VERSION', '1.6.1');
+define('WCEFP_VERSION', '1.7.1');
 define('WCEFP_PLUGIN_FILE', __FILE__);
 define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -412,8 +412,11 @@ class WCEFP_Plugin {
     $days = get_post_meta($post->ID, '_wcefp_weekdays', true);
     $days = is_array($days) ? array_map('intval', $days) : [];
 
-    $labels = wcefp_get_weekday_labels();
-    array_walk($labels, static function (&$label) { $label = esc_html($label); });
+    $raw_labels = wcefp_get_weekday_labels();
+    $labels = array_combine(
+        array_keys($raw_labels),
+        array_map('esc_html', $raw_labels)
+    );
     ?>
     <span class="wrap">
         <div class="wcefp-weekdays-grid">
