@@ -396,13 +396,16 @@ class WCEFP_Plugin {
                 <h3><?php _e('Ricorrenze settimanali & Slot', 'wceventsfp'); ?></h3>
                 <p class="form-field">
                     <label><?php _e('Giorni','wceventsfp'); ?></label>
+                    <?php wp_nonce_field('wcefp_weekdays','wcefp_weekdays_nonce'); ?>
+                    <ul class="wcefp-weekdays">
                     <?php
                     $days = get_post_meta($post->ID, '_wcefp_weekdays', true); $days = is_array($days)?$days:[];
                     $lbl = [__('Dom','wceventsfp'),__('Lun','wceventsfp'),__('Mar','wceventsfp'),__('Mer','wceventsfp'),__('Gio','wceventsfp'),__('Ven','wceventsfp'),__('Sab','wceventsfp')];
                     for($i=0;$i<7;$i++):
-                        printf('<label style="margin-right:8px;"><input type="checkbox" name="_wcefp_weekdays[]" value="%d" %s /> %s</label>',
+                        printf('<li><label><input type="checkbox" name="_wcefp_weekdays[]" value="%d" %s /> %s</label></li>',
                             $i, checked(in_array($i,$days), true, false), esc_html($lbl[$i]));
                     endfor; ?>
+                    </ul>
                 </p>
                 <p class="form-field">
                     <label for="_wcefp_time_slots"><?php _e('Slot (HH:MM, separati da virgola)','wceventsfp'); ?></label>
@@ -421,6 +424,9 @@ class WCEFP_Plugin {
     }
 
     public function save_product_fields($product) {
+        if (!isset($_POST['wcefp_weekdays_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['wcefp_weekdays_nonce'])), 'wcefp_weekdays')) {
+            return;
+        }
         $pid = $product->get_id();
         $keys = [
             '_wcefp_price_adult','_wcefp_price_child','_wcefp_capacity_per_slot',
