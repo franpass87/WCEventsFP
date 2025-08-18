@@ -37,7 +37,7 @@ register_activation_hook(__FILE__, function () {
       INDEX (status)
     ) $charset;";
 
-    // Chiusure straordinarie (globali o per prodotto)
+    // Chiusure straordinarie
     $tbl2 = $wpdb->prefix . 'wcefp_closures';
     $sql2 = "CREATE TABLE IF NOT EXISTS $tbl2 (
       id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -84,10 +84,10 @@ add_action('plugins_loaded', function () {
         return;
     }
 
-    // Include classi
+    // Include core
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-recurring.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-closures.php';   // NEW
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-gift.php';       // NEW
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-closures.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-gift.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-frontend.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-templates.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-product-types.php';
@@ -108,7 +108,6 @@ class WCEFP_Plugin {
 
         /* Tipi prodotto */
         add_filter('product_type_selector', [$this, 'register_product_types']);
-        // RIMOSSO: add_action('init', [$this, 'add_product_classes']);  // <-- causa fatal (classi annidate)
         add_filter('woocommerce_product_class', [$this, 'map_product_class'], 10, 2);
 
         /* Tab prodotto & salvataggio */
@@ -125,8 +124,9 @@ class WCEFP_Plugin {
         /* GA4/DTL eventi base */
         add_action('woocommerce_thankyou', [$this, 'push_purchase_event_to_datalayer'], 20);
 
-        /* Meta Pixel base + Purchase */
-        add_action('wp_head', [$this, 'inject_meta_pixel_base']);
+        /* Iniezione GA4/GTM + Meta Pixel */
+        add_action('wp_head', [$this, 'inject_ga_scripts'], 5);
+        add_action('wp_head', [$this, 'inject_meta_pixel_base'], 6);
         add_action('woocommerce_thankyou', [$this, 'meta_pixel_purchase'], 25);
 
         /* ICS su thank-you */
@@ -136,10 +136,10 @@ class WCEFP_Plugin {
         add_action('woocommerce_single_product_summary', ['WCEFP_Frontend','render_product_details'], 15);
         add_action('woocommerce_single_product_summary', ['WCEFP_Frontend','render_booking_widget_auto'], 35);
 
-        /* Brevo: upsert + transactional + liste IT/EN */
+        /* Brevo */
         add_action('woocommerce_order_status_completed', [$this, 'brevo_on_completed']);
 
-        /* Disattiva email Woo per ordini SOLO-evento/esperienza (opzione) */
+        /* Disattiva email Woo (solo eventi/esperienze) */
         add_filter('woocommerce_email_enabled_customer_processing_order', [$this,'maybe_disable_wc_mail'], 10, 2);
         add_filter('woocommerce_email_enabled_customer_completed_order',  [$this,'maybe_disable_wc_mail'], 10, 2);
         add_filter('woocommerce_email_enabled_customer_on_hold_order',    [$this,'maybe_disable_wc_mail'], 10, 2);
@@ -153,7 +153,6 @@ class WCEFP_Plugin {
         add_action('wp_ajax_wcefp_get_calendar', [$this, 'ajax_get_calendar']);
         add_action('wp_ajax_wcefp_generate_occurrences', ['WCEFP_Recurring', 'ajax_generate_occurrences']);
         add_action('wp_ajax_wcefp_update_occurrence', [$this, 'ajax_update_occurrence']);
-        // Chiusure straordinarie (handled nella classe closures)
         add_action('wp_ajax_wcefp_add_closure', ['WCEFP_Closures', 'ajax_add_closure']);
         add_action('wp_ajax_wcefp_delete_closure', ['WCEFP_Closures', 'ajax_delete_closure']);
         add_action('wp_ajax_wcefp_list_closures', ['WCEFP_Closures', 'ajax_list_closures']);
@@ -183,13 +182,12 @@ class WCEFP_Plugin {
         /* ICS routing */
         add_action('init', [$this, 'serve_ics']);
 
-        /* Gift (checkout + redeem) nella classe WCEFP_Gift */
+        /* Gift */
         WCEFP_Gift::init();
     }
 
     private function ensure_db_schema(){
         global $wpdb;
-        // Assicura colonne e indici occorrenze
         $tbl = $wpdb->prefix.'wcefp_occurrences';
         $cols = $wpdb->get_results("SHOW COLUMNS FROM $tbl", ARRAY_A);
         $names = array_map(function($c){ return $c['Field']; }, (array)$cols);
@@ -197,7 +195,6 @@ class WCEFP_Plugin {
             $wpdb->query("ALTER TABLE $tbl ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active'");
             $wpdb->query("CREATE INDEX status ON $tbl (status)");
         }
-        // Crea tabelle chiusure e voucher se mancanti (su upgrade)
         $charset = $wpdb->get_charset_collate();
         $tbl2 = $wpdb->prefix.'wcefp_closures';
         $wpdb->query("CREATE TABLE IF NOT EXISTS $tbl2 (
@@ -231,10 +228,6 @@ class WCEFP_Plugin {
         $types['wcefp_experience'] = __('Esperienza', 'wceventsfp');
         return $types;
     }
-
-    // RIMOSSO: niente dichiarazioni di classi qui.
-    public function add_product_classes() { /* non usato: le classi sono in includes/class-wcefp-product-types.php */ }
-
     public function map_product_class($classname, $type) {
         if ($type === 'wcefp_event') return 'WC_Product_WCEFP_Event';
         if ($type === 'wcefp_experience') return 'WC_Product_WCEFP_Experience';
@@ -266,7 +259,7 @@ class WCEFP_Plugin {
             </div>
 
             <div class="options_group">
-                <h3><?php _e('Info esperienza', 'wceventsfp'); ?></h3>
+                <h3><?php _e('Info esperienza', 'wceeventsfp'); ?></h3>
                 <?php
                 woocommerce_wp_text_input(['id'=>'_wcefp_languages','label'=>__('Lingue (es. IT, EN)','wceventsfp'),'type'=>'text']);
                 woocommerce_wp_text_input(['id'=>'_wcefp_meeting_point','label'=>__('Meeting point','wceventsfp'),'type'=>'text']);
@@ -348,10 +341,46 @@ class WCEFP_Plugin {
         wp_localize_script('wcefp-frontend', 'WCEFPData', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('wcefp_public'),
-            // Opzioni tracking/performance lato JS
             'ga4_enabled' => (get_option('wcefp_ga4_enable', '1') === '1'),
             'meta_pixel_id' => sanitize_text_field(get_option('wcefp_meta_pixel_id','')),
         ]);
+    }
+
+    /* Iniezione GA4/GTM (se impostati) */
+    public function inject_ga_scripts() {
+        // Esegui solo frontend
+        if (is_admin()) return;
+
+        $gtm_id = trim(get_option('wcefp_gtm_id',''));
+        $ga4_id = trim(get_option('wcefp_ga4_id',''));
+        $ga4_enabled = (get_option('wcefp_ga4_enable','1') === '1');
+
+        if (!$ga4_enabled) return;
+
+        if ($gtm_id) {
+            // Preferisci GTM se presente
+            ?>
+            <!-- Google Tag Manager (WCEventsFP) -->
+            <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','<?php echo esc_js($gtm_id); ?>');</script>
+            <!-- End Google Tag Manager -->
+            <?php
+        } elseif ($ga4_id) {
+            ?>
+            <!-- Google Analytics 4 (WCEventsFP) -->
+            <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_js($ga4_id); ?>"></script>
+            <script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '<?php echo esc_js($ga4_id); ?>');
+            </script>
+            <!-- End GA4 -->
+            <?php
+        }
     }
 
     public function push_purchase_event_to_datalayer($order_id) {
@@ -381,6 +410,7 @@ class WCEFP_Plugin {
 
     /* ---------- Meta Pixel ---------- */
     public function inject_meta_pixel_base() {
+        if (is_admin()) return;
         $pixel_id = trim(get_option('wcefp_meta_pixel_id',''));
         if (!$pixel_id) return;
         ?>
@@ -413,7 +443,7 @@ class WCEFP_Plugin {
         echo "<script>if(window.fbq){ fbq('track','Purchase', {value: ".wp_json_encode($value).", currency: ".wp_json_encode($currency)."}); }</script>";
     }
 
-    /* ---------- ICS in thank-you e servizio ---------- */
+    /* ---------- ICS ---------- */
     public function render_ics_downloads($order_id) {
         $order = wc_get_order($order_id); if(!$order) return;
         $ics = [];
@@ -466,7 +496,7 @@ class WCEFP_Plugin {
     }
     private static function esc_ics($s){ return preg_replace('/([,;])/','\\\$1', str_replace("\n",'\\n', $s)); }
 
-    /* ---------- Brevo: invio + upsert + liste IT/EN ---------- */
+    /* ---------- Brevo ---------- */
     public function brevo_on_completed($order_id) {
         $order = wc_get_order($order_id); if(!$order) return;
 
@@ -504,7 +534,7 @@ class WCEFP_Plugin {
             'updateEnabled' => true,
         ], $api_key);
 
-        // Transazionale: se presente Template ID, altrimenti HTML semplice
+        // Transazionale (se Template ID)
         $tpl_id = intval(get_option('wcefp_brevo_template_id', 0));
         $from_email = sanitize_email(get_option('wcefp_brevo_from_email', get_bloginfo('admin_email')));
         $from_name  = sanitize_text_field(get_option('wcefp_brevo_from_name', get_bloginfo('name')));
@@ -583,13 +613,13 @@ class WCEFP_Plugin {
         if (strpos($hook,'wcefp') === false) return;
         wp_enqueue_style('wcefp-admin', WCEFP_PLUGIN_URL.'assets/css/admin.css', [], WCEFP_VERSION);
 
-        // FullCalendar (solo nella pagina calendario)
+        // FullCalendar solo nella pagina calendario
         if (strpos($hook,'wcefp_page_wcefp-calendar') !== false) {
             wp_enqueue_style('fullcalendar', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css', [], '6.1.15');
             wp_enqueue_script('fullcalendar', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js', [], '6.1.15', true);
         }
 
-        // JS admin generico (include calendario + lista)
+        // JS admin
         wp_enqueue_script('wcefp-admin', WCEFP_PLUGIN_URL.'assets/js/admin.js', ['jquery','fullcalendar'], WCEFP_VERSION, true);
         wp_localize_script('wcefp-admin','WCEFPAdmin',[
             'ajaxUrl'=> admin_url('admin-ajax.php'),
@@ -597,7 +627,7 @@ class WCEFP_Plugin {
             'products' => $this->get_events_products_for_filter(),
         ]);
 
-        // JS gestione chiusure
+        // JS chiusure
         if (strpos($hook,'wcefp_page_wcefp-closures') !== false) {
             wp_enqueue_script('wcefp-closures', WCEFP_PLUGIN_URL.'assets/js/closures.js', ['jquery'], WCEFP_VERSION, true);
             wp_localize_script('wcefp-closures','WCEFPClose',[
@@ -609,7 +639,7 @@ class WCEFP_Plugin {
     }
 
     private function get_events_products_for_filter(){
-        $args = [
+        $q = new WP_Query([
             'post_type' => 'product',
             'posts_per_page' => 300,
             'post_status' => 'publish',
@@ -621,8 +651,7 @@ class WCEFP_Plugin {
             ]],
             'orderby' => 'title',
             'order'   => 'ASC',
-        ];
-        $q = new WP_Query($args);
+        ]);
         $out = [];
         foreach ($q->posts as $p) $out[] = ['id'=>$p->ID,'title'=>$p->post_title];
         return $out;
@@ -675,6 +704,8 @@ class WCEFP_Plugin {
 
     public function render_settings_page() {
         if (!current_user_can('manage_woocommerce')) return;
+
+        /* Salvataggio */
         if (isset($_POST['wcefp_save']) && check_admin_referer('wcefp_settings')) {
             update_option('wcefp_default_capacity', intval($_POST['wcefp_default_capacity'] ?? 0));
             update_option('wcefp_disable_wc_emails_for_events', isset($_POST['wcefp_disable_wc_emails_for_events']) ? '1' : '0');
@@ -689,10 +720,14 @@ class WCEFP_Plugin {
 
             // Tracking
             update_option('wcefp_ga4_enable', isset($_POST['wcefp_ga4_enable']) ? '1' : '0');
+            update_option('wcefp_ga4_id', sanitize_text_field($_POST['wcefp_ga4_id'] ?? ''));   // NEW
+            update_option('wcefp_gtm_id', sanitize_text_field($_POST['wcefp_gtm_id'] ?? ''));   // NEW
             update_option('wcefp_meta_pixel_id', sanitize_text_field($_POST['wcefp_meta_pixel_id'] ?? ''));
 
             echo '<div class="updated"><p>Salvato.</p></div>';
         }
+
+        /* Lettura opzioni */
         $cap = get_option('wcefp_default_capacity', 0);
         $dis = get_option('wcefp_disable_wc_emails_for_events','0')==='1';
         $api = get_option('wcefp_brevo_api_key','');
@@ -702,7 +737,10 @@ class WCEFP_Plugin {
         $list_it    = intval(get_option('wcefp_brevo_list_it', 0));
         $list_en    = intval(get_option('wcefp_brevo_list_en', 0));
         $ga4_en     = get_option('wcefp_ga4_enable','1')==='1';
+        $ga4_id     = get_option('wcefp_ga4_id','');   // NEW
+        $gtm_id     = get_option('wcefp_gtm_id','');   // NEW
         $mp_id      = get_option('wcefp_meta_pixel_id',''); ?>
+
         <div class="wrap">
             <h1><?php _e('Impostazioni','wceventsfp'); ?></h1>
             <form method="post"><?php wp_nonce_field('wcefp_settings'); ?>
@@ -715,6 +753,7 @@ class WCEFP_Plugin {
                         <th><?php _e('Email WooCommerce','wceventsfp'); ?></th>
                         <td><label><input type="checkbox" name="wcefp_disable_wc_emails_for_events" <?php checked($dis,true); ?> /> <?php _e('Disattiva email Woo per ordini SOLO-evento/esperienza','wceventsfp'); ?></label></td>
                     </tr>
+
                     <tr><th colspan="2"><h3><?php _e('Brevo (API v3)','wceventsfp'); ?></h3></th></tr>
                     <tr>
                         <th><label for="wcefp_brevo_api_key"><?php _e('API Key','wceventsfp'); ?></label></th>
@@ -747,16 +786,27 @@ class WCEFP_Plugin {
                         <td><label><input type="checkbox" name="wcefp_ga4_enable" id="wcefp_ga4_enable" <?php checked($ga4_en,true); ?> /> <?php _e('Abilita push dataLayer (view_item, add_to_cart, begin_checkout, extra_selected, purchase)','wceventsfp'); ?></label></td>
                     </tr>
                     <tr>
+                        <th><label for="wcefp_ga4_id">GA4 Measurement ID</label></th>
+                        <td><input type="text" name="wcefp_ga4_id" id="wcefp_ga4_id" value="<?php echo esc_attr($ga4_id); ?>" placeholder="G-XXXXXXXXXX" /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="wcefp_gtm_id">GTM Container ID</label></th>
+                        <td><input type="text" name="wcefp_gtm_id" id="wcefp_gtm_id" value="<?php echo esc_attr($gtm_id); ?>" placeholder="GTM-XXXXXX" />
+                            <p class="description">Se imposti GTM, verrà caricato Google Tag Manager (consigliato). Se lasci vuoto e compili GA4, verrà caricato direttamente GA4.</p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th><label for="wcefp_meta_pixel_id"><?php _e('Meta Pixel ID','wceventsfp'); ?></label></th>
                         <td><input type="text" name="wcefp_meta_pixel_id" id="wcefp_meta_pixel_id" value="<?php echo esc_attr($mp_id); ?>" /></td>
                     </tr>
                 </table>
+
                 <p><button class="button button-primary" type="submit" name="wcefp_save" value="1"><?php _e('Salva','wceventsfp'); ?></button></p>
             </form>
         </div><?php
     }
 
-    /* ---------- AJAX admin base (calendario/lista) ---------- */
+    /* ---------- AJAX admin base ---------- */
     public function ajax_get_bookings() {
         check_ajax_referer('wcefp_admin','nonce');
         $orders = wc_get_orders(['limit'=>200,'type'=>'shop_order','status'=>['wc-processing','wc-completed','wc-on-hold'],'date_created'=>'>='. (new DateTime('-120 days'))->format('Y-m-d')]);
