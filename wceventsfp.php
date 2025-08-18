@@ -412,10 +412,7 @@ class WCEFP_Plugin {
                     $days = get_post_meta($post->ID, '_wcefp_weekdays', true);
                     $days = is_array($days) ? array_map('intval', $days) : [];
 
-                    $labels = wcefp_get_weekday_labels();
-                    foreach ($labels as $k => $lbl) {
-                        $labels[$k] = esc_html($lbl);
-                    }
+                    $labels = array_map('esc_html', wcefp_get_weekday_labels());
                     ?>
                     <div class="wcefp-weekdays-grid">
                         <?php foreach ($labels as $val => $label): ?>
