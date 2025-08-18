@@ -1,8 +1,12 @@
 (function($){
   $(function(){
 
-    function formatEuro(x){
-      return '€ ' + Number(x).toFixed(2).replace('.', ',');
+    const priceFormatter = new Intl.NumberFormat(WCEFPData.locale, {
+      style: 'currency',
+      currency: WCEFPData.currency,
+    });
+    function formatCurrency(x){
+      return priceFormatter.format(Number(x));
     }
 
     $('.wcefp-widget').each(function(){
@@ -52,7 +56,7 @@
           extrasCost += ex.price * mult;
         });
         const total = hasVoucher ? 0 : ((ad*priceAdult) + (ch*priceChild) + extrasCost);
-        $tot.text(formatEuro(total));
+        $tot.text(formatCurrency(total));
       }
 
       function loadSlots(){
