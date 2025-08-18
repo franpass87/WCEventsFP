@@ -1,0 +1,82 @@
+name: Build & Release WCEventsFP
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      PLUGIN_DIR: WCEventsFP
+      ZIP_NAME: wceventsfp-${{ github.ref_name }}.zip
+
+    steps:
+      - name: Checkout
+      - uses: actions/checkout@v4
+
+      - name: Mostra struttura repo (debug)
+        run: ls -la
+
+      - name: Prepara cartella plugin
+        shell: bash
+        run: |
+          set -e
+          if [ -d "${PLUGIN_DIR}" ]; then
+            echo "Trovata cartella ${PLUGIN_DIR}/ (ok)."
+          else
+            echo "Non trovo ${PLUGIN_DIR}/: impacchetto il root nella cartella ${PLUGIN_DIR}/"
+            mkdir "${PLUGIN_DIR}"
+            shopt -s dotglob
+            for f in *; do
+              # esclude la cartella .git e la dir .github dal pacchetto
+              if [ "$f" = ".git" ] || [ "$f" = ".github" ]; then
+                continue
+              fi
+              mv "$f" "${PLUGIN_DIR}/"
+            done
+            shopt -u dotglob
+          fi
+          echo "Contenuto ${PLUGIN_DIR}/:"
+          ls -la "${PLUGIN_DIR}"
+
+      - name: Rimuove file non necessari dallo ZIP
+        shell: bash
+        run: |
+          set -e
+          rm -rf "${PLUGIN_DIR}/.git" \
+                 "${PLUGIN_DIR}/.github" \
+                 "${PLUGIN_DIR}/node_modules" \
+                 "${PLUGIN_DIR}/vendor" \
+                 "${PLUGIN_DIR}/tests" \
+                 "${PLUGIN_DIR}/.DS_Store" \
+                 "${PLUGIN_DIR}/Thumbs.db"
+          # opzionale: rimuovi file dev se presenti
+          rm -f "${PLUGIN_DIR}/package-lock.json" \
+                "${PLUGIN_DIR}/pnpm-lock.yaml" \
+                "${PLUGIN_DIR}/yarn.lock"
+
+      - name: Crea ZIP del plugin
+        run: zip -r "${ZIP_NAME}" "${PLUGIN_DIR}" -x "*/.git/*" "*/.github/*" "*.zip"
+
+      - name: Pubblica artifact (build logico)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ZIP_NAME }}
+          path: ${{ env.ZIP_NAME }}
+          retention-days: 7
+
+      - name: Crea GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: WCEventsFP ${{ github.ref_name }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+          files: |
+            ${{ env.ZIP_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
