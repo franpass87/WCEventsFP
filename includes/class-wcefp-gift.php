@@ -72,6 +72,16 @@ class WCEFP_Gift {
         foreach ($keys as $k){
             if (isset($_POST[$k])) {
                 $val = is_string($_POST[$k]) ? wp_unslash($_POST[$k]) : $_POST[$k];
+                switch ($k) {
+                    case 'wcefp_gift_recipient_email':
+                        $val = sanitize_email($val);
+                        break;
+                    case 'wcefp_gift_message':
+                        $val = sanitize_textarea_field($val);
+                        break;
+                    default:
+                        $val = sanitize_text_field($val);
+                }
                 update_post_meta($order_id, $k, $val);
             }
         }
