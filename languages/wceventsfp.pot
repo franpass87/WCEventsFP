@@ -1,0 +1,502 @@
+
+---
+
+# 6.2) `wp-content/plugins/WCEventsFP/languages/wceventsfp.pot`
+
+```pot
+msgid ""
+msgstr ""
+"Project-Id-Version: WCEventsFP 1.6.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-08-16 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Language: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: wceventsfp\n"
+
+#: includes/class-wcefp-closures.php:14
+msgid "Chiusure straordinarie"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:19
+msgid "Aggiungi chiusura"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:23
+msgid "Prodotto"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:26
+msgid "Tutti gli eventi/esperienze"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:30
+msgid "Dal"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:34
+msgid "Al"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:38
+msgid "Nota (opzionale)"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:39
+msgid "Es. Manutenzione, festività…"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:46
+msgid "Elenco chiusure"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:84
+msgid "Date mancanti"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:85
+msgid "Formato data non valido"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:86
+msgid "Intervallo non valido"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:94
+msgid "Errore salvataggio"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:108
+msgid "Errore eliminazione"
+msgstr ""
+
+#: includes/class-wcefp-closures.php:127
+msgid "Tutti"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:20
+msgid "Seleziona un prodotto valido."
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:41
+msgid "Voucher attivo: questa prenotazione sarà a costo 0€"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:45
+msgid "Data"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:49
+msgid "Slot"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:50
+msgid "Seleziona orario"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:54
+msgid "Adulti"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:58
+msgid "Bambini"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:64
+msgid "Extra"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:77
+msgid "Totale stimato"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:82
+msgid "Aggiungi al carrello"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:83
+msgid "event"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:171
+msgid "Dettagli esperienza"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:175
+msgid "Durata"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:175
+msgid "minuti"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:176
+msgid "Lingue"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:177
+msgid "Meeting point"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:178
+msgid "Prossima data"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:190
+msgid "Prossime disponibilità"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:201
+msgid "Cosa è incluso"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:205
+msgid "Cosa non è incluso"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:209
+msgid "Cancellazione"
+msgstr ""
+
+#: includes/class-wcefp-frontend.php:235
+msgid "Lo slot non è più disponibile"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:17
+msgid "Regala un’esperienza"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:30
+msgid "Nome destinatario"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:35
+msgid "Email destinatario"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:41
+msgid "Messaggio al destinatario (facoltativo)"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:49
+msgid "Se attivo, verrà generato un codice voucher da usare per prenotare in un secondo momento."
+msgstr ""
+
+#: includes/class-wcefp-gift.php:114
+msgid "Voucher generati: %d"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:137
+msgid "Hai ricevuto un’esperienza in regalo"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:138
+msgid "Un regalo per te"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:138
+msgid "Puoi visualizzare/ stampare il tuo voucher ai link seguenti:"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:162
+msgid "Voucher Regalo"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:163
+msgid "Codice"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:164
+msgid "Esperienza"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:165
+msgid "Stato"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:165
+msgid "Utilizzabile"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:165
+msgid "Usato"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:166
+msgid "Destinatario"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:168
+msgid "Per riscattare: visita la pagina “Riscatta voucher” e inserisci il codice."
+msgstr ""
+
+#: includes/class-wcefp-gift.php:177
+msgid "Codice non trovato"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:178
+msgid "Il codice è già stato utilizzato"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:188
+msgid "Codice valido. Ora puoi prenotare l’esperienza senza pagamento."
+msgstr ""
+
+#: includes/class-wcefp-gift.php:191
+msgid "Inserisci il codice voucher"
+msgstr ""
+
+#: includes/class-wcefp-gift.php:193
+msgid "Riscatta"
+msgstr ""
+
+#: wceventsfp.php:112
+msgid "Eventi/Esperienze"
+msgstr ""
+
+#: wceventsfp.php:129
+msgid "Prezzi e capacità"
+msgstr ""
+
+#: wceventsfp.php:131
+msgid "Prezzo Adulto (€)"
+msgstr ""
+
+#: wceventsfp.php:132
+msgid "Prezzo Bambino (€)"
+msgstr ""
+
+#: wceventsfp.php:133
+msgid "Capienza per slot"
+msgstr ""
+
+#: wceventsfp.php:134
+msgid "Durata slot (minuti)"
+msgstr ""
+
+#: wceventsfp.php:139
+msgid "Info esperienza"
+msgstr ""
+
+#: wceventsfp.php:141
+msgid "Lingue (es. IT, EN)"
+msgstr ""
+
+#: wceventsfp.php:142
+msgid "Meeting point"
+msgstr ""
+
+#: wceventsfp.php:143
+msgid "Incluso"
+msgstr ""
+
+#: wceventsfp.php:144
+msgid "Escluso"
+msgstr ""
+
+#: wceventsfp.php:145
+msgid "Politica di cancellazione"
+msgstr ""
+
+#: wceventsfp.php:150
+msgid "Extra opzionali"
+msgstr ""
+
+#: wceventsfp.php:152
+msgid "Extra (JSON)"
+msgstr ""
+
+#: wceventsfp.php:155
+msgid "Formato JSON: name, price"
+msgstr ""
+
+#: wceventsfp.php:160
+msgid "Ricorrenze settimanali & Slot"
+msgstr ""
+
+#: wceventsfp.php:162
+msgid "Giorni"
+msgstr ""
+
+#: wceventsfp.php:171
+msgid "Slot (HH:MM, separati da virgola)"
+msgstr ""
+
+#: wceventsfp.php:175
+msgid "Genera occorrenze"
+msgstr ""
+
+#: wceventsfp.php:179
+msgid "Genera"
+msgstr ""
+
+#: wceventsfp.php:280
+msgid "Aggiungi al calendario"
+msgstr ""
+
+#: wceventsfp.php:449
+msgid "Eventi & Degustazioni"
+msgstr ""
+
+#: wceventsfp.php:450
+msgid "Analisi KPI"
+msgstr ""
+
+#: wceventsfp.php:451
+msgid "Calendario & Lista"
+msgstr ""
+
+#: wceventsfp.php:452
+msgid "Esporta"
+msgstr ""
+
+#: wceventsfp.php:453
+msgid "Impostazioni"
+msgstr ""
+
+#: wceventsfp.php:493
+msgid "Ordini (30gg)"
+msgstr ""
+
+#: wceventsfp.php:494
+msgid "Ricavi (30gg)"
+msgstr ""
+
+#: wceventsfp.php:495
+msgid "Riempimento medio"
+msgstr ""
+
+#: wceventsfp.php:496
+msgid "Top Esperienza"
+msgstr ""
+
+#: wceventsfp.php:506
+msgid "Calendario & Lista Prenotazioni"
+msgstr ""
+
+#: wceventsfp.php:508
+msgid "Filtra prodotto"
+msgstr ""
+
+#: wceventsfp.php:511
+msgid "Tutti"
+msgstr ""
+
+#: wceventsfp.php:512
+msgid "Calendario"
+msgstr ""
+
+#: wceventsfp.php:513
+msgid "Lista"
+msgstr ""
+
+#: wceventsfp.php:523
+msgid "Esporta CSV"
+msgstr ""
+
+#: wceventsfp.php:524
+msgid "Scarica i dati per analisi o backup."
+msgstr ""
+
+#: wceventsfp.php:527
+msgid "Occorrenze"
+msgstr ""
+
+#: wceventsfp.php:528
+msgid "Prenotazioni"
+msgstr ""
+
+#: wceventsfp.php:533
+msgid "Impostazioni"
+msgstr ""
+
+#: wceventsfp.php:541
+msgid "Capienza default per slot"
+msgstr ""
+
+#: wceventsfp.php:546
+msgid "Email WooCommerce"
+msgstr ""
+
+#: wceventsfp.php:547
+msgid "Disattiva email Woo per ordini SOLO-evento/esperienza"
+msgstr ""
+
+#: wceventsfp.php:550
+msgid "Brevo (API v3)"
+msgstr ""
+
+#: wceventsfp.php:553
+msgid "API Key"
+msgstr ""
+
+#: wceventsfp.php:557
+msgid "Template ID (opzionale)"
+msgstr ""
+
+#: wceventsfp.php:561
+msgid "Mittente email"
+msgstr ""
+
+#: wceventsfp.php:565
+msgid "Mittente nome"
+msgstr ""
+
+#: wceventsfp.php:569
+msgid "Lista IT"
+msgstr ""
+
+#: wceventsfp.php:573
+msgid "Lista EN"
+msgstr ""
+
+#: wceventsfp.php:577
+msgid "Tracking"
+msgstr ""
+
+#: wceventsfp.php:580
+msgid "GA4/Tag Manager eventi custom"
+msgstr ""
+
+#: wceventsfp.php:581
+msgid "Abilita push dataLayer (view_item, add_to_cart, begin_checkout, extra_selected, purchase)"
+msgstr ""
+
+#: wceventsfp.php:584
+msgid "Meta Pixel ID"
+msgstr ""
+
+#: wceventsfp.php:592
+msgid "Salva"
+msgstr ""
+
+#: includes/class-wcefp-templates.php:12
+msgid "Nessuna esperienza disponibile"
+msgstr ""
+
+#: includes/class-wcefp-templates.php:58
+msgid "posti"
+msgstr ""
+
+#: includes/class-wcefp-templates.php:62
+msgid "Nessuna data programmata"
+msgstr ""
+
+#: includes/class-wcefp-templates.php:70
+msgid "Prossima data"
+msgstr ""
+
+#: includes/class-wcefp-templates.php:73
+msgid "Prezzo adulto"
+msgstr ""
+
+#: includes/class-wcefp-templates.php:76
+msgid "Prezzo bambino"
+msgstr ""
+
+#: includes/class-wcefp-templates.php:81
+msgid "Dettagli e prenota"
+msgstr ""
