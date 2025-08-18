@@ -1,0 +1,20 @@
+/* Griglia */
+.wcefp-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;
+}
+
+/* Card */
+.wcefp-card{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+.wcefp-card-media{position:relative;aspect-ratio:16/10;background:#f3f4f6}
+.wcefp-card-media img{width:100%;height:100%;object-fit:cover;display:block}
+.wcefp-badge{position:absolute;left:8px;top:8px;padding:4px 8px;border-radius:999px;font-size:12px;background:#111827;color:#fff}
+.wcefp-badge.avail{background:#065f46}
+.wcefp-badge.soldout{background:#6b7280}
+.wcefp-card-body{padding:12px 14px}
+.wcefp-card-title{margin:0 0 6px;font-size:1.1rem;line-height:1.3}
+.wcefp-card-meta{list-style:none;margin:0 0 10px;padding:0}
+.wcefp-card-meta li{font-size:.93rem;color:#374151;margin:3px 0}
+.wcefp-card-cta{margin-top:auto}
+.wcefp-card-cta .button{display:inline-block}
