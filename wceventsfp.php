@@ -112,6 +112,7 @@ add_action('plugins_loaded', function () {
 
     // Include admin (nuova classe)
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin.php';
+    require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-meetingpoints.php';
     WCEFP_Admin::init();
 
     WCEFP()->init();
@@ -312,7 +313,18 @@ class WCEFP_Plugin {
                 <h3><?php _e('Info esperienza', 'wceventsfp'); ?></h3>
                 <?php
                 woocommerce_wp_text_input(['id'=>'_wcefp_languages','label'=>__('Lingue (es. IT, EN)','wceventsfp'),'type'=>'text']);
-                woocommerce_wp_text_input(['id'=>'_wcefp_meeting_point','label'=>__('Meeting point','wceventsfp'),'type'=>'text']);
+                $points = get_option('wcefp_meetingpoints', []);
+                if (!is_array($points)) {
+                    $points = array_filter(array_map('trim', explode("\n", $points)));
+                }
+                $selected_point = get_post_meta($post->ID, '_wcefp_meeting_point', true);
+                if (!empty($points)) {
+                    echo '<p class="form-field"><label>' . __('Meeting point','wceventsfp') . '</label><span>';
+                    foreach ($points as $point) {
+                        echo '<label><input type="radio" name="wcefp_meeting_point" value="' . esc_attr($point) . '" ' . checked($selected_point, $point, false) . '> ' . esc_html($point) . '</label><br>';
+                    }
+                    echo '</span></p>';
+                }
                 woocommerce_wp_textarea_input(['id'=>'_wcefp_includes','label'=>__('Incluso','wceventsfp')]);
                 woocommerce_wp_textarea_input(['id'=>'_wcefp_excludes','label'=>__('Escluso','wceventsfp')]);
                 woocommerce_wp_textarea_input(['id'=>'_wcefp_cancellation','label'=>__('Politica di cancellazione','wceventsfp')]);
@@ -431,9 +443,15 @@ class WCEFP_Plugin {
         $keys = [
             '_wcefp_price_adult','_wcefp_price_child','_wcefp_capacity_per_slot',
             '_wcefp_time_slots','_wcefp_duration_minutes',
-            '_wcefp_languages','_wcefp_meeting_point','_wcefp_includes','_wcefp_excludes','_wcefp_cancellation'
+            '_wcefp_languages','_wcefp_includes','_wcefp_excludes','_wcefp_cancellation'
         ];
         foreach ($keys as $k) if (isset($_POST[$k])) update_post_meta($pid, $k, wp_unslash($_POST[$k]));
+
+        if (isset($_POST['wcefp_meeting_point'])) {
+            update_post_meta($pid, '_wcefp_meeting_point', sanitize_text_field(wp_unslash($_POST['wcefp_meeting_point'])));
+        } else {
+            delete_post_meta($pid, '_wcefp_meeting_point');
+        }
 
         // Extra opzionali
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_product_extras';
