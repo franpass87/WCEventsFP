@@ -18,3 +18,4 @@
 .wcefp-languages{margin-bottom:12px}
 .wcefp-lang-badge{display:inline-block;background:#e5e7eb;border-radius:4px;padding:2px 6px;font-size:12px;margin-right:4px}
 .wcefp-map{height:300px;margin-top:10px}
+.wcefp-widget input:focus,.wcefp-widget select:focus,.wcefp-widget button:focus{outline:2px solid #2563eb;outline-offset:2px}

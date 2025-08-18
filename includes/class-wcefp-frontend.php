@@ -13,6 +13,8 @@ class WCEFP_Frontend {
         $price_child = floatval(get_post_meta($pid, '_wcefp_price_child', true));
         $languages   = sanitize_text_field(get_post_meta($pid, '_wcefp_languages', true));
 
+        $uid = 'wcefp-' . uniqid();
+
         global $wpdb;
         $tbl = $wpdb->prefix.'wcefp_product_extras';
         $posts = $wpdb->prefix.'posts';
@@ -51,20 +53,20 @@ class WCEFP_Frontend {
             </div>
             <?php endif; ?>
             <div class="wcefp-row">
-                <label><?php _e('Data','wceventsfp'); ?></label>
-                <input type="date" class="wcefp-date" />
+                <label for="<?php echo $uid; ?>-date"><?php _e('Data','wceventsfp'); ?></label>
+                <input type="date" id="<?php echo $uid; ?>-date" class="wcefp-date" />
             </div>
             <div class="wcefp-row">
-                <label><?php _e('Slot','wceventsfp'); ?></label>
-                <select class="wcefp-slot"><option value=""><?php _e('Seleziona orario','wceventsfp'); ?></option></select>
+                <label for="<?php echo $uid; ?>-slot"><?php _e('Slot','wceventsfp'); ?></label>
+                <select id="<?php echo $uid; ?>-slot" class="wcefp-slot"><option value=""><?php _e('Seleziona orario','wceventsfp'); ?></option></select>
             </div>
             <div class="wcefp-row">
-                <label><?php _e('Adulti','wceventsfp'); ?></label>
-                <input type="number" class="wcefp-adults" min="0" value="1" />
+                <label for="<?php echo $uid; ?>-adults"><?php _e('Adulti','wceventsfp'); ?></label>
+                <input type="number" id="<?php echo $uid; ?>-adults" class="wcefp-adults" min="0" value="1" />
             </div>
             <div class="wcefp-row">
-                <label><?php _e('Bambini','wceventsfp'); ?></label>
-                <input type="number" class="wcefp-children" min="0" value="0" />
+                <label for="<?php echo $uid; ?>-children"><?php _e('Bambini','wceventsfp'); ?></label>
+                <input type="number" id="<?php echo $uid; ?>-children" class="wcefp-children" min="0" value="0" />
             </div>
             <?php if (!empty($extras)) : ?>
             <div class="wcefp-row">
@@ -72,14 +74,15 @@ class WCEFP_Frontend {
                 <div class="wcefp-extras">
                     <?php foreach ($extras as $i=>$ex): ?>
                         <?php $toggle = ($ex['max_qty']==1 && !$ex['required']); ?>
+                        <?php $desc_id = $uid . '-extra-desc-' . $i; ?>
                         <div class="wcefp-extra-row" data-id="<?php echo esc_attr($ex['id']); ?>" data-name="<?php echo esc_attr($ex['name']); ?>" data-price="<?php echo esc_attr($ex['price']); ?>" data-pricing="<?php echo esc_attr($ex['pricing_type']); ?>">
                             <span class="wcefp-extra-label"><?php echo esc_html($ex['name']); ?> (+€<?php echo esc_html($ex['price']); ?>)</span>
                             <?php if($toggle): ?>
-                                <input type="checkbox" class="wcefp-extra-toggle" />
+                                <input type="checkbox" class="wcefp-extra-toggle" aria-describedby="<?php echo $desc_id; ?>" />
                             <?php else: ?>
-                                <input type="number" class="wcefp-extra-qty" min="<?php echo $ex['required']?1:0; ?>" value="<?php echo $ex['required']?1:0; ?>" <?php if($ex['required']) echo 'readonly'; ?> <?php if($ex['max_qty']>0) echo 'max="'.esc_attr($ex['max_qty']).'"'; ?> />
+                                <input type="number" class="wcefp-extra-qty" min="<?php echo $ex['required']?1:0; ?>" value="<?php echo $ex['required']?1:0; ?>" <?php if($ex['required']) echo 'readonly'; ?> <?php if($ex['max_qty']>0) echo 'max="'.esc_attr($ex['max_qty']).'"'; ?> aria-describedby="<?php echo $desc_id; ?>" />
                             <?php endif; ?>
-                            <?php if($ex['desc']) echo '<small class="wcefp-extra-desc">'.esc_html($ex['desc']).'</small>'; ?>
+                            <?php if($ex['desc']) echo '<small class="wcefp-extra-desc" id="'.$desc_id.'">'.esc_html($ex['desc']).'</small>'; ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -91,9 +94,10 @@ class WCEFP_Frontend {
                 <span class="wcefp-total">€ 0,00</span>
             </div>
 
+            <?php $fb_id = $uid . '-feedback'; ?>
             <div class="wcefp-row">
-                <button class="wcefp-add button"><?php _e('Aggiungi al carrello','wceventsfp'); ?></button>
-                <span class="wcefp-feedback" style="margin-left:8px;"></span>
+                <button class="wcefp-add button" aria-describedby="<?php echo esc_attr($fb_id); ?>"><?php _e('Aggiungi al carrello','wceventsfp'); ?></button>
+                <span class="wcefp-feedback" id="<?php echo esc_attr($fb_id); ?>" role="status" style="margin-left:8px;"></span>
             </div>
         </div>
         <script>window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'view_item',ecommerce:{items:[{item_id:'<?php echo esc_js($pid); ?>',item_name:'<?php echo esc_js(get_the_title($pid)); ?>',item_category:'event'}]}});</script>
