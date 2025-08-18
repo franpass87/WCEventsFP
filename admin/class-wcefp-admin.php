@@ -344,3 +344,21 @@ class WCEFP_Admin {
         </div><?php
     }
 }
+add_action('admin_head', function () { ?>
+<style>
+    #wcefp_product_data .wcefp-weekdays-grid{
+        display:grid;
+        grid-template-columns:repeat(7,minmax(0,1fr));
+        gap:6px;
+    }
+    /* Evita che le label dei checkbox ereditino il float */
+    #wcefp_product_data .form-field label.wcefp-weekday{
+        float:none;
+        width:auto;
+        display:flex;
+        align-items:center;
+        gap:6px;
+        margin:0;
+    }
+</style>
+<?php });
