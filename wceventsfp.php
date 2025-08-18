@@ -670,36 +670,48 @@ class WCEFP_Plugin {
     public function brevo_on_completed($order_id) {
         $order = wc_get_order($order_id); if(!$order) return;
 
-        $has_event = false;
+        $event_item = null;
         foreach ($order->get_items() as $item) {
             $p = $item->get_product(); if(!$p) continue;
-            if (in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) { $has_event = true; break; }
+            if (in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) { $event_item = $item; break; }
         }
-        if (!$has_event) return;
+        if (!$event_item) return;
 
         $api_key = trim(get_option('wcefp_brevo_api_key',''));
         if (!$api_key) return;
 
         $email = $order->get_billing_email();
         $firstname = $order->get_billing_first_name();
+        $product_name = $event_item->get_name();
+        $occ = (string)$event_item->get_meta('Occorrenza');
+        $ad  = intval($event_item->get_meta('Adulti'));
+        $ch  = intval($event_item->get_meta('Bambini'));
 
         $locale = get_locale();
         $is_it = (stripos($locale, 'it_') === 0 || stripos($locale, 'it') === 0);
         $list_it = intval(get_option('wcefp_brevo_list_it', 0));
         $list_en = intval(get_option('wcefp_brevo_list_en', 0));
         $list_id = $is_it ? $list_it : $list_en;
+        $extra_tag = trim(get_option('wcefp_brevo_tag', ''));
+        $tags = ['WCEFP'];
+        if ($extra_tag !== '') { $tags[] = $extra_tag; }
 
         // Upsert contatto
         $this->brevo_request('https://api.brevo.com/v3/contacts', 'POST', [
             'email' => $email,
             'attributes' => [
-                'FIRSTNAME' => $firstname,
-                'ORDER_ID'  => (string)$order->get_order_number(),
-                'TOTAL'     => (float)$order->get_total(),
-                'LANG'      => $is_it ? 'IT' : 'EN',
+                'FIRSTNAME'   => $firstname,
+                'ORDER_ID'    => (string)$order->get_order_number(),
+                'TOTAL'       => (float)$order->get_total(),
+                'LANG'        => $is_it ? 'IT' : 'EN',
+                'ProductName' => $product_name,
+                'OccDate'     => $occ,
+                'Adults'      => $ad,
+                'Children'    => $ch,
             ],
             'listIds' => $list_id ? [$list_id] : [],
             'updateEnabled' => true,
+            'tags' => $tags,
         ], $api_key);
 
         // Transazionale (se Template ID)
