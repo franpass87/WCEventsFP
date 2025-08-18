@@ -1,4 +1,9 @@
 📜 Changelog – WCEventsFP
+[1.7.1] – 2025-08-19
+Fixed
+
+Corretto il checkbox del lunedì che non appariva nel pannello "Ricorrenze settimanali & Slot" del backend.
+
 [1.7.0] – 2025-08-18
 Added
 
