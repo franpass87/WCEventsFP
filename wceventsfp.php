@@ -314,14 +314,13 @@ class WCEFP_Plugin {
                 <?php
                 woocommerce_wp_text_input(['id'=>'_wcefp_languages','label'=>__('Lingue (es. IT, EN)','wceventsfp'),'type'=>'text']);
                 $points = get_option('wcefp_meetingpoints', []);
-                if (!is_array($points)) {
-                    $points = array_filter(array_map('trim', explode("\n", $points)));
-                }
+                $points = is_array($points) ? $points : [];
                 $selected_point = get_post_meta($post->ID, '_wcefp_meeting_point', true);
                 if (!empty($points)) {
                     echo '<p class="form-field"><label>' . __('Meeting point','wceventsfp') . '</label><span>';
-                    foreach ($points as $point) {
-                        echo '<label><input type="radio" name="wcefp_meeting_point" value="' . esc_attr($point) . '" ' . checked($selected_point, $point, false) . '> ' . esc_html($point) . '</label><br>';
+                    foreach ($points as $pt) {
+                        $addr = is_array($pt) ? ( $pt['address'] ?? '' ) : $pt;
+                        echo '<label><input type="radio" name="wcefp_meeting_point" value="' . esc_attr($addr) . '" ' . checked($selected_point, $addr, false) . '> ' . esc_html($addr) . '</label><br>';
                     }
                     echo '</span></p>';
                 }
@@ -517,15 +516,8 @@ class WCEFP_Plugin {
             'meta_pixel_id' => sanitize_text_field(get_option('wcefp_meta_pixel_id','')),
         ]);
 
-        if (is_singular('product')) {
-            $pid = get_the_ID();
-            $meeting = $pid ? sanitize_text_field(get_post_meta($pid, '_wcefp_meeting_point', true)) : '';
-            if ($meeting) {
-                wp_enqueue_style('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
-                wp_enqueue_script('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', [], '1.9.4', true);
-                wp_enqueue_script('wcefp-map', WCEFP_PLUGIN_URL.'assets/js/map.js', ['jquery','leaflet'], WCEFP_VERSION, true);
-            }
-        }
+        wp_enqueue_style('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
+        wp_enqueue_script('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', [], '1.9.4', true);
     }
 
     /* Iniezione GA4/GTM (se impostati) */

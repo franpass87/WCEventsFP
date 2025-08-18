@@ -23,6 +23,23 @@ class WCEFP_Templates {
         ]);
     }
 
+    public static function render_map($id, $lat, $lng) {
+        $id_attr = esc_attr($id);
+        $lat_f = floatval($lat);
+        $lng_f = floatval($lng);
+        ob_start(); ?>
+        <div id="<?php echo $id_attr; ?>" class="wcefp-map"></div>
+        <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            var map = L.map('<?php echo esc_js($id_attr); ?>').setView([<?php echo esc_js($lat_f); ?>, <?php echo esc_js($lng_f); ?>], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '&copy; OpenStreetMap contributors'}).addTo(map);
+            L.marker([<?php echo esc_js($lat_f); ?>, <?php echo esc_js($lng_f); ?>]).addTo(map);
+        });
+        </script>
+        <?php
+        return ob_get_clean();
+    }
+
     /* ------------ CARD SINGOLA ------------ */
     public static function shortcode_card($atts){
         $a = shortcode_atts(['id'=>0], $atts);
@@ -37,6 +54,18 @@ class WCEFP_Templates {
         $img   = $img ?: wc_placeholder_img_src('large');
         $priceA = get_post_meta($pid, '_wcefp_price_adult', true);
         $priceC = get_post_meta($pid, '_wcefp_price_child', true);
+        $meeting = sanitize_text_field(get_post_meta($pid, '_wcefp_meeting_point', true));
+        $points = get_option('wcefp_meetingpoints', []);
+        $lat = $lng = '';
+        if ($meeting && is_array($points)) {
+            foreach ($points as $pt) {
+                if (is_array($pt) && isset($pt['address']) && $pt['address'] === $meeting) {
+                    $lat = $pt['lat'] ?? '';
+                    $lng = $pt['lng'] ?? '';
+                    break;
+                }
+            }
+        }
 
         // prossima disponibilità e posti
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
@@ -68,7 +97,13 @@ class WCEFP_Templates {
                     <?php if ($priceC !== ''): ?>
                         <li><strong><?php _e('Prezzo bambino','wceventsfp'); ?>:</strong> € <?php echo esc_html(number_format((float)$priceC,2,',','.')); ?></li>
                     <?php endif; ?>
+                    <?php if ($meeting): ?>
+                        <li><strong><?php _e('Meeting point','wceventsfp'); ?>:</strong> <?php echo esc_html($meeting); ?></li>
+                    <?php endif; ?>
                 </ul>
+                <?php if ($meeting && $lat && $lng) {
+                    echo self::render_map('wcefp-map-'.$pid, $lat, $lng);
+                } ?>
                 <div class="wcefp-card-cta">
                     <a class="button" href="<?php echo esc_url(get_permalink($pid)); ?>"><?php _e('Dettagli e prenota','wceventsfp'); ?></a>
                 </div>
