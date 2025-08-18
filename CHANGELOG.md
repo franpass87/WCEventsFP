@@ -1,4 +1,18 @@
 📜 Changelog – WCEventsFP
+[1.7.0] – 2025-08-18
+Added
+
+Extra riutilizzabili con CPT dedicato e tabella ponte, supporto a tariffazione per ordine/persona/adulto/bambino, quantità massime, obbligatorietà e stock con allocazione automatica.
+
+Changed
+
+Widget di prenotazione aggiornato con selezione quantità/toggle e calcolo dinamico del prezzo.
+
+[1.6.1] – 2025-08-17
+Changed
+
+Extra opzionali gestiti con campi dedicati (nome e prezzo) invece del JSON manuale.
+
 [1.6.0] – 2025-08-16
 Added
 

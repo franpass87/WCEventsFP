@@ -123,5 +123,24 @@
       });
     });
 
+    // --------- Extra opzionali (tab prodotto) ----------
+    const $extraRows = $('#wcefp-extra-rows');
+    if ($extraRows.length) {
+      $('.wcefp-add-extra').on('click', function(){
+        const idx = $extraRows.find('tr').length;
+        const tpl = $('#wcefp-extra-row-template').html().replace(/{{INDEX}}/g, idx);
+        $extraRows.append(tpl);
+      });
+      $extraRows.on('click', '.wcefp-remove-extra', function(){
+        $(this).closest('tr').remove();
+        $extraRows.find('tr').each(function(i){
+          $(this).find('input').each(function(){
+            const name = $(this).attr('name').replace(/\[\d+\]/, '['+i+']');
+            $(this).attr('name', name);
+          });
+        });
+      });
+    }
+
   });
 })(jQuery);
