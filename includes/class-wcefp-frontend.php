@@ -12,11 +12,22 @@ class WCEFP_Frontend {
         $price_adult = floatval(get_post_meta($pid, '_wcefp_price_adult', true));
         $price_child = floatval(get_post_meta($pid, '_wcefp_price_child', true));
 
+        global $wpdb;
+        $tbl = $wpdb->prefix.'wcefp_product_extras';
+        $posts = $wpdb->prefix.'posts';
+        $rows = $wpdb->get_results($wpdb->prepare("SELECT pe.*, p.post_title, p.post_content FROM $tbl pe LEFT JOIN $posts p ON p.ID=pe.extra_id WHERE pe.product_id=%d ORDER BY pe.sort_order ASC", $pid), ARRAY_A);
         $extras = [];
-        $raw = get_post_meta($pid, '_wcefp_extras_json', true);
-        if ($raw) {
-            $arr = json_decode($raw, true);
-            if (is_array($arr)) $extras = $arr;
+        foreach ($rows as $r) {
+            $extras[] = [
+                'id' => intval($r['extra_id']),
+                'name' => $r['post_title'],
+                'desc' => wp_trim_words($r['post_content'], 20),
+                'pricing_type' => $r['pricing_type'],
+                'price' => floatval($r['price']),
+                'required' => intval($r['required']) ? 1 : 0,
+                'max_qty' => intval($r['max_qty']),
+                'stock' => intval($r['stock'])
+            ];
         }
 
         // Voucher in sessione: se combacia con il prodotto, prezzo 0
@@ -52,10 +63,16 @@ class WCEFP_Frontend {
                 <label><?php _e('Extra','wceventsfp'); ?></label>
                 <div class="wcefp-extras">
                     <?php foreach ($extras as $i=>$ex): ?>
-                        <label class="wcefp-extra-item">
-                            <input type="checkbox" class="wcefp-extra" data-name="<?php echo esc_attr($ex['name']); ?>" data-price="<?php echo esc_attr($ex['price']); ?>" />
-                            <span><?php echo esc_html($ex['name']); ?> (+€<?php echo esc_html($ex['price']); ?>)</span>
-                        </label>
+                        <?php $toggle = ($ex['max_qty']==1 && !$ex['required']); ?>
+                        <div class="wcefp-extra-row" data-id="<?php echo esc_attr($ex['id']); ?>" data-name="<?php echo esc_attr($ex['name']); ?>" data-price="<?php echo esc_attr($ex['price']); ?>" data-pricing="<?php echo esc_attr($ex['pricing_type']); ?>">
+                            <span class="wcefp-extra-label"><?php echo esc_html($ex['name']); ?> (+€<?php echo esc_html($ex['price']); ?>)</span>
+                            <?php if($toggle): ?>
+                                <input type="checkbox" class="wcefp-extra-toggle" />
+                            <?php else: ?>
+                                <input type="number" class="wcefp-extra-qty" min="<?php echo $ex['required']?1:0; ?>" value="<?php echo $ex['required']?1:0; ?>" <?php if($ex['required']) echo 'readonly'; ?> <?php if($ex['max_qty']>0) echo 'max="'.esc_attr($ex['max_qty']).'"'; ?> />
+                            <?php endif; ?>
+                            <?php if($ex['desc']) echo '<small class="wcefp-extra-desc">'.esc_html($ex['desc']).'</small>'; ?>
+                        </div>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -213,7 +230,7 @@ class WCEFP_Frontend {
         $occ  = intval($_POST['occurrence_id'] ?? 0);
         $ad   = max(0, intval($_POST['adults'] ?? 0));
         $ch   = max(0, intval($_POST['children'] ?? 0));
-        $extras = isset($_POST['extras']) && is_array($_POST['extras']) ? array_values($_POST['extras']) : [];
+        $extras_in = isset($_POST['extras']) && is_array($_POST['extras']) ? array_values($_POST['extras']) : [];
 
         if (!$pid || !$occ || ($ad+$ch)<=0) wp_send_json_error(['msg'=>'Dati mancanti']);
 
@@ -235,6 +252,63 @@ class WCEFP_Frontend {
             if ($vPid === $pid) {
                 $useVoucher = true;
                 $voucherCode = WC()->session->get('wcefp_voucher_code', '');
+            }
+        }
+
+        // Sanitizza e valida extra
+        $tbl_ex = $wpdb->prefix.'wcefp_product_extras';
+        $extras = [];
+        foreach ($extras_in as $ex) {
+            $ex_id = intval($ex['id'] ?? 0);
+            $qty = intval($ex['qty'] ?? 0);
+            if (!$ex_id || $qty <= 0) continue;
+            $row = $wpdb->get_row($wpdb->prepare("SELECT pricing_type, price, required, max_qty, stock FROM $tbl_ex WHERE product_id=%d AND extra_id=%d", $pid, $ex_id), ARRAY_A);
+            if (!$row) continue;
+            $pricing = $row['pricing_type'];
+            $price   = floatval($row['price']);
+            $required = intval($row['required']) ? 1 : 0;
+            $max_qty  = intval($row['max_qty']);
+            $stock    = intval($row['stock']);
+            if ($required && $qty < 1) $qty = 1;
+            if ($max_qty > 0 && $qty > $max_qty) $qty = $max_qty;
+            $mult = $qty;
+            if ($pricing === 'per_person') $mult *= ($ad + $ch);
+            elseif ($pricing === 'per_child') $mult *= $ch;
+            elseif ($pricing === 'per_adult') $mult *= $ad;
+            if ($stock > 0 && $stock < $mult) wp_send_json_error(['msg'=>sprintf(__('Extra "%s" esaurito','wceventsfp'), get_the_title($ex_id))]);
+            $extras[] = [
+                'id' => $ex_id,
+                'name' => get_the_title($ex_id),
+                'price' => $price,
+                'qty' => $qty,
+                'pricing' => $pricing
+            ];
+        }
+
+        // Verifica extra obbligatori
+        $required_ids = $wpdb->get_col($wpdb->prepare("SELECT extra_id FROM $tbl_ex WHERE product_id=%d AND required=1", $pid));
+        foreach ($required_ids as $rid) {
+            $found = false;
+            foreach ($extras as $e) if ($e['id'] == $rid) { $found=true; break; }
+            if (!$found) {
+                $row = $wpdb->get_row($wpdb->prepare("SELECT pricing_type, price, stock FROM $tbl_ex WHERE product_id=%d AND extra_id=%d", $pid, $rid), ARRAY_A);
+                if ($row) {
+                    $pricing = $row['pricing_type'];
+                    $price = floatval($row['price']);
+                    $stock = intval($row['stock']);
+                    $mult = 1;
+                    if ($pricing === 'per_person') $mult *= ($ad + $ch);
+                    elseif ($pricing === 'per_child') $mult *= $ch;
+                    elseif ($pricing === 'per_adult') $mult *= $ad;
+                    if ($stock > 0 && $stock < $mult) wp_send_json_error(['msg'=>sprintf(__('Extra "%s" esaurito','wceventsfp'), get_the_title($rid))]);
+                    $extras[] = [
+                        'id'=>$rid,
+                        'name'=>get_the_title($rid),
+                        'price'=>$price,
+                        'qty'=>1,
+                        'pricing'=>$pricing
+                    ];
+                }
             }
         }
 
@@ -297,7 +371,14 @@ class WCEFP_Frontend {
             $price_child = floatval(get_post_meta($p->get_id(), '_wcefp_price_child', true));
             $extras_total = 0.0;
             foreach ($extras as $ex) {
-                if (isset($ex['price'])) $extras_total += floatval($ex['price']);
+                $price = floatval($ex['price'] ?? 0);
+                $qty   = intval($ex['qty'] ?? 0);
+                $pricing = $ex['pricing'] ?? 'per_order';
+                $mult = $qty;
+                if ($pricing === 'per_person') $mult *= ($ad + $ch);
+                elseif ($pricing === 'per_child') $mult *= $ch;
+                elseif ($pricing === 'per_adult') $mult *= $ad;
+                $extras_total += $price * $mult;
             }
             $total = ($ad * $price_adult) + ($ch * $price_child) + $extras_total;
             $qty = max(1, $ad + $ch);
@@ -312,8 +393,13 @@ class WCEFP_Frontend {
         foreach ($map as $k=>$label) if (isset($values[$k])) $item->add_meta_data($label, $values[$k], true);
 
         if (!empty($values['_wcefp_extras']) && is_array($values['_wcefp_extras'])) {
-            $names = array_map(function($e){ return $e['name'] ?? ''; }, $values['_wcefp_extras']);
+            $names = array_map(function($e){
+                $n = $e['name'] ?? '';
+                $q = intval($e['qty'] ?? 0);
+                return $q>1 ? $n.' x'.$q : $n;
+            }, $values['_wcefp_extras']);
             $item->add_meta_data('Extra', implode(', ', array_filter($names)), true);
+            $item->add_meta_data('_wcefp_extras_data', wp_json_encode($values['_wcefp_extras']), true);
         }
         if (!empty($values['_wcefp_voucher_code'])) {
             $item->add_meta_data('Voucher', $values['_wcefp_voucher_code'], true);

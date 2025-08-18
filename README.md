@@ -1,5 +1,5 @@
-# WCEventsFP (v1.6.0)
-Eventi & Esperienze per WooCommerce con ricorrenze, slot, prezzi Adulto/Bambino, extra opzionali, chiusure straordinarie, dashboard KPI, calendario prenotazioni (con inline edit), tracciamento GA4/Tag Manager + Meta Pixel, integrazione Brevo (liste IT/EN, transactional), ICS, e gift “Regala un’esperienza”.
+# WCEventsFP (v1.6.1)
+Eventi & Esperienze per WooCommerce con ricorrenze, slot, prezzi Adulto/Bambino, extra riutilizzabili con regole di prezzo e disponibilità, chiusure straordinarie, dashboard KPI, calendario prenotazioni (con inline edit), tracciamento GA4/Tag Manager + Meta Pixel, integrazione Brevo (liste IT/EN, transactional), ICS, e gift “Regala un’esperienza”.
 
 **Autore:** Francesco Passeri  
 **Requisiti:** WordPress 6+, WooCommerce 7+, PHP 7.4+  
@@ -26,8 +26,7 @@ Eventi & Esperienze per WooCommerce con ricorrenze, slot, prezzi Adulto/Bambino,
    - Prezzo **Adulto** e **Bambino**
    - **Capienza per slot** e **Durata** (minuti)
    - **Giorni** attivi e **slot orari** (es. `11:00, 15:00, 18:30`)
-   - **Extra** in JSON:  
-     `[{ "name": "Tagliere", "price": 8 }, { "name": "Calice vino", "price": 5 }]`
+   - **Extra** riutilizzabili con tariffazione (per ordine/per persona/solo adulto/solo bambino), obbligatorietà, quantità massima e **stock**
    - Info: **lingue**, **meeting point**, **incluso**, **escluso**, **cancellazione**
 3. Genera le **occorrenze** (da/a) con il pulsante nel pannello prodotto.
 

@@ -3,6 +3,9 @@
 .wcefp-toolbar{margin:12px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #wcefp-calendar .fc-event{cursor:pointer}
 
+.wcefp-extra-table td{padding:4px}
+.wcefp-extra-table input{width:100%}
+
 /* Chiusure */
 .wcefp-closures-form{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
 .wcefp-closures-form label{display:flex;flex-direction:column}

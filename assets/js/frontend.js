@@ -24,15 +24,22 @@
         const ad = parseInt($ad.val()||'0',10);
         const ch = parseInt($ch.val()||'0',10);
         let extras = 0;
-        $w.find('.wcefp-extra:checked').each(function(){
-          const p = parseFloat($(this).data('price') || '0');
-          extras += p;
+        $w.find('.wcefp-extra-row').each(function(){
+          const price = parseFloat($(this).data('price') || '0');
+          const pricing = $(this).data('pricing');
+          const $qty = $(this).find('.wcefp-extra-qty');
+          const $tg  = $(this).find('.wcefp-extra-toggle');
+          let qty = 0;
+          if($qty.length) qty = parseInt($qty.val()||'0',10);
+          if($tg.length) qty = $tg.is(':checked') ? 1 : 0;
+          let mult = qty;
+          if(pricing === 'per_person') mult *= (ad+ch);
+          else if(pricing === 'per_child') mult *= ch;
+          else if(pricing === 'per_adult') mult *= ad;
+          extras += price * mult;
         });
         const total = hasVoucher ? 0 : ((ad*priceAdult) + (ch*priceChild) + extras);
         $tot.text(formatEuro(total));
-
-        // GA4 evento custom quando selezioni un extra
-        // (trigger in change extra sotto)
       }
 
       function loadSlots(){
@@ -57,11 +64,19 @@
       $date.on('change', loadSlots);
       $ad.on('input', updateTotal);
       $ch.on('input', updateTotal);
-      $w.on('change', '.wcefp-extra', function(){
+      $w.on('input', '.wcefp-extra-qty', function(){
         updateTotal();
-        // GA4: extra_selected
         if (WCEFPData.ga4_enabled) {
-          const exName = $(this).data('name') || 'extra';
+          const exName = $(this).closest('.wcefp-extra-row').data('name') || 'extra';
+          const selected = parseInt($(this).val()||'0',10) > 0;
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push({event:'extra_selected', extra_name: exName, selected: selected});
+        }
+      });
+      $w.on('change', '.wcefp-extra-toggle', function(){
+        updateTotal();
+        if (WCEFPData.ga4_enabled) {
+          const exName = $(this).closest('.wcefp-extra-row').data('name') || 'extra';
           window.dataLayer = window.dataLayer || [];
           window.dataLayer.push({event:'extra_selected', extra_name: exName, selected: $(this).is(':checked')});
         }
@@ -75,8 +90,19 @@
         const ad = parseInt($ad.val()||'0',10);
         const ch = parseInt($ch.val()||'0',10);
         const extras = [];
-        $w.find('.wcefp-extra:checked').each(function(){
-          extras.push({name: $(this).data('name'), price: $(this).data('price')});
+        $w.find('.wcefp-extra-row').each(function(){
+          const id = $(this).data('id');
+          const name = $(this).data('name');
+          const price = $(this).data('price');
+          const pricing = $(this).data('pricing');
+          const $qty = $(this).find('.wcefp-extra-qty');
+          const $tg  = $(this).find('.wcefp-extra-toggle');
+          let qty = 0;
+          if($qty.length) qty = parseInt($qty.val()||'0',10);
+          if($tg.length) qty = $tg.is(':checked') ? 1 : 0;
+          if(qty>0){
+            extras.push({id:id, name:name, price:price, qty:qty, pricing:pricing});
+          }
         });
 
         if(!occ){ $fb.text('Seleziona uno slot.'); return; }

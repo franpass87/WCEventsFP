@@ -6,9 +6,9 @@
 ```pot
 msgid ""
 msgstr ""
-"Project-Id-Version: WCEventsFP 1.6.0\n"
+"Project-Id-Version: WCEventsFP 1.6.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-16 00:00+0000\n"
+"POT-Creation-Date: 2025-08-17 00:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Language: \n"
 "Language-Team: \n"
@@ -306,11 +306,15 @@ msgid "Extra opzionali"
 msgstr ""
 
 #: wceventsfp.php:152
-msgid "Extra (JSON)"
+msgid "Nome"
 msgstr ""
 
-#: wceventsfp.php:155
-msgid "Formato JSON: name, price"
+#: wceventsfp.php:153
+msgid "Prezzo (€)"
+msgstr ""
+
+#: wceventsfp.php:154
+msgid "Aggiungi extra"
 msgstr ""
 
 #: wceventsfp.php:160

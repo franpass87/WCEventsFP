@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WCEventsFP
  * Description: Eventi & Esperienze per WooCommerce con ricorrenze, slot, prezzi A/B, extra, KPI, Calendario (inline edit + filtro), Chiusure straordinarie, GA4/Tag Manager, Meta Pixel, Brevo (liste IT/EN), anti-overbooking, ICS, gift "Regala un'esperienza" e scheda stile GYG/Viator.
- * Version:     1.6.0
+ * Version:     1.6.1
  * Author:      Francesco Passeri
  * Text Domain: wceventsfp
  * Domain Path: /languages
@@ -10,7 +10,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('WCEFP_VERSION', '1.6.0');
+define('WCEFP_VERSION', '1.6.1');
 define('WCEFP_PLUGIN_FILE', __FILE__);
 define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -73,6 +73,24 @@ register_activation_hook(__FILE__, function () {
     dbDelta($sql1);
     dbDelta($sql2);
     dbDelta($sql3);
+    
+    // Extra associati ai prodotti
+    $tbl4 = $wpdb->prefix . 'wcefp_product_extras';
+    $sql4 = "CREATE TABLE IF NOT EXISTS $tbl4 (
+      id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      product_id BIGINT UNSIGNED NOT NULL,
+      extra_id BIGINT UNSIGNED NOT NULL,
+      pricing_type VARCHAR(20) NOT NULL DEFAULT 'per_order',
+      price DECIMAL(10,2) NOT NULL DEFAULT 0,
+      required TINYINT(1) NOT NULL DEFAULT 0,
+      max_qty INT UNSIGNED NOT NULL DEFAULT 0,
+      stock INT UNSIGNED NOT NULL DEFAULT 0,
+      sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+      UNIQUE KEY uniq_prod_extra (product_id,extra_id),
+      INDEX (product_id),
+      INDEX (extra_id)
+    ) $charset;";
+    dbDelta($sql4);
 });
 
 add_action('plugins_loaded', function () {
@@ -109,6 +127,8 @@ class WCEFP_Plugin {
 
     public function init() {
         $this->ensure_db_schema();
+
+        add_action('init', [$this, 'register_extra_cpt']);
 
         /* Tipi prodotto */
         add_filter('product_type_selector', [$this, 'register_product_types']);
@@ -179,6 +199,12 @@ class WCEFP_Plugin {
         add_action('woocommerce_order_status_cancelled',  [$this, 'release_seats_on_status']);
         add_action('woocommerce_order_status_failed',     [$this, 'release_seats_on_status']);
 
+        add_action('woocommerce_order_status_processing', [$this, 'allocate_extras_on_status']);
+        add_action('woocommerce_order_status_completed',  [$this, 'allocate_extras_on_status']);
+        add_action('woocommerce_order_status_refunded',   [$this, 'release_extras_on_status']);
+        add_action('woocommerce_order_status_cancelled',  [$this, 'release_extras_on_status']);
+        add_action('woocommerce_order_status_failed',     [$this, 'release_extras_on_status']);
+
         /* ICS routing */
         add_action('init', [$this, 'serve_ics']);
 
@@ -220,6 +246,30 @@ class WCEFP_Plugin {
             redeemed_at DATETIME NULL,
             INDEX (product_id), INDEX (order_id), INDEX (status)
         ) $charset");
+
+        $tbl4 = $wpdb->prefix.'wcefp_product_extras';
+        $wpdb->query("CREATE TABLE IF NOT EXISTS $tbl4 (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            product_id BIGINT UNSIGNED NOT NULL,
+            extra_id BIGINT UNSIGNED NOT NULL,
+            pricing_type VARCHAR(20) NOT NULL DEFAULT 'per_order',
+            price DECIMAL(10,2) NOT NULL DEFAULT 0,
+            required TINYINT(1) NOT NULL DEFAULT 0,
+            max_qty INT UNSIGNED NOT NULL DEFAULT 0,
+            stock INT UNSIGNED NOT NULL DEFAULT 0,
+            sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+            UNIQUE KEY uniq_prod_extra (product_id,extra_id),
+            INDEX (product_id), INDEX (extra_id)
+        ) $charset");
+    }
+
+    public function register_extra_cpt(){
+        register_post_type('wcefp_extra', [
+            'label' => __('Extra','wceventsfp'),
+            'public' => false,
+            'show_ui' => true,
+            'supports' => ['title','editor']
+        ]);
     }
 
     /* ---------- Product Types ---------- */
@@ -271,13 +321,75 @@ class WCEFP_Plugin {
 
             <div class="options_group">
                 <h3><?php _e('Extra opzionali', 'wceventsfp'); ?></h3>
-                <p class="form-field">
-                    <label for="_wcefp_extras_json"><?php _e('Extra (JSON)','wceventsfp'); ?></label>
-                    <textarea id="_wcefp_extras_json" name="_wcefp_extras_json" style="width:100%;height:100px" placeholder='[{"name":"Tagliere","price":8},{"name":"Calice vino","price":5}]'><?php
-                        echo esc_textarea(get_post_meta($post->ID, '_wcefp_extras_json', true));
-                    ?></textarea>
-                    <span class="description"><?php _e('Formato JSON: name, price','wceventsfp'); ?></span>
-                </p>
+                <?php
+                    global $wpdb;
+                    $tbl = $wpdb->prefix.'wcefp_product_extras';
+                    $rows = $wpdb->get_results($wpdb->prepare("SELECT pe.*, p.post_title FROM $tbl pe LEFT JOIN {$wpdb->posts} p ON p.ID=pe.extra_id WHERE pe.product_id=%d ORDER BY pe.sort_order ASC", $post->ID), ARRAY_A);
+                    $extras = [];
+                    foreach ($rows as $r) {
+                        $extras[] = [
+                            'id'=>intval($r['extra_id']),
+                            'name'=>$r['post_title'],
+                            'pricing_type'=>$r['pricing_type'],
+                            'price'=>floatval($r['price']),
+                            'required'=>intval($r['required'])?1:0,
+                            'max_qty'=>intval($r['max_qty']),
+                            'stock'=>intval($r['stock'])
+                        ];
+                    }
+                    $all = get_posts(['post_type'=>'wcefp_extra','numberposts'=>-1,'post_status'=>'publish']);
+                ?>
+                <table class="wcefp-extra-table widefat">
+                    <thead>
+                        <tr>
+                            <th><?php _e('Nome','wceventsfp'); ?></th>
+                            <th><?php _e('Tariffazione','wceventsfp'); ?></th>
+                            <th><?php _e('Prezzo (€)','wceventsfp'); ?></th>
+                            <th><?php _e('Obbligatorio','wceventsfp'); ?></th>
+                            <th><?php _e('Max QTY','wceventsfp'); ?></th>
+                            <th><?php _e('Stock','wceventsfp'); ?></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="wcefp-extra-rows">
+                        <?php foreach ($extras as $i => $ex): ?>
+                        <tr>
+                            <td>
+                                <input type="hidden" name="_wcefp_extras[<?php echo esc_attr($i); ?>][id]" value="<?php echo esc_attr($ex['id']); ?>" />
+                                <input type="text" list="wcefp-extra-list" name="_wcefp_extras[<?php echo esc_attr($i); ?>][name]" value="<?php echo esc_attr($ex['name']); ?>" />
+                            </td>
+                            <td>
+                                <select name="_wcefp_extras[<?php echo esc_attr($i); ?>][pricing_type]">
+                                    <option value="per_order" <?php selected($ex['pricing_type'],'per_order'); ?>><?php _e('Per ordine','wceventsfp'); ?></option>
+                                    <option value="per_person" <?php selected($ex['pricing_type'],'per_person'); ?>><?php _e('Per persona','wceventsfp'); ?></option>
+                                    <option value="per_child" <?php selected($ex['pricing_type'],'per_child'); ?>><?php _e('Solo bambino','wceventsfp'); ?></option>
+                                    <option value="per_adult" <?php selected($ex['pricing_type'],'per_adult'); ?>><?php _e('Solo adulto','wceventsfp'); ?></option>
+                                </select>
+                            </td>
+                            <td><input type="number" step="0.01" min="0" name="_wcefp_extras[<?php echo esc_attr($i); ?>][price]" value="<?php echo esc_attr($ex['price']); ?>" /></td>
+                            <td><input type="checkbox" name="_wcefp_extras[<?php echo esc_attr($i); ?>][required]" <?php checked($ex['required'],1); ?> /></td>
+                            <td><input type="number" step="1" min="0" name="_wcefp_extras[<?php echo esc_attr($i); ?>][max_qty]" value="<?php echo esc_attr($ex['max_qty']); ?>" /></td>
+                            <td><input type="number" step="1" min="0" name="_wcefp_extras[<?php echo esc_attr($i); ?>][stock]" value="<?php echo esc_attr($ex['stock']); ?>" /></td>
+                            <td><button type="button" class="button wcefp-remove-extra">&times;</button></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <datalist id="wcefp-extra-list">
+                    <?php foreach ($all as $e) echo '<option value="'.esc_attr($e->post_title).'">'; ?>
+                </datalist>
+                <p><button type="button" class="button wcefp-add-extra"><?php _e('Aggiungi extra','wceventsfp'); ?></button></p>
+                <script type="text/html" id="wcefp-extra-row-template">
+                    <tr>
+                        <td><input type="hidden" name="_wcefp_extras[{{INDEX}}][id]" value="" /><input type="text" list="wcefp-extra-list" name="_wcefp_extras[{{INDEX}}][name]" /></td>
+                        <td><select name="_wcefp_extras[{{INDEX}}][pricing_type]"><option value="per_order"><?php _e('Per ordine','wceventsfp'); ?></option><option value="per_person"><?php _e('Per persona','wceventsfp'); ?></option><option value="per_child"><?php _e('Solo bambino','wceventsfp'); ?></option><option value="per_adult"><?php _e('Solo adulto','wceventsfp'); ?></option></select></td>
+                        <td><input type="number" step="0.01" min="0" name="_wcefp_extras[{{INDEX}}][price]" /></td>
+                        <td><input type="checkbox" name="_wcefp_extras[{{INDEX}}][required]" /></td>
+                        <td><input type="number" step="1" min="0" name="_wcefp_extras[{{INDEX}}][max_qty]" /></td>
+                        <td><input type="number" step="1" min="0" name="_wcefp_extras[{{INDEX}}][stock]" /></td>
+                        <td><button type="button" class="button wcefp-remove-extra">&times;</button></td>
+                    </tr>
+                </script>
             </div>
 
             <div class="options_group">
@@ -312,10 +424,46 @@ class WCEFP_Plugin {
         $pid = $product->get_id();
         $keys = [
             '_wcefp_price_adult','_wcefp_price_child','_wcefp_capacity_per_slot',
-            '_wcefp_extras_json','_wcefp_time_slots','_wcefp_duration_minutes',
+            '_wcefp_time_slots','_wcefp_duration_minutes',
             '_wcefp_languages','_wcefp_meeting_point','_wcefp_includes','_wcefp_excludes','_wcefp_cancellation'
         ];
         foreach ($keys as $k) if (isset($_POST[$k])) update_post_meta($pid, $k, wp_unslash($_POST[$k]));
+
+        // Extra opzionali
+        global $wpdb; $tbl = $wpdb->prefix.'wcefp_product_extras';
+        $wpdb->delete($tbl, ['product_id'=>$pid]);
+        if (isset($_POST['_wcefp_extras']) && is_array($_POST['_wcefp_extras'])) {
+            $order = 0;
+            foreach ($_POST['_wcefp_extras'] as $ex) {
+                $name = sanitize_text_field($ex['name'] ?? '');
+                if ($name === '') continue;
+                $price = isset($ex['price']) ? floatval($ex['price']) : 0;
+                $pricing = sanitize_key($ex['pricing_type'] ?? 'per_order');
+                $required = isset($ex['required']) ? 1 : 0;
+                $max_qty = isset($ex['max_qty']) ? intval($ex['max_qty']) : 0;
+                $stock   = isset($ex['stock']) ? intval($ex['stock']) : 0;
+                $extra_id = intval($ex['id'] ?? 0);
+                if (!$extra_id) {
+                    $existing = get_page_by_title($name, OBJECT, 'wcefp_extra');
+                    if ($existing) $extra_id = $existing->ID;
+                }
+                if (!$extra_id) {
+                    $extra_id = wp_insert_post(['post_type'=>'wcefp_extra','post_title'=>$name,'post_status'=>'publish']);
+                } else {
+                    wp_update_post(['ID'=>$extra_id,'post_title'=>$name]);
+                }
+                $wpdb->insert($tbl, [
+                    'product_id'=>$pid,
+                    'extra_id'=>$extra_id,
+                    'pricing_type'=>$pricing,
+                    'price'=>$price,
+                    'required'=>$required,
+                    'max_qty'=>$max_qty,
+                    'stock'=>$stock,
+                    'sort_order'=>$order++
+                ], ['%d','%d','%s','%f','%d','%d','%d','%d']);
+            }
+        }
         $days = isset($_POST['_wcefp_weekdays']) ? array_map('intval',(array)$_POST['_wcefp_weekdays']) : [];
         update_post_meta($pid, '_wcefp_weekdays', $days);
     }
@@ -746,6 +894,30 @@ class WCEFP_Plugin {
             }
         }
     }
+
+    public function allocate_extras_on_status($order_id){
+        $order = wc_get_order($order_id); if(!$order) return;
+        $todo = WCEFP_OrderExtraOps::get_items_to_alloc($order);
+        foreach ($todo as $row){
+            $ok = wcefp_adjust_extra_stock_atomic($row['product'], $row['extra'], -$row['qty']);
+            if ($ok) {
+                $order->add_order_note("Extra allocato per \"{$row['name']}\" ( -{$row['qty']} ).");
+            } else {
+                $order->add_order_note("ATTENZIONE: stock insufficiente per extra \"{$row['name']}\".");
+                $order->update_status('on-hold');
+            }
+        }
+    }
+    public function release_extras_on_status($order_id){
+        $order = wc_get_order($order_id); if(!$order) return;
+        $todo = WCEFP_OrderExtraOps::get_items_to_alloc($order);
+        foreach ($todo as $row){
+            $ok = wcefp_adjust_extra_stock_atomic($row['product'], $row['extra'], $row['qty']);
+            if ($ok) {
+                $order->add_order_note("Extra rilasciato per \"{$row['name']}\" ( +{$row['qty']} ).");
+            }
+        }
+    }
 }
 
 /* ---------- Helper allocazione ---------- */
@@ -756,6 +928,21 @@ if (!function_exists('wcefp_update_booked_atomic')) {
             $sql = $wpdb->prepare("UPDATE $tbl SET booked = booked + %d WHERE id=%d AND status='active' AND (capacity - booked) >= %d", $delta, $occ_id, $delta);
         } else {
             $sql = $wpdb->prepare("UPDATE $tbl SET booked = GREATEST(0, booked + %d) WHERE id=%d", $delta, $occ_id);
+        }
+        $res = $wpdb->query($sql);
+        return ($res && intval($res) > 0);
+    }
+}
+
+if (!function_exists('wcefp_adjust_extra_stock_atomic')) {
+    function wcefp_adjust_extra_stock_atomic($product_id, $extra_id, $delta){
+        global $wpdb; $tbl = $wpdb->prefix.'wcefp_product_extras';
+        if ($delta < 0) {
+            $delta = absint($delta);
+            $sql = $wpdb->prepare("UPDATE $tbl SET stock = stock - %d WHERE product_id=%d AND extra_id=%d AND stock >= %d AND stock > 0", $delta, $product_id, $extra_id, $delta);
+        } else {
+            $delta = absint($delta);
+            $sql = $wpdb->prepare("UPDATE $tbl SET stock = stock + %d WHERE product_id=%d AND extra_id=%d AND stock > 0", $delta, $product_id, $extra_id);
         }
         $res = $wpdb->query($sql);
         return ($res && intval($res) > 0);
@@ -773,6 +960,35 @@ class WCEFP_OrderSeatOps {
             $ch = intval($it->get_meta('Bambini'));
             $qty = max(0, $ad + $ch);
             if ($occId && $qty>0) $rows[] = ['occ'=>$occId,'qty'=>$qty,'name'=>$p->get_name()];
+        }
+        return $rows;
+    }
+}
+
+class WCEFP_OrderExtraOps {
+    public static function get_items_to_alloc($order){
+        $rows = [];
+        foreach ($order->get_items() as $it){
+            $p = $it->get_product(); if(!$p) continue;
+            if (!in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) continue;
+            $ad = intval($it->get_meta('Adulti'));
+            $ch = intval($it->get_meta('Bambini'));
+            $json = $it->get_meta('_wcefp_extras_data');
+            if(!$json) continue;
+            $extras = json_decode($json, true);
+            if(!is_array($extras)) continue;
+            foreach ($extras as $ex){
+                $id = intval($ex['id'] ?? 0);
+                $qty = intval($ex['qty'] ?? 0);
+                $pricing = $ex['pricing'] ?? 'per_order';
+                if($id && $qty>0){
+                    $mult = $qty;
+                    if($pricing === 'per_person') $mult *= ($ad + $ch);
+                    elseif($pricing === 'per_child') $mult *= $ch;
+                    elseif($pricing === 'per_adult') $mult *= $ad;
+                    $rows[] = ['product'=>$p->get_id(),'extra'=>$id,'qty'=>$mult,'name'=>$ex['name'] ?? 'extra'];
+                }
+            }
         }
         return $rows;
     }
