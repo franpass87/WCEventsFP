@@ -8,6 +8,10 @@ Changed
 
 Widget di prenotazione aggiornato con selezione quantità/toggle e calcolo dinamico del prezzo.
 
+Fixed
+
+Pagina Meeting Points nel backend registrata dopo il menu principale del plugin, evitando il redirect alla homepage.
+
 [1.6.1] – 2025-08-17
 Changed
 
