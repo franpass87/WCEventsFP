@@ -1031,3 +1031,80 @@ class WCEFP_OrderExtraOps {
         return $rows;
     }
 }
+
+/* ---- Meta box: Giorni disponibili ---- */
+
+add_action('add_meta_boxes', 'wcefp_add_days_metabox', 10, 2);
+
+/**
+ * Register meta box for available weekdays.
+ *
+ * @param string   $post_type Current post type.
+ * @param WP_Post  $post      Current post object.
+ */
+function wcefp_add_days_metabox($post_type, $post){
+    if ($post_type !== 'product') return;
+    $product = wc_get_product($post->ID);
+    if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
+
+    add_meta_box(
+        'wcefp_days_meta',
+        __('Giorni disponibili', 'wceventsfp'),
+        'wcefp_render_days_metabox',
+        'product',
+        'side',
+        'default'
+    );
+}
+
+/**
+ * Render the weekdays checkboxes.
+ *
+ * @param WP_Post $post Current post.
+ */
+function wcefp_render_days_metabox($post){
+    $saved = (array) get_post_meta($post->ID, '_wcefp_days', true);
+    $days = [
+        'mon' => __('Lunedì', 'wceventsfp'),
+        'tue' => __('Martedì', 'wceventsfp'),
+        'wed' => __('Mercoledì', 'wceventsfp'),
+        'thu' => __('Giovedì', 'wceventsfp'),
+        'fri' => __('Venerdì', 'wceventsfp'),
+        'sat' => __('Sabato', 'wceventsfp'),
+        'sun' => __('Domenica', 'wceventsfp'),
+    ];
+    echo '<div class="wcefp-weekdays-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
+    foreach ($days as $key => $label) {
+        printf(
+            '<label style="display:flex;align-items:center;gap:2px;"><input type="checkbox" name="wcefp_days[]" value="%s" %s /> %s</label>',
+            esc_attr($key),
+            checked(in_array($key, $saved, true), true, false),
+            esc_html($label)
+        );
+    }
+    echo '</div>';
+    wp_nonce_field('wcefp_save_days', 'wcefp_days_nonce');
+}
+
+/**
+ * Save selected weekdays.
+ *
+ * @param int $post_id Product ID.
+ */
+function wcefp_save_days_metabox($post_id){
+    if (!isset($_POST['wcefp_days_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['wcefp_days_nonce'])), 'wcefp_save_days')) return;
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (!current_user_can('edit_post', $post_id)) return;
+
+    $days = isset($_POST['wcefp_days']) ? array_map('sanitize_text_field', (array)$_POST['wcefp_days']) : [];
+    $valid = ['mon','tue','wed','thu','fri','sat','sun'];
+    $days = array_values(array_intersect($valid, $days));
+
+    if (!empty($days)) {
+        update_post_meta($post_id, '_wcefp_days', $days);
+    } else {
+        delete_post_meta($post_id, '_wcefp_days');
+    }
+}
+add_action('save_post_product', 'wcefp_save_days_metabox');
+
