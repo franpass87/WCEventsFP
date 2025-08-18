@@ -689,17 +689,46 @@ class WCEFP_Plugin {
         $list_en = intval(get_option('wcefp_brevo_list_en', 0));
         $list_id = $is_it ? $list_it : $list_en;
 
+        // First event data
+        $product_name = '';
+        $occ_date = '';
+        $adults = 0;
+        $children = 0;
+        foreach ($order->get_items() as $item) {
+            $p = $item->get_product();
+            if (!$p || !in_array($p->get_type(), ['wcefp_event', 'wcefp_experience'], true)) continue;
+            $product_name = $p->get_name();
+            $occ_date = $item->get_meta('Occorrenza');
+            $adults = intval($item->get_meta('Adulti'));
+            $children = intval($item->get_meta('Bambini'));
+            break;
+        }
+
+        $brevo_tag = trim(get_option('wcefp_brevo_tag', ''));
+        $tags = ['WCEFP'];
+        if ($brevo_tag !== '') $tags[] = $brevo_tag;
+
+        $attributes = [
+            'FIRSTNAME' => $firstname,
+            'ORDER_ID'  => (string)$order->get_order_number(),
+            'TOTAL'     => (float)$order->get_total(),
+            'LANG'      => $is_it ? 'IT' : 'EN',
+            'ProductName' => $product_name,
+            'OccDate' => $occ_date,
+            'Adults' => $adults,
+            'Children' => $children,
+        ];
+        if (!empty($tags)) {
+            $attributes['TAGS'] = implode(',', $tags);
+        }
+
         // Upsert contatto
         $this->brevo_request('https://api.brevo.com/v3/contacts', 'POST', [
             'email' => $email,
-            'attributes' => [
-                'FIRSTNAME' => $firstname,
-                'ORDER_ID'  => (string)$order->get_order_number(),
-                'TOTAL'     => (float)$order->get_total(),
-                'LANG'      => $is_it ? 'IT' : 'EN',
-            ],
+            'attributes' => $attributes,
             'listIds' => $list_id ? [$list_id] : [],
             'updateEnabled' => true,
+            'tags' => $tags,
         ], $api_key);
 
         // Transazionale (se Template ID)
