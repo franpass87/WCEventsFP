@@ -19,8 +19,18 @@ class WCEFP_Frontend {
             if (is_array($arr)) $extras = $arr;
         }
 
+        // Voucher in sessione: se combacia con il prodotto, prezzo 0
+        $voucherActive = false;
+        if (function_exists('WC')) {
+            $vPid = intval(WC()->session->get('wcefp_voucher_product', 0));
+            $voucherActive = ($vPid === $pid);
+        }
+
         ob_start(); ?>
-        <div class="wcefp-widget" data-product="<?php echo esc_attr($pid); ?>" data-price-adult="<?php echo esc_attr($price_adult); ?>" data-price-child="<?php echo esc_attr($price_child); ?>">
+        <div class="wcefp-widget" data-product="<?php echo esc_attr($pid); ?>" data-price-adult="<?php echo esc_attr($price_adult); ?>" data-price-child="<?php echo esc_attr($price_child); ?>" data-voucher="<?php echo $voucherActive?'1':'0'; ?>">
+            <?php if ($voucherActive): ?>
+                <div class="wcefp-voucher-banner"><?php _e('Voucher attivo: questa prenotazione sarà a costo 0€','wceventsfp'); ?></div>
+            <?php endif; ?>
             <div class="wcefp-row">
                 <label><?php _e('Data','wceventsfp'); ?></label>
                 <input type="date" class="wcefp-date" />
@@ -85,7 +95,7 @@ class WCEFP_Frontend {
         $excludes = wp_kses_post(get_post_meta($pid, '_wcefp_excludes', true));
         $cxl      = wp_kses_post(get_post_meta($pid, '_wcefp_cancellation', true));
 
-        // Next upcoming occurrence con posti disponibili
+        // Next upcoming occurrence (attivo e con posti)
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
         $now = current_time('mysql');
         $next = $wpdb->get_row($wpdb->prepare("SELECT start_datetime,end_datetime FROM $tbl WHERE product_id=%d AND status='active' AND (capacity - booked) > 0 AND start_datetime >= %s ORDER BY start_datetime ASC LIMIT 1", $pid, $now));
@@ -119,7 +129,7 @@ class WCEFP_Frontend {
             echo '<script type="application/ld+json">'.wp_json_encode($json).'</script>';
         }
 
-        // Prossime 5 date disponibili
+        // Prossime 5 date
         $next_rows = $wpdb->get_results($wpdb->prepare(
             "SELECT id, start_datetime, capacity, booked FROM $tbl WHERE product_id=%d AND status='active' AND (capacity - booked) > 0 AND start_datetime >= %s ORDER BY start_datetime ASC LIMIT 5",
             $pid, $now
@@ -167,6 +177,11 @@ class WCEFP_Frontend {
         $date = sanitize_text_field($_POST['date'] ?? '');
         if (!$pid || !$date) wp_send_json_success(['slots'=>[]]);
 
+        // Blocca se giorno chiuso (globale o specifico)
+        if (class_exists('WCEFP_Closures') && WCEFP_Closures::is_date_closed($pid, $date)) {
+            wp_send_json_success(['slots'=>[]]);
+        }
+
         $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT id,start_datetime,capacity,booked,status FROM $tbl WHERE product_id=%d AND DATE(start_datetime)=%s ORDER BY start_datetime ASC",
             $pid, $date
@@ -189,7 +204,7 @@ class WCEFP_Frontend {
         wp_send_json_success(['slots'=>$slots]);
     }
 
-    /* ---------- AJAX: add to cart con check capienza e stato ---------- */
+    /* ---------- AJAX: add to cart con check capienza + voucher ---------- */
     public static function ajax_add_to_cart() {
         check_ajax_referer('wcefp_public','nonce');
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
@@ -213,17 +228,28 @@ class WCEFP_Frontend {
             wp_send_json_error(['msg'=> sprintf(__('Posti disponibili insufficienti. Rimasti: %d','wceventsfp'), $available)]);
         }
 
+        // Voucher in sessione?
+        $useVoucher = false; $voucherCode = '';
+        if (function_exists('WC')) {
+            $vPid = intval(WC()->session->get('wcefp_voucher_product', 0));
+            if ($vPid === $pid) {
+                $useVoucher = true;
+                $voucherCode = WC()->session->get('wcefp_voucher_code', '');
+            }
+        }
+
         $meta = [
             '_wcefp_occurrence_id' => $occ,
             '_wcefp_adults'  => $ad,
             '_wcefp_children'=> $ch,
             '_wcefp_extras'  => $extras,
         ];
+        if ($useVoucher && $voucherCode) $meta['_wcefp_voucher_code'] = $voucherCode;
 
         $added = WC()->cart->add_to_cart($pid, $qty, 0, [], $meta);
         if (!$added) wp_send_json_error(['msg'=>'Impossibile aggiungere al carrello']);
 
-        // GA4 add_to_cart (bridge opzionale)
+        // GA4 add_to_cart
         $product = wc_get_product($pid);
         $dl = [
             'event'=>'add_to_cart',
@@ -241,7 +267,7 @@ class WCEFP_Frontend {
         wp_send_json_success(['cart_url'=>wc_get_cart_url()]);
     }
 
-    /* ---------- Prezzo dinamico ---------- */
+    /* ---------- Prezzo dinamico + voucher ---------- */
     public static function apply_dynamic_price($cart) {
         if (is_admin() && !defined('DOING_AJAX')) return;
         if (did_action('woocommerce_before_calculate_totals') >= 2) return;
@@ -255,6 +281,18 @@ class WCEFP_Frontend {
             $ch = intval($ci['_wcefp_children'] ?? 0);
             $extras = isset($ci['_wcefp_extras']) && is_array($ci['_wcefp_extras']) ? $ci['_wcefp_extras'] : [];
 
+            // Voucher: se presente e combacia, prezzo 0
+            $voucher_ok = false;
+            if (!empty($ci['_wcefp_voucher_code']) && function_exists('WC')) {
+                $vPid = intval(WC()->session->get('wcefp_voucher_product', 0));
+                $voucher_ok = ($vPid === $p->get_id());
+            }
+
+            if ($voucher_ok) {
+                $ci['data']->set_price(0);
+                continue;
+            }
+
             $price_adult = floatval(get_post_meta($p->get_id(), '_wcefp_price_adult', true));
             $price_child = floatval(get_post_meta($p->get_id(), '_wcefp_price_child', true));
             $extras_total = 0.0;
@@ -265,7 +303,7 @@ class WCEFP_Frontend {
             $qty = max(1, $ad + $ch);
             $unit = $qty > 0 ? ($total / $qty) : $total;
 
-            if ($unit > 0) $ci['data']->set_price($unit);
+            if ($unit >= 0) $ci['data']->set_price($unit);
         }
     }
 
@@ -276,6 +314,11 @@ class WCEFP_Frontend {
         if (!empty($values['_wcefp_extras']) && is_array($values['_wcefp_extras'])) {
             $names = array_map(function($e){ return $e['name'] ?? ''; }, $values['_wcefp_extras']);
             $item->add_meta_data('Extra', implode(', ', array_filter($names)), true);
+        }
+        if (!empty($values['_wcefp_voucher_code'])) {
+            $item->add_meta_data('Voucher', $values['_wcefp_voucher_code'], true);
+            // salva anche a livello ordine per mark used
+            $order->update_meta_data('wcefp_voucher_code', $values['_wcefp_voucher_code']);
         }
     }
 }
