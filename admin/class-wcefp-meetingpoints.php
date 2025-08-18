@@ -11,8 +11,8 @@ class WCEFP_MeetingPoints {
     public function add_settings_page() {
         add_submenu_page(
             'wcefp', // slug principale del plugin
-            'Meeting Points',
-            'Meeting Points',
+            __( 'Meeting Points', 'wceventsfp' ),
+            __( 'Meeting Points', 'wceventsfp' ),
             'manage_options',
             'wcefp-meetingpoints',
             array( $this, 'render_settings_page' )
@@ -20,19 +20,35 @@ class WCEFP_MeetingPoints {
     }
 
     public function register_settings() {
-        register_setting( 'wcefp_meetingpoints_group', 'wcefp_meetingpoints' );
+        register_setting( 'wcefp_meetingpoints_group', 'wcefp_meetingpoints', array( $this, 'sanitize_points' ) );
+    }
+
+    public function sanitize_points( $input ) {
+        $sanitized = array();
+
+        if ( is_array( $input ) ) {
+            foreach ( $input as $point ) {
+                $sanitized[] = array(
+                    'address' => isset( $point['address'] ) ? sanitize_text_field( $point['address'] ) : '',
+                    'lat'     => isset( $point['lat'] ) ? sanitize_text_field( $point['lat'] ) : '',
+                    'lng'     => isset( $point['lng'] ) ? sanitize_text_field( $point['lng'] ) : '',
+                );
+            }
+        }
+
+        return $sanitized;
     }
 
     public function render_settings_page() {
         ?>
         <div class="wrap">
-            <h1>Meeting Points</h1>
+            <h1><?php esc_html_e( 'Meeting Points', 'wceventsfp' ); ?></h1>
             <form method="post" action="options.php">
                 <?php settings_fields( 'wcefp_meetingpoints_group' ); ?>
                 <?php $points = get_option( 'wcefp_meetingpoints', array() ); ?>
                 <table class="form-table">
                     <tr>
-                        <th>Meeting Points</th>
+                        <th><?php esc_html_e( 'Meeting Points', 'wceventsfp' ); ?></th>
                         <td>
                             <table id="wcefp-points" class="widefat" style="max-width:600px;">
                                 <thead>
