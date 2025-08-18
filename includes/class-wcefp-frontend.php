@@ -387,6 +387,14 @@ class WCEFP_Frontend {
             $ch = intval($ci['_wcefp_children'] ?? 0);
             $extras = isset($ci['_wcefp_extras']) && is_array($ci['_wcefp_extras']) ? $ci['_wcefp_extras'] : [];
 
+            // Occorrenza per regole prezzo
+            $occ_id = intval($ci['_wcefp_occurrence_id'] ?? 0);
+            $occ_start = '';
+            if ($occ_id > 0) {
+                global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
+                $occ_start = $wpdb->get_var($wpdb->prepare("SELECT start_datetime FROM $tbl WHERE id=%d", $occ_id));
+            }
+
             // Voucher: se presente e combacia, prezzo 0
             $voucher_ok = false;
             if (!empty($ci['_wcefp_voucher_code']) && function_exists('WC')) {
@@ -413,6 +421,27 @@ class WCEFP_Frontend {
                 $extras_total += $price * $mult;
             }
             $total = ($ad * $price_adult) + ($ch * $price_child) + $extras_total;
+
+            // Regole prezzo
+            $rules = json_decode(get_option('wcefp_price_rules','[]'), true);
+            if ($occ_start && is_array($rules)) {
+                $ts = strtotime($occ_start);
+                $w = (int)date('w', $ts);
+                foreach ($rules as $r) {
+                    $df = $r['date_from'] ?? '';
+                    $dt = $r['date_to'] ?? '';
+                    $weekdays = $r['weekdays'] ?? [];
+                    $inRange = (!$df || $occ_start >= $df.' 00:00:00') && (!$dt || $occ_start <= $dt.' 23:59:59');
+                    $matchW  = empty($weekdays) || in_array($w, $weekdays, true);
+                    if ($inRange && $matchW) {
+                        $type  = $r['type'] ?? 'percent';
+                        $value = floatval($r['value'] ?? 0);
+                        if ($type === 'percent') $total += $total * ($value / 100);
+                        else $total += $value;
+                    }
+                }
+            }
+
             $qty = max(1, $ad + $ch);
             $unit = $qty > 0 ? ($total / $qty) : $total;
 

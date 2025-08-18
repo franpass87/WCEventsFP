@@ -221,6 +221,10 @@ private static function get_kpi($days = 30) {
             update_option('wcefp_default_capacity', intval($_POST['wcefp_default_capacity'] ?? 0));
             update_option('wcefp_disable_wc_emails_for_events', isset($_POST['wcefp_disable_wc_emails_for_events']) ? '1' : '0');
 
+            // Prezzi dinamici
+            $rules_raw = wp_unslash($_POST['wcefp_price_rules'] ?? '');
+            update_option('wcefp_price_rules', $rules_raw);
+
             // Brevo
             update_option('wcefp_brevo_api_key', sanitize_text_field($_POST['wcefp_brevo_api_key'] ?? ''));
             update_option('wcefp_brevo_template_id', intval($_POST['wcefp_brevo_template_id'] ?? 0));
@@ -241,6 +245,7 @@ private static function get_kpi($days = 30) {
         /* Lettura */
         $cap = get_option('wcefp_default_capacity', 0);
         $dis = get_option('wcefp_disable_wc_emails_for_events','0')==='1';
+        $price_rules = get_option('wcefp_price_rules','[]');
         $api = get_option('wcefp_brevo_api_key','');
         $tpl = intval(get_option('wcefp_brevo_template_id', 0));
         $from_email = get_option('wcefp_brevo_from_email','');
@@ -263,6 +268,14 @@ private static function get_kpi($days = 30) {
                     <tr>
                         <th><?php _e('Email WooCommerce','wceventsfp'); ?></th>
                         <td><label><input type="checkbox" name="wcefp_disable_wc_emails_for_events" <?php checked($dis,true); ?> /> <?php _e('Disattiva email Woo per ordini SOLO-evento/esperienza','wceventsfp'); ?></label></td>
+                    </tr>
+
+                    <tr>
+                        <th><label for="wcefp_price_rules"><?php _e('Regole prezzo (JSON)','wceventsfp'); ?></label></th>
+                        <td>
+                            <textarea name="wcefp_price_rules" id="wcefp_price_rules" rows="5" cols="50" class="large-text code"><?php echo esc_textarea($price_rules); ?></textarea>
+                            <p class="description"><?php _e('Esempio: [{"date_from":"2024-06-01","date_to":"2024-09-30","weekdays":[5,6],"type":"percent","value":10}]','wceventsfp'); ?></p>
+                        </td>
                     </tr>
 
                     <tr><th colspan="2"><h3><?php _e('Brevo (API v3)','wceventsfp'); ?></h3></th></tr>
