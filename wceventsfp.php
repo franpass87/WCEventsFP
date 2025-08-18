@@ -89,6 +89,8 @@ add_action('plugins_loaded', function () {
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-closures.php';   // NEW
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-gift.php';       // NEW
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-frontend.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-templates.php';
+
 
     WCEFP()->init();
 });
