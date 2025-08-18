@@ -405,28 +405,28 @@ class WCEFP_Plugin {
 
             <div class="options_group">
                 <h3><?php _e('Ricorrenze settimanali & Slot', 'wceventsfp'); ?></h3>
-                <p class="form-field">
-                    <label><?php _e('Giorni','wceventsfp'); ?></label>
-                    <?php wp_nonce_field('wcefp_weekdays','wcefp_weekdays_nonce'); ?>
-                    <?php
-                    $days = get_post_meta($post->ID, '_wcefp_weekdays', true);
-                    $days = is_array($days) ? array_map('intval', $days) : [];
+               <p class="form-field">
+    <label><?php _e('Giorni','wceventsfp'); ?></label>
+    <?php wp_nonce_field('wcefp_weekdays','wcefp_weekdays_nonce'); ?>
+    <?php
+    $days = get_post_meta($post->ID, '_wcefp_weekdays', true);
+    $days = is_array($days) ? array_map('intval', $days) : [];
 
-                    $labels = wcefp_get_weekday_labels();
-                    array_walk($labels, static function (&$label) {
-                        $label = esc_html($label);
-                    });
-                    ?>
-                    <div class="wcefp-weekdays-grid">
-                        <?php foreach ($labels as $val => $label): ?>
-                            <label class="wcefp-weekday">
-                                <input type="checkbox" name="_wcefp_weekdays[]" value="<?php echo esc_attr($val); ?>"
-                                    <?php checked(in_array($val, $days, true), true); ?> />
-                                <?php echo $label; ?>
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
-                </p>
+    $labels = wcefp_get_weekday_labels();
+    array_walk($labels, static function (&$label) { $label = esc_html($label); });
+    ?>
+    <span class="wrap">
+        <div class="wcefp-weekdays-grid">
+            <?php foreach ($labels as $val => $label): ?>
+                <label class="wcefp-weekday">
+                    <input type="checkbox" name="_wcefp_weekdays[]" value="<?php echo esc_attr($val); ?>"
+                        <?php checked(in_array($val, $days, true), true); ?> />
+                    <?php echo $label; ?>
+                </label>
+            <?php endforeach; ?>
+        </div>
+    </span>
+</p>
                 <p class="form-field">
                     <label for="_wcefp_time_slots"><?php _e('Slot (HH:MM, separati da virgola)','wceventsfp'); ?></label>
                     <input type="text" id="_wcefp_time_slots" name="_wcefp_time_slots" style="width:100%;" placeholder="11:00, 13:00, 19:30" value="<?php echo esc_attr(get_post_meta($post->ID, '_wcefp_time_slots', true)); ?>" />
