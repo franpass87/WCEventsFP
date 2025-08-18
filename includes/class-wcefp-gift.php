@@ -99,6 +99,7 @@ class WCEFP_Gift {
         $message   = sanitize_textarea_field(get_post_meta($order_id, 'wcefp_gift_message', true));
 
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_vouchers';
+        $max_retry = 5;
         $count = 0;
         $voucher_links = [];
 
@@ -108,19 +109,26 @@ class WCEFP_Gift {
 
             $qty = max(1, (int)$it->get_quantity());
             for ($i=0; $i<$qty; $i++){
-                $code = self::generate_code();
-                $ins = $wpdb->insert($tbl, [
-                    'code' => $code,
-                    'product_id' => $p->get_id(),
-                    'order_id' => $order_id,
-                    'recipient_name' => $rec_name,
-                    'recipient_email' => $rec_email,
-                    'message_text' => $message,
-                    'status' => 'unused',
-                ], ['%s','%d','%d','%s','%s','%s','%s']);
+                $attempts = 0;
+                do {
+                    $code = self::generate_code();
+                    $ins = $wpdb->insert($tbl, [
+                        'code' => $code,
+                        'product_id' => $p->get_id(),
+                        'order_id' => $order_id,
+                        'recipient_name' => $rec_name,
+                        'recipient_email' => $rec_email,
+                        'message_text' => $message,
+                        'status' => 'unused',
+                    ], ['%s','%d','%d','%s','%s','%s','%s']);
+                    $attempts++;
+                } while (!$ins && $attempts < $max_retry);
+
                 if ($ins) {
                     $count++;
                     $voucher_links[] = self::voucher_url($code);
+                } else {
+                    error_log(sprintf('WCEFP_Gift: failed to insert voucher for order %d after %d attempts', $order_id, $attempts));
                 }
             }
         }
