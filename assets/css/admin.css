@@ -12,3 +12,5 @@
 .wcefp-closures-note{flex:1 1 320px}
 .wcefp-weekdays{display:flex;flex-wrap:wrap;gap:12px;list-style:none;margin:0;padding:0}
 .wcefp-weekdays li{margin:0}
+.wcefp-weekdays-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wcefp-weekdays-grid .wcefp-weekday{display:flex;align-items:center;gap:4px}
