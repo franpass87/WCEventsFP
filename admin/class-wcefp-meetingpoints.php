@@ -32,13 +32,48 @@ class WCEFP_MeetingPoints {
                 <?php $points = get_option( 'wcefp_meetingpoints', array() ); ?>
                 <table class="form-table">
                     <tr>
-                        <th>Indirizzi Meeting Point</th>
+                        <th>Meeting Points</th>
                         <td>
-                            <textarea name="wcefp_meetingpoints" rows="6" cols="60"><?php echo esc_textarea( implode("\n", (array)$points ) ); ?></textarea>
-                            <p class="description">Inserisci un indirizzo per riga</p>
+                            <table id="wcefp-points" class="widefat" style="max-width:600px;">
+                                <thead>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Indirizzo', 'wceventsfp' ); ?></th>
+                                        <th><?php esc_html_e( 'Latitudine', 'wceventsfp' ); ?></th>
+                                        <th><?php esc_html_e( 'Longitudine', 'wceventsfp' ); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if ( is_array( $points ) ) : ?>
+                                        <?php foreach ( $points as $i => $p ) : ?>
+                                            <tr>
+                                                <td><input type="text" name="wcefp_meetingpoints[<?php echo esc_attr( $i ); ?>][address]" value="<?php echo esc_attr( isset( $p['address'] ) ? $p['address'] : '' ); ?>" class="regular-text" /></td>
+                                                <td><input type="text" name="wcefp_meetingpoints[<?php echo esc_attr( $i ); ?>][lat]" value="<?php echo esc_attr( isset( $p['lat'] ) ? $p['lat'] : '' ); ?>" class="small-text" /></td>
+                                                <td><input type="text" name="wcefp_meetingpoints[<?php echo esc_attr( $i ); ?>][lng]" value="<?php echo esc_attr( isset( $p['lng'] ) ? $p['lng'] : '' ); ?>" class="small-text" /></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                            <p><button type="button" class="button" id="wcefp-add-point"><?php esc_html_e( 'Aggiungi', 'wceventsfp' ); ?></button></p>
                         </td>
                     </tr>
                 </table>
+                <script type="text/html" id="wcefp-point-row-template">
+                    <tr>
+                        <td><input type="text" name="wcefp_meetingpoints[{{INDEX}}][address]" class="regular-text" /></td>
+                        <td><input type="text" name="wcefp_meetingpoints[{{INDEX}}][lat]" class="small-text" /></td>
+                        <td><input type="text" name="wcefp_meetingpoints[{{INDEX}}][lng]" class="small-text" /></td>
+                    </tr>
+                </script>
+                <script>
+                jQuery(function($){
+                    var i = $('#wcefp-points tbody tr').length;
+                    $('#wcefp-add-point').on('click', function(){
+                        var html = $('#wcefp-point-row-template').html().replace(/{{INDEX}}/g, i++);
+                        $('#wcefp-points tbody').append(html);
+                    });
+                });
+                </script>
                 <?php submit_button(); ?>
             </form>
         </div>

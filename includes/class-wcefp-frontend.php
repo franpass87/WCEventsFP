@@ -175,7 +175,20 @@ class WCEFP_Frontend {
             $map_id = 'wcefp-map-'.uniqid();
             $link = 'https://www.google.com/maps?daddr='.urlencode($meeting);
             echo '<li><strong>'.esc_html__('Meeting point','wceventsfp').':</strong> '.esc_html($meeting).' <a href="'.esc_url($link).'" target="_blank">'.esc_html__('Ottieni indicazioni','wceventsfp').'</a></li>';
-            echo '<div id="'.$map_id.'" class="wcefp-map" data-address="'.esc_attr($meeting).'"></div>';
+            $points_opt = get_option('wcefp_meetingpoints', []);
+            $lat = $lng = '';
+            if (is_array($points_opt)) {
+                foreach ($points_opt as $pt) {
+                    if (is_array($pt) && isset($pt['address']) && $pt['address'] === $meeting) {
+                        $lat = $pt['lat'] ?? '';
+                        $lng = $pt['lng'] ?? '';
+                        break;
+                    }
+                }
+            }
+            if ($lat && $lng) {
+                echo WCEFP_Templates::render_map($map_id, $lat, $lng);
+            }
         }
         if ($next_start) echo '<li><strong>'.esc_html__('Prossima data','wceventsfp').':</strong> '.esc_html(date_i18n('d/m/Y H:i', strtotime($next_start))).'</li>';
         echo '</ul>';
