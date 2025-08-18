@@ -90,7 +90,7 @@ add_action('plugins_loaded', function () {
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-gift.php';       // NEW
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-frontend.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-templates.php';
-
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-product-types.php';
 
     WCEFP()->init();
 });
@@ -108,7 +108,7 @@ class WCEFP_Plugin {
 
         /* Tipi prodotto */
         add_filter('product_type_selector', [$this, 'register_product_types']);
-        add_action('init', [$this, 'add_product_classes']);
+        // RIMOSSO: add_action('init', [$this, 'add_product_classes']);  // <-- causa fatal (classi annidate)
         add_filter('woocommerce_product_class', [$this, 'map_product_class'], 10, 2);
 
         /* Tab prodotto & salvataggio */
@@ -231,11 +231,10 @@ class WCEFP_Plugin {
         $types['wcefp_experience'] = __('Esperienza', 'wceventsfp');
         return $types;
     }
-    public function add_product_classes() {
-        if (!class_exists('WC_Product_Simple')) return;
-        class WC_Product_WCEFP_Event extends WC_Product_Simple { public function get_type(){ return 'wcefp_event'; } }
-        class WC_Product_WCEFP_Experience extends WC_Product_Simple { public function get_type(){ return 'wcefp_experience'; } }
-    }
+
+    // RIMOSSO: niente dichiarazioni di classi qui.
+    public function add_product_classes() { /* non usato: le classi sono in includes/class-wcefp-product-types.php */ }
+
     public function map_product_class($classname, $type) {
         if ($type === 'wcefp_event') return 'WC_Product_WCEFP_Event';
         if ($type === 'wcefp_experience') return 'WC_Product_WCEFP_Experience';
