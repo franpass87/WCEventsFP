@@ -4,7 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class WCEFP_MeetingPoints {
 
     public function __construct() {
-        add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
+        // Ensure submenu registers after the main plugin menu to prevent redirects
+        add_action( 'admin_menu', array( $this, 'add_settings_page' ), 20 );
         add_action( 'admin_init', array( $this, 'register_settings' ) );
     }
 
@@ -13,7 +14,7 @@ class WCEFP_MeetingPoints {
             'wcefp', // slug principale del plugin
             __( 'Meeting Points', 'wceventsfp' ),
             __( 'Meeting Points', 'wceventsfp' ),
-            'manage_options',
+            'manage_woocommerce',
             'wcefp-meetingpoints',
             array( $this, 'render_settings_page' )
         );
