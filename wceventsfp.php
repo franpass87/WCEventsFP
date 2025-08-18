@@ -410,25 +410,28 @@ class WCEFP_Plugin {
                     <?php wp_nonce_field('wcefp_weekdays','wcefp_weekdays_nonce'); ?>
                     <div class="wcefp-weekdays-grid">
                     <?php
-                    $days = get_post_meta($post->ID, '_wcefp_weekdays', true); $days = is_array($days)?array_map('intval',$days):[];
-                    $labels = [
-                        1 => __('Lunedì','wceventsfp'),
-                        2 => __('Martedì','wceventsfp'),
-                        3 => __('Mercoledì','wceventsfp'),
-                        4 => __('Giovedì','wceventsfp'),
-                        5 => __('Venerdì','wceventsfp'),
-                        6 => __('Sabato','wceventsfp'),
-                        0 => __('Domenica','wceventsfp'),
-                    ];
-                    foreach($labels as $val => $label):
-                        printf(
-                            '<label class="wcefp-weekday"><input type="checkbox" name="_wcefp_weekdays[]" value="%d" %s /> %s</label>',
-                            $val,
-                            checked(in_array($val, $days, true), true, false),
-                            esc_html($label)
-                        );
-                    endforeach; ?>
-                    </div>
+$days = get_post_meta($post->ID, '_wcefp_weekdays', true);
+$days = is_array($days) ? array_map('intval', $days) : [];
+
+$labels = [
+    1 => esc_html__('Lunedì', 'wceventsfp'),
+    2 => esc_html__('Martedì', 'wceventsfp'),
+    3 => esc_html__('Mercoledì', 'wceventsfp'),
+    4 => esc_html__('Giovedì', 'wceventsfp'),
+    5 => esc_html__('Venerdì', 'wceventsfp'),
+    6 => esc_html__('Sabato', 'wceventsfp'),
+    0 => esc_html__('Domenica', 'wceventsfp'),
+];
+?>
+<div class="wcefp-weekdays-grid">
+    <?php foreach ($labels as $val => $label): ?>
+        <label class="wcefp-weekday">
+            <input type="checkbox" name="_wcefp_weekdays[]" value="<?php echo esc_attr($val); ?>"
+                <?php checked(in_array($val, $days, true), true); ?> />
+            <?php echo $label; ?>
+        </label>
+    <?php endforeach; ?>
+</div>
                 </p>
                 <p class="form-field">
                     <label for="_wcefp_time_slots"><?php _e('Slot (HH:MM, separati da virgola)','wceventsfp'); ?></label>

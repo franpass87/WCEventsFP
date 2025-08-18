@@ -15,7 +15,7 @@ class WCEFP_Recurring {
         $toDt   = DateTime::createFromFormat('Y-m-d', $to);
         if (!$fromDt || !$toDt) wp_send_json_error(['msg'=>'Formato data non valido']);
 
-        $weekdays = (array) get_post_meta($pid, '_wcefp_weekdays', true);
+        $weekdays = array_map('intval', (array) get_post_meta($pid, '_wcefp_weekdays', true));
         $slots    = trim((string) get_post_meta($pid, '_wcefp_time_slots', true));
         $capacity = intval(get_post_meta($pid, '_wcefp_capacity_per_slot', true));
         if (!$capacity) $capacity = intval(get_option('wcefp_default_capacity', 0));
