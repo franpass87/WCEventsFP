@@ -20,11 +20,11 @@
       const $fb   = $w.find('.wcefp-feedback');
       const $tot  = $w.find('.wcefp-total');
 
-      function updateTotal(){
-        const ad = parseInt($ad.val()||'0',10);
-        const ch = parseInt($ch.val()||'0',10);
-        let extras = 0;
+      function getExtras(){
+        const extras = [];
         $w.find('.wcefp-extra-row').each(function(){
+          const id = $(this).data('id');
+          const name = $(this).data('name');
           const price = parseFloat($(this).data('price') || '0');
           const pricing = $(this).data('pricing');
           const $qty = $(this).find('.wcefp-extra-qty');
@@ -32,13 +32,26 @@
           let qty = 0;
           if($qty.length) qty = parseInt($qty.val()||'0',10);
           if($tg.length) qty = $tg.is(':checked') ? 1 : 0;
-          let mult = qty;
-          if(pricing === 'per_person') mult *= (ad+ch);
-          else if(pricing === 'per_child') mult *= ch;
-          else if(pricing === 'per_adult') mult *= ad;
-          extras += price * mult;
+          if(qty>0){
+            extras.push({id:id, name:name, price:price, qty:qty, pricing:pricing});
+          }
         });
-        const total = hasVoucher ? 0 : ((ad*priceAdult) + (ch*priceChild) + extras);
+        return extras;
+      }
+
+      function updateTotal(){
+        const ad = parseInt($ad.val()||'0',10);
+        const ch = parseInt($ch.val()||'0',10);
+        const extras = getExtras();
+        let extrasCost = 0;
+        extras.forEach(ex=>{
+          let mult = ex.qty;
+          if(ex.pricing === 'per_person') mult *= (ad+ch);
+          else if(ex.pricing === 'per_child') mult *= ch;
+          else if(ex.pricing === 'per_adult') mult *= ad;
+          extrasCost += ex.price * mult;
+        });
+        const total = hasVoucher ? 0 : ((ad*priceAdult) + (ch*priceChild) + extrasCost);
         $tot.text(formatEuro(total));
       }
 
@@ -64,23 +77,16 @@
       $date.on('change', loadSlots);
       $ad.on('input', updateTotal);
       $ch.on('input', updateTotal);
-      $w.on('input', '.wcefp-extra-qty', function(){
+      function handleExtrasChange(){
         updateTotal();
         if (WCEFPData.ga4_enabled) {
-          const exName = $(this).closest('.wcefp-extra-row').data('name') || 'extra';
-          const selected = parseInt($(this).val()||'0',10) > 0;
+          const extras = getExtras();
           window.dataLayer = window.dataLayer || [];
-          window.dataLayer.push({event:'extra_selected', extra_name: exName, selected: selected});
+          window.dataLayer.push({event:'select_extras', item_id: pid, extras: extras});
         }
-      });
-      $w.on('change', '.wcefp-extra-toggle', function(){
-        updateTotal();
-        if (WCEFPData.ga4_enabled) {
-          const exName = $(this).closest('.wcefp-extra-row').data('name') || 'extra';
-          window.dataLayer = window.dataLayer || [];
-          window.dataLayer.push({event:'extra_selected', extra_name: exName, selected: $(this).is(':checked')});
-        }
-      });
+      }
+      $w.on('input', '.wcefp-extra-qty', handleExtrasChange);
+      $w.on('change', '.wcefp-extra-toggle', handleExtrasChange);
       updateTotal();
 
       $btn.on('click', function(e){
@@ -89,21 +95,7 @@
         const occ = $slot.val();
         const ad = parseInt($ad.val()||'0',10);
         const ch = parseInt($ch.val()||'0',10);
-        const extras = [];
-        $w.find('.wcefp-extra-row').each(function(){
-          const id = $(this).data('id');
-          const name = $(this).data('name');
-          const price = $(this).data('price');
-          const pricing = $(this).data('pricing');
-          const $qty = $(this).find('.wcefp-extra-qty');
-          const $tg  = $(this).find('.wcefp-extra-toggle');
-          let qty = 0;
-          if($qty.length) qty = parseInt($qty.val()||'0',10);
-          if($tg.length) qty = $tg.is(':checked') ? 1 : 0;
-          if(qty>0){
-            extras.push({id:id, name:name, price:price, qty:qty, pricing:pricing});
-          }
-        });
+        const extras = getExtras();
 
         if(!occ){ $fb.text('Seleziona uno slot.'); return; }
         if((ad+ch) <= 0){ $fb.text('Indica almeno 1 partecipante.'); return; }
