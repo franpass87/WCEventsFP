@@ -228,6 +228,7 @@ private static function get_kpi($days = 30) {
             update_option('wcefp_brevo_from_name', sanitize_text_field($_POST['wcefp_brevo_from_name'] ?? ''));
             update_option('wcefp_brevo_list_it', intval($_POST['wcefp_brevo_list_it'] ?? 0));
             update_option('wcefp_brevo_list_en', intval($_POST['wcefp_brevo_list_en'] ?? 0));
+            update_option('wcefp_brevo_tag', sanitize_text_field($_POST['wcefp_brevo_tag'] ?? ''));
 
             // Tracking
             update_option('wcefp_ga4_enable', isset($_POST['wcefp_ga4_enable']) ? '1' : '0');
@@ -247,6 +248,7 @@ private static function get_kpi($days = 30) {
         $from_name  = get_option('wcefp_brevo_from_name','');
         $list_it    = intval(get_option('wcefp_brevo_list_it', 0));
         $list_en    = intval(get_option('wcefp_brevo_list_en', 0));
+        $tag        = get_option('wcefp_brevo_tag','');
         $ga4_en     = get_option('wcefp_ga4_enable','1')==='1';
         $ga4_id     = get_option('wcefp_ga4_id','');
         $gtm_id     = get_option('wcefp_gtm_id','');
@@ -289,6 +291,10 @@ private static function get_kpi($days = 30) {
                     <tr>
                         <th><label for="wcefp_brevo_list_en"><?php _e('Lista EN','wceventsfp'); ?></label></th>
                         <td><input type="number" name="wcefp_brevo_list_en" id="wcefp_brevo_list_en" value="<?php echo esc_attr($list_en); ?>" /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="wcefp_brevo_tag"><?php _e('Tag contatto','wceventsfp'); ?></label></th>
+                        <td><input type="text" name="wcefp_brevo_tag" id="wcefp_brevo_tag" value="<?php echo esc_attr($tag); ?>" /></td>
                     </tr>
 
                     <tr><th colspan="2"><h3><?php _e('Tracking','wceventsfp'); ?></h3></th></tr>
