@@ -98,4 +98,3 @@ class WCEFP_MeetingPoints {
 }
 
 new WCEFP_MeetingPoints();
-
