@@ -2,3 +2,8 @@
 .wcefp-kpi-grid .card{background:#fff;padding:16px;border:1px solid #e5e5e5;border-radius:8px}
 .wcefp-toolbar{margin:12px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #wcefp-calendar .fc-event{cursor:pointer}
+
+/* Chiusure */
+.wcefp-closures-form{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.wcefp-closures-form label{display:flex;flex-direction:column}
+.wcefp-closures-note{flex:1 1 320px}
