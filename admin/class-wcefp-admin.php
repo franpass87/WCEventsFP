@@ -80,19 +80,105 @@ class WCEFP_Admin {
     }
 
     /* ---------- Pagine ---------- */
-    public static function render_kpi_page() {
-        if (!current_user_can('manage_woocommerce')) return;
-        $kpi = ['orders_30'=>18,'revenue_30'=>2150.50,'fill_rate'=>63,'top_product'=>'Degustazione Classica']; ?>
-        <div class="wrap">
-            <h1><?php _e('Analisi KPI','wceventsfp'); ?></h1>
-            <div class="wcefp-kpi-grid">
-                <div class="card"><h3><?php _e('Ordini (30gg)','wceventsfp'); ?></h3><p><?php echo esc_html($kpi['orders_30']); ?></p></div>
-                <div class="card"><h3><?php _e('Ricavi (30gg)','wceventsfp'); ?></h3><p>€ <?php echo number_format($kpi['revenue_30'],2,',','.'); ?></p></div>
-                <div class="card"><h3><?php _e('Riempimento medio','wceventsfp'); ?></h3><p><?php echo esc_html($kpi['fill_rate']); ?>%</p></div>
-                <div class="card"><h3><?php _e('Top Esperienza','wceventsfp'); ?></h3><p><?php echo esc_html($kpi['top_product']); ?></p></div>
+// --- SOSTITUISCI TUTTA la render_kpi_page con questa ---
+public static function render_kpi_page() {
+    if (!current_user_can('manage_woocommerce')) return;
+
+    $kpi = self::get_kpi(30); // ultimi 30 giorni
+    ?>
+    <div class="wrap">
+        <h1><?php _e('Analisi KPI','wceventsfp'); ?></h1>
+        <div class="wcefp-kpi-grid">
+            <div class="card">
+                <h3><?php _e('Ordini (30gg)','wceventsfp'); ?></h3>
+                <p><?php echo esc_html($kpi['orders_30']); ?></p>
             </div>
-        </div><?php
+            <div class="card">
+                <h3><?php _e('Ricavi (30gg)','wceventsfp'); ?></h3>
+                <p>€ <?php echo number_format($kpi['revenue_30'],2,',','.'); ?></p>
+            </div>
+            <div class="card">
+                <h3><?php _e('Riempimento medio','wceventsfp'); ?></h3>
+                <p><?php echo esc_html($kpi['fill_rate']); ?>%</p>
+            </div>
+            <div class="card">
+                <h3><?php _e('Top Esperienza','wceventsfp'); ?></h3>
+                <p><?php echo esc_html($kpi['top_product'] ?: '—'); ?></p>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+// --- AGGIUNGI questa funzione sotto alla render_kpi_page() ---
+private static function get_kpi($days = 30) {
+    $from = (new DateTime("-{$days} days"))->format('Y-m-d H:i:s');
+
+    // 1) Ordini & Ricavi SOLO per articoli evento/esperienza
+    $orders = wc_get_orders([
+        'limit'        => -1,
+        'type'         => 'shop_order',
+        'status'       => ['wc-processing','wc-completed','wc-on-hold'],
+        'date_created' => '>=' . $from,
+        'return'       => 'objects',
+    ]);
+
+    $orders_with_events = 0;
+    $revenue_events = 0.0;
+    $product_counters = []; // product_id => qty
+
+    foreach ($orders as $order) {
+        $has_event = false;
+        foreach ($order->get_items() as $item) {
+            $product = $item->get_product();
+            if (!$product) continue;
+
+            $type = $product->get_type();
+            if ($type === 'wcefp_event' || $type === 'wcefp_experience') {
+                $has_event = true;
+                // somma solo il totale linea degli articoli evento/esperienza
+                $revenue_events += (float) $order->get_item_total($item, false) * (int) $item->get_quantity();
+
+                $pid = $product->get_id();
+                $product_counters[$pid] = ($product_counters[$pid] ?? 0) + (int)$item->get_quantity();
+            }
+        }
+        if ($has_event) {
+            $orders_with_events++;
+        }
     }
+
+    // 2) Top prodotto (per quantità vendute)
+    $top_product = '';
+    if (!empty($product_counters)) {
+        arsort($product_counters);
+        $top_id = array_key_first($product_counters);
+        $top_product = get_the_title($top_id);
+    }
+
+    // 3) Riempimento medio = (posti prenotati / posti totali) nel periodo
+    global $wpdb;
+    $tbl = $wpdb->prefix . 'wcefp_occurrences';
+    $row = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT SUM(capacity) AS cap, SUM(booked) AS bkd
+             FROM $tbl
+             WHERE start_datetime >= %s AND status IN ('active','cancelled')",
+            $from
+        ), ARRAY_A
+    );
+    $cap = (int)($row['cap'] ?? 0);
+    $bkd = (int)($row['bkd'] ?? 0);
+    $fill_rate = ($cap > 0) ? round(($bkd / $cap) * 100) : 0;
+
+    return [
+        'orders_30'  => (int)$orders_with_events,
+        'revenue_30' => (float)$revenue_events,
+        'fill_rate'  => (int)$fill_rate,
+        'top_product'=> $top_product,
+    ];
+}
+
 
     public static function render_calendar_page() {
         if (!current_user_can('manage_woocommerce')) return; ?>
