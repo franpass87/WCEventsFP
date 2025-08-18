@@ -1,0 +1,56 @@
+# ================================
+# GITIGNORE PER WCEventsFP PLUGIN
+# ================================
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# IDE / Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Composer / Node (se in futuro usi dipendenze)
+vendor/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+
+# Cache & Log
+*.log
+*.cache
+*.tmp
+
+# File temporanei di WordPress
+wp-content/cache/
+wp-content/uploads/wc-eventsfp-temp/
+wp-content/uploads/wc-eventsfp-logs/
+
+# Config locali
+.env
+*.env.local
+.env.*
+.env.local.*
+config-local.php
+
+# Backup
+*.zip
+*.tar
+*.gz
+*.sql
+*.bak
+
+# File personali o di test
+test.php
+dev-notes.md
+todo.md
+
+# Build / Distribuzione
+/dist/
