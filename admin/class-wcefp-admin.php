@@ -360,5 +360,8 @@ add_action('admin_head', function () { ?>
         gap:6px;
         margin:0;
     }
+    #wcefp_product_data .form-field .wcefp-weekdays-grid:not(.wrap){
+        margin-left:162px;
+    }
 </style>
 <?php });

@@ -418,16 +418,14 @@ class WCEFP_Plugin {
         array_map('esc_html', $raw_labels)
     );
     ?>
-    <span class="wrap">
-        <div class="wcefp-weekdays-grid">
-            <?php foreach ($labels as $val => $label): ?>
-                <label class="wcefp-weekday">
-                    <input type="checkbox" name="_wcefp_weekdays[]" value="<?php echo esc_attr($val); ?>"
-                        <?php checked(in_array($val, $days, true), true); ?> />
-                    <?php echo $label; ?>
-                </label>
-            <?php endforeach; ?>
-        </div>
+    <span class="wrap wcefp-weekdays-grid">
+        <?php foreach ($labels as $val => $label): ?>
+            <label class="wcefp-weekday">
+                <input type="checkbox" name="_wcefp_weekdays[]" value="<?php echo esc_attr($val); ?>"
+                    <?php checked(in_array($val, $days, true), true); ?> />
+                <?php echo $label; ?>
+            </label>
+        <?php endforeach; ?>
     </span>
 </p>
                 <p class="form-field">
