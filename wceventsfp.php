@@ -312,7 +312,17 @@ class WCEFP_Plugin {
             <div class="options_group">
                 <h3><?php _e('Info esperienza', 'wceventsfp'); ?></h3>
                 <?php
-                woocommerce_wp_text_input(['id'=>'_wcefp_languages','label'=>__('Lingue (es. IT, EN)','wceventsfp'),'type'=>'text']);
+                // Lingue (CSV)
+                woocommerce_wp_text_input([
+                    'id'          => '_wcefp_languages',
+                    'label'       => __('Lingue (es. IT, EN)', 'wceventsfp'),
+                    'type'        => 'text',
+                    'placeholder' => 'IT, EN',
+                    'description' => __('Separa con virgola. Verranno mostrati come badge nel frontend.', 'wceventsfp'),
+                    'desc_tip'    => true,
+                ]);
+
+                // Meeting point (logica invariata)
                 $points = get_option('wcefp_meetingpoints', []);
                 $points = is_array($points) ? $points : [];
                 $selected_point = get_post_meta($post->ID, '_wcefp_meeting_point', true);
@@ -324,9 +334,34 @@ class WCEFP_Plugin {
                     }
                     echo '</span></p>';
                 }
-                woocommerce_wp_textarea_input(['id'=>'_wcefp_includes','label'=>__('Incluso','wceventsfp')]);
-                woocommerce_wp_textarea_input(['id'=>'_wcefp_excludes','label'=>__('Escluso','wceventsfp')]);
-                woocommerce_wp_textarea_input(['id'=>'_wcefp_cancellation','label'=>__('Politica di cancellazione','wceventsfp')]);
+
+                // Mini editor per contenuti elenco
+                $fields = [
+                    '_wcefp_includes'     => __('Incluso', 'wceventsfp'),
+                    '_wcefp_excludes'     => __('Escluso', 'wceventsfp'),
+                    '_wcefp_cancellation' => __('Politica di cancellazione', 'wceventsfp'),
+                ];
+                foreach ($fields as $fid => $flabel) {
+                    $val = get_post_meta($post->ID, $fid, true);
+                    echo '<p class="form-field"><label>' . esc_html($flabel) . '</label><span class="wrap">';
+                    wp_editor(
+                        $val,
+                        $fid,
+                        [
+                            'textarea_name' => $fid,
+                            'media_buttons' => false,
+                            'teeny'         => true,
+                            'quicktags'     => true,
+                            'textarea_rows' => 4,
+                            'tinymce'       => [
+                                'toolbar1' => 'bold,italic,undo,redo,bullist,numlist,link,unlink',
+                                'toolbar2' => '',
+                            ],
+                        ]
+                    );
+                    echo '<em style="opacity:.7;display:block;margin-top:4px;">' . esc_html__('Suggerimento: usa elenchi puntati e frasi brevi.', 'wceventsfp') . '</em>';
+                    echo '</span></p>';
+                }
                 ?>
             </div>
 
@@ -449,12 +484,31 @@ class WCEFP_Plugin {
             return;
         }
         $pid = $product->get_id();
-        $keys = [
-            '_wcefp_price_adult','_wcefp_price_child','_wcefp_capacity_per_slot',
-            '_wcefp_time_slots','_wcefp_duration_minutes',
-            '_wcefp_languages','_wcefp_includes','_wcefp_excludes','_wcefp_cancellation'
+
+        $allowed = [
+            'a' => [ 'href'=>[], 'title'=>[], 'target'=>[] ],
+            'strong'=>[], 'em'=>[],
+            'ul'=>[], 'ol'=>[], 'li'=>[],
+            'p'=>[], 'br'=>[]
         ];
-        foreach ($keys as $k) if (isset($_POST[$k])) update_post_meta($pid, $k, wp_unslash($_POST[$k]));
+
+        // Campi plain
+        $keys_plain = ['_wcefp_price_adult','_wcefp_price_child','_wcefp_capacity_per_slot','_wcefp_time_slots','_wcefp_duration_minutes','_wcefp_languages'];
+        foreach ($keys_plain as $k) {
+            if (isset($_POST[$k])) {
+                update_post_meta($pid, $k, wp_unslash($_POST[$k]));
+            }
+        }
+
+        // Campi con HTML leggero
+        $keys_html = ['_wcefp_includes','_wcefp_excludes','_wcefp_cancellation'];
+        foreach ($keys_html as $k) {
+            if (isset($_POST[$k])) {
+                $raw = wp_unslash($_POST[$k]);
+                $clean = wp_kses($raw, $allowed);
+                update_post_meta($pid, $k, $clean);
+            }
+        }
 
         if (isset($_POST['wcefp_meeting_point'])) {
             update_post_meta($pid, '_wcefp_meeting_point', sanitize_text_field(wp_unslash($_POST['wcefp_meeting_point'])));
@@ -1144,3 +1198,25 @@ function wcefp_save_days_metabox($post_id){
     }
 }
 add_action('save_post_product', 'wcefp_save_days_metabox');
+
+add_action('admin_head', function(){ ?>
+<style>
+  #wcefp_product_data .form-field .wrap .wp-editor-wrap{ max-width: 900px; }
+  #_wcefp_languages{ max-width: 600px; }
+  #_wcefp_languages[data-hint]::after{
+    content: attr(data-hint);
+    display:block; font-size:12px; opacity:.65; margin-top:4px;
+  }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  var el = document.getElementById('_wcefp_languages');
+  if(!el) return;
+  function hint(){
+    var v = (el.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+    el.setAttribute('data-hint', v.length ? ('Badge: '+v.join(' · ')) : 'Esempio: IT, EN');
+  }
+  el.addEventListener('input', hint); hint();
+});
+</script>
+<?php });
