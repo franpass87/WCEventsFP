@@ -4,6 +4,10 @@ Fixed
 
 Corretto il checkbox del lunedì che non appariva nel pannello "Ricorrenze settimanali & Slot" del backend.
 
+Changed
+
+Admin UX: migliorato blocco “Info esperienza” con editor leggeri, microcopy e sanitizzazione HTML.
+
 [1.7.0] – 2025-08-18
 Added
 
