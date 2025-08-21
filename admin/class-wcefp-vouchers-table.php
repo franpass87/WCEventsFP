@@ -22,14 +22,37 @@ class WCEFP_Vouchers_Table extends WP_List_Table {
         $orderby = !empty($_REQUEST['orderby']) ? sanitize_sql_orderby($_REQUEST['orderby']) : 'created_at';
         $order   = (isset($_REQUEST['order']) && strtolower($_REQUEST['order']) === 'asc') ? 'ASC' : 'DESC';
 
-        $sql = "SELECT * FROM {$tbl} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
-        return $wpdb->get_results($wpdb->prepare($sql, $per_page, ($page_number - 1) * $per_page), ARRAY_A);
+        $where = '1=1';
+        $params = [];
+        if (isset($_REQUEST['order_id'])) {
+            $where .= ' AND order_id = %d';
+            $params[] = (int)$_REQUEST['order_id'];
+        } elseif (!empty($_REQUEST['wcefp_only_order'])) {
+            $where .= ' AND order_id > 0';
+        }
+
+        $sql = "SELECT * FROM {$tbl} WHERE {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
+        $params[] = $per_page;
+        $params[] = ($page_number - 1) * $per_page;
+        return $wpdb->get_results($wpdb->prepare($sql, $params), ARRAY_A);
     }
 
     public static function record_count() {
         global $wpdb;
         $tbl = $wpdb->prefix . 'wcefp_vouchers';
-        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$tbl}");
+        $where = '1=1';
+        $params = [];
+        if (isset($_REQUEST['order_id'])) {
+            $where .= ' AND order_id = %d';
+            $params[] = (int)$_REQUEST['order_id'];
+        } elseif (!empty($_REQUEST['wcefp_only_order'])) {
+            $where .= ' AND order_id > 0';
+        }
+        $sql = "SELECT COUNT(*) FROM {$tbl} WHERE {$where}";
+        if ($params) {
+            $sql = $wpdb->prepare($sql, $params);
+        }
+        return (int) $wpdb->get_var($sql);
     }
 
     public function no_items() {
