@@ -337,3 +337,344 @@ $(document).ready(function() {
     `);
   }
 });
+
+// Multi-Step Booking Widget Enhancement
+(function($) {
+  class WCEFPMultiStepWidget {
+    constructor($widget) {
+      this.$widget = $widget;
+      this.currentStep = 1;
+      this.totalSteps = 3;
+      this.data = {};
+      
+      if (this.$widget.hasClass('wcefp-multistep')) {
+        this.init();
+      }
+    }
+    
+    init() {
+      this.createProgressIndicator();
+      this.organizeSteps();
+      this.bindNavigation();
+      this.showStep(1);
+    }
+    
+    createProgressIndicator() {
+      const progressHTML = `
+        <div class="wcefp-progress-indicator">
+          <div class="wcefp-step-indicator ${this.currentStep >= 1 ? 'active' : ''}">
+            <div class="wcefp-step-number">1</div>
+            <div class="wcefp-step-label">Data & Orario</div>
+          </div>
+          <div class="wcefp-step-connector ${this.currentStep > 1 ? 'completed' : ''}"></div>
+          <div class="wcefp-step-indicator ${this.currentStep >= 2 ? 'active' : ''}">
+            <div class="wcefp-step-number">2</div>
+            <div class="wcefp-step-label">Partecipanti & Extra</div>
+          </div>
+          <div class="wcefp-step-connector ${this.currentStep > 2 ? 'completed' : ''}"></div>
+          <div class="wcefp-step-indicator ${this.currentStep >= 3 ? 'active' : ''}">
+            <div class="wcefp-step-number">3</div>
+            <div class="wcefp-step-label">Conferma</div>
+          </div>
+        </div>
+      `;
+      
+      this.$widget.prepend(progressHTML);
+    }
+    
+    organizeSteps() {
+      // Group existing form elements into steps
+      const $dateSlot = this.$widget.find('.wcefp-date, .wcefp-slot').closest('.wcefp-row');
+      const $participants = this.$widget.find('.wcefp-adults, .wcefp-children').closest('.wcefp-row');
+      const $extras = this.$widget.find('.wcefp-extra-row');
+      const $total = this.$widget.find('.wcefp-total-row');
+      const $button = this.$widget.find('.wcefp-add');
+      
+      // Create step containers
+      const $step1 = $('<div class="wcefp-step" data-step="1"></div>');
+      const $step2 = $('<div class="wcefp-step" data-step="2"></div>');
+      const $step3 = $('<div class="wcefp-step" data-step="3"></div>');
+      
+      // Move elements to appropriate steps
+      $step1.append($dateSlot);
+      $step2.append($participants).append($extras);
+      $step3.append($total).append($button);
+      
+      // Add navigation buttons
+      $step1.append('<button type="button" class="wcefp-next-step">Avanti →</button>');
+      $step2.append('<button type="button" class="wcefp-prev-step">← Indietro</button><button type="button" class="wcefp-next-step">Avanti →</button>');
+      $step3.append('<button type="button" class="wcefp-prev-step">← Indietro</button>');
+      
+      // Add steps to widget
+      this.$widget.append($step1).append($step2).append($step3);
+    }
+    
+    bindNavigation() {
+      this.$widget.on('click', '.wcefp-next-step', (e) => {
+        e.preventDefault();
+        if (this.validateCurrentStep()) {
+          this.nextStep();
+        }
+      });
+      
+      this.$widget.on('click', '.wcefp-prev-step', (e) => {
+        e.preventDefault();
+        this.prevStep();
+      });
+    }
+    
+    showStep(step) {
+      this.currentStep = step;
+      
+      // Hide all steps
+      this.$widget.find('.wcefp-step').removeClass('active');
+      
+      // Show current step
+      this.$widget.find(`.wcefp-step[data-step="${step}"]`).addClass('active');
+      
+      // Update progress indicator
+      this.updateProgressIndicator();
+      
+      // Add entrance animation
+      this.$widget.find('.wcefp-step.active').addClass('wcefp-step-enter');
+      setTimeout(() => {
+        this.$widget.find('.wcefp-step.active').removeClass('wcefp-step-enter');
+      }, 300);
+    }
+    
+    updateProgressIndicator() {
+      const $indicators = this.$widget.find('.wcefp-step-indicator');
+      const $connectors = this.$widget.find('.wcefp-step-connector');
+      
+      $indicators.each((index, indicator) => {
+        const $indicator = $(indicator);
+        const stepNumber = index + 1;
+        
+        $indicator.removeClass('active completed');
+        
+        if (stepNumber < this.currentStep) {
+          $indicator.addClass('completed');
+        } else if (stepNumber === this.currentStep) {
+          $indicator.addClass('active');
+        }
+      });
+      
+      $connectors.each((index, connector) => {
+        const $connector = $(connector);
+        const stepNumber = index + 1;
+        
+        $connector.removeClass('completed');
+        
+        if (stepNumber < this.currentStep) {
+          $connector.addClass('completed');
+        }
+      });
+    }
+    
+    validateCurrentStep() {
+      const $feedback = this.$widget.find('.wcefp-feedback');
+      $feedback.removeClass('wcefp-error').hide();
+      
+      if (this.currentStep === 1) {
+        const $date = this.$widget.find('.wcefp-date');
+        const $slot = this.$widget.find('.wcefp-slot');
+        
+        if (!$date.val()) {
+          $feedback.text('Seleziona una data.').addClass('wcefp-error').slideDown();
+          return false;
+        }
+        
+        if (!$slot.val()) {
+          $feedback.text('Seleziona un orario.').addClass('wcefp-error').slideDown();
+          return false;
+        }
+      }
+      
+      if (this.currentStep === 2) {
+        const adults = parseInt(this.$widget.find('.wcefp-adults').val() || '0');
+        const children = parseInt(this.$widget.find('.wcefp-children').val() || '0');
+        
+        if ((adults + children) <= 0) {
+          $feedback.text('Indica almeno 1 partecipante.').addClass('wcefp-error').slideDown();
+          return false;
+        }
+      }
+      
+      return true;
+    }
+    
+    nextStep() {
+      if (this.currentStep < this.totalSteps) {
+        this.showStep(this.currentStep + 1);
+      }
+    }
+    
+    prevStep() {
+      if (this.currentStep > 1) {
+        this.showStep(this.currentStep - 1);
+      }
+    }
+  }
+  
+  // Initialize multi-step widgets
+  $(document).ready(function() {
+    $('.wcefp-widget').each(function() {
+      new WCEFPMultiStepWidget($(this));
+    });
+    
+    // Add multi-step styles
+    if (!$('#wcefp-multistep-styles').length) {
+      $('<style id="wcefp-multistep-styles">').appendTo('head').text(`
+        .wcefp-multistep .wcefp-progress-indicator {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 32px;
+          padding: 20px;
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          border-radius: 16px;
+        }
+        
+        .wcefp-step-indicator {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          position: relative;
+        }
+        
+        .wcefp-step-number {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: #e5e7eb;
+          color: #6b7280;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 16px;
+          margin-bottom: 8px;
+          transition: all 0.3s ease;
+        }
+        
+        .wcefp-step-indicator.active .wcefp-step-number {
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          color: white;
+          transform: scale(1.1);
+        }
+        
+        .wcefp-step-indicator.completed .wcefp-step-number {
+          background: linear-gradient(135deg, #10b981, #059669);
+          color: white;
+        }
+        
+        .wcefp-step-indicator.completed .wcefp-step-number::after {
+          content: '✓';
+          position: absolute;
+        }
+        
+        .wcefp-step-label {
+          font-size: 12px;
+          font-weight: 600;
+          color: #6b7280;
+          text-align: center;
+        }
+        
+        .wcefp-step-indicator.active .wcefp-step-label {
+          color: #4f46e5;
+        }
+        
+        .wcefp-step-connector {
+          flex: 1;
+          height: 2px;
+          background: #e5e7eb;
+          margin: 0 12px;
+          position: relative;
+          top: -20px;
+          transition: background 0.3s ease;
+        }
+        
+        .wcefp-step-connector.completed {
+          background: linear-gradient(90deg, #10b981, #059669);
+        }
+        
+        .wcefp-step {
+          display: none;
+        }
+        
+        .wcefp-step.active {
+          display: block;
+          animation: wcefpStepSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes wcefpStepSlideIn {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        .wcefp-step-enter {
+          animation: wcefpStepSlideIn 0.3s ease-out;
+        }
+        
+        .wcefp-next-step, .wcefp-prev-step {
+          margin: 16px 8px 0;
+          padding: 12px 24px;
+          border: none;
+          border-radius: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        
+        .wcefp-next-step {
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          color: white;
+        }
+        
+        .wcefp-next-step:hover {
+          background: linear-gradient(135deg, #5a6fd8, #6b46a8);
+          transform: translateY(-1px);
+        }
+        
+        .wcefp-prev-step {
+          background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+          color: #374151;
+        }
+        
+        .wcefp-prev-step:hover {
+          background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+          transform: translateY(-1px);
+        }
+        
+        @media (max-width: 768px) {
+          .wcefp-progress-indicator {
+            padding: 16px 12px;
+          }
+          
+          .wcefp-step-label {
+            font-size: 11px;
+            max-width: 80px;
+          }
+          
+          .wcefp-step-number {
+            width: 32px;
+            height: 32px;
+            font-size: 14px;
+          }
+          
+          .wcefp-step-connector {
+            margin: 0 8px;
+            top: -16px;
+          }
+        }
+      `);
+    }
+  });
+  
+})(jQuery);

@@ -1,3 +1,44 @@
+# 📜 Changelog – WCEventsFP
+
+[1.8.1] – 2025-08-21
+
+## Added
+
+🎨 **Design Moderno e UX**: Interfaccia completamente ridisegnata con gradients moderni, animazioni fluide e micro-interazioni.
+
+🔍 **Filtri Avanzati**: Sistema di ricerca e filtri in tempo reale con debounce, filtro per tipo evento/esperienza e fasce di prezzo.
+
+🗺️ **Mappe Interactive**: Integrazione Leaflet con marker personalizzati, popup informativi e fallback per Google Maps.
+
+⭐ **Sistema Recensioni**: Shortcode [wcefp_reviews] e [wcefp_testimonials] con rating stelle, avatars e slider automatico touch-friendly.
+
+🎯 **Social Proof**: Indicatori dinamici di attività, badge di urgenza (Ultimi posti!, Popolare, Bestseller), contatori disponibilità.
+
+📱 **Mobile Experience**: Design completamente responsive con touch gestures, interfaccia mobile-friendly e ottimizzazioni prestazioni.
+
+🚀 **Widget Multi-Step**: Sistema di prenotazione a step multipli con progress indicator e validazione avanzata.
+
+🔄 **Animazioni Avanzate**: Loading states, success animations, micro-interazioni e feedback visivo migliorato.
+
+## Changed
+
+Frontend CSS e JavaScript completamente riscritti per prestazioni e UX moderne.
+
+Sistema di template cards migliorato con hover effects, gradient backgrounds e typography moderna.
+
+Filtri e ricerca ottimizzati con debouncing e animazioni fluide.
+
+Mobile responsiveness migliorata su tutti i componenti.
+
+## Improved
+
+Accessibilità migliorata con ARIA labels e supporto screen reader.
+
+Performance ottimizzate con lazy loading immagini e caching intelligente.
+
+Cross-browser compatibility migliorata.
+
+---
 [1.7.1] – 2025-08-19
 Added
 

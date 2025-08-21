@@ -1,5 +1,41 @@
-# WCEventsFP (v1.7.1)
-Eventi & Esperienze per WooCommerce con:
+# WCEventsFP (v1.8.1) - Premium Booking Platform
+Eventi & Esperienze per WooCommerce con funzionalità avanzate simili a Bokun, Regiondo e GetYourGuide.
+
+## 🚀 Nuove Funzionalità v1.8.1
+
+### 🎨 Design Moderno e UX Migliorata
+- **Interfaccia completamente ridisegnata** con gradients moderni e animazioni fluide
+- **Filtri avanzati** con ricerca in tempo reale, filtro per tipo e fascia prezzo
+- **Social proof dinamico** con indicatori di prenotazioni recenti e disponibilità
+- **Sistema di recensioni** integrato con stelle e testimonial rotativi
+- **Widget di prenotazione multi-step** con progress indicator
+
+### 🗺️ Mappe Interactive
+- **Integrazione Leaflet** per visualizzare meeting points
+- **Marker personalizzati** con popup informativi
+- **Link diretti** a Google Maps per navigazione
+- **Design responsive** ottimizzato per mobile
+
+### ⭐ Sistema di Recensioni
+- **Shortcode `[wcefp_reviews id="123"]`** per mostrare recensioni clienti
+- **Shortcode `[wcefp_testimonials limit="3"]`** con slider automatico
+- **Rating visivi** con stelle e statistiche
+- **Testimonianze multilingue** con avatars
+
+### 🎯 Social Proof & Urgency
+- **Indicatori di attività** ("Marco ha prenotato 2 ore fa")
+- **Badge di urgenza** (Ultimi posti!, Popolare, Bestseller)
+- **Contatori disponibilità** in tempo reale
+- **Animazioni di social proof** con effetti di comparsa
+
+### 📱 Mobile Experience
+- **Design completamente responsive**
+- **Touch gestures** per gallery e slider
+- **Interfaccia touch-friendly** per tutti i controlli
+- **Ottimizzazione prestazioni** per dispositivi mobili
+
+## 🏗️ Funzionalità Base Esistenti
+Con:
 - Ricorrenze settimanali, slot orari, prezzi Adulto/Bambino
 - Extra riutilizzabili (CPT dedicato, tabella ponte, tariffazione per ordine/persona/adulto/bambino, quantità massime, obbligatorietà, stock con allocazione automatica)
 - Chiusure straordinarie (globali/prodotto)
@@ -113,11 +149,35 @@ La pagina **Eventi & Degustazioni → Impostazioni** è ora organizzata in tab p
 
 ## Shortcode disponibili
 
+### Shortcode Base
 - `[wcefp_event_card id="123"]` — Card evento singolo
 - `[wcefp_event_grid]` — Griglia eventi/esperienze
 - `[wcefp_booking_widget]` — Widget prenotazione
 - `[wcefp_booking product_id="123"]` — Widget prenotazione manuale
 - `[wcefp_redeem]` — Riscatta voucher
+
+### 🆕 Nuovi Shortcode v1.8.1
+- `[wcefp_reviews id="123" limit="5"]` — Sistema recensioni con rating
+- `[wcefp_testimonials limit="3" style="carousel"]` — Testimonial slider
+- `[wcefp_countdown id="123"]` — Timer countdown per eventi
+- `[wcefp_featured_events limit="3"]` — Eventi in evidenza
+
+### Esempi d'Uso
+```html
+<!-- Widget multi-step per prodotto specifico -->
+<div class="wcefp-multistep">
+  [wcefp_booking_widget product_id="123"]
+</div>
+
+<!-- Sezione recensioni completa -->
+[wcefp_reviews id="123" limit="8"]
+
+<!-- Testimonial rotativi -->
+[wcefp_testimonials limit="5" style="carousel"]
+
+<!-- Countdown per prossimo evento -->
+[wcefp_countdown id="123" style="modern"]
+```
 
 ---
 

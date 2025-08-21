@@ -13,6 +13,8 @@ class WCEFP_Templates {
         add_shortcode('wcefp_event_grid', [__CLASS__, 'shortcode_grid']);
         add_shortcode('wcefp_countdown', [__CLASS__, 'shortcode_countdown']);
         add_shortcode('wcefp_featured_events', [__CLASS__, 'shortcode_featured']);
+        add_shortcode('wcefp_reviews', [__CLASS__, 'shortcode_reviews']);
+        add_shortcode('wcefp_testimonials', [__CLASS__, 'shortcode_testimonials']);
         add_action('wp_enqueue_scripts', [__CLASS__, 'assets']);
     }
 
@@ -118,17 +120,73 @@ class WCEFP_Templates {
         return ob_get_clean();
     }
 
-    public static function render_map($id, $lat, $lng) {
-        $id_attr = esc_attr($id);
-        $lat_f = floatval($lat);
-        $lng_f = floatval($lng);
-        ob_start(); ?>
-        <div id="<?php echo $id_attr; ?>" class="wcefp-map"></div>
+    public static function render_map($id, $lat, $lng, $zoom = 15) {
+        $lat = floatval($lat);
+        $lng = floatval($lng);
+        
+        if (!$lat || !$lng) return '';
+        
+        ob_start();
+        ?>
+        <div class="wcefp-map-container">
+            <div id="<?php echo esc_attr($id); ?>" class="wcefp-map" data-lat="<?php echo esc_attr($lat); ?>" data-lng="<?php echo esc_attr($lng); ?>" data-zoom="<?php echo esc_attr($zoom); ?>">
+                <div class="wcefp-map-loading">
+                    <div class="wcefp-map-spinner"></div>
+                    <p>Caricamento mappa...</p>
+                </div>
+                <noscript>
+                    <div class="wcefp-map-fallback">
+                        <p>🗺️ Mappa non disponibile (JavaScript richiesto)</p>
+                        <a href="https://www.google.com/maps?q=<?php echo $lat; ?>,<?php echo $lng; ?>" target="_blank" rel="noopener">
+                            Visualizza su Google Maps
+                        </a>
+                    </div>
+                </noscript>
+            </div>
+        </div>
         <script>
-        document.addEventListener('DOMContentLoaded', function(){
-            var map = L.map('<?php echo esc_js($id_attr); ?>').setView([<?php echo esc_js($lat_f); ?>, <?php echo esc_js($lng_f); ?>], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '&copy; OpenStreetMap contributors'}).addTo(map);
-            L.marker([<?php echo esc_js($lat_f); ?>, <?php echo esc_js($lng_f); ?>]).addTo(map);
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof L !== 'undefined') {
+                const mapContainer = document.getElementById('<?php echo esc_js($id); ?>');
+                if (mapContainer && !mapContainer.hasChildNodes()) {
+                    const lat = <?php echo json_encode($lat); ?>;
+                    const lng = <?php echo json_encode($lng); ?>;
+                    const zoom = <?php echo json_encode($zoom); ?>;
+                    
+                    // Initialize Leaflet map
+                    const map = L.map('<?php echo esc_js($id); ?>', {
+                        zoomControl: true,
+                        scrollWheelZoom: false,
+                        doubleClickZoom: true
+                    }).setView([lat, lng], zoom);
+                    
+                    // Add tile layer
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }).addTo(map);
+                    
+                    // Add marker with custom icon
+                    const customIcon = L.divIcon({
+                        html: '<div class="wcefp-map-marker">📍</div>',
+                        className: 'wcefp-custom-marker',
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 30]
+                    });
+                    
+                    L.marker([lat, lng], { icon: customIcon })
+                        .addTo(map)
+                        .bindPopup('<strong>Meeting Point</strong><br><a href="https://www.google.com/maps?q=' + lat + ',' + lng + '" target="_blank">Apri in Google Maps</a>');
+                    
+                    // Enable scroll wheel zoom on focus
+                    map.on('focus', function() {
+                        map.scrollWheelZoom.enable();
+                    });
+                    map.on('blur', function() {
+                        map.scrollWheelZoom.disable();
+                    });
+                }
+            }
         });
         </script>
         <?php
@@ -272,6 +330,168 @@ class WCEFP_Templates {
         echo '</div>';
         echo '</div>';
         return ob_get_clean();
+    }
+
+    /* ------------ CUSTOMER REVIEWS ------------ */
+    public static function shortcode_reviews($atts){
+        $a = shortcode_atts(['id'=>0, 'limit'=>5], $atts);
+        $pid = intval($a['id']);
+        $limit = max(1, intval($a['limit']));
+        
+        if (!$pid) return '';
+        
+        // Mock reviews - in a real implementation, these would come from a database
+        $reviews = self::get_mock_reviews($pid, $limit);
+        
+        if (empty($reviews)) return '<p>'.__('Nessuna recensione disponibile.','wceventsfp').'</p>';
+        
+        ob_start();
+        ?>
+        <div class="wcefp-reviews-container">
+            <h3><?php _e('Recensioni dei clienti','wceventsfp'); ?></h3>
+            <div class="wcefp-reviews-summary">
+                <div class="wcefp-overall-rating">
+                    <div class="wcefp-rating-number">4.8</div>
+                    <div class="wcefp-rating-stars">★★★★★</div>
+                    <div class="wcefp-rating-count"><?php echo count($reviews); ?> recensioni</div>
+                </div>
+            </div>
+            <div class="wcefp-reviews-list">
+                <?php foreach ($reviews as $review): ?>
+                    <div class="wcefp-review-item">
+                        <div class="wcefp-review-header">
+                            <div class="wcefp-reviewer-info">
+                                <div class="wcefp-reviewer-avatar"><?php echo substr($review['name'], 0, 1); ?></div>
+                                <div class="wcefp-reviewer-details">
+                                    <div class="wcefp-reviewer-name"><?php echo esc_html($review['name']); ?></div>
+                                    <div class="wcefp-review-date"><?php echo esc_html($review['date']); ?></div>
+                                </div>
+                            </div>
+                            <div class="wcefp-review-rating">
+                                <?php echo str_repeat('★', $review['rating']) . str_repeat('☆', 5 - $review['rating']); ?>
+                            </div>
+                        </div>
+                        <div class="wcefp-review-content">
+                            <p><?php echo esc_html($review['content']); ?></p>
+                            <?php if (!empty($review['experience'])): ?>
+                                <div class="wcefp-review-experience">
+                                    <strong><?php _e('Esperienza:','wceventsfp'); ?></strong> <?php echo esc_html($review['experience']); ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ------------ TESTIMONIALS ------------ */
+    public static function shortcode_testimonials($atts){
+        $a = shortcode_atts(['limit'=>3, 'style'=>'carousel'], $atts);
+        $limit = max(1, intval($a['limit']));
+        $style = sanitize_text_field($a['style']);
+        
+        $testimonials = self::get_mock_testimonials($limit);
+        
+        if (empty($testimonials)) return '';
+        
+        ob_start();
+        ?>
+        <div class="wcefp-testimonials-container wcefp-testimonials-<?php echo esc_attr($style); ?>">
+            <h3><?php _e('Cosa dicono i nostri clienti','wceventsfp'); ?></h3>
+            <div class="wcefp-testimonials-slider">
+                <?php foreach ($testimonials as $index => $testimonial): ?>
+                    <div class="wcefp-testimonial-item <?php echo $index === 0 ? 'active' : ''; ?>">
+                        <div class="wcefp-testimonial-content">
+                            <div class="wcefp-testimonial-quote">"</div>
+                            <p><?php echo esc_html($testimonial['content']); ?></p>
+                        </div>
+                        <div class="wcefp-testimonial-author">
+                            <div class="wcefp-author-avatar"><?php echo substr($testimonial['name'], 0, 1); ?></div>
+                            <div class="wcefp-author-info">
+                                <div class="wcefp-author-name"><?php echo esc_html($testimonial['name']); ?></div>
+                                <div class="wcefp-author-location"><?php echo esc_html($testimonial['location']); ?></div>
+                            </div>
+                            <div class="wcefp-testimonial-rating">
+                                <?php echo str_repeat('★', 5); ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <?php if (count($testimonials) > 1): ?>
+                <div class="wcefp-testimonials-nav">
+                    <?php for ($i = 0; $i < count($testimonials); $i++): ?>
+                        <button class="wcefp-nav-dot <?php echo $i === 0 ? 'active' : ''; ?>" data-slide="<?php echo $i; ?>"></button>
+                    <?php endfor; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /* ------------ MOCK DATA HELPERS ------------ */
+    private static function get_mock_reviews($product_id, $limit) {
+        $names = ['Marco Rossi', 'Giulia Bianchi', 'Alessandro Verdi', 'Francesca Neri', 'Luca Ferrari', 'Sara Romano', 'Andrea Costa', 'Elena Ricci'];
+        $experiences = ['Degustazione Vini', 'Tour Culinario', 'Cooking Class', 'Food Tour', 'Wine Tasting', 'Aperitivo Experience'];
+        $contents = [
+            'Esperienza fantastica! Lo consiglio vivamente a tutti.',
+            'Molto bello, guida preparata e location suggestiva.',
+            'Un\'esperienza unica che ricorderò per sempre.',
+            'Perfetto per una giornata speciale con amici.',
+            'Organizzazione impeccabile, tutto perfetto.',
+            'Superato le aspettative, davvero ben fatto.',
+            'Atmosfera magica e cibo delizioso.',
+            'Un must per chi visita la città!'
+        ];
+        
+        $reviews = [];
+        for ($i = 0; $i < $limit; $i++) {
+            $reviews[] = [
+                'name' => $names[array_rand($names)],
+                'rating' => rand(4, 5),
+                'content' => $contents[array_rand($contents)],
+                'experience' => $experiences[array_rand($experiences)],
+                'date' => date('d/m/Y', strtotime('-' . rand(1, 30) . ' days'))
+            ];
+        }
+        
+        return $reviews;
+    }
+
+    private static function get_mock_testimonials($limit) {
+        $testimonials = [
+            [
+                'name' => 'Marco Rossi',
+                'location' => 'Milano, Italia',
+                'content' => 'Un\'esperienza incredibile che ha superato tutte le mie aspettative. La guida era molto preparata e l\'atmosfera era magica.'
+            ],
+            [
+                'name' => 'Sarah Johnson',
+                'location' => 'New York, USA',
+                'content' => 'Amazing experience! Perfect organization and delicious food. I highly recommend this to anyone visiting Italy.'
+            ],
+            [
+                'name' => 'Jean Dupont',
+                'location' => 'Parigi, Francia',
+                'content' => 'Une expérience fantastique avec une organisation parfaite. Je recommande vivement cette activité unique.'
+            ],
+            [
+                'name' => 'Giulia Bianchi',
+                'location' => 'Roma, Italia',
+                'content' => 'Perfetto per una giornata speciale! L\'organizzazione è stata impeccabile e l\'esperienza indimenticabile.'
+            ],
+            [
+                'name' => 'Hans Mueller',
+                'location' => 'Berlino, Germania',
+                'content' => 'Ein unvergessliches Erlebnis mit perfekter Organisation. Sehr zu empfehlen für alle Italien-Besucher.'
+            ]
+        ];
+        
+        return array_slice($testimonials, 0, $limit);
     }
 }
 
