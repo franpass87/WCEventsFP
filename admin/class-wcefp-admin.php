@@ -36,6 +36,7 @@ class WCEFP_Admin {
         if (!$is_wcefp_page && !$is_product_edit) return;
 
         wp_enqueue_style('wcefp-admin', WCEFP_PLUGIN_URL.'assets/css/admin.css', [], WCEFP_VERSION);
+        wp_enqueue_style('wcefp-admin-enhanced', WCEFP_PLUGIN_URL.'assets/css/admin-enhanced.css', ['wcefp-admin'], WCEFP_VERSION);
 
         // FullCalendar solo nella pagina calendario
         if ($is_wcefp_page && strpos($hook,'wcefp_page_wcefp-calendar') !== false) {
@@ -48,6 +49,7 @@ class WCEFP_Admin {
 
         // JS admin principale
         wp_enqueue_script('wcefp-admin', WCEFP_PLUGIN_URL.'assets/js/admin.js', $deps, WCEFP_VERSION, true);
+        wp_enqueue_script('wcefp-admin-enhanced', WCEFP_PLUGIN_URL.'assets/js/admin-enhanced.js', array_merge($deps, ['wcefp-admin']), WCEFP_VERSION, true);
         wp_localize_script('wcefp-admin','WCEFPAdmin',[
             'ajaxUrl'=> admin_url('admin-ajax.php'),
             'nonce'  => wp_create_nonce('wcefp_admin'),

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WCEventsFP
  * Description: Eventi & Esperienze per WooCommerce con ricorrenze, slot, prezzi A/B, extra, KPI, Calendario (inline edit + filtro), Chiusure straordinarie, GA4/Tag Manager, Meta Pixel, Brevo (liste IT/EN), anti-overbooking, ICS, gift "Regala un'esperienza" e scheda stile GYG/Viator.
- * Version:     1.7.1
+ * Version:     1.7.2
  * Author:      Francesco Passeri
  * Text Domain: wceventsfp
  * Domain Path: /languages
@@ -10,7 +10,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('WCEFP_VERSION', '1.7.1');
+define('WCEFP_VERSION', '1.7.2');
 define('WCEFP_PLUGIN_FILE', __FILE__);
 define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -103,6 +103,9 @@ add_action('plugins_loaded', function () {
     }
 
     // Include core
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-logger.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-validator.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-cache.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-recurring.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-closures.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-gift.php';
