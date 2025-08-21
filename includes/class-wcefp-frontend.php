@@ -286,37 +286,108 @@ class WCEFP_Frontend {
         $occ  = intval($_POST['occurrence_id'] ?? 0);
         $ad   = max(0, intval($_POST['adults'] ?? 0));
         $ch   = max(0, intval($_POST['children'] ?? 0));
-        $extras_in = isset($_POST['extras']) && is_array($_POST['extras']) ? array_values($_POST['extras']) : [];
-        $gift_toggle = intval($_POST['wcefp_gift_toggle'] ?? 0) === 1;
-        $gift_name = sanitize_text_field($_POST['gift_recipient_name'] ?? '');
-        $gift_email = sanitize_email($_POST['gift_recipient_email'] ?? '');
-        $gift_msg = isset($_POST['gift_message']) ? wp_kses($_POST['gift_message'], ['br'=>[]]) : '';
-        if (strlen($gift_msg) > 300) $gift_msg = substr($gift_msg, 0, 300);
+    /* ---------- AJAX: add to cart con check capienza + voucher ---------- */
+    public static function ajax_add_to_cart() {
+        try {
+            check_ajax_referer('wcefp_public','nonce');
+            
+            $validation_rules = [
+                'product_id' => ['method' => 'validate_product_id', 'required' => true],
+                'occurrence_id' => ['method' => 'validate_occurrence_id', 'required' => true],
+                'adults' => ['method' => 'validate_quantity', 'required' => false],
+                'children' => ['method' => 'validate_quantity', 'required' => false],
+            ];
 
-        if ($gift_toggle && $gift_name === '') {
-            wp_send_json_error(['msg' => __('Nome destinatario obbligatorio','wceventsfp')]);
-        }
+            $validated = WCEFP_Validator::validate_bulk($_POST, $validation_rules);
+            if ($validated === false) {
+                wp_send_json_error(['msg'=>__('Dati di prenotazione non validi','wceventsfp')]);
+            }
 
-        if (!$pid || !$occ || ($ad+$ch)<=0) wp_send_json_error(['msg'=>'Dati mancanti']);
+            $pid = $validated['product_id'];
+            $occ = $validated['occurrence_id'];
+            $ad = $validated['adults'] ?? 0;
+            $ch = $validated['children'] ?? 0;
+            
+            $extras_in = isset($_POST['extras']) && is_array($_POST['extras']) ? array_values($_POST['extras']) : [];
+            
+            // Gift validation
+            $gift_toggle = intval($_POST['wcefp_gift_toggle'] ?? 0) === 1;
+            $gift_name = '';
+            $gift_email = '';
+            $gift_msg = '';
+            
+            if ($gift_toggle) {
+                $gift_name = WCEFP_Validator::validate_text($_POST['gift_recipient_name'] ?? '', 100);
+                if ($gift_name === false || empty($gift_name)) {
+                    wp_send_json_error(['msg' => __('Nome destinatario obbligatorio','wceventsfp')]);
+                }
+                
+                $gift_email = WCEFP_Validator::validate_email($_POST['gift_recipient_email'] ?? '');
+                if ($gift_email === false) {
+                    wp_send_json_error(['msg' => __('Email destinatario non valida','wceventsfp')]);
+                }
+                
+                $gift_msg = WCEFP_Validator::validate_textarea($_POST['gift_message'] ?? '', 300);
+                if ($gift_msg === false) {
+                    wp_send_json_error(['msg' => __('Messaggio troppo lungo','wceventsfp')]);
+                }
+            }
 
-        $qty = max(1, $ad + $ch);
+            if (($ad + $ch) <= 0) {
+                WCEFP_Logger::warning('Invalid booking attempt with zero quantity', [
+                    'product_id' => $pid,
+                    'occurrence_id' => $occ,
+                    'adults' => $ad,
+                    'children' => $ch
+                ]);
+                wp_send_json_error(['msg' => __('Seleziona almeno una persona','wceventsfp')]);
+            }
 
-        // Check capienza e stato
-        $row = $wpdb->get_row($wpdb->prepare("SELECT capacity, booked, status FROM $tbl WHERE id=%d AND product_id=%d", $occ, $pid), ARRAY_A);
-        if (!$row) wp_send_json_error(['msg'=>'Slot non trovato.']);
-        if (($row['status'] ?? '') !== 'active') wp_send_json_error(['msg'=>__('Lo slot non è più disponibile','wceventsfp')]);
-        $available = max(0, intval($row['capacity']) - intval($row['booked']));
-        if ($available < $qty) {
-            wp_send_json_error(['msg'=> sprintf(__('Posti disponibili insufficienti. Rimasti: %d','wceventsfp'), $available)]);
-        }
+            $qty = $ad + $ch;
 
-        // Voucher in sessione?
-        $useVoucher = false; $voucherCode = '';
-        if (function_exists('WC')) {
-            $vPid = intval(WC()->session->get('wcefp_voucher_product', 0));
-            if ($vPid === $pid) {
-                $useVoucher = true;
-                $voucherCode = WC()->session->get('wcefp_voucher_code', '');
+            // Check capacity and status with atomic operation
+            global $wpdb;
+            $tbl = $wpdb->prefix . 'wcefp_occurrences';
+            
+            $row = $wpdb->get_row($wpdb->prepare(
+                "SELECT capacity, booked, status FROM $tbl WHERE id=%d AND product_id=%d", 
+                $occ, $pid
+            ), ARRAY_A);
+            
+            if (!$row) {
+                WCEFP_Logger::error('Occurrence not found for booking', [
+                    'occurrence_id' => $occ,
+                    'product_id' => $pid
+                ]);
+                wp_send_json_error(['msg'=>__('Slot non trovato','wceventsfp')]);
+            }
+            
+            if (($row['status'] ?? '') !== 'active') {
+                WCEFP_Logger::info('Booking attempt on inactive slot', [
+                    'occurrence_id' => $occ,
+                    'status' => $row['status']
+                ]);
+                wp_send_json_error(['msg'=>__('Lo slot non è più disponibile','wceventsfp')]);
+            }
+            
+            $available = max(0, intval($row['capacity']) - intval($row['booked']));
+            if ($available < $qty) {
+                WCEFP_Logger::info('Insufficient capacity for booking', [
+                    'occurrence_id' => $occ,
+                    'available' => $available,
+                    'requested' => $qty
+                ]);
+                wp_send_json_error(['msg'=> sprintf(__('Posti disponibili insufficienti. Rimasti: %d','wceventsfp'), $available)]);
+            }
+
+            // Voucher in sessione?
+            $useVoucher = false; $voucherCode = '';
+            if (function_exists('WC')) {
+                $vPid = intval(WC()->session->get('wcefp_voucher_product', 0));
+                if ($vPid === $pid) {
+                    $useVoucher = true;
+                    $voucherCode = WC()->session->get('wcefp_voucher_code', '');
+                }
             }
         }
 

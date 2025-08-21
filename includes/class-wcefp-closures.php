@@ -46,28 +46,73 @@ class WCEFP_Closures {
 
     /** AJAX: aggiunge chiusura */
     public static function ajax_add_closure() {
-        check_ajax_referer('wcefp_admin','nonce');
-        if (!current_user_can('manage_woocommerce')) wp_send_json_error(['msg'=>'No perms']);
+        try {
+            check_ajax_referer('wcefp_admin','nonce');
+            if (!current_user_can('manage_woocommerce')) {
+                WCEFP_Logger::warning('Unauthorized access attempt to add closure');
+                wp_send_json_error(['msg'=>'No perms']);
+            }
 
-        $pid  = isset($_POST['product_id']) ? max(0, intval($_POST['product_id'])) : 0;
-        $from = sanitize_text_field($_POST['from'] ?? '');
-        $to   = sanitize_text_field($_POST['to'] ?? '');
-        $note = sanitize_text_field($_POST['note'] ?? '');
+            $validation_rules = [
+                'product_id' => ['method' => 'validate_product_id', 'required' => false],
+                'from' => ['method' => 'validate_date', 'required' => true],
+                'to' => ['method' => 'validate_date', 'required' => true],
+                'note' => ['method' => 'validate_text', 'args' => [500], 'required' => false],
+            ];
 
-        if (!$from || !$to) wp_send_json_error(['msg'=>__('Date mancanti','wceventsfp')]);
-        if (!self::is_valid_date($from) || !self::is_valid_date($to)) wp_send_json_error(['msg'=>__('Formato data non valido','wceventsfp')]);
-        if ($from > $to) wp_send_json_error(['msg'=>__('Intervallo non valido','wceventsfp')]);
+            $validated = WCEFP_Validator::validate_bulk($_POST, $validation_rules);
+            if ($validated === false) {
+                wp_send_json_error(['msg'=>__('Dati non validi','wceventsfp')]);
+            }
 
-        global $wpdb; $tbl = $wpdb->prefix.'wcefp_closures';
-        $ins = $wpdb->insert($tbl, [
-            'product_id' => $pid,
-            'start_date' => $from,
-            'end_date'   => $to,
-            'note'       => $note,
-        ], ['%d','%s','%s','%s']);
+            $pid = $validated['product_id'] ?? 0;
+            $from = $validated['from'];
+            $to = $validated['to'];
+            $note = $validated['note'] ?? '';
 
-        if (!$ins) wp_send_json_error(['msg'=>__('Errore salvataggio','wceventsfp')]);
-        wp_send_json_success(['ok'=>true]);
+            if ($from > $to) {
+                WCEFP_Logger::warning('Invalid date range for closure', [
+                    'from' => $from, 
+                    'to' => $to
+                ]);
+                wp_send_json_error(['msg'=>__('Intervallo non valido','wceventsfp')]);
+            }
+
+            global $wpdb; $tbl = $wpdb->prefix.'wcefp_closures';
+            
+            $ins = $wpdb->insert($tbl, [
+                'product_id' => $pid,
+                'start_date' => $from,
+                'end_date'   => $to,
+                'note'       => $note,
+            ], ['%d','%s','%s','%s']);
+
+            if (!$ins) {
+                WCEFP_Logger::error('Failed to insert closure', [
+                    'product_id' => $pid,
+                    'from' => $from,
+                    'to' => $to,
+                    'wpdb_error' => $wpdb->last_error
+                ]);
+                wp_send_json_error(['msg'=>__('Errore salvataggio','wceventsfp')]);
+            }
+
+            WCEFP_Logger::info('Closure added successfully', [
+                'closure_id' => $wpdb->insert_id,
+                'product_id' => $pid,
+                'from' => $from,
+                'to' => $to
+            ]);
+
+            wp_send_json_success(['ok'=>true, 'id' => $wpdb->insert_id]);
+            
+        } catch (Exception $e) {
+            WCEFP_Logger::error('Exception in ajax_add_closure', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            wp_send_json_error(['msg'=>__('Errore interno','wceventsfp')]);
+        }
     }
 
     /** AJAX: elimina chiusura */

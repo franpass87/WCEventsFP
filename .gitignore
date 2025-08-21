@@ -33,6 +33,11 @@ pnpm-lock.yaml
 wp-content/cache/
 wp-content/uploads/wc-eventsfp-temp/
 wp-content/uploads/wc-eventsfp-logs/
+wp-content/uploads/wcefp-logs/
+
+# Log files
+*.log
+logs/
 
 # Config locali
 .env
