@@ -582,6 +582,8 @@ class WCEFP_Plugin {
     public function enqueue_frontend() {
         wp_register_style('wcefp-frontend', WCEFP_PLUGIN_URL.'assets/css/frontend.css', [], WCEFP_VERSION);
         wp_register_script('wcefp-frontend', WCEFP_PLUGIN_URL.'assets/js/frontend.js', ['jquery'], WCEFP_VERSION, true);
+        wp_register_script('wcefp-advanced', WCEFP_PLUGIN_URL.'assets/js/advanced-features.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
+        
         wp_localize_script('wcefp-frontend', 'WCEFPData', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('wcefp_public'),
@@ -599,6 +601,7 @@ class WCEFP_Plugin {
 
         wp_enqueue_style('wcefp-frontend');
         wp_enqueue_script('wcefp-frontend');
+        wp_enqueue_script('wcefp-advanced');
         wp_enqueue_style('leaflet');
         wp_enqueue_script('leaflet');
     }
