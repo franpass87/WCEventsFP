@@ -42,6 +42,10 @@ class WCEFP_Admin {
 
         wp_enqueue_style('wcefp-admin', WCEFP_PLUGIN_URL.'assets/css/admin.css', [], WCEFP_VERSION);
         wp_enqueue_style('wcefp-admin-enhanced', WCEFP_PLUGIN_URL.'assets/css/admin-enhanced.css', ['wcefp-admin'], WCEFP_VERSION);
+        
+        // Enhanced UI Components
+        wp_enqueue_style('wcefp-modern-components', WCEFP_PLUGIN_URL.'assets/css/modern-components.css', ['wcefp-admin'], WCEFP_VERSION);
+        wp_enqueue_style('wcefp-advanced-analytics', WCEFP_PLUGIN_URL.'assets/css/advanced-analytics.css', ['wcefp-admin'], WCEFP_VERSION);
 
         // Settings page specific assets
         if ($is_wcefp_page && strpos($hook,'wcefp_page_wcefp-settings') !== false) {
@@ -49,18 +53,24 @@ class WCEFP_Admin {
             wp_enqueue_script('wcefp-admin-settings', WCEFP_PLUGIN_URL.'assets/js/admin-settings.js', ['jquery'], WCEFP_VERSION, true);
         }
 
+        // Chart.js for advanced analytics
+        wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js', [], '4.4.0', true);
+        
         // FullCalendar solo nella pagina calendario
         if ($is_wcefp_page && strpos($hook,'wcefp_page_wcefp-calendar') !== false) {
             wp_enqueue_style('fullcalendar', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css', [], '6.1.15');
             wp_enqueue_script('fullcalendar', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js', [], '6.1.15', true);
         }
 
-        $deps = ['jquery'];
-        if ($is_wcefp_page) $deps[] = 'fullcalendar';
+        $deps = ['jquery', 'chartjs'];
+        if ($is_wcefp_page && strpos($hook,'wcefp_page_wcefp-calendar') !== false) $deps[] = 'fullcalendar';
 
         // JS admin principale
         wp_enqueue_script('wcefp-admin', WCEFP_PLUGIN_URL.'assets/js/admin.js', $deps, WCEFP_VERSION, true);
         wp_enqueue_script('wcefp-admin-enhanced', WCEFP_PLUGIN_URL.'assets/js/admin-enhanced.js', array_merge($deps, ['wcefp-admin']), WCEFP_VERSION, true);
+        
+        // Enhanced features scripts
+        wp_enqueue_script('wcefp-advanced-analytics', WCEFP_PLUGIN_URL.'assets/js/advanced-analytics.js', array_merge($deps, ['wcefp-admin']), WCEFP_VERSION, true);
         wp_localize_script('wcefp-admin','WCEFPAdmin',[
             'ajaxUrl'=> admin_url('admin-ajax.php'),
             'nonce'  => wp_create_nonce('wcefp_admin'),
