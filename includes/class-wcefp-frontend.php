@@ -239,22 +239,47 @@ class WCEFP_Frontend {
         echo '</div>';
     }
 
-    /* ---------- AJAX: occorrenze pubbliche per data ---------- */
+    /* ---------- AJAX: occorrenze pubbliche per data con cache e rate limiting ---------- */
     public static function ajax_public_occurrences() {
+        // Rate limiting per prevenire spam su endpoint pubblico
+        WCEFP_RateLimiter::check_or_die('public_occurrences', 30, 60); // Max 30 richieste per minuto
+        
         check_ajax_referer('wcefp_public','nonce');
-        global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
+        
         $pid  = intval($_POST['product_id'] ?? 0);
         $date = sanitize_text_field($_POST['date'] ?? '');
-        if (!$pid || !$date) wp_send_json_error(['msg'=>'Parametri mancanti']);
+        
+        // Validazione input migliorata con helper
+        if (!WCEFP_Validator::product_id($pid)) {
+            wp_send_json_error(['msg' => __('Prodotto non valido', 'wceventsfp')]);
+        }
+        
+        if (!$date) {
+            wp_send_json_error(['msg'=>'Parametri mancanti']);
+        }
 
         $dateDt = DateTime::createFromFormat('Y-m-d', $date);
         if (!$dateDt) wp_send_json_error(['msg'=>'Formato data non valido']);
 
-        // Blocca se giorno chiuso (globale o specifico)
-        if (class_exists('WCEFP_Closures') && WCEFP_Closures::is_date_closed($pid, $date)) {
-            wp_send_json_success(['slots'=>[]]);
+        // Verifica cache prima della query database
+        $cache_key = WCEFP_Cache::occurrences_key($pid, $date);
+        $cached_slots = WCEFP_Cache::get($cache_key);
+        
+        if ($cached_slots !== null) {
+            wp_send_json_success($cached_slots);
+            return;
         }
 
+        // Blocca se giorno chiuso (globale o specifico)
+        if (class_exists('WCEFP_Closures') && WCEFP_Closures::is_date_closed($pid, $date)) {
+            $result = ['slots'=>[]];
+            WCEFP_Cache::set($cache_key, $result, HOUR_IN_SECONDS); // Cache chiusure più a lungo
+            wp_send_json_success($result);
+            return;
+        }
+
+        // Query database per gli slot
+        global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
         $rows = $wpdb->get_results($wpdb->prepare(
             "SELECT id,start_datetime,capacity,booked,status FROM $tbl WHERE product_id=%d AND DATE(start_datetime)=%s ORDER BY start_datetime ASC",
             $pid, $date
@@ -274,11 +299,21 @@ class WCEFP_Frontend {
                 'soldout' => ($r['status']!=='active' || $avail<=0)
             ];
         }
-        wp_send_json_success(['slots'=>$slots]);
+        
+        $result = ['slots'=>$slots];
+        
+        // Cache risultato per 30 minuti (meno se ci sono prenotazioni attive)
+        $cache_duration = empty($slots) ? HOUR_IN_SECONDS : WCEFP_Config::CACHE_OCCURRENCES_EXPIRATION;
+        WCEFP_Cache::set($cache_key, $result, $cache_duration);
+        
+        wp_send_json_success($result);
     }
 
-    /* ---------- AJAX: add to cart con check capienza + voucher ---------- */
+    /* ---------- AJAX: add to cart con check capienza + voucher + rate limiting ---------- */
     public static function ajax_add_to_cart() {
+        // Rate limiting per prevenire spam/abusi
+        WCEFP_RateLimiter::check_or_die('add_to_cart', 10, 60); // Max 10 richieste per minuto
+        
         check_ajax_referer('wcefp_public','nonce');
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
 
@@ -291,10 +326,19 @@ class WCEFP_Frontend {
         $gift_name = sanitize_text_field($_POST['gift_recipient_name'] ?? '');
         $gift_email = sanitize_email($_POST['gift_recipient_email'] ?? '');
         $gift_msg = isset($_POST['gift_message']) ? wp_kses($_POST['gift_message'], ['br'=>[]]) : '';
-        if (strlen($gift_msg) > 300) $gift_msg = substr($gift_msg, 0, 300);
+        
+        // Usa helper per validare lunghezza messaggio regalo
+        if (!WCEFP_Validator::gift_message($gift_msg)) {
+            $gift_msg = substr($gift_msg, 0, WCEFP_Config::MAX_GIFT_MESSAGE_LENGTH);
+        }
 
+        // Validazione email regalo migliorata  
         if ($gift_toggle && $gift_name === '') {
             wp_send_json_error(['msg' => __('Nome destinatario obbligatorio','wceventsfp')]);
+        }
+        
+        if ($gift_toggle && !empty($gift_email) && !WCEFP_Validator::email($gift_email)) {
+            wp_send_json_error(['msg' => __('Email destinatario non valida','wceventsfp')]);
         }
 
         if (!$pid || !$occ || ($ad+$ch)<=0) wp_send_json_error(['msg'=>'Dati mancanti']);
