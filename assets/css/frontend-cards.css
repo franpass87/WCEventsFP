@@ -1,0 +1,461 @@
+/*!
+ * WCEventsFP Frontend Cards - Enhanced Styling
+ * Quick wins for improved visual design, responsiveness, and accessibility
+ * 
+ * @since 1.7.3
+ */
+
+/* =============================================================================
+   CSS CUSTOM PROPERTIES - Design System
+   ============================================================================= */
+
+:root {
+  /* Colors */
+  --wcefp-color-primary: #2563eb;
+  --wcefp-color-primary-hover: #1d4ed8;
+  --wcefp-color-primary-focus: #3b82f6;
+  --wcefp-color-secondary: #374151;
+  --wcefp-color-text: #1f2937;
+  --wcefp-color-text-muted: #6b7280;
+  --wcefp-color-background: #ffffff;
+  --wcefp-color-background-alt: #f9fafb;
+  --wcefp-color-border: #e5e7eb;
+  --wcefp-color-border-light: #f3f4f6;
+  --wcefp-color-success: #065f46;
+  --wcefp-color-success-bg: #ecfdf5;
+  --wcefp-color-warning: #d97706;
+  --wcefp-color-warning-bg: #fef3c7;
+  --wcefp-color-error: #dc2626;
+  --wcefp-color-shadow: rgba(0, 0, 0, 0.1);
+  --wcefp-color-shadow-light: rgba(0, 0, 0, 0.05);
+  --wcefp-color-shadow-dark: rgba(0, 0, 0, 0.15);
+  
+  /* Spacing */
+  --wcefp-spacing-xs: 4px;
+  --wcefp-spacing-sm: 8px;
+  --wcefp-spacing-md: 12px;
+  --wcefp-spacing-lg: 16px;
+  --wcefp-spacing-xl: 20px;
+  --wcefp-spacing-2xl: 24px;
+  --wcefp-spacing-3xl: 32px;
+  
+  /* Typography */
+  --wcefp-font-size-xs: 0.75rem;    /* 12px */
+  --wcefp-font-size-sm: 0.875rem;   /* 14px */
+  --wcefp-font-size-base: 1rem;     /* 16px */
+  --wcefp-font-size-lg: 1.125rem;   /* 18px */
+  --wcefp-font-size-xl: 1.25rem;    /* 20px */
+  --wcefp-font-size-2xl: 1.5rem;    /* 24px */
+  
+  --wcefp-font-weight-normal: 400;
+  --wcefp-font-weight-medium: 500;
+  --wcefp-font-weight-semibold: 600;
+  --wcefp-font-weight-bold: 700;
+  
+  --wcefp-line-height-tight: 1.25;
+  --wcefp-line-height-normal: 1.5;
+  --wcefp-line-height-relaxed: 1.75;
+  
+  /* Borders & Radius */
+  --wcefp-border-radius-sm: 6px;
+  --wcefp-border-radius-md: 8px;
+  --wcefp-border-radius-lg: 12px;
+  --wcefp-border-radius-xl: 16px;
+  --wcefp-border-radius-full: 9999px;
+  
+  /* Shadows */
+  --wcefp-shadow-sm: 0 1px 2px 0 var(--wcefp-color-shadow-light);
+  --wcefp-shadow-md: 0 4px 6px -1px var(--wcefp-color-shadow-light), 0 2px 4px -1px var(--wcefp-color-shadow-light);
+  --wcefp-shadow-lg: 0 10px 15px -3px var(--wcefp-color-shadow), 0 4px 6px -2px var(--wcefp-color-shadow-light);
+  --wcefp-shadow-hover: 0 8px 25px -6px var(--wcefp-color-shadow), 0 4px 10px -2px var(--wcefp-color-shadow-light);
+  
+  /* Transitions */
+  --wcefp-transition-fast: 0.15s ease-in-out;
+  --wcefp-transition-normal: 0.25s ease-in-out;
+  --wcefp-transition-slow: 0.35s ease-in-out;
+  
+  /* Breakpoints (for reference - used in media queries) */
+  --wcefp-breakpoint-sm: 480px;
+  --wcefp-breakpoint-md: 768px;
+  --wcefp-breakpoint-lg: 1024px;
+  --wcefp-breakpoint-xl: 1200px;
+}
+
+/* =============================================================================
+   ENHANCED GRID LAYOUT
+   ============================================================================= */
+
+.wcefp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--wcefp-spacing-lg);
+  margin: var(--wcefp-spacing-xl) 0;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 480px) {
+  .wcefp-grid {
+    grid-template-columns: 1fr;
+    gap: var(--wcefp-spacing-md);
+    margin: var(--wcefp-spacing-lg) 0;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .wcefp-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--wcefp-spacing-lg);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .wcefp-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--wcefp-spacing-xl);
+  }
+}
+
+@media (min-width: 1025px) {
+  .wcefp-grid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: var(--wcefp-spacing-2xl);
+  }
+}
+
+/* =============================================================================
+   ENHANCED CARD COMPONENT
+   ============================================================================= */
+
+.wcefp-card {
+  background: var(--wcefp-color-background);
+  border: 1px solid var(--wcefp-color-border);
+  border-radius: var(--wcefp-border-radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--wcefp-shadow-sm);
+  transition: all var(--wcefp-transition-normal);
+  position: relative;
+  height: fit-content;
+}
+
+/* Card hover and focus states */
+.wcefp-card:hover {
+  box-shadow: var(--wcefp-shadow-hover);
+  transform: translateY(-2px);
+  border-color: var(--wcefp-color-primary-focus);
+}
+
+.wcefp-card:focus-within {
+  outline: 2px solid var(--wcefp-color-primary);
+  outline-offset: 2px;
+  box-shadow: var(--wcefp-shadow-lg);
+}
+
+/* Card Media */
+.wcefp-card-media {
+  position: relative;
+  aspect-ratio: 16/10;
+  background: var(--wcefp-color-background-alt);
+  overflow: hidden;
+}
+
+.wcefp-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--wcefp-transition-slow);
+}
+
+.wcefp-card:hover .wcefp-card-media img {
+  transform: scale(1.05);
+}
+
+/* Badge enhancements */
+.wcefp-badge {
+  position: absolute;
+  left: var(--wcefp-spacing-sm);
+  top: var(--wcefp-spacing-sm);
+  padding: var(--wcefp-spacing-xs) var(--wcefp-spacing-md);
+  border-radius: var(--wcefp-border-radius-full);
+  font-size: var(--wcefp-font-size-xs);
+  font-weight: var(--wcefp-font-weight-medium);
+  line-height: var(--wcefp-line-height-tight);
+  background: var(--wcefp-color-text);
+  color: var(--wcefp-color-background);
+  box-shadow: var(--wcefp-shadow-md);
+  z-index: 2;
+}
+
+.wcefp-badge.avail {
+  background: var(--wcefp-color-success);
+  color: var(--wcefp-color-background);
+}
+
+.wcefp-badge.soldout {
+  background: var(--wcefp-color-text-muted);
+  color: var(--wcefp-color-background);
+}
+
+/* Card Body */
+.wcefp-card-body {
+  padding: var(--wcefp-spacing-lg) var(--wcefp-spacing-lg) var(--wcefp-spacing-xl);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card Title */
+.wcefp-card-title {
+  margin: 0 0 var(--wcefp-spacing-md);
+  font-size: var(--wcefp-font-size-lg);
+  font-weight: var(--wcefp-font-weight-semibold);
+  line-height: var(--wcefp-line-height-tight);
+  color: var(--wcefp-color-text);
+}
+
+/* Card Meta */
+.wcefp-card-meta {
+  list-style: none;
+  margin: 0 0 var(--wcefp-spacing-lg);
+  padding: 0;
+  flex: 1;
+}
+
+.wcefp-card-meta li {
+  font-size: var(--wcefp-font-size-sm);
+  color: var(--wcefp-color-text-muted);
+  margin: var(--wcefp-spacing-xs) 0;
+  line-height: var(--wcefp-line-height-normal);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wcefp-spacing-xs);
+}
+
+.wcefp-card-meta li strong {
+  color: var(--wcefp-color-secondary);
+  font-weight: var(--wcefp-font-weight-medium);
+  white-space: nowrap;
+}
+
+/* Card CTA */
+.wcefp-card-cta {
+  margin-top: auto;
+  padding-top: var(--wcefp-spacing-md);
+}
+
+.wcefp-card-cta .button {
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  background: var(--wcefp-color-primary);
+  color: var(--wcefp-color-background) !important;
+  border: 1px solid var(--wcefp-color-primary);
+  padding: var(--wcefp-spacing-md) var(--wcefp-spacing-lg);
+  border-radius: var(--wcefp-border-radius-md);
+  font-size: var(--wcefp-font-size-sm);
+  font-weight: var(--wcefp-font-weight-medium);
+  text-decoration: none;
+  transition: all var(--wcefp-transition-fast);
+  cursor: pointer;
+}
+
+.wcefp-card-cta .button:hover {
+  background: var(--wcefp-color-primary-hover);
+  border-color: var(--wcefp-color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--wcefp-shadow-md);
+}
+
+.wcefp-card-cta .button:focus {
+  outline: 2px solid var(--wcefp-color-primary-focus);
+  outline-offset: 2px;
+}
+
+.wcefp-card-cta .button:active {
+  transform: translateY(0);
+}
+
+/* =============================================================================
+   MAP INTEGRATION
+   ============================================================================= */
+
+.wcefp-map {
+  height: 200px;
+  margin-top: var(--wcefp-spacing-md);
+  border-radius: var(--wcefp-border-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--wcefp-color-border);
+}
+
+@media (max-width: 480px) {
+  .wcefp-map {
+    height: 150px;
+  }
+}
+
+/* =============================================================================
+   SKELETON LOADER (Optional)
+   ============================================================================= */
+
+.wcefp-skeleton-enabled .wcefp-card.wcefp-loading {
+  pointer-events: none;
+}
+
+.wcefp-skeleton-enabled .wcefp-loading .wcefp-card-media::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    var(--wcefp-color-border-light) 25%,
+    var(--wcefp-color-border) 50%,
+    var(--wcefp-color-border-light) 75%
+  );
+  background-size: 200% 100%;
+  animation: wcefp-skeleton-shimmer 2s infinite;
+  z-index: 1;
+}
+
+.wcefp-skeleton-enabled .wcefp-loading .wcefp-card-title,
+.wcefp-skeleton-enabled .wcefp-loading .wcefp-card-meta,
+.wcefp-skeleton-enabled .wcefp-loading .wcefp-card-cta {
+  position: relative;
+  overflow: hidden;
+}
+
+.wcefp-skeleton-enabled .wcefp-loading .wcefp-card-title::before,
+.wcefp-skeleton-enabled .wcefp-loading .wcefp-card-meta::before,
+.wcefp-skeleton-enabled .wcefp-loading .wcefp-card-cta::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    var(--wcefp-color-border-light) 25%,
+    var(--wcefp-color-border) 50%,
+    var(--wcefp-color-border-light) 75%
+  );
+  background-size: 200% 100%;
+  animation: wcefp-skeleton-shimmer 2s infinite;
+  z-index: 1;
+}
+
+@keyframes wcefp-skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* =============================================================================
+   ACCESSIBILITY ENHANCEMENTS
+   ============================================================================= */
+
+/* Focus indicators for keyboard navigation */
+.wcefp-card a:focus,
+.wcefp-card button:focus {
+  outline: 2px solid var(--wcefp-color-primary);
+  outline-offset: 2px;
+  border-radius: var(--wcefp-border-radius-sm);
+}
+
+/* Screen reader only content */
+.wcefp-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .wcefp-card {
+    border-width: 2px;
+  }
+  
+  .wcefp-card-cta .button {
+    border-width: 2px;
+  }
+  
+  .wcefp-badge {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .wcefp-card,
+  .wcefp-card-media img,
+  .wcefp-card-cta .button,
+  .wcefp-badge {
+    transition: none;
+  }
+  
+  .wcefp-card:hover {
+    transform: none;
+  }
+  
+  .wcefp-card:hover .wcefp-card-media img {
+    transform: none;
+  }
+  
+  .wcefp-skeleton-enabled .wcefp-loading::before {
+    animation: none;
+  }
+}
+
+/* =============================================================================
+   DARK MODE SUPPORT (respects system preference)
+   ============================================================================= */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --wcefp-color-background: #1f2937;
+    --wcefp-color-background-alt: #374151;
+    --wcefp-color-text: #f9fafb;
+    --wcefp-color-text-muted: #d1d5db;
+    --wcefp-color-border: #4b5563;
+    --wcefp-color-border-light: #374151;
+    --wcefp-color-shadow: rgba(0, 0, 0, 0.3);
+    --wcefp-color-shadow-light: rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* =============================================================================
+   PRINT STYLES
+   ============================================================================= */
+
+@media print {
+  .wcefp-card {
+    box-shadow: none;
+    border: 1px solid #000;
+    page-break-inside: avoid;
+    margin-bottom: var(--wcefp-spacing-lg);
+  }
+  
+  .wcefp-card-cta .button {
+    background: transparent;
+    color: #000;
+    border: 1px solid #000;
+  }
+  
+  .wcefp-card:hover,
+  .wcefp-card:hover .wcefp-card-media img {
+    transform: none;
+  }
+}

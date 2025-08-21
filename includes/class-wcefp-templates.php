@@ -15,7 +15,12 @@ class WCEFP_Templates {
     }
 
     public static function assets(){
+        // Load base template styles
         wp_enqueue_style('wcefp-templates', WCEFP_PLUGIN_URL.'assets/css/templates.css', [], WCEFP_VERSION);
+        
+        // Load enhanced frontend cards styles (v1.7.3+)
+        wp_enqueue_style('wcefp-frontend-cards', WCEFP_PLUGIN_URL.'assets/css/frontend-cards.css', ['wcefp-templates'], WCEFP_VERSION);
+        
         wp_enqueue_script('wcefp-templates', WCEFP_PLUGIN_URL.'assets/js/templates.js', ['jquery'], WCEFP_VERSION, true);
         wp_localize_script('wcefp-templates', 'WCEFPTpl', [
             'ajaxUrl' => admin_url('admin-ajax.php'),

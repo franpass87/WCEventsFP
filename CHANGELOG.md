@@ -5,6 +5,32 @@ Widget di prenotazione con selezione quantità/toggle e calcolo dinamico del pre
 Shortcode aggiuntivi: [wcefp_booking_widget], [wcefp_redeem].
 Sezione compatibilità e screenshot UI nella documentazione.
 📜 Changelog – WCEventsFP
+
+[1.7.3] – 2025-08-21
+Added
+
+Frontend Quick Wins - Enhanced visual design and user experience:
+- New `frontend-cards.css` with comprehensive design system using CSS custom properties
+- CSS variables for colors, spacing, typography, and theming support
+- Enhanced card components with hover states, improved shadows, and better spacing
+- Responsive design with breakpoints for mobile (≤480px), tablet (≤768px), and desktop (≤1024px)
+- Optional skeleton loader with `.wcefp-skeleton-enabled` flag for reduced CLS
+- Enhanced widget styling with improved typography, padding, and form controls
+- WCAG AA compliant contrast ratios and visible focus indicators
+- Dark mode support (respects `prefers-color-scheme`)
+- High contrast mode support
+- Reduced motion accessibility support
+- Print-friendly styles
+
+Improved
+
+Enhanced accessibility and user experience:
+- Better hover and focus states for all interactive elements
+- Improved keyboard navigation support
+- Enhanced button and form control styling with better visual feedback
+- More consistent spacing and typography throughout
+- Smooth transitions and micro-interactions (with reduced motion respect)
+
 [1.7.1] – 2025-08-19
 Fixed
 
