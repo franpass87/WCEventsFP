@@ -148,10 +148,61 @@
           if(r && r.success){
             $fb.text('Aggiunto al carrello con successo!').addClass('wcefp-success').hide().slideDown(300);
             
-            // GA4 begin_checkout
+            // Enhanced GA4/GTM tracking
             if (WCEFPData.ga4_enabled) {
               window.dataLayer = window.dataLayer || [];
-              window.dataLayer.push({event:'begin_checkout'});
+              
+              // Get product data for enhanced tracking
+              const productData = {
+                item_id: pid.toString(),
+                item_name: $w.find('.wcefp-product-title').text() || 'Unknown Product',
+                item_category: 'Experience',
+                item_category2: 'Booking',
+                quantity: (ad + ch),
+                price: parseFloat($w.find('.wcefp-total-price').text().replace(/[^\d.,]/g, '').replace(',', '.')) || 0
+              };
+              
+              // Enhanced begin_checkout event with ecommerce data
+              window.dataLayer.push({
+                event: 'begin_checkout',
+                ecommerce: {
+                  currency: WCEFPData.currency || 'EUR',
+                  value: productData.price,
+                  items: [productData]
+                },
+                // Additional custom parameters
+                booking_type: 'experience',
+                adults: ad,
+                children: ch,
+                selected_date: $w.find('.wcefp-date').val(),
+                selected_slot: $w.find('.wcefp-slot').val()
+              });
+              
+              // Enhanced add_to_cart event
+              window.dataLayer.push({
+                event: 'add_to_cart', 
+                ecommerce: {
+                  currency: WCEFPData.currency || 'EUR',
+                  value: productData.price,
+                  items: [productData]
+                }
+              });
+            }
+            
+            // Enhanced Meta Pixel tracking
+            if (WCEFPData.meta_pixel_id && typeof fbq !== 'undefined') {
+              const pixelData = {
+                content_ids: [pid.toString()],
+                content_type: 'product',
+                value: parseFloat($w.find('.wcefp-total-price').text().replace(/[^\d.,]/g, '').replace(',', '.')) || 0,
+                currency: WCEFPData.currency || 'EUR',
+                content_name: $w.find('.wcefp-product-title').text() || 'Experience',
+                content_category: 'Experience',
+                num_items: (ad + ch)
+              };
+              
+              fbq('track', 'AddToCart', pixelData);
+              fbq('track', 'InitiateCheckout', pixelData);
             }
             
             // Celebrate with animation

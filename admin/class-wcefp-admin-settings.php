@@ -145,6 +145,24 @@ class WCEFP_Admin_Settings {
             'default' => ''
         ));
 
+        register_setting('wcefp_advanced_settings', 'wcefp_google_ads_id', array(
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default' => ''
+        ));
+
+        register_setting('wcefp_advanced_settings', 'wcefp_enable_server_analytics', array(
+            'type' => 'boolean',
+            'sanitize_callback' => array($this, 'sanitize_checkbox'),
+            'default' => false
+        ));
+
+        register_setting('wcefp_advanced_settings', 'wcefp_conversion_optimization', array(
+            'type' => 'boolean',
+            'sanitize_callback' => array($this, 'sanitize_checkbox'),
+            'default' => true
+        ));
+
         // Add settings sections and fields
         $this->add_settings_sections();
     }
@@ -285,6 +303,30 @@ class WCEFP_Admin_Settings {
             'wcefp_meta_pixel_id',
             __('Meta Pixel ID', 'wceventsfp'),
             array($this, 'meta_pixel_id_callback'),
+            'wcefp_advanced_settings',
+            'wcefp_tracking_section'
+        );
+
+        add_settings_field(
+            'wcefp_google_ads_id',
+            __('Google Ads Conversion ID', 'wceventsfp'),
+            array($this, 'google_ads_id_callback'),
+            'wcefp_advanced_settings',
+            'wcefp_tracking_section'
+        );
+
+        add_settings_field(
+            'wcefp_enable_server_analytics',
+            __('Server-side Analytics', 'wceventsfp'),
+            array($this, 'enable_server_analytics_callback'),
+            'wcefp_advanced_settings',
+            'wcefp_tracking_section'
+        );
+
+        add_settings_field(
+            'wcefp_conversion_optimization',
+            __('Ottimizzazione Conversioni', 'wceventsfp'),
+            array($this, 'conversion_optimization_callback'),
             'wcefp_advanced_settings',
             'wcefp_tracking_section'
         );
@@ -605,6 +647,62 @@ class WCEFP_Admin_Settings {
         <p id="wcefp-meta-pixel-id-description" class="description">
             <?php esc_html_e('ID del Meta Pixel (Facebook) per il tracking delle conversioni.', 'wceventsfp'); ?>
         </p>
+        <?php
+    }
+
+    public function google_ads_id_callback() {
+        $value = get_option('wcefp_google_ads_id', '');
+        ?>
+        <input type="text" 
+               id="wcefp_google_ads_id" 
+               name="wcefp_google_ads_id" 
+               value="<?php echo esc_attr($value); ?>" 
+               class="regular-text"
+               placeholder="AW-XXXXXXXXXX/XXXXXXXXX"
+               aria-describedby="wcefp-google-ads-id-description" />
+        <p id="wcefp-google-ads-id-description" class="description">
+            <?php esc_html_e('ID di conversione Google Ads per il tracking delle conversioni (formato: AW-XXXXXXXXXX/XXXXXXXXX).', 'wceventsfp'); ?>
+        </p>
+        <?php
+    }
+
+    public function enable_server_analytics_callback() {
+        $value = get_option('wcefp_enable_server_analytics', false);
+        ?>
+        <fieldset>
+            <label for="wcefp_enable_server_analytics">
+                <input type="checkbox" 
+                       id="wcefp_enable_server_analytics" 
+                       name="wcefp_enable_server_analytics" 
+                       value="1" 
+                       <?php checked($value, true); ?>
+                       aria-describedby="wcefp-enable-server-analytics-description" />
+                <?php esc_html_e('Abilita analytics server-side', 'wceventsfp'); ?>
+            </label>
+            <p id="wcefp-enable-server-analytics-description" class="description">
+                <?php esc_html_e('Invia eventi critici al server per analytics avanzate e backup dei dati.', 'wceventsfp'); ?>
+            </p>
+        </fieldset>
+        <?php
+    }
+
+    public function conversion_optimization_callback() {
+        $value = get_option('wcefp_conversion_optimization', true);
+        ?>
+        <fieldset>
+            <label for="wcefp_conversion_optimization">
+                <input type="checkbox" 
+                       id="wcefp_conversion_optimization" 
+                       name="wcefp_conversion_optimization" 
+                       value="1" 
+                       <?php checked($value, true); ?>
+                       aria-describedby="wcefp-conversion-optimization-description" />
+                <?php esc_html_e('Abilita ottimizzazioni per conversioni', 'wceventsfp'); ?>
+            </label>
+            <p id="wcefp-conversion-optimization-description" class="description">
+                <?php esc_html_e('Attiva funzionalità avanzate per migliorare le conversioni: urgency indicators, social proof, dynamic pricing hints.', 'wceventsfp'); ?>
+            </p>
+        </fieldset>
         <?php
     }
 
