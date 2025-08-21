@@ -27,11 +27,6 @@ class WCEFP_Admin {
         add_submenu_page('wcefp', __('Chiusure straordinarie','wceventsfp'), __('Chiusure straordinarie','wceeventsfp'), $cap,'wcefp-closures',['WCEFP_Closures','render_admin_page']);
         add_submenu_page('wcefp', __('Esporta','wceventsfp'), __('Esporta','wceventsfp'), $cap,'wcefp-export',[__CLASS__,'render_export_page']);
         add_submenu_page('wcefp', __('Impostazioni','wceventsfp'), __('Impostazioni','wceventsfp'), $cap,'wcefp-settings',[__CLASS__,'render_settings_page']);
-        
-        // Pagina test di sistema (solo in debug mode)
-        if (WCEFP_Config::debug_enabled()) {
-            add_submenu_page('wcefp', __('Test Sistema','wceventsfp'), __('Test Sistema','wceventsfp'), 'manage_options','wcefp-tests',[__CLASS__,'render_tests_page']);
-        }
     }
 
     /* ---------- Enqueue admin ---------- */
@@ -97,11 +92,7 @@ class WCEFP_Admin {
     public static function render_kpi_page() {
         if (!current_user_can('manage_woocommerce')) return;
 
-        // Usa cache per migliorare performance dei KPI
-        $cache_key = WCEFP_Cache::kpi_key(30);
-        $kpi = WCEFP_Cache::remember($cache_key, function() {
-            return self::get_kpi(30);
-        }, 15 * MINUTE_IN_SECONDS); // Cache 15 minuti per dati live
+        $kpi = self::get_kpi(30); // ultimi 30 giorni
         ?>
         <div class="wrap">
             <h1><?php _e('Analisi KPI','wceventsfp'); ?></h1>
@@ -123,38 +114,6 @@ class WCEFP_Admin {
                     <p><?php echo esc_html($kpi['top_product'] ?: '—'); ?></p>
                 </div>
             </div>
-        </div>
-        <?php
-    }
-    
-    /** Pagina test di sistema per debugging e verifica componenti */
-    public static function render_tests_page() {
-        if (!current_user_can('manage_options')) return;
-        
-        $run_tests = isset($_POST['run_tests']);
-        $results = [];
-        
-        if ($run_tests && check_admin_referer('wcefp_tests')) {
-            $results = WCEFP_Tests::run_all();
-        }
-        
-        ?>
-        <div class="wrap">
-            <h1><?php _e('Test Sistema WCEventsFP','wceventsfp'); ?></h1>
-            <p><?php _e('Verifica il funzionamento dei componenti principali del plugin.','wceventsfp'); ?></p>
-            
-            <form method="post">
-                <?php wp_nonce_field('wcefp_tests'); ?>
-                <p>
-                    <button type="submit" name="run_tests" class="button button-primary">
-                        <?php _e('Esegui Test','wceventsfp'); ?>
-                    </button>
-                </p>
-            </form>
-            
-            <?php if (!empty($results)): ?>
-                <?php echo WCEFP_Tests::get_html_report($results); ?>
-            <?php endif; ?>
         </div>
         <?php
     }
@@ -383,38 +342,6 @@ class WCEFP_Admin {
                 <p><button class="button button-primary" type="submit" name="wcefp_save" value="1"><?php _e('Salva','wceventsfp'); ?></button></p>
             </form>
         </div><?php
-    }
-    
-    /** Pagina test di sistema per debugging e verifica componenti */
-    public static function render_tests_page() {
-        if (!current_user_can('manage_options')) return;
-        
-        $run_tests = isset($_POST['run_tests']);
-        $results = [];
-        
-        if ($run_tests && check_admin_referer('wcefp_tests')) {
-            $results = WCEFP_Tests::run_all();
-        }
-        
-        ?>
-        <div class="wrap">
-            <h1><?php _e('Test Sistema WCEventsFP','wceventsfp'); ?></h1>
-            <p><?php _e('Verifica il funzionamento dei componenti principali del plugin.','wceventsfp'); ?></p>
-            
-            <form method="post">
-                <?php wp_nonce_field('wcefp_tests'); ?>
-                <p>
-                    <button type="submit" name="run_tests" class="button button-primary">
-                        <?php _e('Esegui Test','wceventsfp'); ?>
-                    </button>
-                </p>
-            </form>
-            
-            <?php if (!empty($results)): ?>
-                <?php echo WCEFP_Tests::get_html_report($results); ?>
-            <?php endif; ?>
-        </div>
-        <?php
     }
 }
 add_action('admin_head', function () { ?>
