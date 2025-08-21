@@ -115,8 +115,10 @@ add_action('plugins_loaded', function () {
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-meetingpoints.php';
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-table.php';
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-admin.php';
+    require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-orders-bridge.php';
     WCEFP_Admin::init();
     WCEFP_Vouchers_Admin::init();
+    WCEFP_Orders_Bridge::init();
 
     WCEFP()->init();
 });
