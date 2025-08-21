@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WCEventsFP v1.8.1 - Demo Features</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .hero {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            margin-bottom: 40px;
+        }
+        .hero h1 {
+            font-size: 3rem;
+            margin: 0 0 16px;
+            font-weight: 700;
+        }
+        .hero p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            margin-bottom: 40px;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+        }
+        .feature-card h3 {
+            color: #1f2937;
+            margin: 0 0 16px;
+            font-size: 1.5rem;
+        }
+        .feature-card p {
+            color: #6b7280;
+            margin: 0 0 16px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .feature-list li {
+            color: #374151;
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+        .demo-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .demo-section h2 {
+            color: #1f2937;
+            margin: 0 0 24px;
+            font-size: 2rem;
+        }
+        .shortcode-example {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            margin: 16px 0;
+            border-left: 4px solid #667eea;
+        }
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 0 8px 8px 0;
+        }
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>🚀 WCEventsFP v1.8.1</h1>
+            <p>Plugin di prenotazioni WordPress di livello professionale - Competitivo con Bokun, Regiondo e GetYourGuide</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h3>Design Moderno</h3>
+                <p>Interfaccia completamente ridisegnata con estetica moderna</p>
+                <ul class="feature-list">
+                    <li>Gradients e animazioni fluide</li>
+                    <li>Cards con hover effects</li>
+                    <li>Typography migliorata</li>
+                    <li>Micro-interazioni</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Filtri Avanzati</h3>
+                <p>Sistema di ricerca e filtri professionale in tempo reale</p>
+                <ul class="feature-list">
+                    <li>Ricerca con debouncing</li>
+                    <li>Filtri per tipo e prezzo</li>
+                    <li>Animazioni fluide</li>
+                    <li>UX ottimizzata</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🗺️</div>
+                <h3>Mappe Interactive</h3>
+                <p>Integrazione Leaflet per meeting points</p>
+                <ul class="feature-list">
+                    <li>Marker personalizzati</li>
+                    <li>Popup informativi</li>
+                    <li>Link Google Maps</li>
+                    <li>Responsive design</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">⭐</div>
+                <h3>Sistema Recensioni</h3>
+                <p>Reviews e testimonial come piattaforme professionali</p>
+                <ul class="feature-list">
+                    <li>Rating con stelle</li>
+                    <li>Avatar utenti</li>
+                    <li>Slider testimonial</li>
+                    <li>Touch-friendly</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Social Proof</h3>
+                <p>Elementi di urgenza e social proof dinamici</p>
+                <ul class="feature-list">
+                    <li>Indicatori attività</li>
+                    <li>Badge urgenza</li>
+                    <li>Contatori disponibilità</li>
+                    <li>Animazioni smart</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>Mobile First</h3>
+                <p>Esperienza mobile ottimizzata</p>
+                <ul class="feature-list">
+                    <li>Touch gestures</li>
+                    <li>Swipe support</li>
+                    <li>Responsive design</li>
+                    <li>Performance ottimizzate</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🆕 Nuovi Shortcode</h2>
+            <p>WCEventsFP v1.8.1 introduce nuovi shortcode per funzionalità avanzate:</p>
+            
+            <h3>Sistema Recensioni</h3>
+            <div class="shortcode-example">[wcefp_reviews id="123" limit="5"]</div>
+            <p>Mostra recensioni clienti con rating stelle, avatars e design moderno.</p>
+            
+            <h3>Testimonial Slider</h3>
+            <div class="shortcode-example">[wcefp_testimonials limit="3" style="carousel"]</div>
+            <p>Slider testimonial automatico con touch support e controlli di navigazione.</p>
+            
+            <h3>Widget Multi-Step</h3>
+            <div class="shortcode-example">&lt;div class="wcefp-multistep"&gt;
+[wcefp_booking_widget product_id="123"]
+&lt;/div&gt;</div>
+            <p>Widget di prenotazione a step multipli con progress indicator.</p>
+            
+            <h3>Countdown Timer</h3>
+            <div class="shortcode-example">[wcefp_countdown id="123" style="modern"]</div>
+            <p>Timer countdown per eventi in arrivo con design accattivante.</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>🏆 Caratteristiche di Livello Professionale</h2>
+            <p>WCEventsFP ora compete con le migliori piattaforme di prenotazione:</p>
+            
+            <div class="features-grid">
+                <div style="background: #f0f9ff; padding: 20px; border-radius: 12px;">
+                    <h4>📊 Come Bokun</h4>
+                    <div class="badge">Social Proof</div>
+                    <div class="badge">Reviews</div>
+                    <div class="badge">Maps</div>
+                    <div class="badge">Mobile UX</div>
+                </div>
+                
+                <div style="background: #f0fdf4; padding: 20px; border-radius: 12px;">
+                    <h4>🎯 Come Regiondo</h4>
+                    <div class="badge">Multi-Step</div>
+                    <div class="badge">Filters</div>
+                    <div class="badge">Urgency</div>
+                    <div class="badge">Performance</div>
+                </div>
+                
+                <div style="background: #fefbf0; padding: 20px; border-radius: 12px;">
+                    <h4>✨ Come GetYourGuide</h4>
+                    <div class="badge">Modern UI</div>
+                    <div class="badge">Testimonials</div>
+                    <div class="badge">Availability</div>
+                    <div class="badge">Animations</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🔧 Miglioramenti Tecnici</h2>
+            <ul class="feature-list">
+                <li><strong>CSS Moderno:</strong> Flexbox, Grid, Custom Properties, Animazioni CSS3</li>
+                <li><strong>JavaScript ES6+:</strong> Classes, Arrow Functions, Template Literals</li>
+                <li><strong>Performance:</strong> Lazy Loading, Debouncing, Caching</li>
+                <li><strong>Accessibilità:</strong> ARIA Labels, Screen Reader Support</li>
+                <li><strong>Mobile:</strong> Touch Events, Responsive Breakpoints</li>
+                <li><strong>Cross-browser:</strong> Compatibility migliorata</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; padding: 40px 20px;">
+            <h2>🎉 Pronto per il Mercato Professionale</h2>
+            <p style="font-size: 1.125rem; color: #6b7280; max-width: 600px; margin: 0 auto;">
+                WCEventsFP v1.8.1 offre ora un'esperienza di prenotazione premium comparabile alle migliori piattaforme internazionali, 
+                con design moderno, funzionalità avanzate e prestazioni ottimizzate.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
