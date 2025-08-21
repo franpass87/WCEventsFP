@@ -16,6 +16,7 @@ desktop.ini
 
 # Composer / Node (se in futuro usi dipendenze)
 vendor/
+!vendor/wcefp-fpdf.php
 node_modules/
 npm-debug.log*
 yarn-debug.log*

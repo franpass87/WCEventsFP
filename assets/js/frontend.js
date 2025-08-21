@@ -1,6 +1,12 @@
 (function($){
   $(function(){
 
+    const $giftToggle = $('#wcefp-gift-toggle');
+    const $giftFields = $('#wcefp-gift-fields');
+    $giftToggle.on('change', function(){
+      $giftFields.toggle(this.checked);
+    });
+
     const priceFormatter = new Intl.NumberFormat(WCEFPData.locale, {
       style: 'currency',
       currency: WCEFPData.currency,
@@ -104,9 +110,22 @@
         if(!occ){ $fb.text('Seleziona uno slot.'); return; }
         if((ad+ch) <= 0){ $fb.text('Indica almeno 1 partecipante.'); return; }
 
+        const giftEnabled = $giftToggle.is(':checked');
+        let giftName = '', giftEmail = '', giftMsg = '';
+        if(giftEnabled){
+          giftName = $.trim($('input[name="gift_recipient_name"]').val());
+          giftEmail = $.trim($('input[name="gift_recipient_email"]').val());
+          giftMsg = $.trim($('textarea[name="gift_message"]').val());
+          if(!giftName){ $fb.text('Inserisci il nome del destinatario.'); return; }
+        }
+
         $.post(WCEFPData.ajaxUrl, {
           action:'wcefp_add_to_cart', nonce: WCEFPData.nonce,
-          product_id: pid, occurrence_id: occ, adults: ad, children: ch, extras: extras
+          product_id: pid, occurrence_id: occ, adults: ad, children: ch, extras: extras,
+          wcefp_gift_toggle: giftEnabled ? 1 : 0,
+          gift_recipient_name: giftName,
+          gift_recipient_email: giftEmail,
+          gift_message: giftMsg
         }, function(r){
           if(r && r.success){
             // GA4 begin_checkout

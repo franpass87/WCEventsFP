@@ -1,5 +1,6 @@
 <?php
 if (!defined('ABSPATH')) exit;
+require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-gift-pdf.php';
 
 class WCEFP_Frontend {
 
@@ -110,6 +111,22 @@ class WCEFP_Frontend {
         global $product;
         if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
         echo self::shortcode_booking(['product_id' => $product->get_id()]);
+        self::render_gift_form();
+    }
+
+    public static function render_gift_form() {
+        global $product;
+        if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
+        ?>
+        <div id="wcefp-gift">
+            <label><input type="checkbox" id="wcefp-gift-toggle" name="wcefp_gift_toggle" value="1"> <?php _e('Regala un’esperienza','wceventsfp'); ?></label>
+            <div id="wcefp-gift-fields" style="display:none">
+                <p><label><?php _e('Nome destinatario','wceventsfp'); ?></label><input type="text" name="gift_recipient_name" maxlength="120"></p>
+                <p><label><?php _e('Email destinatario (facoltativa)','wceventsfp'); ?></label><input type="email" name="gift_recipient_email"></p>
+                <p><label><?php _e('Messaggio (facoltativo)','wceventsfp'); ?></label><textarea name="gift_message" rows="3" maxlength="300" placeholder="<?php esc_attr_e('Un pensiero per chi riceve il regalo…','wceeventsfp'); ?>"></textarea></p>
+            </div>
+        </div>
+        <?php
     }
 
     public static function render_product_details() {
@@ -270,6 +287,15 @@ class WCEFP_Frontend {
         $ad   = max(0, intval($_POST['adults'] ?? 0));
         $ch   = max(0, intval($_POST['children'] ?? 0));
         $extras_in = isset($_POST['extras']) && is_array($_POST['extras']) ? array_values($_POST['extras']) : [];
+        $gift_toggle = intval($_POST['wcefp_gift_toggle'] ?? 0) === 1;
+        $gift_name = sanitize_text_field($_POST['gift_recipient_name'] ?? '');
+        $gift_email = sanitize_email($_POST['gift_recipient_email'] ?? '');
+        $gift_msg = isset($_POST['gift_message']) ? wp_kses($_POST['gift_message'], ['br'=>[]]) : '';
+        if (strlen($gift_msg) > 300) $gift_msg = substr($gift_msg, 0, 300);
+
+        if ($gift_toggle && $gift_name === '') {
+            wp_send_json_error(['msg' => __('Nome destinatario obbligatorio','wceventsfp')]);
+        }
 
         if (!$pid || !$occ || ($ad+$ch)<=0) wp_send_json_error(['msg'=>'Dati mancanti']);
 
@@ -358,6 +384,13 @@ class WCEFP_Frontend {
             '_wcefp_extras'  => $extras,
         ];
         if ($useVoucher && $voucherCode) $meta['_wcefp_voucher_code'] = $voucherCode;
+        if ($gift_name) {
+            $meta['_wcefp_gift'] = [
+                'name'  => $gift_name,
+                'email' => $gift_email,
+                'msg'   => $gift_msg,
+            ];
+        }
 
         $added = WC()->cart->add_to_cart($pid, $qty, 0, [], $meta);
         if (!$added) wp_send_json_error(['msg'=>'Impossibile aggiungere al carrello']);
@@ -474,5 +507,65 @@ class WCEFP_Frontend {
             // salva anche a livello ordine per mark used
             $order->update_meta_data('wcefp_voucher_code', $values['_wcefp_voucher_code']);
         }
+        if (!empty($values['_wcefp_gift']) && is_array($values['_wcefp_gift'])) {
+            $gift = $values['_wcefp_gift'];
+            $item->add_meta_data('Gift - Nome', $gift['name'] ?? '', true);
+            if (!empty($gift['email'])) $item->add_meta_data('Gift - Email', $gift['email'], true);
+            if (!empty($gift['msg'])) $item->add_meta_data('Gift - Messaggio', $gift['msg'], true);
+            $item->add_meta_data('_wcefp_gift_data', wp_json_encode($gift), true);
+        }
+    }
+
+    public static function display_gift_item($data, $cart_item) {
+        if (!empty($cart_item['_wcefp_gift'])) {
+            $g = $cart_item['_wcefp_gift'];
+            $parts = [];
+            if (!empty($g['name'])) $parts[] = $g['name'];
+            if (!empty($g['email'])) $parts[] = $g['email'];
+            if (!empty($g['msg'])) $parts[] = $g['msg'];
+            if (!empty($parts)) {
+                $data[] = [
+                    'name' => __('Gift', 'wceventsfp'),
+                    'value' => implode(' / ', $parts)
+                ];
+            }
+        }
+        return $data;
+    }
+
+    public static function thankyou_gift_links($order_id) {
+        $order = wc_get_order($order_id); if(!$order) return;
+        foreach ($order->get_items() as $item_id => $item) {
+            $vid = intval($item->get_meta('_wcefp_voucher_id', true));
+            if ($vid > 0) {
+                $url = add_query_arg([
+                    'wcefp_gift_pdf' => 1,
+                    'order' => $order_id,
+                    'item' => $item_id,
+                    'voucher' => $vid,
+                    'key' => $order->get_order_key(),
+                ], home_url('/'));
+                echo '<p><a class="button wcefp-gift-download" href="'.esc_url($url).'">'.esc_html__('Scarica PDF','wceventsfp').'</a></p>';
+            }
+        }
+    }
+
+    public static function capture_gift_cart($data, $product_id, $variation_id) {
+        $toggle = intval($_POST['wcefp_gift_toggle'] ?? 0) === 1;
+        $name = sanitize_text_field($_POST['gift_recipient_name'] ?? '');
+        $email = sanitize_email($_POST['gift_recipient_email'] ?? '');
+        $msg = isset($_POST['gift_message']) ? wp_kses($_POST['gift_message'], ['br'=>[]]) : '';
+        if (strlen($msg) > 300) $msg = substr($msg, 0, 300);
+        if ($toggle && $name === '') {
+            wc_add_notice(__('Nome destinatario obbligatorio','wceventsfp'), 'error');
+        }
+        if ($name) {
+            $data['_wcefp_gift'] = ['name'=>$name,'email'=>$email,'msg'=>$msg];
+        }
+        return $data;
     }
 }
+WCEFP_Gift_PDF::init();
+add_filter('woocommerce_add_cart_item_data', ['WCEFP_Frontend','capture_gift_cart'], 10, 3);
+add_filter('woocommerce_get_item_data', ['WCEFP_Frontend','display_gift_item'], 10, 2);
+add_action('woocommerce_thankyou', ['WCEFP_Frontend','thankyou_gift_links'], 40);

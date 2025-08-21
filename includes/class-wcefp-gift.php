@@ -91,61 +91,61 @@ class WCEFP_Gift {
     public static function maybe_generate_vouchers($order_id){
         $order = wc_get_order($order_id); if(!$order) return;
 
-        $enabled = get_post_meta($order_id, 'wcefp_gift_enable', true);
-        if (!$enabled) return;
-
-        $rec_name  = sanitize_text_field(get_post_meta($order_id, 'wcefp_gift_recipient_name', true));
-        $rec_email = sanitize_email(get_post_meta($order_id, 'wcefp_gift_recipient_email', true));
-        $message   = sanitize_textarea_field(get_post_meta($order_id, 'wcefp_gift_message', true));
-
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_vouchers';
-        $max_retry = 5;
-        $count = 0;
-        $voucher_links = [];
 
-        foreach ($order->get_items() as $it) {
+        foreach ($order->get_items() as $item_id => $it) {
+            $gift_json = $it->get_meta('_wcefp_gift_data', true);
+            if (!$gift_json) continue;
+            $gift = json_decode($gift_json, true);
+            if (!is_array($gift) || empty($gift['name'])) continue;
+
             $p = $it->get_product(); if(!$p) continue;
             if (!in_array($p->get_type(), ['wcefp_event','wcefp_experience'], true)) continue;
 
             $qty = max(1, (int)$it->get_quantity());
+            $links = [];
             for ($i=0; $i<$qty; $i++){
-                $attempts = 0;
+                $attempts = 0; $ins = false; $code = '';
                 do {
                     $code = self::generate_code();
                     $ins = $wpdb->insert($tbl, [
                         'code' => $code,
                         'product_id' => $p->get_id(),
                         'order_id' => $order_id,
-                        'recipient_name' => $rec_name,
-                        'recipient_email' => $rec_email,
-                        'message_text' => $message,
+                        'recipient_name' => $gift['name'],
+                        'recipient_email' => $gift['email'],
+                        'message_text' => $gift['msg'],
                         'status' => 'unused',
                     ], ['%s','%d','%d','%s','%s','%s','%s']);
                     $attempts++;
-                } while (!$ins && $attempts < $max_retry);
+                } while (!$ins && $attempts < 5);
 
                 if ($ins) {
-                    $count++;
-                    $voucher_links[] = self::voucher_url($code);
+                    $vid = $wpdb->insert_id;
+                    $it->add_meta_data('_wcefp_voucher_id', $vid, true);
+                    $it->add_meta_data('Voucher', $code, true);
+                    $links[] = add_query_arg([
+                        'wcefp_gift_pdf' => 1,
+                        'order' => $order_id,
+                        'item' => $item_id,
+                        'voucher' => $vid,
+                        'key' => $order->get_order_key(),
+                    ], home_url('/'));
                 } else {
                     error_log(sprintf('WCEFP_Gift: failed to insert voucher for order %d after %d attempts', $order_id, $attempts));
                 }
             }
+
+            if (!empty($gift['email']) && !empty($links)) {
+                self::brevo_send_voucher_mail($order, $gift['name'], $gift['email'], $links);
+            }
         }
 
-        if ($count > 0) {
-            $order->add_order_note(sprintf(__('Voucher generati: %d','wceventsfp'), $count));
-            // invio email via Brevo
-            self::brevo_send_voucher_mail($order, $rec_name, $rec_email, $voucher_links);
-        }
+        $order->save();
     }
 
-    private static function generate_code(){
+    public static function generate_code(){
         return strtoupper( wp_generate_password(12, false, false) );
-    }
-
-    private static function voucher_url($code){
-        return add_query_arg(['wcefp_voucher_view'=>1,'code'=>$code], home_url('/'));
     }
 
     private static function brevo_send_voucher_mail($order, $rec_name, $rec_email, array $links){
@@ -280,6 +280,12 @@ class WCEFP_Gift {
             'status' => 'used',
             'redeemed_at' => current_time('mysql')
         ], ['code'=>$voucher_code], ['%s','%s'], ['%s']);
+    }
+}
+
+if (!function_exists('wcefp_generate_voucher_code')) {
+    function wcefp_generate_voucher_code() {
+        return WCEFP_Gift::generate_code();
     }
 }
 
