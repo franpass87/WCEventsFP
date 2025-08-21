@@ -112,6 +112,7 @@ add_action('plugins_loaded', function () {
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-frontend.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-templates.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-product-types.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-enhanced-features.php';
 
     // Include admin (nuova classe)
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin.php';
@@ -589,6 +590,15 @@ class WCEFP_Plugin {
         wp_register_script('wcefp-frontend', WCEFP_PLUGIN_URL.'assets/js/frontend.js', ['jquery'], WCEFP_VERSION, true);
         wp_register_script('wcefp-advanced', WCEFP_PLUGIN_URL.'assets/js/advanced-features.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
         
+        // Enhanced UI Components and Features
+        wp_register_style('wcefp-modern-components', WCEFP_PLUGIN_URL.'assets/css/modern-components.css', ['wcefp-frontend'], WCEFP_VERSION);
+        wp_register_style('wcefp-dark-theme', WCEFP_PLUGIN_URL.'assets/css/dark-theme.css', ['wcefp-frontend'], WCEFP_VERSION);
+        wp_register_style('wcefp-gamification', WCEFP_PLUGIN_URL.'assets/css/gamification.css', ['wcefp-frontend'], WCEFP_VERSION);
+        
+        wp_register_script('wcefp-dark-theme', WCEFP_PLUGIN_URL.'assets/js/dark-theme.js', ['wcefp-frontend'], WCEFP_VERSION, true);
+        wp_register_script('wcefp-ai-recommendations', WCEFP_PLUGIN_URL.'assets/js/ai-recommendations.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
+        wp_register_script('wcefp-gamification', WCEFP_PLUGIN_URL.'assets/js/gamification.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
+        
         // Conversion optimization assets
         wp_register_style('wcefp-conversion', WCEFP_PLUGIN_URL.'assets/css/conversion-optimization.css', ['wcefp-frontend'], WCEFP_VERSION);
         wp_register_script('wcefp-conversion', WCEFP_PLUGIN_URL.'assets/js/conversion-optimization.js', ['jquery', 'wcefp-advanced'], WCEFP_VERSION, true);
@@ -601,6 +611,9 @@ class WCEFP_Plugin {
             'google_ads_id' => sanitize_text_field(get_option('wcefp_google_ads_id','')),
             'enable_server_analytics' => (get_option('wcefp_enable_server_analytics', false) === true),
             'conversion_optimization' => (get_option('wcefp_conversion_optimization', true) === true),
+            'enable_gamification' => (get_option('wcefp_enable_gamification', true) === true),
+            'enable_ai_recommendations' => (get_option('wcefp_enable_ai_recommendations', true) === true),
+            'enable_dark_theme' => (get_option('wcefp_enable_dark_theme', true) === true),
             'locale' => str_replace('_', '-', get_locale()),
             'currency' => get_woocommerce_currency(),
         ]);
@@ -611,16 +624,35 @@ class WCEFP_Plugin {
         wp_register_style('leaflet', $leaflet_css_url, [], '1.9.4');
         wp_register_script('leaflet', $leaflet_js_url, [], '1.9.4', true);
 
+        // Enqueue core assets
         wp_enqueue_style('wcefp-frontend');
         wp_enqueue_script('wcefp-frontend');
         wp_enqueue_script('wcefp-advanced');
+        
+        // Enqueue enhanced features
+        wp_enqueue_style('wcefp-modern-components');
+        
+        // Conditionally enqueue enhanced features based on settings
+        if (get_option('wcefp_enable_dark_theme', true)) {
+            wp_enqueue_style('wcefp-dark-theme');
+            wp_enqueue_script('wcefp-dark-theme');
+        }
+        
+        if (get_option('wcefp_enable_gamification', true)) {
+            wp_enqueue_style('wcefp-gamification');
+            wp_enqueue_script('wcefp-gamification');
+        }
+        
+        if (get_option('wcefp_enable_ai_recommendations', true)) {
+            wp_enqueue_script('wcefp-ai-recommendations');
+        }
         
         // Enqueue conversion optimization if enabled
         if (get_option('wcefp_conversion_optimization', true)) {
             wp_enqueue_style('wcefp-conversion');
             wp_enqueue_script('wcefp-conversion');
         }
-        wp_enqueue_script('wcefp-advanced');
+        
         wp_enqueue_style('leaflet');
         wp_enqueue_script('leaflet');
     }

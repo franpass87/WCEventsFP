@@ -1,0 +1,354 @@
+/**
+ * WCEventsFP Dark Theme
+ * Professional dark mode implementation with smooth transitions
+ */
+
+/* Dark theme CSS custom properties */
+:root[data-theme="dark"] {
+    /* Primary colors */
+    --wcefp-primary: #4f46e5;
+    --wcefp-primary-light: #6366f1;
+    --wcefp-primary-dark: #3730a3;
+    
+    /* Background colors */
+    --wcefp-bg-primary: #0f172a;
+    --wcefp-bg-secondary: #1e293b;
+    --wcefp-bg-tertiary: #334155;
+    --wcefp-bg-elevated: #475569;
+    
+    /* Text colors */
+    --wcefp-text-primary: #f1f5f9;
+    --wcefp-text-secondary: #cbd5e1;
+    --wcefp-text-tertiary: #94a3b8;
+    --wcefp-text-muted: #64748b;
+    
+    /* Border colors */
+    --wcefp-border-light: #334155;
+    --wcefp-border-medium: #475569;
+    --wcefp-border-dark: #64748b;
+    
+    /* Status colors */
+    --wcefp-success: #10b981;
+    --wcefp-warning: #f59e0b;
+    --wcefp-error: #ef4444;
+    --wcefp-info: #06b6d4;
+    
+    /* Shadow colors */
+    --wcefp-shadow-light: rgba(0, 0, 0, 0.3);
+    --wcefp-shadow-medium: rgba(0, 0, 0, 0.5);
+    --wcefp-shadow-heavy: rgba(0, 0, 0, 0.7);
+}
+
+/* Light theme default (fallback) */
+:root {
+    /* Primary colors */
+    --wcefp-primary: #4f46e5;
+    --wcefp-primary-light: #6366f1;
+    --wcefp-primary-dark: #3730a3;
+    
+    /* Background colors */
+    --wcefp-bg-primary: #ffffff;
+    --wcefp-bg-secondary: #f8fafc;
+    --wcefp-bg-tertiary: #f1f5f9;
+    --wcefp-bg-elevated: #e2e8f0;
+    
+    /* Text colors */
+    --wcefp-text-primary: #0f172a;
+    --wcefp-text-secondary: #334155;
+    --wcefp-text-tertiary: #64748b;
+    --wcefp-text-muted: #94a3b8;
+    
+    /* Border colors */
+    --wcefp-border-light: #e2e8f0;
+    --wcefp-border-medium: #cbd5e1;
+    --wcefp-border-dark: #94a3b8;
+    
+    /* Status colors */
+    --wcefp-success: #059669;
+    --wcefp-warning: #d97706;
+    --wcefp-error: #dc2626;
+    --wcefp-info: #0284c7;
+    
+    /* Shadow colors */
+    --wcefp-shadow-light: rgba(0, 0, 0, 0.05);
+    --wcefp-shadow-medium: rgba(0, 0, 0, 0.1);
+    --wcefp-shadow-heavy: rgba(0, 0, 0, 0.15);
+}
+
+/* Theme toggle button */
+.wcefp-theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: var(--wcefp-bg-elevated);
+    border: 1px solid var(--wcefp-border-medium);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: 0 4px 6px var(--wcefp-shadow-light), 0 1px 3px var(--wcefp-shadow-medium);
+    color: var(--wcefp-text-primary);
+    font-size: 20px;
+}
+
+.wcefp-theme-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 15px var(--wcefp-shadow-medium), 0 4px 6px var(--wcefp-shadow-light);
+}
+
+.wcefp-theme-toggle:active {
+    transform: scale(0.95);
+}
+
+/* Global dark theme styles */
+[data-theme="dark"] body {
+    background-color: var(--wcefp-bg-primary);
+    color: var(--wcefp-text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="dark"] .wcefp-card,
+[data-theme="dark"] .wcefp-event-card,
+[data-theme="dark"] .wcefp-booking-widget {
+    background: var(--wcefp-bg-secondary);
+    border: 1px solid var(--wcefp-border-light);
+    color: var(--wcefp-text-primary);
+    box-shadow: 0 4px 6px var(--wcefp-shadow-light), 0 1px 3px var(--wcefp-shadow-medium);
+}
+
+[data-theme="dark"] .wcefp-card:hover,
+[data-theme="dark"] .wcefp-event-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px var(--wcefp-shadow-medium), 0 10px 10px var(--wcefp-shadow-light);
+}
+
+/* Form elements */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background: var(--wcefp-bg-tertiary);
+    border: 1px solid var(--wcefp-border-medium);
+    color: var(--wcefp-text-primary);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+    border-color: var(--wcefp-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    outline: none;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: var(--wcefp-text-muted);
+}
+
+/* Buttons */
+[data-theme="dark"] .wcefp-button,
+[data-theme="dark"] .button {
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+[data-theme="dark"] .wcefp-button-primary,
+[data-theme="dark"] .button-primary {
+    background: linear-gradient(135deg, var(--wcefp-primary), var(--wcefp-primary-light));
+    color: white;
+    border: none;
+    box-shadow: 0 4px 6px var(--wcefp-shadow-light), 0 1px 3px var(--wcefp-shadow-medium);
+}
+
+[data-theme="dark"] .wcefp-button-primary:hover,
+[data-theme="dark"] .button-primary:hover {
+    background: linear-gradient(135deg, var(--wcefp-primary-light), var(--wcefp-primary));
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px var(--wcefp-shadow-medium), 0 4px 6px var(--wcefp-shadow-light);
+}
+
+[data-theme="dark"] .wcefp-button-secondary,
+[data-theme="dark"] .button-secondary {
+    background: var(--wcefp-bg-tertiary);
+    color: var(--wcefp-text-primary);
+    border: 1px solid var(--wcefp-border-medium);
+}
+
+[data-theme="dark"] .wcefp-button-secondary:hover,
+[data-theme="dark"] .button-secondary:hover {
+    background: var(--wcefp-bg-elevated);
+    transform: translateY(-1px);
+}
+
+/* Navigation and menus */
+[data-theme="dark"] .wcefp-nav,
+[data-theme="dark"] .nav-tab-wrapper {
+    background: var(--wcefp-bg-secondary);
+    border-bottom: 1px solid var(--wcefp-border-light);
+}
+
+[data-theme="dark"] .nav-tab {
+    background: transparent;
+    color: var(--wcefp-text-secondary);
+    border: 1px solid var(--wcefp-border-light);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .nav-tab:hover {
+    background: var(--wcefp-bg-tertiary);
+    color: var(--wcefp-text-primary);
+}
+
+[data-theme="dark"] .nav-tab-active {
+    background: var(--wcefp-bg-primary);
+    color: var(--wcefp-primary);
+    border-color: var(--wcefp-primary);
+}
+
+/* Status indicators */
+[data-theme="dark"] .wcefp-status-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--wcefp-success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="dark"] .wcefp-status-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--wcefp-warning);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="dark"] .wcefp-status-error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--wcefp-error);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="dark"] .wcefp-status-info {
+    background: rgba(6, 182, 212, 0.1);
+    color: var(--wcefp-info);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+}
+
+/* Loading states */
+[data-theme="dark"] .wcefp-loading {
+    background: var(--wcefp-bg-secondary);
+}
+
+[data-theme="dark"] .wcefp-skeleton {
+    background: linear-gradient(90deg, var(--wcefp-bg-tertiary) 25%, var(--wcefp-bg-elevated) 50%, var(--wcefp-bg-tertiary) 75%);
+    background-size: 200% 100%;
+    animation: wcefp-skeleton-loading 1.5s infinite;
+}
+
+@keyframes wcefp-skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Notifications and alerts */
+[data-theme="dark"] .wcefp-notification {
+    background: var(--wcefp-bg-elevated);
+    border: 1px solid var(--wcefp-border-medium);
+    color: var(--wcefp-text-primary);
+    box-shadow: 0 10px 15px var(--wcefp-shadow-medium), 0 4px 6px var(--wcefp-shadow-light);
+}
+
+[data-theme="dark"] .wcefp-notification-success {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: var(--wcefp-success);
+}
+
+[data-theme="dark"] .wcefp-notification-error {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: var(--wcefp-error);
+}
+
+[data-theme="dark"] .wcefp-notification-warning {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: var(--wcefp-warning);
+}
+
+[data-theme="dark"] .wcefp-notification-info {
+    background: rgba(6, 182, 212, 0.15);
+    border-color: var(--wcefp-info);
+}
+
+/* Maps in dark mode */
+[data-theme="dark"] .wcefp-map-container {
+    border: 1px solid var(--wcefp-border-medium);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .leaflet-container {
+    background: var(--wcefp-bg-secondary);
+}
+
+[data-theme="dark"] .leaflet-popup-content-wrapper {
+    background: var(--wcefp-bg-elevated);
+    color: var(--wcefp-text-primary);
+    border: 1px solid var(--wcefp-border-medium);
+}
+
+[data-theme="dark"] .leaflet-popup-tip {
+    background: var(--wcefp-bg-elevated);
+    border: 1px solid var(--wcefp-border-medium);
+}
+
+/* Calendar in dark mode */
+[data-theme="dark"] .fc-theme-standard .fc-scrollgrid {
+    border: 1px solid var(--wcefp-border-medium);
+}
+
+[data-theme="dark"] .fc-theme-standard td,
+[data-theme="dark"] .fc-theme-standard th {
+    border-color: var(--wcefp-border-light);
+}
+
+[data-theme="dark"] .fc-event {
+    background: var(--wcefp-primary);
+    border-color: var(--wcefp-primary-dark);
+}
+
+[data-theme="dark"] .fc-daygrid-day-number {
+    color: var(--wcefp-text-primary);
+}
+
+/* Smooth theme transition */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    [data-theme="dark"] {
+        --wcefp-border-light: #64748b;
+        --wcefp-border-medium: #94a3b8;
+        --wcefp-text-tertiary: #cbd5e1;
+    }
+}
+
+/* Print styles */
+@media print {
+    [data-theme="dark"] * {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .wcefp-theme-toggle {
+        display: none !important;
+    }
+}

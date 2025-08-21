@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WCEventsFP - Enhanced Features Demo</title>
+    <link rel="stylesheet" href="assets/css/modern-components.css">
+    <link rel="stylesheet" href="assets/css/dark-theme.css">
+    <link rel="stylesheet" href="assets/css/advanced-analytics.css">
+    <link rel="stylesheet" href="assets/css/gamification.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--wcefp-bg-primary, #ffffff);
+            color: var(--wcefp-text-primary, #0f172a);
+            transition: all 0.3s ease;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .demo-section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background: var(--wcefp-bg-secondary, #f8fafc);
+            border-radius: 20px;
+            border: 1px solid var(--wcefp-border-light, #e2e8f0);
+        }
+        
+        .demo-section h2 {
+            color: var(--wcefp-primary, #4f46e5);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .buttons-demo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .analytics-preview {
+            background: var(--wcefp-bg-primary, white);
+            padding: 20px;
+            border-radius: 16px;
+            margin: 20px 0;
+        }
+        
+        .gamification-preview {
+            position: relative;
+            min-height: 200px;
+        }
+        
+        .recommendations-preview {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>🚀 WCEventsFP - Enhanced Features</h1>
+            <p>Innovative features for modern booking experiences</p>
+        </div>
+
+        <!-- Dark Theme Demo -->
+        <div class="demo-section">
+            <h2>🌙 Dark Theme & Modern Components</h2>
+            <div class="buttons-demo">
+                <button class="wcefp-btn wcefp-btn-primary">Primary Button</button>
+                <button class="wcefp-btn wcefp-btn-secondary">Secondary</button>
+                <button class="wcefp-btn wcefp-btn-success">Success</button>
+                <button class="wcefp-btn wcefp-btn-danger">Danger</button>
+                <button class="wcefp-btn wcefp-btn-ghost">Ghost</button>
+                <button class="wcefp-btn wcefp-btn-loading wcefp-btn-primary">Loading...</button>
+            </div>
+
+            <div class="demo-grid">
+                <div class="wcefp-card wcefp-card-elevated">
+                    <h3>Modern Card Design</h3>
+                    <p>Enhanced cards with hover effects, smooth animations, and glassmorphism elements.</p>
+                    <div class="wcefp-badge wcefp-badge-primary">New</div>
+                </div>
+                
+                <div class="wcefp-input-group">
+                    <span class="wcefp-input-icon">🔍</span>
+                    <input type="text" class="wcefp-input" placeholder="Search events...">
+                </div>
+                
+                <div class="wcefp-select">
+                    <select>
+                        <option>Select Experience Type</option>
+                        <option>Wine Tasting</option>
+                        <option>Cooking Class</option>
+                        <option>Cultural Tour</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="wcefp-alert wcefp-alert-success">
+                <div class="wcefp-alert-icon">✅</div>
+                <div class="wcefp-alert-content">
+                    <div class="wcefp-alert-title">Booking Confirmed!</div>
+                    <div class="wcefp-alert-message">Your wine tasting experience has been successfully booked.</div>
+                </div>
+                <button class="wcefp-alert-close">&times;</button>
+            </div>
+        </div>
+
+        <!-- AI Recommendations Demo -->
+        <div class="demo-section">
+            <h2>🎯 AI-Powered Recommendations</h2>
+            <div class="recommendations-preview">
+                <div class="wcefp-recommendations-container">
+                    <div class="wcefp-recommendations-header">
+                        <h3>
+                            <span class="wcefp-recommendations-icon">🎯</span>
+                            Consigliato per te
+                        </h3>
+                        <p class="wcefp-recommendations-subtitle">
+                            Basato sui tuoi interessi e preferenze
+                        </p>
+                    </div>
+                    <div class="wcefp-recommendations-content">
+                        <div class="wcefp-recommendations-grid">
+                            <div class="wcefp-recommendation-card">
+                                <div class="wcefp-recommendation-image">
+                                    <div style="width: 100%; height: 150px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">🍷</div>
+                                    <div class="wcefp-recommendation-badge">🔄 Simile</div>
+                                </div>
+                                <div class="wcefp-recommendation-content">
+                                    <h4 class="wcefp-recommendation-title">Degustazione Brunello di Montalcino</h4>
+                                    <p class="wcefp-recommendation-description">Scopri i segreti del re dei vini toscani in una cantina storica con vista mozzafiato sulle colline.</p>
+                                    <div class="wcefp-recommendation-rating">⭐⭐⭐⭐⭐ 4.8/5</div>
+                                    <div class="wcefp-recommendation-footer">
+                                        <span class="wcefp-recommendation-price">€65</span>
+                                        <span class="wcefp-recommendation-reason">Simile agli eventi che hai visualizzato</span>
+                                    </div>
+                                    <button class="wcefp-recommendation-cta">Scopri di più</button>
+                                </div>
+                            </div>
+                            
+                            <div class="wcefp-recommendation-card">
+                                <div class="wcefp-recommendation-image">
+                                    <div style="width: 100%; height: 150px; background: linear-gradient(135deg, #ff9a56, #ff6b35); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">🍝</div>
+                                    <div class="wcefp-recommendation-badge">🔥 Popolare</div>
+                                </div>
+                                <div class="wcefp-recommendation-content">
+                                    <h4 class="wcefp-recommendation-title">Corso di Cucina Toscana</h4>
+                                    <p class="wcefp-recommendation-description">Impara i segreti della cucina tradizionale toscana con uno chef stellato.</p>
+                                    <div class="wcefp-recommendation-rating">⭐⭐⭐⭐⭐ 4.9/5</div>
+                                    <div class="wcefp-recommendation-footer">
+                                        <span class="wcefp-recommendation-price">€85</span>
+                                        <span class="wcefp-recommendation-reason">Molto richiesto da altri utenti</span>
+                                    </div>
+                                    <button class="wcefp-recommendation-cta">Scopri di più</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gamification Demo -->
+        <div class="demo-section">
+            <h2>🎮 Gamification System</h2>
+            <div class="gamification-preview">
+                <!-- Points Widget -->
+                <div class="wcefp-points-widget" style="position: relative; top: 0; right: 0; margin: 20px 0;">
+                    <div class="wcefp-points-container">
+                        <div class="wcefp-points-icon">⭐</div>
+                        <div class="wcefp-points-info">
+                            <div class="wcefp-points-value">1,250</div>
+                            <div class="wcefp-points-label">Punti</div>
+                        </div>
+                        <div class="wcefp-level-info">
+                            <div class="wcefp-level-badge">Lv. 5</div>
+                        </div>
+                    </div>
+                    <div class="wcefp-level-progress-container">
+                        <div class="wcefp-level-progress-header">
+                            <span>Livello 5</span>
+                            <span>75%</span>
+                        </div>
+                        <div class="wcefp-level-progress-bar">
+                            <div class="wcefp-level-progress-fill" style="width: 75%"></div>
+                        </div>
+                        <div class="wcefp-level-progress-footer">
+                            <span>1000 punti</span>
+                            <span>1800 punti</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Achievement Examples -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+                    <div class="wcefp-achievement unlocked">
+                        <div class="wcefp-achievement-icon">🎟️</div>
+                        <div class="wcefp-achievement-info">
+                            <div class="wcefp-achievement-title">Prima Esperienza</div>
+                            <div class="wcefp-achievement-description">Completa la tua prima prenotazione</div>
+                            <div class="wcefp-achievement-date">Sbloccato il 15/08/2024</div>
+                            <div class="wcefp-achievement-points">+20 punti</div>
+                        </div>
+                    </div>
+                    
+                    <div class="wcefp-achievement unlocked">
+                        <div class="wcefp-achievement-icon">🦋</div>
+                        <div class="wcefp-achievement-info">
+                            <div class="wcefp-achievement-title">Social Butterfly</div>
+                            <div class="wcefp-achievement-description">Condividi 5 eventi sui social media</div>
+                            <div class="wcefp-achievement-date">Sbloccato il 20/08/2024</div>
+                            <div class="wcefp-achievement-points">+25 punti</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Badges -->
+                <div style="margin-top: 20px;">
+                    <h4>🎖️ Badge Collection</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; margin-top: 15px;">
+                        <div class="wcefp-badge owned">
+                            <div class="wcefp-badge-icon">🍷</div>
+                            <div class="wcefp-badge-title">Esperto di Vini</div>
+                            <div class="wcefp-badge-description">5+ degustazioni</div>
+                            <div class="wcefp-badge-earned">Ottenuto il 18/08</div>
+                        </div>
+                        
+                        <div class="wcefp-badge owned">
+                            <div class="wcefp-badge-icon">🍽️</div>
+                            <div class="wcefp-badge-title">Amante del Cibo</div>
+                            <div class="wcefp-badge-description">10+ esperienze culinarie</div>
+                            <div class="wcefp-badge-earned">Ottenuto il 22/08</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics Demo -->
+        <div class="demo-section">
+            <h2>📊 Advanced Analytics Dashboard</h2>
+            <div class="analytics-preview">
+                <div class="wcefp-realtime-metrics">
+                    <h3>📈 Metriche in Tempo Reale</h3>
+                    <div class="wcefp-metrics-grid">
+                        <div class="wcefp-metric-card">
+                            <div class="wcefp-metric-icon">👥</div>
+                            <div class="wcefp-metric-content">
+                                <div class="wcefp-metric-value">23</div>
+                                <div class="wcefp-metric-label">Visitatori Attivi</div>
+                                <div class="wcefp-metric-trend">
+                                    <span style="color: #10b981">↗️ +12.5%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="wcefp-metric-card">
+                            <div class="wcefp-metric-icon">🎯</div>
+                            <div class="wcefp-metric-content">
+                                <div class="wcefp-metric-value">8</div>
+                                <div class="wcefp-metric-label">Prenotazioni Oggi</div>
+                                <div class="wcefp-metric-trend">
+                                    <span style="color: #10b981">↗️ +25.0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="wcefp-metric-card">
+                            <div class="wcefp-metric-icon">💰</div>
+                            <div class="wcefp-metric-content">
+                                <div class="wcefp-metric-value">€1,240</div>
+                                <div class="wcefp-metric-label">Ricavi Oggi</div>
+                                <div class="wcefp-metric-trend">
+                                    <span style="color: #10b981">↗️ +18.2%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="wcefp-metric-card">
+                            <div class="wcefp-metric-icon">🎯</div>
+                            <div class="wcefp-metric-content">
+                                <div class="wcefp-metric-value">4.2%</div>
+                                <div class="wcefp-metric-label">Tasso Conversione</div>
+                                <div class="wcefp-metric-trend">
+                                    <span style="color: #ef4444">↘️ -2.1%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wcefp-insights-container" style="margin-top: 30px;">
+                    <h4>🔍 Performance Insights</h4>
+                    <div class="wcefp-insight-card opportunity">
+                        <div class="wcefp-insight-icon">🎯</div>
+                        <div class="wcefp-insight-content">
+                            <h4>Ottimizza Prezzi Weekend</h4>
+                            <p>I weekend mostrano domanda elevata. Considera prezzi dinamici per massimizzare i ricavi.</p>
+                            <button class="wcefp-insight-action">Configura Prezzi</button>
+                        </div>
+                        <div class="wcefp-insight-impact">+15% ricavi</div>
+                    </div>
+                    
+                    <div class="wcefp-insight-card warning">
+                        <div class="wcefp-insight-icon">⚠️</div>
+                        <div class="wcefp-insight-content">
+                            <h4>Calo Conversioni Mobile</h4>
+                            <p>Le conversioni da mobile sono calate del 8% questa settimana. Revisiona l'esperienza mobile.</p>
+                            <button class="wcefp-insight-action">Ottimizza Mobile</button>
+                        </div>
+                        <div class="wcefp-insight-impact">Performance</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading States Demo -->
+        <div class="demo-section">
+            <h2>⚡ Enhanced Loading States</h2>
+            <div class="demo-grid">
+                <div>
+                    <h4>Skeleton Loading</h4>
+                    <div class="wcefp-skeleton" style="height: 20px; margin-bottom: 10px;"></div>
+                    <div class="wcefp-skeleton" style="height: 20px; width: 70%; margin-bottom: 10px;"></div>
+                    <div class="wcefp-skeleton" style="height: 20px; width: 90%;"></div>
+                </div>
+                
+                <div>
+                    <h4>Spinners</h4>
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div class="wcefp-spinner wcefp-spinner-sm"></div>
+                        <div class="wcefp-spinner"></div>
+                        <div class="wcefp-spinner wcefp-spinner-lg"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4>Dots Loader</h4>
+                    <div class="wcefp-dots-loader">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4>Progress Bar</h4>
+                    <div class="wcefp-progress">
+                        <div class="wcefp-progress-bar" style="width: 65%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/dark-theme.js"></script>
+    <script>
+        // Demo initialization
+        console.log('WCEventsFP Enhanced Features Demo loaded');
+        
+        // Add some interactive demo functionality
+        document.querySelectorAll('.wcefp-recommendation-cta').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const notification = document.createElement('div');
+                notification.className = 'wcefp-points-notification wcefp-show';
+                notification.innerHTML = `
+                    <div class="wcefp-points-notification-icon">✨</div>
+                    <div class="wcefp-points-notification-text">+2 punti per interesse mostrato!</div>
+                `;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            });
+        });
+
+        // Demo progress bar animation
+        setTimeout(() => {
+            const progressBars = document.querySelectorAll('.wcefp-progress-bar');
+            progressBars.forEach(bar => {
+                bar.style.width = '85%';
+            });
+        }, 1000);
+    </script>
+</body>
+</html>
