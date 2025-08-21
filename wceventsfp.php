@@ -115,6 +115,7 @@ add_action('plugins_loaded', function () {
 
     // Include admin (nuova classe)
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin.php';
+    require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin-settings.php';
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-meetingpoints.php';
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-table.php';
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-admin.php';
