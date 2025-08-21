@@ -120,6 +120,18 @@ class WCEFP_Admin_Settings {
             'default' => ''
         ));
 
+        register_setting('wcefp_integrations_settings', 'wcefp_google_places_api_key', array(
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default' => ''
+        ));
+
+        register_setting('wcefp_integrations_settings', 'wcefp_google_place_id', array(
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'default' => ''
+        ));
+
         // Advanced Settings - Tracking
         register_setting('wcefp_advanced_settings', 'wcefp_ga4_enable', array(
             'type' => 'boolean',
@@ -265,6 +277,30 @@ class WCEFP_Admin_Settings {
             array($this, 'brevo_tag_callback'),
             'wcefp_integrations_settings',
             'wcefp_brevo_section'
+        );
+
+        // Google Reviews Section
+        add_settings_section(
+            'wcefp_google_reviews_section',
+            __('Google Reviews', 'wceventsfp'),
+            array($this, 'google_reviews_section_callback'),
+            'wcefp_integrations_settings'
+        );
+
+        add_settings_field(
+            'wcefp_google_places_api_key',
+            __('Google Places API Key', 'wceventsfp'),
+            array($this, 'google_places_api_key_callback'),
+            'wcefp_integrations_settings',
+            'wcefp_google_reviews_section'
+        );
+
+        add_settings_field(
+            'wcefp_google_place_id',
+            __('Google Place ID', 'wceventsfp'),
+            array($this, 'google_place_id_callback'),
+            'wcefp_integrations_settings',
+            'wcefp_google_reviews_section'
         );
 
         // Advanced Tab
@@ -416,6 +452,10 @@ class WCEFP_Admin_Settings {
 
     public function brevo_section_callback() {
         echo '<p>' . esc_html__('Configurazione per l\'integrazione con Brevo (ex Sendinblue) per l\'invio di email transazionali.', 'wceventsfp') . '</p>';
+    }
+
+    public function google_reviews_section_callback() {
+        echo '<p>' . esc_html__('Configura l\'integrazione con Google Reviews per mostrare le recensioni autentiche dei tuoi clienti direttamente sul sito.', 'wceventsfp') . '</p>';
     }
 
     public function tracking_section_callback() {
@@ -579,6 +619,46 @@ class WCEFP_Admin_Settings {
                aria-describedby="wcefp-brevo-tag-description" />
         <p id="wcefp-brevo-tag-description" class="description">
             <?php esc_html_e('Tag da applicare automaticamente ai contatti aggiunti tramite il plugin.', 'wceventsfp'); ?>
+        </p>
+        <?php
+    }
+
+    public function google_places_api_key_callback() {
+        $value = get_option('wcefp_google_places_api_key', '');
+        ?>
+        <input type="text" 
+               id="wcefp_google_places_api_key" 
+               name="wcefp_google_places_api_key" 
+               value="<?php echo esc_attr($value); ?>" 
+               class="large-text code"
+               aria-describedby="wcefp-google-places-api-key-description" />
+        <p id="wcefp-google-places-api-key-description" class="description">
+            <?php 
+            esc_html_e('Chiave API di Google Places per recuperare le recensioni. ', 'wceventsfp'); 
+            echo '<a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">';
+            esc_html_e('Ottienila dalla Google Cloud Console', 'wceventsfp');
+            echo '</a>.';
+            ?>
+        </p>
+        <?php
+    }
+
+    public function google_place_id_callback() {
+        $value = get_option('wcefp_google_place_id', '');
+        ?>
+        <input type="text" 
+               id="wcefp_google_place_id" 
+               name="wcefp_google_place_id" 
+               value="<?php echo esc_attr($value); ?>" 
+               class="regular-text"
+               aria-describedby="wcefp-google-place-id-description" />
+        <p id="wcefp-google-place-id-description" class="description">
+            <?php 
+            esc_html_e('ID del tuo luogo su Google Places. ', 'wceventsfp'); 
+            echo '<a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener">';
+            esc_html_e('Come trovare il Place ID', 'wceventsfp');
+            echo '</a>.';
+            ?>
         </p>
         <?php
     }

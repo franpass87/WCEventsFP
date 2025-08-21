@@ -25,6 +25,9 @@ class WCEFP_Enhanced_Features {
         
         // Database table creation
         add_action('init', [__CLASS__, 'create_enhanced_tables']);
+        
+        // Register shortcodes
+        add_shortcode('wcefp_google_reviews', [__CLASS__, 'google_reviews_shortcode']);
     }
 
     public static function create_enhanced_tables() {
