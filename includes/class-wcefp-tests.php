@@ -28,6 +28,7 @@ class WCEFP_Tests {
         self::test_cache();
         self::test_validator();
         self::test_config();
+        self::test_rate_limiter();
         
         // Test funzioni critiche
         self::test_atomic_booking();
@@ -135,6 +136,24 @@ class WCEFP_Tests {
             }
         } catch (Exception $e) {
             self::$results['atomic_booking'] = 'FAIL: ' . $e->getMessage();
+        }
+    }
+    
+    /**
+     * Test rate limiter
+     */
+    private static function test_rate_limiter() {
+        try {
+            // Test che la classe esista e funzioni base
+            $limited = WCEFP_RateLimiter::is_limited('test_action', 1, 60);
+            
+            if (is_bool($limited)) {
+                self::$results['rate_limiter'] = 'PASS';
+            } else {
+                self::$results['rate_limiter'] = 'FAIL: Invalid return type';
+            }
+        } catch (Exception $e) {
+            self::$results['rate_limiter'] = 'FAIL: ' . $e->getMessage();
         }
     }
     

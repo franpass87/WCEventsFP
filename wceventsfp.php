@@ -107,6 +107,7 @@ add_action('plugins_loaded', function () {
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-logger.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-cache.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-validator.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-rate-limiter.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-container.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-database.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-tests.php';
