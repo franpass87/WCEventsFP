@@ -9,8 +9,8 @@ class WCEFP_Closures {
         <div class="wrap">
             <h1><?php _e('Chiusure straordinarie','wceventsfp'); ?></h1>
 
-            <div class="card" style="max-width:880px;padding:16px;margin-top:12px;">
-                <h2 style="margin-top:0;"><?php _e('Aggiungi chiusura','wceventsfp'); ?></h2>
+            <div class="wcefp-card">
+                <h2><?php _e('Aggiungi chiusura','wceventsfp'); ?></h2>
                 <div class="wcefp-closures-form">
                     <label>
                         <?php _e('Prodotto','wceventsfp'); ?><br/>

@@ -1,27 +1,37 @@
 /* ============ WCEFP Admin Styles ============ */
 
-/* KPI Grid */
-.wcefp-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.wcefp-kpi-grid .card{background:#fff;padding:16px;border:1px solid #e5e5e5;border-radius:8px}
-.wcefp-toolbar{margin:12px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-#wcefp-calendar .fc-event{cursor:pointer}
-
-/* Extra Table */
-.wcefp-extra-table td{padding:4px}
-.wcefp-extra-table input{width:100%}
-
 /* Weekdays Grid (Product Edit Meta Box) */
-.wcefp-weekdays{display:flex;flex-wrap:wrap;gap:12px;list-style:none;margin:0;padding:0}
-.wcefp-weekdays li{margin:0}
-.wcefp-weekdays-grid{
-    display:grid;
-    grid-template-columns:repeat(7,1fr);
-    gap:4px;
+.wcefp-weekdays-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
 }
-.wcefp-weekdays-grid .wcefp-weekday{
-    display:flex;
-    align-items:center;
-    gap:2px;
+
+.wcefp-weekday {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* Product Data Weekdays Grid Specific */
+#wcefp_product_data .wcefp-weekdays-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+}
+
+/* Evita che le label dei checkbox ereditino il float */
+#wcefp_product_data .form-field label.wcefp-weekday {
+    float: none;
+    width: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+
+#wcefp_product_data .form-field .wcefp-weekdays-grid:not(.wrap) {
+    margin-left: 162px;
 }
 
 /* Closures Page */
@@ -34,24 +44,13 @@
     border-radius: 4px;
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
+
 .wcefp-card h2 {
     margin-top: 0;
     font-size: 1.3em;
     font-weight: 600;
 }
-.wcefp-closures-form{
-    display:flex;
-    gap:12px;
-    flex-wrap:wrap;
-    align-items:flex-end;
-}
-.wcefp-closures-form label{
-    display:flex;
-    flex-direction:column;
-}
-.wcefp-closures-note{
-    flex:1 1 320px;
-}
+
 .wcefp-form-row {
     display: flex;
     gap: 12px;
@@ -60,12 +59,29 @@
     margin-bottom: 16px;
 }
 
+.wcefp-closures-form {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.wcefp-closures-form label {
+    display: flex;
+    flex-direction: column;
+}
+
+.wcefp-closures-note {
+    flex: 1 1 320px;
+}
+
 /* Settings Page Tabs */
 .wcefp-nav-tab-wrapper {
     border-bottom: 1px solid #c3c4c7;
     margin: 16px 0;
     padding: 0;
 }
+
 .wcefp-nav-tab {
     display: inline-block;
     padding: 8px 12px;
@@ -78,21 +94,26 @@
     position: relative;
     top: 1px;
 }
+
 .wcefp-nav-tab.nav-tab-active {
     background: #fff;
     color: #000;
     border-bottom: 1px solid #fff;
 }
+
 .wcefp-nav-tab:hover {
     background: #fff;
     color: #2271b1;
 }
+
 .wcefp-tab-content {
     display: none;
 }
+
 .wcefp-tab-content.active {
     display: block;
 }
+
 .wcefp-tab-description {
     margin-bottom: 20px;
     color: #646970;
@@ -106,11 +127,13 @@
         border-color: #3c434a;
         color: #f0f0f1;
     }
+    
     .wcefp-nav-tab {
         background: #1d2327;
         border-color: #3c434a;
         color: #f0f0f1;
     }
+    
     .wcefp-nav-tab.nav-tab-active {
         background: #2c3338;
         color: #f0f0f1;

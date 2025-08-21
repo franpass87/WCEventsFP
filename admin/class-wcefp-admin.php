@@ -33,9 +33,22 @@ class WCEFP_Admin {
     public static function enqueue_admin($hook) {
         $is_wcefp_page = strpos($hook, 'wcefp') !== false;
         $is_product_edit = in_array($hook, ['post.php', 'post-new.php'], true);
-        if (!$is_wcefp_page && !$is_product_edit) return;
+        
+        // For product edit pages, check if it's a wcefp event/experience
+        if ($is_product_edit && !$is_wcefp_page) {
+            global $post;
+            if (!$post || $post->post_type !== 'product') return;
+            
+            $product = wc_get_product($post->ID);
+            if (!$product) return;
+            
+            $product_type = $product->get_type();
+            if (!in_array($product_type, ['wcefp_event', 'wcefp_experience'], true)) return;
+        } elseif (!$is_wcefp_page && !$is_product_edit) {
+            return;
+        }
 
-        wp_enqueue_style('wcefp-admin', WCEFP_PLUGIN_URL.'assets/css/admin.css', [], WCEFP_VERSION);
+        wp_enqueue_style('wcefp-admin', WCEFP_PLUGIN_URL.'admin/assets/css/admin.css', [], WCEFP_VERSION);
         wp_enqueue_style('wcefp-admin-enhanced', WCEFP_PLUGIN_URL.'assets/css/admin-enhanced.css', ['wcefp-admin'], WCEFP_VERSION);
 
         // FullCalendar solo nella pagina calendario
@@ -226,6 +239,13 @@ class WCEFP_Admin {
     public static function render_settings_page() {
         if (!current_user_can('manage_woocommerce')) return;
 
+        /* Determine active tab */
+        $active_tab = sanitize_text_field($_GET['tab'] ?? 'generale');
+        $valid_tabs = ['generale', 'tracking', 'brevo', 'email', 'regole_prezzo', 'ics', 'gift'];
+        if (!in_array($active_tab, $valid_tabs, true)) {
+            $active_tab = 'generale';
+        }
+
         /* Salvataggio */
         if (isset($_POST['wcefp_save']) && check_admin_referer('wcefp_settings')) {
             update_option('wcefp_default_capacity', intval($_POST['wcefp_default_capacity'] ?? 0));
@@ -250,7 +270,7 @@ class WCEFP_Admin {
             update_option('wcefp_gtm_id', sanitize_text_field($_POST['wcefp_gtm_id'] ?? ''));
             update_option('wcefp_meta_pixel_id', sanitize_text_field($_POST['wcefp_meta_pixel_id'] ?? ''));
 
-            echo '<div class="updated"><p>Salvato.</p></div>';
+            echo '<div class="updated"><p>' . esc_html__('Impostazioni salvate.', 'wceventsfp') . '</p></div>';
         }
 
         /* Lettura */
@@ -271,99 +291,138 @@ class WCEFP_Admin {
 
         <div class="wrap">
             <h1><?php _e('Impostazioni','wceventsfp'); ?></h1>
+
+            <!-- Tab Navigation -->
+            <div class="wcefp-nav-tab-wrapper">
+                <a href="<?php echo esc_url(add_query_arg('tab', 'generale')); ?>" class="wcefp-nav-tab <?php echo $active_tab === 'generale' ? 'nav-tab-active' : ''; ?>"><?php _e('Generale', 'wceventsfp'); ?></a>
+                <a href="<?php echo esc_url(add_query_arg('tab', 'tracking')); ?>" class="wcefp-nav-tab <?php echo $active_tab === 'tracking' ? 'nav-tab-active' : ''; ?>"><?php _e('Tracking', 'wceventsfp'); ?></a>
+                <a href="<?php echo esc_url(add_query_arg('tab', 'brevo')); ?>" class="wcefp-nav-tab <?php echo $active_tab === 'brevo' ? 'nav-tab-active' : ''; ?>"><?php _e('Brevo', 'wceventsfp'); ?></a>
+                <a href="<?php echo esc_url(add_query_arg('tab', 'email')); ?>" class="wcefp-nav-tab <?php echo $active_tab === 'email' ? 'nav-tab-active' : ''; ?>"><?php _e('Email', 'wceventsfp'); ?></a>
+                <a href="<?php echo esc_url(add_query_arg('tab', 'regole_prezzo')); ?>" class="wcefp-nav-tab <?php echo $active_tab === 'regole_prezzo' ? 'nav-tab-active' : ''; ?>"><?php _e('Regole prezzo', 'wceventsfp'); ?></a>
+                <a href="<?php echo esc_url(add_query_arg('tab', 'ics')); ?>" class="wcefp-nav-tab <?php echo $active_tab === 'ics' ? 'nav-tab-active' : ''; ?>"><?php _e('ICS', 'wceventsfp'); ?></a>
+                <a href="<?php echo esc_url(add_query_arg('tab', 'gift')); ?>" class="wcefp-nav-tab <?php echo $active_tab === 'gift' ? 'nav-tab-active' : ''; ?>"><?php _e('Gift', 'wceventsfp'); ?></a>
+            </div>
+
             <form method="post"><?php wp_nonce_field('wcefp_settings'); ?>
-                <table class="form-table">
-                    <tr>
-                        <th><label for="wcefp_default_capacity"><?php _e('Capienza default per slot','wceventsfp'); ?></label></th>
-                        <td><input type="number" name="wcefp_default_capacity" id="wcefp_default_capacity" value="<?php echo esc_attr($cap); ?>" min="0" /></td>
-                    </tr>
-                    <tr>
-                        <th><?php _e('Email WooCommerce','wceventsfp'); ?></th>
-                        <td><label><input type="checkbox" name="wcefp_disable_wc_emails_for_events" <?php checked($dis,true); ?> /> <?php _e('Disattiva email Woo per ordini SOLO-evento/esperienza','wceventsfp'); ?></label></td>
-                    </tr>
 
-                    <tr>
-                        <th><label for="wcefp_price_rules"><?php _e('Regole prezzo (JSON)','wceventsfp'); ?></label></th>
-                        <td>
-                            <textarea name="wcefp_price_rules" id="wcefp_price_rules" rows="5" cols="50" class="large-text code"><?php echo esc_textarea($price_rules); ?></textarea>
-                            <p class="description"><?php _e('Esempio: [{"date_from":"2024-06-01","date_to":"2024-09-30","weekdays":[5,6],"type":"percent","value":10}]','wceventsfp'); ?></p>
-                        </td>
-                    </tr>
+                <!-- Generale Tab -->
+                <div class="wcefp-tab-content <?php echo $active_tab === 'generale' ? 'active' : ''; ?>">
+                    <p class="wcefp-tab-description"><?php _e('Impostazioni generali per eventi e esperienze.', 'wceventsfp'); ?></p>
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="wcefp_default_capacity"><?php _e('Capienza default per slot','wceventsfp'); ?></label></th>
+                            <td><input type="number" name="wcefp_default_capacity" id="wcefp_default_capacity" value="<?php echo esc_attr($cap); ?>" min="0" /></td>
+                        </tr>
+                    </table>
+                </div>
 
-                    <tr><th colspan="2"><h3><?php _e('Brevo (API v3)','wceventsfp'); ?></h3></th></tr>
-                    <tr>
-                        <th><label for="wcefp_brevo_api_key"><?php _e('API Key','wceventsfp'); ?></label></th>
-                        <td><input type="text" name="wcefp_brevo_api_key" id="wcefp_brevo_api_key" value="<?php echo esc_attr($api); ?>" style="width:420px" /></td>
-                    </tr>
-                    <tr>
-                        <th><label for="wcefp_brevo_template_id"><?php _e('Template ID (opzionale)','wceventsfp'); ?></label></th>
-                        <td><input type="number" name="wcefp_brevo_template_id" id="wcefp_brevo_template_id" value="<?php echo esc_attr($tpl); ?>" /></td>
-                    </tr>
-                    <tr>
-                        <th><label for="wcefp_brevo_from_email"><?php _e('Mittente email','wceventsfp'); ?></label></th>
-                        <td><input type="email" name="wcefp_brevo_from_email" id="wcefp_brevo_from_email" value="<?php echo esc_attr($from_email); ?>" /></td>
-                    </tr>
-                    <tr>
-                        <th><label for="wcefp_brevo_from_name"><?php _e('Mittente nome','wceventsfp'); ?></label></th>
-                        <td><input type="text" name="wcefp_brevo_from_name" id="wcefp_brevo_from_name" value="<?php echo esc_attr($from_name); ?>" /></td>
-                    </tr>
-                    <tr>
-                        <th><label for="wcefp_brevo_list_it"><?php _e('Lista IT','wceventsfp'); ?></label></th>
-                        <td><input type="number" name="wcefp_brevo_list_it" id="wcefp_brevo_list_it" value="<?php echo esc_attr($list_it); ?>" /></td>
-                    </tr>
-                    <tr>
-                        <th><label for="wcefp_brevo_list_en"><?php _e('Lista EN','wceventsfp'); ?></label></th>
-                        <td><input type="number" name="wcefp_brevo_list_en" id="wcefp_brevo_list_en" value="<?php echo esc_attr($list_en); ?>" /></td>
-                    </tr>
-                    <tr>
-                        <th><label for="wcefp_brevo_tag"><?php _e('Tag contatto','wceventsfp'); ?></label></th>
-                        <td><input type="text" name="wcefp_brevo_tag" id="wcefp_brevo_tag" value="<?php echo esc_attr($tag); ?>" /></td>
-                    </tr>
+                <!-- Tracking Tab -->
+                <div class="wcefp-tab-content <?php echo $active_tab === 'tracking' ? 'active' : ''; ?>">
+                    <p class="wcefp-tab-description"><?php _e('Configurazione per Google Analytics 4, Tag Manager e Meta Pixel.', 'wceventsfp'); ?></p>
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="wcefp_ga4_enable"><?php _e('GA4/Tag Manager eventi custom','wceventsfp'); ?></label></th>
+                            <td><label><input type="checkbox" name="wcefp_ga4_enable" id="wcefp_ga4_enable" <?php checked($ga4_en,true); ?> /> <?php _e('Abilita push dataLayer (view_item, add_to_cart, begin_checkout, extra_selected, purchase)','wceventsfp'); ?></label></td>
+                        </tr>
+                        <tr>
+                            <th><label for="wcefp_ga4_id">GA4 Measurement ID</label></th>
+                            <td><input type="text" name="wcefp_ga4_id" id="wcefp_ga4_id" value="<?php echo esc_attr($ga4_id); ?>" placeholder="G-XXXXXXXXXX" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="wcefp_gtm_id">GTM Container ID</label></th>
+                            <td><input type="text" name="wcefp_gtm_id" id="wcefp_gtm_id" value="<?php echo esc_attr($gtm_id); ?>" placeholder="GTM-XXXXXX" />
+                                <p class="description"><?php _e('Se imposti GTM, verrà caricato Google Tag Manager (consigliato). Se lasci vuoto e compili GA4, verrà caricato direttamente GA4.','wceventsfp'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="wcefp_meta_pixel_id"><?php _e('Meta Pixel ID','wceventsfp'); ?></label></th>
+                            <td><input type="text" name="wcefp_meta_pixel_id" id="wcefp_meta_pixel_id" value="<?php echo esc_attr($mp_id); ?>" /></td>
+                        </tr>
+                    </table>
+                </div>
 
-                    <tr><th colspan="2"><h3><?php _e('Tracking','wceventsfp'); ?></h3></th></tr>
-                    <tr>
-                        <th><label for="wcefp_ga4_enable"><?php _e('GA4/Tag Manager eventi custom','wceventsfp'); ?></label></th>
-                        <td><label><input type="checkbox" name="wcefp_ga4_enable" id="wcefp_ga4_enable" <?php checked($ga4_en,true); ?> /> <?php _e('Abilita push dataLayer (view_item, add_to_cart, begin_checkout, extra_selected, purchase)','wceventsfp'); ?></label></td>
-                    </tr>
-                    <tr>
-                        <th><label for="wcefp_ga4_id">GA4 Measurement ID</label></th>
-                        <td><input type="text" name="wcefp_ga4_id" id="wcefp_ga4_id" value="<?php echo esc_attr($ga4_id); ?>" placeholder="G-XXXXXXXXXX" /></td>
-                    </tr>
-                    <tr>
-                        <th><label for="wcefp_gtm_id">GTM Container ID</label></th>
-                        <td><input type="text" name="wcefp_gtm_id" id="wcefp_gtm_id" value="<?php echo esc_attr($gtm_id); ?>" placeholder="GTM-XXXXXX" />
-                            <p class="description"><?php _e('Se imposti GTM, verrà caricato Google Tag Manager (consigliato). Se lasci vuoto e compili GA4, verrà caricato direttamente GA4.','wceventsfp'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><label for="wcefp_meta_pixel_id"><?php _e('Meta Pixel ID','wceventsfp'); ?></label></th>
-                        <td><input type="text" name="wcefp_meta_pixel_id" id="wcefp_meta_pixel_id" value="<?php echo esc_attr($mp_id); ?>" /></td>
-                    </tr>
-                </table>
+                <!-- Brevo Tab -->
+                <div class="wcefp-tab-content <?php echo $active_tab === 'brevo' ? 'active' : ''; ?>">
+                    <p class="wcefp-tab-description"><?php _e('Integrazione con Brevo (ex Sendinblue) per email marketing.', 'wceventsfp'); ?></p>
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="wcefp_brevo_api_key"><?php _e('API Key','wceventsfp'); ?></label></th>
+                            <td><input type="text" name="wcefp_brevo_api_key" id="wcefp_brevo_api_key" value="<?php echo esc_attr($api); ?>" style="width:420px" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="wcefp_brevo_template_id"><?php _e('Template ID (opzionale)','wceventsfp'); ?></label></th>
+                            <td><input type="number" name="wcefp_brevo_template_id" id="wcefp_brevo_template_id" value="<?php echo esc_attr($tpl); ?>" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="wcefp_brevo_from_email"><?php _e('Mittente email','wceventsfp'); ?></label></th>
+                            <td><input type="email" name="wcefp_brevo_from_email" id="wcefp_brevo_from_email" value="<?php echo esc_attr($from_email); ?>" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="wcefp_brevo_from_name"><?php _e('Mittente nome','wceventsfp'); ?></label></th>
+                            <td><input type="text" name="wcefp_brevo_from_name" id="wcefp_brevo_from_name" value="<?php echo esc_attr($from_name); ?>" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="wcefp_brevo_list_it"><?php _e('Lista IT','wceventsfp'); ?></label></th>
+                            <td><input type="number" name="wcefp_brevo_list_it" id="wcefp_brevo_list_it" value="<?php echo esc_attr($list_it); ?>" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="wcefp_brevo_list_en"><?php _e('Lista EN','wceventsfp'); ?></label></th>
+                            <td><input type="number" name="wcefp_brevo_list_en" id="wcefp_brevo_list_en" value="<?php echo esc_attr($list_en); ?>" /></td>
+                        </tr>
+                        <tr>
+                            <th><label for="wcefp_brevo_tag"><?php _e('Tag contatto','wceventsfp'); ?></label></th>
+                            <td><input type="text" name="wcefp_brevo_tag" id="wcefp_brevo_tag" value="<?php echo esc_attr($tag); ?>" /></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Email Tab -->
+                <div class="wcefp-tab-content <?php echo $active_tab === 'email' ? 'active' : ''; ?>">
+                    <p class="wcefp-tab-description"><?php _e('Gestione delle email di WooCommerce per eventi.', 'wceventsfp'); ?></p>
+                    <table class="form-table">
+                        <tr>
+                            <th><?php _e('Email WooCommerce','wceventsfp'); ?></th>
+                            <td><label><input type="checkbox" name="wcefp_disable_wc_emails_for_events" <?php checked($dis,true); ?> /> <?php _e('Disattiva email Woo per ordini SOLO-evento/esperienza','wceventsfp'); ?></label></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Regole Prezzo Tab -->
+                <div class="wcefp-tab-content <?php echo $active_tab === 'regole_prezzo' ? 'active' : ''; ?>">
+                    <p class="wcefp-tab-description"><?php _e('Configurazione delle regole di prezzo dinamiche in formato JSON.', 'wceventsfp'); ?></p>
+                    <table class="form-table">
+                        <tr>
+                            <th><label for="wcefp_price_rules"><?php _e('Regole prezzo (JSON)','wceventsfp'); ?></label></th>
+                            <td>
+                                <textarea name="wcefp_price_rules" id="wcefp_price_rules" rows="5" cols="50" class="large-text code"><?php echo esc_textarea($price_rules); ?></textarea>
+                                <p class="description"><?php _e('Esempio: [{"date_from":"2024-06-01","date_to":"2024-09-30","weekdays":[5,6],"type":"percent","value":10}]','wceventsfp'); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- ICS Tab -->
+                <div class="wcefp-tab-content <?php echo $active_tab === 'ics' ? 'active' : ''; ?>">
+                    <p class="wcefp-tab-description"><?php _e('Configurazione per l\'esportazione calendario ICS.', 'wceventsfp'); ?></p>
+                    <table class="form-table">
+                        <tr>
+                            <td><?php _e('Le impostazioni ICS sono configurabili tramite i filtri del plugin.', 'wceventsfp'); ?></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Gift Tab -->
+                <div class="wcefp-tab-content <?php echo $active_tab === 'gift' ? 'active' : ''; ?>">
+                    <p class="wcefp-tab-description"><?php _e('Configurazione per i voucher regalo e gift card.', 'wceventsfp'); ?></p>
+                    <table class="form-table">
+                        <tr>
+                            <td><?php _e('Le impostazioni Gift sono gestite tramite la sezione Voucher del plugin.', 'wceventsfp'); ?></td>
+                        </tr>
+                    </table>
+                </div>
 
                 <p><button class="button button-primary" type="submit" name="wcefp_save" value="1"><?php _e('Salva','wceventsfp'); ?></button></p>
             </form>
         </div><?php
     }
 }
-add_action('admin_head', function () { ?>
-<style>
-    #wcefp_product_data .wcefp-weekdays-grid{
-        display:grid;
-        grid-template-columns:repeat(7,minmax(0,1fr));
-        gap:6px;
-    }
-    /* Evita che le label dei checkbox ereditino il float */
-    #wcefp_product_data .form-field label.wcefp-weekday{
-        float:none;
-        width:auto;
-        display:flex;
-        align-items:center;
-        gap:6px;
-        margin:0;
-    }
-    #wcefp_product_data .form-field .wcefp-weekdays-grid:not(.wrap){
-        margin-left:162px;
-    }
-</style>
-<?php });

@@ -1172,10 +1172,10 @@ function wcefp_render_days_metabox($post){
         'sat' => __('Sabato', 'wceventsfp'),
         'sun' => __('Domenica', 'wceventsfp'),
     ];
-    echo '<div class="wcefp-weekdays-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
+    echo '<div class="wcefp-weekdays-grid">';
     foreach ($days as $key => $label) {
         printf(
-            '<label style="display:flex;align-items:center;gap:2px;"><input type="checkbox" name="wcefp_days[]" value="%s" %s /> %s</label>',
+            '<label class="wcefp-weekday"><input type="checkbox" name="wcefp_days[]" value="%s" %s /> %s</label>',
             esc_attr($key),
             checked(in_array($key, $saved, true), true, false),
             esc_html($label)
