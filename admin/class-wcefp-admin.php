@@ -6,6 +6,11 @@ class WCEFP_Admin {
     public static function init() {
         add_action('admin_menu', [__CLASS__, 'admin_menu']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin']);
+        
+        // Initialize new settings class
+        if (class_exists('WCEFP_Admin_Settings')) {
+            WCEFP_Admin_Settings::get_instance();
+        }
     }
 
     /* ---------- Menu ---------- */
@@ -26,7 +31,7 @@ class WCEFP_Admin {
         add_submenu_page('wcefp', __('Calendario & Lista','wceventsfp'), __('Calendario & Lista','wceventsfp'), $cap,'wcefp-calendar',[__CLASS__,'render_calendar_page']);
         add_submenu_page('wcefp', __('Chiusure straordinarie','wceventsfp'), __('Chiusure straordinarie','wceeventsfp'), $cap,'wcefp-closures',['WCEFP_Closures','render_admin_page']);
         add_submenu_page('wcefp', __('Esporta','wceventsfp'), __('Esporta','wceventsfp'), $cap,'wcefp-export',[__CLASS__,'render_export_page']);
-        add_submenu_page('wcefp', __('Impostazioni','wceventsfp'), __('Impostazioni','wceventsfp'), $cap,'wcefp-settings',[__CLASS__,'render_settings_page']);
+        add_submenu_page('wcefp', __('Impostazioni','wceventsfp'), __('Impostazioni','wceventsfp'), $cap,'wcefp-settings',[__CLASS__,'render_new_settings_page']);
     }
 
     /* ---------- Enqueue admin ---------- */
@@ -37,6 +42,12 @@ class WCEFP_Admin {
 
         wp_enqueue_style('wcefp-admin', WCEFP_PLUGIN_URL.'assets/css/admin.css', [], WCEFP_VERSION);
         wp_enqueue_style('wcefp-admin-enhanced', WCEFP_PLUGIN_URL.'assets/css/admin-enhanced.css', ['wcefp-admin'], WCEFP_VERSION);
+
+        // Settings page specific assets
+        if ($is_wcefp_page && strpos($hook,'wcefp_page_wcefp-settings') !== false) {
+            wp_enqueue_style('wcefp-admin-settings', WCEFP_PLUGIN_URL.'assets/css/admin-settings.css', ['wcefp-admin'], WCEFP_VERSION);
+            wp_enqueue_script('wcefp-admin-settings', WCEFP_PLUGIN_URL.'assets/js/admin-settings.js', ['jquery'], WCEFP_VERSION, true);
+        }
 
         // FullCalendar solo nella pagina calendario
         if ($is_wcefp_page && strpos($hook,'wcefp_page_wcefp-calendar') !== false) {
@@ -344,6 +355,19 @@ class WCEFP_Admin {
                 <p><button class="button button-primary" type="submit" name="wcefp_save" value="1"><?php _e('Salva','wceventsfp'); ?></button></p>
             </form>
         </div><?php
+    }
+
+    /**
+     * New tabbed settings page using WordPress Settings API
+     */
+    public static function render_new_settings_page() {
+        if (!current_user_can('manage_woocommerce')) {
+            return;
+        }
+
+        // Use the new settings class
+        $settings = WCEFP_Admin_Settings::get_instance();
+        $settings->render_settings_page();
     }
 }
 add_action('admin_head', function () { ?>

@@ -73,6 +73,30 @@ Per aggiungere altri screenshot, inserire le immagini in `assets/screenshots/` e
 
 ---
 
+## Interfaccia Impostazioni Tabbed
+
+La pagina **Eventi & Degustazioni → Impostazioni** è ora organizzata in tab per una migliore usabilità:
+
+### 🔧 Tab Generali
+- **Capienza Default**: Numero predefinito di posti per nuove occorrenze
+- **Email WooCommerce**: Opzione per disabilitare email WC per ordini solo-eventi
+- **Regole Prezzo Dinamiche**: JSON per sconti/ricarichi per date e giorni specifici
+
+### 🎨 Tab Visualizzazione  
+- Opzioni per personalizzare l'aspetto degli widget e template (disponibili in versioni future)
+
+### 🔗 Tab Integrazioni
+- **Brevo/Sendinblue**: API Key, template email, mittente, liste IT/EN, tag contatti
+- Configurazione completa per email transazionali automatiche
+
+### ⚙️ Tab Avanzate
+- **Google Analytics 4**: ID misurazione, eventi custom dataLayer
+- **Google Tag Manager**: Container ID (preferito rispetto a GA4 diretto)  
+- **Meta Pixel**: ID per tracking Facebook/Instagram
+- Tutte le configurazioni hanno descrizioni contestuali e validazione in tempo reale
+
+---
+
 ## Dashboard KPI
 - **Eventi & Degustazioni → Analisi KPI**
   - Ordini 30gg, Ricavi 30gg, Riempimento medio, Top esperienza.  
