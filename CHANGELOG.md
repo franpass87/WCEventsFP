@@ -1,3 +1,9 @@
+[1.7.1] – 2025-08-19
+Added
+
+Widget di prenotazione con selezione quantità/toggle e calcolo dinamico del prezzo.
+Shortcode aggiuntivi: [wcefp_booking_widget], [wcefp_redeem].
+Sezione compatibilità e screenshot UI nella documentazione.
 📜 Changelog – WCEventsFP
 [1.7.1] – 2025-08-19
 Fixed

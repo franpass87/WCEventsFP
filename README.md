@@ -1,5 +1,30 @@
-# WCEventsFP (v1.6.1)
-Eventi & Esperienze per WooCommerce con ricorrenze, slot, prezzi Adulto/Bambino, extra riutilizzabili con regole di prezzo e disponibilità, chiusure straordinarie, dashboard KPI, calendario prenotazioni (con inline edit), tracciamento GA4/Tag Manager + Meta Pixel, integrazione Brevo (liste IT/EN, transactional), ICS, e gift “Regala un’esperienza”.
+# WCEventsFP (v1.7.1)
+Eventi & Esperienze per WooCommerce con:
+- Ricorrenze settimanali, slot orari, prezzi Adulto/Bambino
+- Extra riutilizzabili (CPT dedicato, tabella ponte, tariffazione per ordine/persona/adulto/bambino, quantità massime, obbligatorietà, stock con allocazione automatica)
+- Chiusure straordinarie (globali/prodotto)
+- Dashboard KPI (ordini, ricavi, riempimento medio, top esperienza)
+- Calendario prenotazioni (FullCalendar, inline edit)
+- Lista prenotazioni AJAX (ricerca live, export CSV)
+- Tracciamento GA4/Tag Manager + Meta Pixel
+- Integrazione Brevo (liste IT/EN, transactional)
+- ICS, gift “Regala un’esperienza”
+- Widget di prenotazione con selezione quantità/toggle e calcolo dinamico del prezzo
+## Compatibilità
+
+- **WordPress**: 6+
+- **WooCommerce**: 7+
+- **PHP**: 7.4+
+- **Browser**: Chrome, Firefox, Edge, Safari (ultime versioni)
+## Screenshot UI
+
+Esempi interfaccia amministratore e frontend:
+
+![Calendario backend](assets/screenshots/calendar-admin.png)
+![Widget prenotazione](assets/screenshots/booking-widget.png)
+![Dashboard KPI](assets/screenshots/kpi-dashboard.png)
+
+Per aggiungere altri screenshot, inserire le immagini in `assets/screenshots/` e aggiornare questa sezione.
 
 **Autore:** Francesco Passeri  
 **Requisiti:** WordPress 6+, WooCommerce 7+, PHP 7.4+  
@@ -57,25 +82,18 @@ Eventi & Esperienze per WooCommerce con ricorrenze, slot, prezzi Adulto/Bambino,
 
 ## Gift / Regala un’esperienza
 - Nel **checkout**: flag “Regala un’esperienza” + campi **Nome**, **Email destinatario**, **Messaggio**.
-- A **ordine completato**:
-  - Creazione **voucher** (uno per quantità) e invio link al destinatario via **Brevo**.
-  - Pagina voucher stampabile (`?wcefp_voucher_view=1&code=...`).
-- **Riscatto**: crea una pagina “Riscatta voucher” con lo shortcode:
-  - `[wcefp_redeem]`  
-  Dopo redeem valido, l’utente prenota il relativo prodotto a **0€**.  
-  Il voucher diventa **used** quando l’ordine è **Completato**.
+- A **ordine completato**: invio PDF personalizzato via email al destinatario, con codice voucher e messaggio. Creazione voucher (uno per quantità) e invio link al destinatario via Brevo. Pagina voucher stampabile (`?wcefp_voucher_view=1&code=...`).
+- Riscatto: crea una pagina “Riscatta voucher” con lo shortcode `[wcefp_redeem]`. Dopo redeem valido, l’utente prenota il relativo prodotto a 0€. Il voucher diventa used quando l’ordine è Completato.
 
 ---
 
-## Shortcode frontend
-- **Widget prenotazione** su pagina prodotto: auto-render.
-- **Widget prenotazione** manuale:  
-  `[wcefp_booking product_id="123"]`
-- **Card & griglie stile OTA**:
-  - `[wcefp_event_card id="123"]`
-  - `[wcefp_event_grid limit="6"]`
-  - `[wcefp_event_grid type="wcefp_experience" limit="8"]`
-  - `[wcefp_event_grid ids="12,45,78"]`
+## Shortcode disponibili
+
+- `[wcefp_event_card id="123"]` — Card evento singolo
+- `[wcefp_event_grid]` — Griglia eventi/esperienze
+- `[wcefp_booking_widget]` — Widget prenotazione
+- `[wcefp_booking product_id="123"]` — Widget prenotazione manuale
+- `[wcefp_redeem]` — Riscatta voucher
 
 ---
 
