@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: WCEventsFP
- * Description: Eventi & Esperienze per WooCommerce con ricorrenze, slot, prezzi A/B, extra, KPI, Calendario (inline edit + filtro), Chiusure straordinarie, GA4/Tag Manager, Meta Pixel, Brevo (liste IT/EN), anti-overbooking, ICS, gift "Regala un'esperienza" e scheda stile GYG/Viator.
- * Version:     1.8.1
+ * Description: Plugin di prenotazione eventi & esperienze avanzato per WooCommerce. Sistema completo per competere con RegionDo/Bokun: tracking Google Analytics/Ads/Meta avanzato, ottimizzazione conversioni con urgency indicators, social proof, dynamic pricing, live chat, A/B testing, analytics server-side, funnel tracking, performance monitoring, cross-device tracking, automazioni Brevo avanzate.
+ * Version:     1.9.0
  * Author:      Francesco Passeri
  * Text Domain: wceventsfp
  * Domain Path: /languages
@@ -10,7 +10,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('WCEFP_VERSION', '1.8.1');
+define('WCEFP_VERSION', '1.9.0');
 define('WCEFP_PLUGIN_FILE', __FILE__);
 define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -116,6 +116,7 @@ add_action('plugins_loaded', function () {
     // Include admin (nuova classe)
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin.php';
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin-settings.php';
+    require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-analytics-dashboard.php';
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-meetingpoints.php';
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-table.php';
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-admin.php';
@@ -197,6 +198,10 @@ class WCEFP_Plugin {
         add_action('wp_ajax_wcefp_public_occurrences', ['WCEFP_Frontend', 'ajax_public_occurrences']);
         add_action('wp_ajax_nopriv_wcefp_add_to_cart', ['WCEFP_Frontend', 'ajax_add_to_cart']);
         add_action('wp_ajax_wcefp_add_to_cart', ['WCEFP_Frontend', 'ajax_add_to_cart']);
+        
+        /* Analytics tracking AJAX */
+        add_action('wp_ajax_wcefp_track_analytics', [$this, 'ajax_track_analytics']);
+        add_action('wp_ajax_nopriv_wcefp_track_analytics', [$this, 'ajax_track_analytics']);
 
         /* Prezzo dinamico + meta */
         add_action('woocommerce_before_calculate_totals', ['WCEFP_Frontend', 'apply_dynamic_price']);
@@ -584,11 +589,18 @@ class WCEFP_Plugin {
         wp_register_script('wcefp-frontend', WCEFP_PLUGIN_URL.'assets/js/frontend.js', ['jquery'], WCEFP_VERSION, true);
         wp_register_script('wcefp-advanced', WCEFP_PLUGIN_URL.'assets/js/advanced-features.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
         
+        // Conversion optimization assets
+        wp_register_style('wcefp-conversion', WCEFP_PLUGIN_URL.'assets/css/conversion-optimization.css', ['wcefp-frontend'], WCEFP_VERSION);
+        wp_register_script('wcefp-conversion', WCEFP_PLUGIN_URL.'assets/js/conversion-optimization.js', ['jquery', 'wcefp-advanced'], WCEFP_VERSION, true);
+        
         wp_localize_script('wcefp-frontend', 'WCEFPData', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('wcefp_public'),
             'ga4_enabled' => (get_option('wcefp_ga4_enable', '1') === '1'),
             'meta_pixel_id' => sanitize_text_field(get_option('wcefp_meta_pixel_id','')),
+            'google_ads_id' => sanitize_text_field(get_option('wcefp_google_ads_id','')),
+            'enable_server_analytics' => (get_option('wcefp_enable_server_analytics', false) === true),
+            'conversion_optimization' => (get_option('wcefp_conversion_optimization', true) === true),
             'locale' => str_replace('_', '-', get_locale()),
             'currency' => get_woocommerce_currency(),
         ]);
@@ -602,6 +614,13 @@ class WCEFP_Plugin {
         wp_enqueue_style('wcefp-frontend');
         wp_enqueue_script('wcefp-frontend');
         wp_enqueue_script('wcefp-advanced');
+        
+        // Enqueue conversion optimization if enabled
+        if (get_option('wcefp_conversion_optimization', true)) {
+            wp_enqueue_style('wcefp-conversion');
+            wp_enqueue_script('wcefp-conversion');
+        }
+        wp_enqueue_script('wcefp-advanced');
         wp_enqueue_style('leaflet');
         wp_enqueue_script('leaflet');
     }
@@ -611,6 +630,7 @@ class WCEFP_Plugin {
         if (is_admin()) return;
         $gtm_id = trim(get_option('wcefp_gtm_id',''));
         $ga4_id = trim(get_option('wcefp_ga4_id',''));
+        $google_ads_id = trim(get_option('wcefp_google_ads_id',''));
         $ga4_enabled = (get_option('wcefp_ga4_enable','1') === '1');
         if (!$ga4_enabled) return;
 
@@ -632,9 +652,39 @@ class WCEFP_Plugin {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', '<?php echo esc_js($ga4_id); ?>');
+              gtag('config', '<?php echo esc_js($ga4_id); ?>', {
+                enhanced_conversions: true,
+                automatic_event_tracking: true,
+                send_page_view: true
+              });
+              
+              <?php if ($google_ads_id): ?>
+              // Google Ads tracking
+              gtag('config', '<?php echo esc_js($google_ads_id); ?>', {
+                enhanced_conversions: true,
+                allow_enhanced_conversions: true
+              });
+              <?php endif; ?>
             </script>
             <!-- End GA4 -->
+            <?php
+        }
+        
+        // Add Google Ads conversion tracking if separate from GA4
+        if ($google_ads_id && !$ga4_id) {
+            ?>
+            <!-- Google Ads Conversion Tracking (WCEventsFP) -->
+            <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_js($google_ads_id); ?>"></script>
+            <script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '<?php echo esc_js($google_ads_id); ?>', {
+                enhanced_conversions: true,
+                allow_enhanced_conversions: true
+              });
+            </script>
+            <!-- End Google Ads -->
             <?php
         }
     }
@@ -642,26 +692,124 @@ class WCEFP_Plugin {
     public function push_purchase_event_to_datalayer($order_id) {
         $order = wc_get_order($order_id); if(!$order) return;
         $items = [];
+        
         foreach ($order->get_items() as $item) {
             $product = $item->get_product(); if(!$product) continue;
+            
+            // Get additional product data for enhanced tracking
+            $category = '';
+            $terms = get_the_terms($product->get_id(), 'product_cat');
+            if ($terms && !is_wp_error($terms)) {
+                $category = $terms[0]->name;
+            }
+            
             $items[] = [
                 'item_id'      => (string)$product->get_id(),
                 'item_name'    => $product->get_name(),
                 'item_category'=> $product->get_type(),
+                'item_category2'=> $category,
+                'item_brand'   => get_bloginfo('name'),
                 'quantity'     => (int)$item->get_quantity(),
                 'price'        => (float)$order->get_item_total($item, false),
+                'item_variant' => $this->get_booking_variant($item),
+                'affiliation'  => get_bloginfo('name'),
+                'coupon'       => $order->get_coupon_codes() ? implode(',', $order->get_coupon_codes()) : '',
+                'discount'     => (float)$order->get_total_discount()
             ];
         }
-        $data = [
+        
+        // Enhanced purchase event data
+        $purchase_data = [
             'event' => 'purchase',
             'ecommerce' => [
                 'transaction_id' => (string)$order->get_order_number(),
+                'affiliation' => get_bloginfo('name'),
                 'value' => (float)$order->get_total(),
+                'tax' => (float)$order->get_total_tax(),
+                'shipping' => (float)$order->get_shipping_total(),
                 'currency' => $order->get_currency(),
+                'coupon' => $order->get_coupon_codes() ? implode(',', $order->get_coupon_codes()) : '',
+                'payment_type' => $order->get_payment_method_title(),
                 'items' => $items,
             ],
+            // Additional custom parameters
+            'customer_type' => $this->get_customer_type($order),
+            'booking_lead_time' => $this->get_booking_lead_time($order),
+            'total_participants' => $this->get_total_participants($order)
         ];
-        echo "<script>window.dataLayer=window.dataLayer||[];dataLayer.push(".wp_json_encode($data).");</script>";
+        
+        // Output enhanced dataLayer event
+        echo "<script>window.dataLayer=window.dataLayer||[];dataLayer.push(".wp_json_encode($purchase_data).");</script>";
+        
+        // Google Ads enhanced conversion
+        $google_ads_id = trim(get_option('wcefp_google_ads_id',''));
+        if ($google_ads_id && function_exists('gtag')) {
+            echo "<script>";
+            echo "if(typeof gtag !== 'undefined') {";
+            echo "gtag('event', 'conversion', {";
+            echo "'send_to': '" . esc_js($google_ads_id) . "',";
+            echo "'value': " . (float)$order->get_total() . ",";
+            echo "'currency': '" . esc_js($order->get_currency()) . "',";
+            echo "'transaction_id': '" . esc_js($order->get_order_number()) . "'";
+            echo "});";
+            echo "}";
+            echo "</script>";
+        }
+    }
+
+    private function get_booking_variant($item) {
+        // Extract booking details from order item meta
+        $adults = $item->get_meta('_wcefp_adults', true) ?: 0;
+        $children = $item->get_meta('_wcefp_children', true) ?: 0;
+        $date = $item->get_meta('_wcefp_date', true) ?: '';
+        $time = $item->get_meta('_wcefp_time', true) ?: '';
+        
+        return "{$adults}A{$children}C_{$date}_{$time}";
+    }
+
+    private function get_customer_type($order) {
+        $customer_id = $order->get_customer_id();
+        if (!$customer_id) return 'guest';
+        
+        // Check if returning customer
+        $customer_orders = wc_get_orders([
+            'customer_id' => $customer_id,
+            'status' => ['completed', 'processing'],
+            'limit' => 2
+        ]);
+        
+        return count($customer_orders) > 1 ? 'returning' : 'new';
+    }
+
+    private function get_booking_lead_time($order) {
+        // Calculate days between order date and experience date
+        $order_date = $order->get_date_created();
+        $experience_date = null;
+        
+        foreach ($order->get_items() as $item) {
+            $date = $item->get_meta('_wcefp_date', true);
+            if ($date) {
+                $experience_date = new DateTime($date);
+                break;
+            }
+        }
+        
+        if ($experience_date && $order_date) {
+            $diff = $order_date->diff($experience_date);
+            return $diff->days;
+        }
+        
+        return 0;
+    }
+
+    private function get_total_participants($order) {
+        $total = 0;
+        foreach ($order->get_items() as $item) {
+            $adults = (int)$item->get_meta('_wcefp_adults', true);
+            $children = (int)$item->get_meta('_wcefp_children', true);
+            $total += ($adults + $children) * $item->get_quantity();
+        }
+        return $total;
     }
 
     /* ---------- Meta Pixel ---------- */
@@ -694,9 +842,47 @@ class WCEFP_Plugin {
         $pixel_id = trim(get_option('wcefp_meta_pixel_id',''));
         if (!$pixel_id) return;
         $order = wc_get_order($order_id); if(!$order) return;
+        
         $value = (float)$order->get_total();
         $currency = $order->get_currency();
-        echo "<script>if(window.fbq){ fbq('track','Purchase', {value: ".wp_json_encode($value).", currency: ".wp_json_encode($currency)."}); }</script>";
+        
+        // Get product details for enhanced tracking
+        $content_ids = [];
+        $contents = [];
+        
+        foreach ($order->get_items() as $item) {
+            $product = $item->get_product();
+            if ($product) {
+                $content_ids[] = (string)$product->get_id();
+                $contents[] = [
+                    'id' => (string)$product->get_id(),
+                    'quantity' => (int)$item->get_quantity(),
+                    'item_price' => (float)$order->get_item_total($item, false)
+                ];
+            }
+        }
+        
+        // Enhanced Meta Pixel Purchase event
+        echo "<script>";
+        echo "if(window.fbq){ ";
+        echo "fbq('track','Purchase', {";
+        echo "value: " . wp_json_encode($value) . ",";
+        echo "currency: " . wp_json_encode($currency) . ",";
+        echo "content_ids: " . wp_json_encode($content_ids) . ",";
+        echo "content_type: 'product',";
+        echo "contents: " . wp_json_encode($contents) . ",";
+        echo "num_items: " . count($content_ids);
+        echo "}); ";
+        
+        // Also track as CompleteRegistration for experience bookings
+        echo "fbq('track','CompleteRegistration', {";
+        echo "content_name: 'Experience Booking',";
+        echo "value: " . wp_json_encode($value) . ",";
+        echo "currency: " . wp_json_encode($currency);
+        echo "}); ";
+        
+        echo "}";
+        echo "</script>";
     }
 
     /* ---------- ICS ---------- */
@@ -1041,6 +1227,168 @@ class WCEFP_Plugin {
                 $order->add_order_note("Extra rilasciato per \"{$row['name']}\" ( +{$row['qty']} ).");
             }
         }
+    }
+
+    /* ---------- Advanced Analytics Tracking ---------- */
+    public function ajax_track_analytics() {
+        // Verify nonce for security
+        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'] ?? '')), 'wcefp_public')) {
+            wp_die('Accesso negato.');
+        }
+
+        $event_data = json_decode(sanitize_textarea_field(wp_unslash($_POST['event_data'] ?? '{}')), true);
+        
+        if (!$event_data || !isset($event_data['event'])) {
+            wp_send_json_error('Dati evento non validi.');
+            return;
+        }
+
+        // Store analytics event in custom table for advanced reporting
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'wcefp_analytics';
+        
+        // Create analytics table if it doesn't exist
+        $this->maybe_create_analytics_table();
+
+        // Store the event
+        $result = $wpdb->insert(
+            $table_name,
+            [
+                'event_name' => sanitize_text_field($event_data['event']),
+                'event_data' => wp_json_encode($event_data),
+                'session_id' => sanitize_text_field($event_data['session_id'] ?? ''),
+                'user_id' => sanitize_text_field($event_data['user_id'] ?? ''),
+                'product_id' => isset($event_data['product_id']) ? absint($event_data['product_id']) : null,
+                'page_url' => esc_url_raw($event_data['page_url'] ?? ''),
+                'user_agent' => sanitize_text_field($_SERVER['HTTP_USER_AGENT'] ?? ''),
+                'ip_address' => sanitize_text_field($this->get_client_ip()),
+                'created_at' => current_time('mysql')
+            ],
+            ['%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s']
+        );
+
+        if ($result !== false) {
+            // Trigger advanced processing for specific events
+            $this->process_advanced_analytics($event_data);
+            wp_send_json_success('Evento tracciato con successo.');
+        } else {
+            wp_send_json_error('Errore nel salvataggio dell\'evento.');
+        }
+    }
+
+    private function maybe_create_analytics_table() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'wcefp_analytics';
+        
+        $charset_collate = $wpdb->get_charset_collate();
+        
+        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            event_name VARCHAR(100) NOT NULL,
+            event_data LONGTEXT NULL,
+            session_id VARCHAR(100) NULL,
+            user_id VARCHAR(100) NULL,
+            product_id BIGINT UNSIGNED NULL,
+            page_url TEXT NULL,
+            user_agent TEXT NULL,
+            ip_address VARCHAR(45) NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_event_name (event_name),
+            INDEX idx_session_id (session_id),
+            INDEX idx_user_id (user_id),
+            INDEX idx_product_id (product_id),
+            INDEX idx_created_at (created_at)
+        ) $charset_collate;";
+        
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
+    }
+
+    private function process_advanced_analytics($event_data) {
+        $event_name = $event_data['event'];
+        
+        // Advanced processing for specific events
+        switch ($event_name) {
+            case 'core_web_vital':
+                $this->process_performance_metric($event_data);
+                break;
+                
+            case 'booking_attempt':
+                $this->process_conversion_event($event_data);
+                break;
+                
+            case 'session_end':
+                $this->process_session_completion($event_data);
+                break;
+        }
+    }
+
+    private function process_performance_metric($event_data) {
+        // Store performance metrics for dashboard
+        $metric = $event_data['metric'] ?? '';
+        $value = $event_data['value'] ?? 0;
+        $rating = $event_data['rating'] ?? 'unknown';
+        
+        // Could be used to trigger alerts for poor performance
+        if ($rating === 'poor') {
+            // Log performance issue
+            error_log("WCEFP Performance Alert: {$metric} = {$value}ms (rating: {$rating})");
+        }
+    }
+
+    private function process_conversion_event($event_data) {
+        // Advanced conversion tracking
+        $product_id = $event_data['product_id'] ?? 0;
+        $funnel_completion = $event_data['funnel_completion'] ?? 0;
+        
+        // Store conversion funnel data for optimization
+        update_option("wcefp_funnel_data_{$product_id}", [
+            'last_attempt' => current_time('mysql'),
+            'completion_rate' => $funnel_completion,
+            'session_id' => $event_data['session_id'] ?? ''
+        ]);
+    }
+
+    private function process_session_completion($event_data) {
+        // Process session completion for user journey analysis
+        $session_duration = $event_data['session_duration'] ?? 0;
+        $funnel_completion = $event_data['funnel_completion'] ?? 0;
+        $final_step = $event_data['final_step'] ?? '';
+        
+        // Store session insights
+        $session_data = [
+            'duration' => $session_duration,
+            'completion' => $funnel_completion,
+            'final_step' => $final_step,
+            'timestamp' => current_time('mysql')
+        ];
+        
+        $sessions = get_option('wcefp_session_insights', []);
+        $sessions[] = $session_data;
+        
+        // Keep only last 1000 sessions
+        if (count($sessions) > 1000) {
+            $sessions = array_slice($sessions, -1000);
+        }
+        
+        update_option('wcefp_session_insights', $sessions);
+    }
+
+    private function get_client_ip() {
+        $ip_keys = ['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'];
+        
+        foreach ($ip_keys as $key) {
+            if (!empty($_SERVER[$key])) {
+                $ips = explode(',', sanitize_text_field(wp_unslash($_SERVER[$key])));
+                $ip = trim($ips[0]);
+                
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                    return $ip;
+                }
+            }
+        }
+        
+        return sanitize_text_field($_SERVER['REMOTE_ADDR'] ?? '');
     }
 }
 

@@ -127,58 +127,292 @@
         }
     }
 
-    // Enhanced booking analytics
+    // Enhanced booking analytics with competitive tracking
     class WCEFPAnalytics {
         constructor() {
             this.events = [];
+            this.sessionData = {};
+            this.conversionFunnel = {};
+            this.performanceMetrics = {};
             this.init();
         }
 
         init() {
             this.bindEvents();
             this.startSession();
+            this.initPerformanceTracking();
+            this.initConversionFunnel();
+            this.initCrossDeviceTracking();
         }
 
         startSession() {
-            this.track('session_start', {
-                timestamp: new Date().toISOString(),
+            this.sessionData = {
+                session_id: this.generateSessionId(),
+                start_time: Date.now(),
                 page_url: window.location.href,
                 user_agent: navigator.userAgent,
                 screen_resolution: `${screen.width}x${screen.height}`,
-                viewport_size: `${window.innerWidth}x${window.innerHeight}`
+                viewport_size: `${window.innerWidth}x${window.innerHeight}`,
+                referrer: document.referrer,
+                utm_source: this.getUrlParameter('utm_source'),
+                utm_medium: this.getUrlParameter('utm_medium'),
+                utm_campaign: this.getUrlParameter('utm_campaign'),
+                device_type: this.getDeviceType(),
+                connection_type: this.getConnectionType()
+            };
+            
+            this.track('session_start', this.sessionData);
+        }
+
+        initPerformanceTracking() {
+            // Core Web Vitals tracking
+            if ('PerformanceObserver' in window) {
+                // Largest Contentful Paint (LCP)
+                new PerformanceObserver((entryList) => {
+                    const entries = entryList.getEntries();
+                    const lastEntry = entries[entries.length - 1];
+                    this.track('core_web_vital', {
+                        metric: 'LCP',
+                        value: lastEntry.startTime,
+                        rating: lastEntry.startTime < 2500 ? 'good' : lastEntry.startTime < 4000 ? 'needs_improvement' : 'poor'
+                    });
+                }).observe({entryTypes: ['largest-contentful-paint']});
+
+                // First Input Delay (FID)
+                new PerformanceObserver((entryList) => {
+                    const entries = entryList.getEntries();
+                    entries.forEach((entry) => {
+                        this.track('core_web_vital', {
+                            metric: 'FID',
+                            value: entry.processingStart - entry.startTime,
+                            rating: entry.processingStart - entry.startTime < 100 ? 'good' : entry.processingStart - entry.startTime < 300 ? 'needs_improvement' : 'poor'
+                        });
+                    });
+                }).observe({entryTypes: ['first-input']});
+
+                // Cumulative Layout Shift (CLS)
+                let clsValue = 0;
+                new PerformanceObserver((entryList) => {
+                    const entries = entryList.getEntries();
+                    entries.forEach((entry) => {
+                        if (!entry.hadRecentInput) {
+                            clsValue += entry.value;
+                        }
+                    });
+                    this.track('core_web_vital', {
+                        metric: 'CLS',
+                        value: clsValue,
+                        rating: clsValue < 0.1 ? 'good' : clsValue < 0.25 ? 'needs_improvement' : 'poor'
+                    });
+                }).observe({entryTypes: ['layout-shift']});
+            }
+
+            // Page load performance
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    const navigation = performance.getEntriesByType('navigation')[0];
+                    if (navigation) {
+                        this.track('page_performance', {
+                            dom_content_loaded: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
+                            load_complete: navigation.loadEventEnd - navigation.loadEventStart,
+                            total_load_time: navigation.loadEventEnd - navigation.fetchStart,
+                            dns_lookup: navigation.domainLookupEnd - navigation.domainLookupStart,
+                            tcp_connection: navigation.connectEnd - navigation.connectStart,
+                            server_response: navigation.responseStart - navigation.requestStart,
+                            dom_processing: navigation.domComplete - navigation.domLoading
+                        });
+                    }
+                }, 1000);
             });
         }
 
+        initConversionFunnel() {
+            this.conversionFunnel = {
+                page_view: false,
+                product_view: false,
+                date_selected: false,
+                participants_selected: false,
+                extras_viewed: false,
+                add_to_cart_attempted: false,
+                add_to_cart_completed: false,
+                checkout_initiated: false,
+                purchase_completed: false
+            };
+
+            // Track funnel progression
+            this.updateFunnelStep('page_view');
+        }
+
+        initCrossDeviceTracking() {
+            // Generate or retrieve user fingerprint
+            const fingerprint = this.generateUserFingerprint();
+            this.sessionData.user_fingerprint = fingerprint;
+            
+            // Store cross-session data
+            const userId = localStorage.getItem('wcefp_user_id') || this.generateUserId();
+            localStorage.setItem('wcefp_user_id', userId);
+            this.sessionData.user_id = userId;
+        }
+
         bindEvents() {
-            // Track widget interactions
+            // Enhanced widget interaction tracking
             $(document).on('click', '.wcefp-widget .wcefp-add', (e) => {
+                this.updateFunnelStep('add_to_cart_attempted');
                 this.track('booking_attempt', {
                     product_id: $(e.target).closest('.wcefp-widget').data('product'),
-                    step: 'add_to_cart'
+                    step: 'add_to_cart',
+                    participants_total: this.getParticipantsCount($(e.target).closest('.wcefp-widget')),
+                    selected_date: $(e.target).closest('.wcefp-widget').find('.wcefp-date').val(),
+                    selected_time: $(e.target).closest('.wcefp-widget').find('.wcefp-slot').val(),
+                    funnel_completion: this.calculateFunnelCompletion()
                 });
             });
 
-            // Track filter usage
+            // Date selection tracking
+            $(document).on('change', '.wcefp-date', (e) => {
+                this.updateFunnelStep('date_selected');
+                this.track('date_selected', {
+                    product_id: $(e.target).closest('.wcefp-widget').data('product'),
+                    selected_date: e.target.value,
+                    days_from_now: this.getDaysFromNow(e.target.value)
+                });
+            });
+
+            // Participants selection tracking
+            $(document).on('change', '.wcefp-adults, .wcefp-children', (e) => {
+                this.updateFunnelStep('participants_selected');
+                const $widget = $(e.target).closest('.wcefp-widget');
+                this.track('participants_changed', {
+                    product_id: $widget.data('product'),
+                    adults: parseInt($widget.find('.wcefp-adults').val() || 0),
+                    children: parseInt($widget.find('.wcefp-children').val() || 0),
+                    total: this.getParticipantsCount($widget)
+                });
+            });
+
+            // Time slot selection tracking  
+            $(document).on('change', '.wcefp-slot', (e) => {
+                this.track('time_slot_selected', {
+                    product_id: $(e.target).closest('.wcefp-widget').data('product'),
+                    selected_slot: e.target.value,
+                    slot_text: $(e.target).find('option:selected').text()
+                });
+            });
+
+            // Extras interaction tracking
+            $(document).on('change', '.wcefp-extra-checkbox', (e) => {
+                this.updateFunnelStep('extras_viewed');
+                const $checkbox = $(e.target);
+                const extraData = {
+                    product_id: $checkbox.closest('.wcefp-widget').data('product'),
+                    extra_id: $checkbox.data('extra-id'),
+                    extra_name: $checkbox.data('extra-name'),
+                    extra_price: parseFloat($checkbox.data('extra-price') || 0),
+                    action: $checkbox.is(':checked') ? 'added' : 'removed'
+                };
+                
+                this.track('extra_interaction', extraData);
+                
+                // Send to dataLayer for GA4/GTM
+                if (typeof dataLayer !== 'undefined') {
+                    dataLayer.push({
+                        event: 'extra_selected',
+                        ecommerce: {
+                            currency: WCEFPData.currency || 'EUR',
+                            value: extraData.extra_price,
+                            items: [{
+                                item_id: extraData.extra_id.toString(),
+                                item_name: extraData.extra_name,
+                                item_category: 'Extra',
+                                quantity: extraData.action === 'added' ? 1 : -1,
+                                price: extraData.extra_price
+                            }]
+                        }
+                    });
+                }
+            });
+
+            // Enhanced filter usage tracking
             $(document).on('input change', '.wcefp-search-input, .wcefp-filter-select', (e) => {
                 this.track('filter_used', {
-                    filter_type: e.target.className,
-                    filter_value: e.target.value
+                    filter_type: e.target.className.split(' ').find(cls => cls.includes('filter')) || 'search',
+                    filter_value: e.target.value,
+                    results_count: $('.wcefp-card:visible').length,
+                    total_items: $('.wcefp-card').length
                 });
             });
 
-            // Track card interactions
+            // Enhanced card interaction tracking
             $(document).on('click', '.wcefp-card', (e) => {
+                this.updateFunnelStep('product_view');
+                const $card = $(e.currentTarget);
                 this.track('card_clicked', {
-                    product_id: $(e.currentTarget).data('product-id'),
-                    card_position: $(e.currentTarget).index()
+                    product_id: $card.data('product-id'),
+                    product_name: $card.find('.wcefp-card-title').text(),
+                    card_position: $card.index(),
+                    price: this.extractPriceFromCard($card),
+                    rating: this.extractRatingFromCard($card),
+                    availability: $card.find('.wcefp-availability').text()
                 });
             });
 
-            // Track social sharing
+            // Social sharing tracking
             $(document).on('click', '.wcefp-share-btn', (e) => {
+                const platform = e.target.className.split(' ').find(cls => cls.includes('share-')) || 'unknown';
                 this.track('social_share', {
-                    platform: e.target.className.split(' ').find(cls => cls.includes('share-')),
-                    product_id: $(e.target).closest('.wcefp-card').data('product-id')
+                    platform: platform.replace('share-', ''),
+                    product_id: $(e.target).closest('.wcefp-card').data('product-id'),
+                    share_url: window.location.href
+                });
+            });
+
+            // Scroll depth tracking
+            let maxScrollDepth = 0;
+            $(window).on('scroll', this.throttle(() => {
+                const scrollDepth = Math.round(($(window).scrollTop() / ($(document).height() - $(window).height())) * 100);
+                if (scrollDepth > maxScrollDepth && scrollDepth % 25 === 0) {
+                    maxScrollDepth = scrollDepth;
+                    this.track('scroll_depth', {
+                        depth_percentage: scrollDepth,
+                        page_url: window.location.href
+                    });
+                }
+            }, 1000));
+
+            // Engagement time tracking
+            let engagementStart = Date.now();
+            let isActive = true;
+            
+            // Track when user becomes inactive
+            $(document).on('visibilitychange', () => {
+                if (document.hidden) {
+                    if (isActive) {
+                        this.track('engagement_time', {
+                            duration: Date.now() - engagementStart,
+                            type: 'visible'
+                        });
+                        isActive = false;
+                    }
+                } else {
+                    engagementStart = Date.now();
+                    isActive = true;
+                }
+            });
+
+            // Track page exit
+            $(window).on('beforeunload', () => {
+                if (isActive) {
+                    this.track('engagement_time', {
+                        duration: Date.now() - engagementStart,
+                        type: 'total'
+                    });
+                }
+                
+                // Send final funnel status
+                this.track('session_end', {
+                    funnel_completion: this.calculateFunnelCompletion(),
+                    final_step: this.getFinalFunnelStep(),
+                    session_duration: Date.now() - this.sessionData.start_time
                 });
             });
         }
@@ -187,32 +421,248 @@
             const event = {
                 event: event_name,
                 timestamp: new Date().toISOString(),
+                session_id: this.sessionData.session_id,
+                user_id: this.sessionData.user_id,
+                page_url: window.location.href,
                 ...data
             };
             
             this.events.push(event);
 
-            // Send to Google Analytics if available
+            // Enhanced Google Analytics tracking
             if (typeof gtag !== 'undefined') {
-                gtag('event', event_name, data);
+                // Send to Google Analytics with enhanced data
+                gtag('event', event_name, {
+                    custom_parameter_1: data.product_id || '',
+                    custom_parameter_2: data.step || data.type || '',
+                    custom_parameter_3: data.value || '',
+                    session_id: this.sessionData.session_id,
+                    user_id: this.sessionData.user_id,
+                    ...data
+                });
             }
 
-            // Send to dataLayer if available
+            // Enhanced dataLayer push for GTM
             if (typeof dataLayer !== 'undefined') {
-                dataLayer.push(event);
+                dataLayer.push({
+                    event: `wcefp_${event_name}`,
+                    wcefp_data: {
+                        event_category: 'WCEFP',
+                        event_action: event_name,
+                        event_label: data.product_id || data.type || '',
+                        session_id: this.sessionData.session_id,
+                        user_id: this.sessionData.user_id,
+                        funnel_step: this.getFinalFunnelStep(),
+                        funnel_completion: this.calculateFunnelCompletion()
+                    },
+                    ...event
+                });
             }
 
-            // Store in localStorage for debugging
+            // Enhanced Meta Pixel tracking
+            if (typeof fbq !== 'undefined' && WCEFPData.meta_pixel_id) {
+                const customData = {
+                    session_id: this.sessionData.session_id,
+                    user_id: this.sessionData.user_id,
+                    event_category: 'WCEFP',
+                    ...data
+                };
+
+                // Map specific events to Meta Pixel standard events
+                const metaEventMap = {
+                    'product_view': 'ViewContent',
+                    'date_selected': 'Search',
+                    'add_to_cart_attempted': 'AddToCart',
+                    'booking_attempt': 'InitiateCheckout',
+                    'social_share': 'Share'
+                };
+
+                if (metaEventMap[event_name]) {
+                    fbq('track', metaEventMap[event_name], customData);
+                } else {
+                    fbq('trackCustom', `WCEFP_${event_name}`, customData);
+                }
+            }
+
+            // Google Ads conversion tracking
+            if (typeof gtag !== 'undefined' && WCEFPData.google_ads_id) {
+                // Track key conversion events for Google Ads
+                const conversionEvents = {
+                    'add_to_cart_completed': 'add_to_cart',
+                    'booking_attempt': 'begin_checkout', 
+                    'purchase_completed': 'purchase'
+                };
+
+                if (conversionEvents[event_name]) {
+                    gtag('event', 'conversion', {
+                        send_to: WCEFPData.google_ads_id,
+                        value: data.value || data.price || 0,
+                        currency: WCEFPData.currency || 'EUR',
+                        transaction_id: data.transaction_id || this.sessionData.session_id
+                    });
+                }
+            }
+
+            // Store in localStorage for offline analysis
             if (window.localStorage) {
                 const stored = JSON.parse(localStorage.getItem('wcefp_analytics') || '[]');
                 stored.push(event);
                 
-                // Keep only last 100 events
-                if (stored.length > 100) {
-                    stored.splice(0, stored.length - 100);
+                // Keep only last 500 events for better performance
+                if (stored.length > 500) {
+                    stored.splice(0, stored.length - 500);
                 }
                 
                 localStorage.setItem('wcefp_analytics', JSON.stringify(stored));
+            }
+
+            // Send to server for advanced analytics (optional)
+            if (WCEFPData.enable_server_analytics && this.shouldSendToServer(event_name)) {
+                this.sendToServer(event);
+            }
+        }
+
+        // Utility methods for enhanced tracking
+        updateFunnelStep(step) {
+            if (this.conversionFunnel.hasOwnProperty(step)) {
+                this.conversionFunnel[step] = true;
+            }
+        }
+
+        calculateFunnelCompletion() {
+            const steps = Object.keys(this.conversionFunnel);
+            const completedSteps = steps.filter(step => this.conversionFunnel[step]);
+            return Math.round((completedSteps.length / steps.length) * 100);
+        }
+
+        getFinalFunnelStep() {
+            const steps = Object.keys(this.conversionFunnel);
+            for (let i = steps.length - 1; i >= 0; i--) {
+                if (this.conversionFunnel[steps[i]]) {
+                    return steps[i];
+                }
+            }
+            return 'page_view';
+        }
+
+        getParticipantsCount($widget) {
+            const adults = parseInt($widget.find('.wcefp-adults').val() || 0);
+            const children = parseInt($widget.find('.wcefp-children').val() || 0);
+            return adults + children;
+        }
+
+        getDaysFromNow(dateString) {
+            const selectedDate = new Date(dateString);
+            const today = new Date();
+            return Math.ceil((selectedDate - today) / (1000 * 60 * 60 * 24));
+        }
+
+        extractPriceFromCard($card) {
+            const priceText = $card.find('.wcefp-price').text();
+            return parseFloat(priceText.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+        }
+
+        extractRatingFromCard($card) {
+            const ratingElement = $card.find('.wcefp-rating');
+            if (ratingElement.length) {
+                return parseFloat(ratingElement.data('rating')) || 0;
+            }
+            return null;
+        }
+
+        generateSessionId() {
+            return 'wcefp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        generateUserId() {
+            return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        generateUserFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('WCEventsFP fingerprint', 2, 2);
+            
+            const fingerprint = [
+                navigator.userAgent,
+                navigator.language,
+                screen.width + 'x' + screen.height,
+                new Date().getTimezoneOffset(),
+                canvas.toDataURL()
+            ].join('|');
+            
+            return this.simpleHash(fingerprint);
+        }
+
+        simpleHash(str) {
+            let hash = 0;
+            if (str.length === 0) return hash;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return Math.abs(hash).toString(36);
+        }
+
+        getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        getDeviceType() {
+            const width = window.innerWidth;
+            if (width <= 768) return 'mobile';
+            if (width <= 1024) return 'tablet';
+            return 'desktop';
+        }
+
+        getConnectionType() {
+            if ('connection' in navigator) {
+                return navigator.connection.effectiveType || 'unknown';
+            }
+            return 'unknown';
+        }
+
+        throttle(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        shouldSendToServer(event_name) {
+            // Only send critical events to reduce server load
+            const criticalEvents = [
+                'booking_attempt', 'add_to_cart_completed', 'purchase_completed',
+                'session_start', 'session_end', 'core_web_vital'
+            ];
+            return criticalEvents.includes(event_name);
+        }
+
+        sendToServer(event) {
+            // Send event to server for advanced analytics
+            if (typeof fetch !== 'undefined') {
+                fetch(WCEFPData.ajaxUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'wcefp_track_analytics',
+                        nonce: WCEFPData.nonce,
+                        event_data: JSON.stringify(event)
+                    })
+                }).catch(error => {
+                    console.log('Analytics tracking error:', error);
+                });
             }
         }
 

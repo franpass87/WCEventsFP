@@ -1,4 +1,8 @@
-# WCEventsFP (v1.8.1) - Premium Booking Platform
+# WCEventsFP (v1.9.0) - Advanced Booking Platform
+
+**Sistema di prenotazione avanzato per competere con RegionDo e Bokun**
+
+Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità enterprise-level per massimizzare le conversioni e automatizzare la gestione clienti.
 Eventi & Esperienze per WooCommerce con funzionalità avanzate simili a Bokun, Regiondo e GetYourGuide.
 
 ## 🚀 Nuove Funzionalità v1.8.1
@@ -133,12 +137,31 @@ La pagina **Eventi & Degustazioni → Impostazioni** è ora organizzata in tab p
 
 ---
 
-## Dashboard KPI
-- **Eventi & Degustazioni → Analisi KPI**
-  - Ordini 30gg, Ricavi 30gg, Riempimento medio, Top esperienza.  
-  *(Demo simple: personalizza la query secondo le tue metriche.)*
+## 🚀 Nuove Funzionalità v1.9.0 - Competitive Edge
 
----
+### Advanced Tracking & Analytics
+- **Google Analytics 4 Potenziato**: Eventi ecommerce completi, enhanced conversions, funnel tracking
+- **Google Ads Integration**: Conversion tracking automatico con enhanced conversions
+- **Meta Pixel Avanzato**: Eventi Facebook completi (ViewContent, AddToCart, InitiateCheckout, Purchase, CompleteRegistration)
+- **Server-side Analytics**: Backup dati critici con analytics table personalizzata
+- **Performance Monitoring**: Core Web Vitals, tempo caricamento, metriche UX
+- **Cross-device Tracking**: Fingerprinting utenti e tracking cross-session
+- **Real-time Dashboard**: Monitoraggio KPI, conversion funnel, insights automatici
+
+### Conversion Optimization Engine
+- **Urgency Indicators**: Timer countdown per offerte limitate nel tempo
+- **Social Proof**: Notifiche prenotazioni recenti, badge "Molto Richiesto", recensioni simulate
+- **Dynamic Pricing**: Confronto prezzi concorrenti, indicatori sconto, "Miglior Prezzo"
+- **Scarcity Marketing**: Indicatori disponibilità limitata con colori di urgenza
+- **Trust Badges**: Badge sicurezza, garanzie, certificazioni
+- **Exit Intent Popup**: Recovery conversioni con codici sconto
+- **Live Chat Simulation**: Widget supporto clienti con risposte automatiche
+
+### Customer Journey Enhancement
+- **Funnel Tracking**: Monitoraggio completo del percorso utente (9 step)
+- **Engagement Analytics**: Scroll depth, tempo permanenza, interazioni
+- **Session Analysis**: Durata sessioni, step completamento, abbandoni
+- **User Behavior**: Heat mapping simulato, click tracking, form analytics
 
 ## Gift / Regala un’esperienza
 - Nel **checkout**: flag “Regala un’esperienza” + campi **Nome**, **Email destinatario**, **Messaggio**.
