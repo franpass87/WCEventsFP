@@ -1,4 +1,4 @@
-# WCEventsFP (v1.7.1)
+# WCEventsFP (v1.7.2)
 Eventi & Esperienze per WooCommerce con:
 - Ricorrenze settimanali, slot orari, prezzi Adulto/Bambino
 - Extra riutilizzabili (CPT dedicato, tabella ponte, tariffazione per ordine/persona/adulto/bambino, quantità massime, obbligatorietà, stock con allocazione automatica)
@@ -169,3 +169,33 @@ add_filter('wcefp_brevo_order_payload', function($payload, $order){ return $payl
 
 // Convalida voucher personalizzata
 add_filter('wcefp_validate_voucher', function($ok, $code, $row){ return $ok; }, 10, 3);
+```
+
+---
+
+## Gestione versioni
+
+### Aggiornamento versione plugin
+Quando si rilascia una nuova versione, aggiornare **coerentemente** tutti i seguenti file:
+
+1. **`wceventsfp.php`** (header del plugin):
+   ```php
+   * Version:     1.x.x
+   define('WCEFP_VERSION', '1.x.x');
+   ```
+
+2. **`README.md`** (titolo):
+   ```markdown
+   # WCEventsFP (v1.x.x)
+   ```
+
+3. **`CHANGELOG.md`** (nuova voce in cima):
+   ```markdown
+   [1.x.x] – YYYY-MM-DD
+   Added/Changed/Fixed
+   ```
+
+### Controllo coerenza versioni
+Verifica che tutte le versioni siano allineate:
+```bash
+grep -n "1\.[0-9]\." wceventsfp.php README.md CHANGELOG.md

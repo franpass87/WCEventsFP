@@ -17,6 +17,9 @@ jobs:
       - name: Checkout
       - uses: actions/checkout@v4
 
+      - name: Check version consistency
+        run: php bin/check-version-consistency.php
+
       - name: Mostra struttura repo (debug)
         run: ls -la
 

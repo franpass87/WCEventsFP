@@ -1,3 +1,17 @@
+[1.7.2] – 2025-08-21
+Added
+
+Sistema di logging centralizzato (WCEFP_Logger) con rotazione automatica, livelli multipli e interfaccia admin.
+Sistema di validazione input avanzato (WCEFP_Validator) con validazione bulk e logging automatico.
+Sistema di caching intelligente (WCEFP_Cache) con invalidazione strategica e supporto object cache.
+Interfaccia admin migliorata con notifiche toast, indicatori di caricamento e supporto dark mode.
+
+Improved
+
+Sicurezza: validazione input completa, prepared statements, gestione errori migliorata.
+Performance: caching strategico, ottimizzazioni database, caricamento asset ottimizzato.
+Qualità codice: file di configurazione phpcs.xml e phpstan.neon, architettura migliorata.
+
 [1.7.1] – 2025-08-19
 Added
 
