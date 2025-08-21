@@ -45,9 +45,7 @@ class WCEFP_Admin {
         
         // Enhanced UI Components
         wp_enqueue_style('wcefp-modern-components', WCEFP_PLUGIN_URL.'assets/css/modern-components.css', ['wcefp-admin'], WCEFP_VERSION);
-        wp_enqueue_style('wcefp-dark-theme', WCEFP_PLUGIN_URL.'assets/css/dark-theme.css', ['wcefp-admin'], WCEFP_VERSION);
         wp_enqueue_style('wcefp-advanced-analytics', WCEFP_PLUGIN_URL.'assets/css/advanced-analytics.css', ['wcefp-admin'], WCEFP_VERSION);
-        wp_enqueue_style('wcefp-gamification', WCEFP_PLUGIN_URL.'assets/css/gamification.css', ['wcefp-admin'], WCEFP_VERSION);
 
         // Settings page specific assets
         if ($is_wcefp_page && strpos($hook,'wcefp_page_wcefp-settings') !== false) {
@@ -72,9 +70,7 @@ class WCEFP_Admin {
         wp_enqueue_script('wcefp-admin-enhanced', WCEFP_PLUGIN_URL.'assets/js/admin-enhanced.js', array_merge($deps, ['wcefp-admin']), WCEFP_VERSION, true);
         
         // Enhanced features scripts
-        wp_enqueue_script('wcefp-dark-theme', WCEFP_PLUGIN_URL.'assets/js/dark-theme.js', ['wcefp-admin'], WCEFP_VERSION, true);
         wp_enqueue_script('wcefp-advanced-analytics', WCEFP_PLUGIN_URL.'assets/js/advanced-analytics.js', array_merge($deps, ['wcefp-admin']), WCEFP_VERSION, true);
-        wp_enqueue_script('wcefp-gamification', WCEFP_PLUGIN_URL.'assets/js/gamification.js', ['wcefp-admin'], WCEFP_VERSION, true);
         wp_localize_script('wcefp-admin','WCEFPAdmin',[
             'ajaxUrl'=> admin_url('admin-ajax.php'),
             'nonce'  => wp_create_nonce('wcefp_admin'),

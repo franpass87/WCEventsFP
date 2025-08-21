@@ -592,12 +592,10 @@ class WCEFP_Plugin {
         
         // Enhanced UI Components and Features
         wp_register_style('wcefp-modern-components', WCEFP_PLUGIN_URL.'assets/css/modern-components.css', ['wcefp-frontend'], WCEFP_VERSION);
-        wp_register_style('wcefp-dark-theme', WCEFP_PLUGIN_URL.'assets/css/dark-theme.css', ['wcefp-frontend'], WCEFP_VERSION);
-        wp_register_style('wcefp-gamification', WCEFP_PLUGIN_URL.'assets/css/gamification.css', ['wcefp-frontend'], WCEFP_VERSION);
+        wp_register_style('wcefp-google-reviews', WCEFP_PLUGIN_URL.'assets/css/google-reviews.css', ['wcefp-frontend'], WCEFP_VERSION);
         
-        wp_register_script('wcefp-dark-theme', WCEFP_PLUGIN_URL.'assets/js/dark-theme.js', ['wcefp-frontend'], WCEFP_VERSION, true);
         wp_register_script('wcefp-ai-recommendations', WCEFP_PLUGIN_URL.'assets/js/ai-recommendations.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
-        wp_register_script('wcefp-gamification', WCEFP_PLUGIN_URL.'assets/js/gamification.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
+        wp_register_script('wcefp-google-reviews', WCEFP_PLUGIN_URL.'assets/js/google-reviews.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
         
         // Conversion optimization assets
         wp_register_style('wcefp-conversion', WCEFP_PLUGIN_URL.'assets/css/conversion-optimization.css', ['wcefp-frontend'], WCEFP_VERSION);
@@ -631,17 +629,8 @@ class WCEFP_Plugin {
         
         // Enqueue enhanced features
         wp_enqueue_style('wcefp-modern-components');
-        
-        // Conditionally enqueue enhanced features based on settings
-        if (get_option('wcefp_enable_dark_theme', true)) {
-            wp_enqueue_style('wcefp-dark-theme');
-            wp_enqueue_script('wcefp-dark-theme');
-        }
-        
-        if (get_option('wcefp_enable_gamification', true)) {
-            wp_enqueue_style('wcefp-gamification');
-            wp_enqueue_script('wcefp-gamification');
-        }
+        wp_enqueue_style('wcefp-google-reviews');
+        wp_enqueue_script('wcefp-google-reviews');
         
         if (get_option('wcefp_enable_ai_recommendations', true)) {
             wp_enqueue_script('wcefp-ai-recommendations');

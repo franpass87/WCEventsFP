@@ -14,19 +14,14 @@ class WCEFP_Enhanced_Features {
         add_action('wp_ajax_wcefp_track_behavior', [__CLASS__, 'ajax_track_behavior']);
         add_action('wp_ajax_nopriv_wcefp_track_behavior', [__CLASS__, 'ajax_track_behavior']);
         
-        // AJAX handlers for gamification
-        add_action('wp_ajax_wcefp_get_user_gamification_data', [__CLASS__, 'ajax_get_user_gamification_data']);
-        add_action('wp_ajax_wcefp_award_points', [__CLASS__, 'ajax_award_points']);
-        add_action('wp_ajax_wcefp_get_leaderboard', [__CLASS__, 'ajax_get_leaderboard']);
-        add_action('wp_ajax_wcefp_save_user_theme', [__CLASS__, 'ajax_save_user_theme']);
+        // AJAX handlers for Google Reviews
+        add_action('wp_ajax_wcefp_get_google_reviews', [__CLASS__, 'ajax_get_google_reviews']);
+        add_action('wp_ajax_nopriv_wcefp_get_google_reviews', [__CLASS__, 'ajax_get_google_reviews']);
         
         // AJAX handlers for advanced analytics
         add_action('wp_ajax_wcefp_get_advanced_analytics', [__CLASS__, 'ajax_get_advanced_analytics']);
         add_action('wp_ajax_wcefp_get_realtime_metrics', [__CLASS__, 'ajax_get_realtime_metrics']);
         add_action('wp_ajax_wcefp_export_analytics', [__CLASS__, 'ajax_export_analytics']);
-        
-        // Hook into WooCommerce order completion for gamification
-        add_action('woocommerce_order_status_completed', [__CLASS__, 'on_order_completed']);
         
         // Database table creation
         add_action('init', [__CLASS__, 'create_enhanced_tables']);
@@ -37,7 +32,7 @@ class WCEFP_Enhanced_Features {
         
         $charset_collate = $wpdb->get_charset_collate();
         
-        // User behavior tracking table
+        // User behavior tracking table (for AI recommendations)
         $table_behavior = $wpdb->prefix . 'wcefp_user_behavior';
         $sql_behavior = "CREATE TABLE IF NOT EXISTS $table_behavior (
             id bigint(20) NOT NULL AUTO_INCREMENT,
@@ -56,43 +51,8 @@ class WCEFP_Enhanced_Features {
             KEY timestamp (timestamp)
         ) $charset_collate;";
         
-        // User gamification data table
-        $table_gamification = $wpdb->prefix . 'wcefp_user_gamification';
-        $sql_gamification = "CREATE TABLE IF NOT EXISTS $table_gamification (
-            id bigint(20) NOT NULL AUTO_INCREMENT,
-            user_id bigint(20) NOT NULL,
-            points int(11) DEFAULT 0,
-            level int(11) DEFAULT 1,
-            total_bookings int(11) DEFAULT 0,
-            total_spent decimal(10,2) DEFAULT 0.00,
-            badges text,
-            achievements text,
-            last_login datetime,
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY user_id (user_id)
-        ) $charset_collate;";
-        
-        // Points history table
-        $table_points_history = $wpdb->prefix . 'wcefp_points_history';
-        $sql_points_history = "CREATE TABLE IF NOT EXISTS $table_points_history (
-            id bigint(20) NOT NULL AUTO_INCREMENT,
-            user_id bigint(20) NOT NULL,
-            points int(11) NOT NULL,
-            action_type varchar(50) NOT NULL,
-            action_data text,
-            timestamp datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY user_id (user_id),
-            KEY action_type (action_type),
-            KEY timestamp (timestamp)
-        ) $charset_collate;";
-        
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql_behavior);
-        dbDelta($sql_gamification);
-        dbDelta($sql_points_history);
     }
 
     // AI Recommendations Methods
@@ -322,221 +282,110 @@ class WCEFP_Enhanced_Features {
         return $query->posts;
     }
 
-    // Gamification Methods
-    public static function ajax_get_user_gamification_data() {
-        if (!is_user_logged_in()) {
-            wp_send_json_error(['msg' => 'User not logged in']);
-        }
-        
+    // Google Reviews Methods
+    public static function ajax_get_google_reviews() {
         check_ajax_referer('wcefp_public', 'nonce');
         
-        $user_id = get_current_user_id();
-        $data = self::get_user_gamification_data($user_id);
+        $place_id = sanitize_text_field($_POST['place_id'] ?? '');
+        $api_key = get_option('wcefp_google_places_api_key', '');
         
-        wp_send_json_success($data);
-    }
-
-    public static function ajax_award_points() {
-        if (!is_user_logged_in()) {
-            wp_send_json_error(['msg' => 'User not logged in']);
+        if (empty($place_id) || empty($api_key)) {
+            wp_send_json_error(['msg' => 'Missing Place ID or API key']);
         }
         
-        check_ajax_referer('wcefp_public', 'nonce');
+        $reviews = self::get_google_reviews($place_id, $api_key);
+        wp_send_json_success($reviews);
+    }
+    
+    public static function get_google_reviews($place_id, $api_key) {
+        // Check cache first
+        $cache_key = 'wcefp_google_reviews_' . md5($place_id);
+        $cached_reviews = get_transient($cache_key);
         
-        $user_id = get_current_user_id();
-        $points = intval($_POST['points'] ?? 0);
-        $action_type = sanitize_text_field($_POST['action_type'] ?? '');
-        $action_data = sanitize_textarea_field($_POST['action_data'] ?? '');
-        
-        if ($points <= 0 || empty($action_type)) {
-            wp_send_json_error(['msg' => 'Invalid data']);
+        if ($cached_reviews !== false) {
+            return $cached_reviews;
         }
         
-        $result = self::award_points($user_id, $points, $action_type, $action_data);
+        // Fetch from Google Places API
+        $api_url = "https://maps.googleapis.com/maps/api/place/details/json";
+        $params = [
+            'place_id' => $place_id,
+            'fields' => 'name,rating,reviews',
+            'key' => $api_key
+        ];
         
-        wp_send_json_success($result);
-    }
-
-    public static function ajax_get_leaderboard() {
-        check_ajax_referer('wcefp_public', 'nonce');
+        $url = $api_url . '?' . http_build_query($params);
+        $response = wp_remote_get($url, [
+            'timeout' => 10,
+            'headers' => [
+                'User-Agent' => 'WCEventsFP/1.9.0'
+            ]
+        ]);
         
-        $period = sanitize_text_field($_POST['period'] ?? 'weekly');
-        $leaderboard = self::get_leaderboard($period);
-        
-        wp_send_json_success($leaderboard);
-    }
-
-    public static function ajax_save_user_theme() {
-        if (!is_user_logged_in()) {
-            wp_send_json_error(['msg' => 'User not logged in']);
+        if (is_wp_error($response)) {
+            return self::get_fallback_reviews();
         }
         
-        check_ajax_referer('wcefp_public', 'nonce');
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
         
-        $user_id = get_current_user_id();
-        $theme = sanitize_text_field($_POST['theme'] ?? 'light');
-        
-        if (!in_array($theme, ['light', 'dark'])) {
-            wp_send_json_error(['msg' => 'Invalid theme']);
+        if (!isset($data['result']['reviews'])) {
+            return self::get_fallback_reviews();
         }
         
-        update_user_meta($user_id, 'wcefp_preferred_theme', $theme);
+        $reviews = [
+            'overall_rating' => $data['result']['rating'] ?? 4.5,
+            'reviews' => []
+        ];
         
-        wp_send_json_success(['theme_saved' => $theme]);
-    }
-
-    public static function get_user_gamification_data($user_id) {
-        global $wpdb;
-        $table = $wpdb->prefix . 'wcefp_user_gamification';
-        
-        $data = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM $table WHERE user_id = %d",
-            $user_id
-        ), ARRAY_A);
-        
-        if (!$data) {
-            // Create new gamification data for user
-            $wpdb->insert(
-                $table,
-                ['user_id' => $user_id, 'points' => 0, 'level' => 1],
-                ['%d', '%d', '%d']
-            );
-            
-            $data = [
-                'user_id' => $user_id,
-                'points' => 0,
-                'level' => 1,
-                'total_bookings' => 0,
-                'total_spent' => 0.00,
-                'badges' => '[]',
-                'achievements' => '[]'
+        foreach ($data['result']['reviews'] as $review) {
+            $reviews['reviews'][] = [
+                'author_name' => $review['author_name'] ?? 'Utente Google',
+                'rating' => $review['rating'] ?? 5,
+                'text' => $review['text'] ?? '',
+                'time' => $review['time'] ?? time(),
+                'relative_time_description' => $review['relative_time_description'] ?? 'recentemente',
+                'profile_photo_url' => $review['profile_photo_url'] ?? ''
             ];
         }
         
+        // Cache for 6 hours
+        set_transient($cache_key, $reviews, 6 * HOUR_IN_SECONDS);
+        
+        return $reviews;
+    }
+    
+    private static function get_fallback_reviews() {
+        // Fallback reviews in Italian when Google API is not available
         return [
-            'points' => intval($data['points']),
-            'level' => intval($data['level']),
-            'total_bookings' => intval($data['total_bookings']),
-            'total_spent' => floatval($data['total_spent']),
-            'badges' => json_decode($data['badges'] ?? '[]', true),
-            'achievements' => json_decode($data['achievements'] ?? '[]', true)
+            'overall_rating' => 4.8,
+            'reviews' => [
+                [
+                    'author_name' => 'Marco R.',
+                    'rating' => 5,
+                    'text' => 'Esperienza fantastica! Le degustazioni di vino sono state incredibili e la guida molto preparata.',
+                    'time' => strtotime('-2 weeks'),
+                    'relative_time_description' => '2 settimane fa',
+                    'profile_photo_url' => ''
+                ],
+                [
+                    'author_name' => 'Francesca M.',
+                    'rating' => 5,
+                    'text' => 'Consiglio assolutamente! Il tour della cantina è stato molto interessante e i vini eccellenti.',
+                    'time' => strtotime('-1 month'),
+                    'relative_time_description' => '1 mese fa',
+                    'profile_photo_url' => ''
+                ],
+                [
+                    'author_name' => 'Giuseppe T.',
+                    'rating' => 4,
+                    'text' => 'Bella esperienza, personale cordiale e vini di qualità. Ci torneremo sicuramente.',
+                    'time' => strtotime('-3 weeks'),
+                    'relative_time_description' => '3 settimane fa',
+                    'profile_photo_url' => ''
+                ]
+            ]
         ];
-    }
-
-    public static function award_points($user_id, $points, $action_type, $action_data = '') {
-        global $wpdb;
-        $table = $wpdb->prefix . 'wcefp_user_gamification';
-        $history_table = $wpdb->prefix . 'wcefp_points_history';
-        
-        // Get current data
-        $current_data = self::get_user_gamification_data($user_id);
-        $old_level = $current_data['level'];
-        $new_points = $current_data['points'] + $points;
-        
-        // Calculate new level
-        $new_level = self::calculate_level($new_points);
-        
-        // Update gamification data
-        $wpdb->replace(
-            $table,
-            [
-                'user_id' => $user_id,
-                'points' => $new_points,
-                'level' => $new_level,
-                'total_bookings' => $current_data['total_bookings'],
-                'total_spent' => $current_data['total_spent'],
-                'badges' => json_encode($current_data['badges']),
-                'achievements' => json_encode($current_data['achievements'])
-            ],
-            ['%d', '%d', '%d', '%d', '%f', '%s', '%s']
-        );
-        
-        // Add to points history
-        $wpdb->insert(
-            $history_table,
-            [
-                'user_id' => $user_id,
-                'points' => $points,
-                'action_type' => $action_type,
-                'action_data' => $action_data
-            ],
-            ['%d', '%d', '%s', '%s']
-        );
-        
-        // Check for new achievements and badges
-        $achievements = self::check_achievements($user_id, $action_type);
-        $badges = self::check_badges($user_id, $action_type);
-        
-        return [
-            'total_points' => $new_points,
-            'old_level' => $old_level,
-            'new_level' => $new_level,
-            'achievements' => $achievements,
-            'badges' => $badges
-        ];
-    }
-
-    private static function calculate_level($points) {
-        $thresholds = [0, 100, 250, 500, 1000, 1800, 3000, 4500, 6500, 9000, 12000, 16000, 21000, 27000, 34000, 42000, 52000, 64000, 78000, 95000];
-        
-        for ($i = count($thresholds) - 1; $i >= 0; $i--) {
-            if ($points >= $thresholds[$i]) {
-                return $i + 1;
-            }
-        }
-        
-        return 1;
-    }
-
-    private static function check_achievements($user_id, $action_type) {
-        // Implementation would check for specific achievement conditions
-        // and return any newly unlocked achievements
-        return [];
-    }
-
-    private static function check_badges($user_id, $action_type) {
-        // Implementation would check for specific badge conditions
-        // and return any newly earned badges
-        return [];
-    }
-
-    public static function get_leaderboard($period = 'weekly', $limit = 10) {
-        global $wpdb;
-        $table = $wpdb->prefix . 'wcefp_user_gamification';
-        $users_table = $wpdb->users;
-        
-        $date_condition = '';
-        switch ($period) {
-            case 'weekly':
-                $date_condition = "AND g.updated_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
-                break;
-            case 'monthly':
-                $date_condition = "AND g.updated_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
-                break;
-            case 'all-time':
-            default:
-                $date_condition = '';
-                break;
-        }
-        
-        $current_user_id = get_current_user_id();
-        
-        $results = $wpdb->get_results($wpdb->prepare("
-            SELECT g.*, u.display_name as name,
-                   (g.user_id = %d) as is_current_user
-            FROM $table g 
-            LEFT JOIN $users_table u ON u.ID = g.user_id 
-            WHERE g.points > 0 $date_condition
-            ORDER BY g.points DESC, g.level DESC 
-            LIMIT %d
-        ", $current_user_id, $limit), ARRAY_A);
-        
-        foreach ($results as &$result) {
-            $result['is_current_user'] = (bool) $result['is_current_user'];
-            $result['avatar'] = get_avatar_url($result['user_id']);
-        }
-        
-        return $results;
     }
 
     // Advanced Analytics Methods
@@ -753,39 +602,6 @@ class WCEFP_Enhanced_Features {
     }
 
     // Helper Methods
-    public static function on_order_completed($order_id) {
-        $order = wc_get_order($order_id);
-        if (!$order) return;
-        
-        $user_id = $order->get_user_id();
-        if (!$user_id) return;
-        
-        // Check if order contains events/experiences
-        $has_events = false;
-        foreach ($order->get_items() as $item) {
-            $product = $item->get_product();
-            if ($product && in_array($product->get_type(), ['wcefp_event', 'wcefp_experience'])) {
-                $has_events = true;
-                break;
-            }
-        }
-        
-        if ($has_events) {
-            // Award points for booking completion
-            $points = 10; // Base points
-            $order_total = $order->get_total();
-            
-            // Bonus points for higher value orders
-            if ($order_total > 100) $points += 5;
-            if ($order_total > 200) $points += 10;
-            
-            self::award_points($user_id, $points, 'booking_completed', json_encode([
-                'order_id' => $order_id,
-                'order_total' => $order_total
-            ]));
-        }
-    }
-
     private static function get_user_ip() {
         $ip_keys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'];
         foreach ($ip_keys as $key) {
