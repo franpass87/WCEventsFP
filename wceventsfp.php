@@ -102,6 +102,15 @@ add_action('plugins_loaded', function () {
         return;
     }
 
+    // Carica helper di base per miglioramenti architetturali
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-config.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-logger.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-cache.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-validator.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-container.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-database.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-tests.php';
+    
     // Include core
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-recurring.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-closures.php';
@@ -1039,15 +1048,50 @@ class WCEFP_Plugin {
 
 /* ---------- Helper allocazione ---------- */
 if (!function_exists('wcefp_update_booked_atomic')) {
+    /**
+     * Aggiornamento atomico posti prenotati con logging migliorato
+     * 
+     * @param int $occ_id ID occorrenza
+     * @param int $delta Variazione posti (+/-)
+     * @return bool Success
+     * @since 1.7.2 Aggiunto logging e cache invalidation
+     */
     function wcefp_update_booked_atomic($occ_id, $delta){
-        global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
+        global $wpdb; 
+        $tbl = $wpdb->prefix.'wcefp_occurrences';
+        $logger = new WCEFP_Logger();
+        
         if ($delta > 0) {
+            // Booking: verifica disponibilità
             $sql = $wpdb->prepare("UPDATE $tbl SET booked = booked + %d WHERE id=%d AND status='active' AND (capacity - booked) >= %d", $delta, $occ_id, $delta);
         } else {
+            // Release: evita valori negativi
             $sql = $wpdb->prepare("UPDATE $tbl SET booked = GREATEST(0, booked + %d) WHERE id=%d", $delta, $occ_id);
         }
+        
         $res = $wpdb->query($sql);
-        return ($res && intval($res) > 0);
+        $success = ($res && intval($res) > 0);
+        
+        if (!$success) {
+            $logger->warning('Atomic booking update failed', [
+                'occurrence_id' => $occ_id,
+                'delta' => $delta,
+                'sql_error' => $wpdb->last_error
+            ]);
+        } else {
+            // Invalida cache per questa occorrenza
+            $occurrence = $wpdb->get_row($wpdb->prepare("SELECT product_id FROM $tbl WHERE id=%d", $occ_id));
+            if ($occurrence) {
+                WCEFP_Cache::delete(WCEFP_Cache::occurrences_key($occurrence->product_id));
+                $logger->debug('Booking updated successfully', [
+                    'occurrence_id' => $occ_id,
+                    'delta' => $delta,
+                    'product_id' => $occurrence->product_id
+                ]);
+            }
+        }
+        
+        return $success;
     }
 }
 

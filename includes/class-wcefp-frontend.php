@@ -291,10 +291,19 @@ class WCEFP_Frontend {
         $gift_name = sanitize_text_field($_POST['gift_recipient_name'] ?? '');
         $gift_email = sanitize_email($_POST['gift_recipient_email'] ?? '');
         $gift_msg = isset($_POST['gift_message']) ? wp_kses($_POST['gift_message'], ['br'=>[]]) : '';
-        if (strlen($gift_msg) > 300) $gift_msg = substr($gift_msg, 0, 300);
+        
+        // Usa helper per validare lunghezza messaggio regalo
+        if (!WCEFP_Validator::gift_message($gift_msg)) {
+            $gift_msg = substr($gift_msg, 0, WCEFP_Config::MAX_GIFT_MESSAGE_LENGTH);
+        }
 
+        // Validazione email regalo migliorata  
         if ($gift_toggle && $gift_name === '') {
             wp_send_json_error(['msg' => __('Nome destinatario obbligatorio','wceventsfp')]);
+        }
+        
+        if ($gift_toggle && !empty($gift_email) && !WCEFP_Validator::email($gift_email)) {
+            wp_send_json_error(['msg' => __('Email destinatario non valida','wceventsfp')]);
         }
 
         if (!$pid || !$occ || ($ad+$ch)<=0) wp_send_json_error(['msg'=>'Dati mancanti']);
