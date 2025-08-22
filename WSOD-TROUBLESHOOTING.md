@@ -17,6 +17,10 @@ Il plugin include già diverse protezioni contro il WSOD:
 5. **🔧 Ordine Funzioni Corretto**: Funzioni definite prima dell'uso per evitare errori fatali
 6. **🛡️ Caricamento Classi Robusto**: Controllo esistenza file e gestione errori
 7. **⚡ Hook di Attivazione Sicuro**: Verifiche WooCommerce e database prima delle operazioni
+8. **🆕 Controlli Ambiente PHP**: Verifica versione PHP 7.4+ e estensioni richieste
+9. **🆕 Protezione plugins_loaded**: Hook principale protetto da try-catch comprehensivo
+10. **🆕 Auto-disattivazione**: Il plugin si disattiva automaticamente in caso di errore fatale
+11. **🆕 Validazione Memoria Robusta**: Gestione sicura di valori memory_limit non validi
 
 ## 🛠️ Strumenti Diagnostici
 
@@ -160,6 +164,28 @@ Assicurati che l'utente database abbia le seguenti autorizzazioni:
 **Prima**: Operazioni database senza controlli preliminari
 **Dopo**: Verifica WooCommerce, connessione database e funzioni WordPress
 **Impatto**: Attivazione sicura anche in ambienti non ottimali
+
+### 🆕 **Nuove Correzioni v2.0.1+**
+
+### Problema Risolto #4: Controlli Ambiente PHP Mancanti
+**Prima**: Nessun controllo versione PHP o estensioni richieste
+**Dopo**: Verifica PHP 7.4+ e estensioni critiche (mysqli, json, mbstring) in activation hook
+**Impatto**: Prevenzione WSOD da incompatibilità ambiente
+
+### Problema Risolto #5: plugins_loaded Non Protetto
+**Prima**: Hook plugins_loaded senza gestione errori comprehensiva
+**Dopo**: Wrapping completo con try-catch per Error e Exception
+**Impatto**: Recupero automatico da errori fatali durante inizializzazione
+
+### Problema Risolto #6: Funzione Memoria Fragile
+**Prima**: `wcefp_convert_memory_to_bytes()` falliva con valori non validi
+**Dopo**: Validazione robusta con gestione edge cases (null, stringhe vuote, valori negativi)
+**Impatto**: Elimina crashes da configurazioni memory_limit non standard
+
+### Problema Risolto #7: Mancanza Auto-Recovery
+**Prima**: Errori fatali causavano WSOD permanente
+**Dopo**: Auto-disattivazione plugin in caso di errore critico + messaggio utente
+**Impatto**: Il sito rimane accessibile anche con plugin problematico
 
 ## 🆘 Supporto Avanzato
 
