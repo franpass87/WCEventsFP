@@ -27,7 +27,14 @@ class Plugin {
      * 
      * @var string
      */
-    private $version = '2.1.0';
+    private $version = '2.1.1';
+    
+    /**
+     * Cache manager instance
+     * 
+     * @var WCEFP_Cache_Manager|null
+     */
+    private $cache_manager;
     
     /**
      * Dependency injection container
@@ -80,6 +87,11 @@ class Plugin {
         
         $this->container = new Container();
         
+        // Initialize cache manager if available
+        if (class_exists('WCEFP_Cache_Manager')) {
+            $this->cache_manager = WCEFP_Cache_Manager::get_instance();
+        }
+        
         // Register core services
         $this->register_core_services();
     }
@@ -114,12 +126,18 @@ class Plugin {
     }
     
     /**
-     * Get plugin version
+     * Get plugin version with cache busting in development mode
      * 
+     * @param bool $force_static Force static version (for database storage)
      * @return string
      */
-    public function get_version() {
-        return $this->version;
+    public function get_version($force_static = false) {
+        if ($force_static || !$this->cache_manager) {
+            return $this->version;
+        }
+        
+        // Use cache manager for dynamic versioning in development
+        return $this->cache_manager->get_cache_busting_version($this->version);
     }
     
     /**

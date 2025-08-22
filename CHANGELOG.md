@@ -1,5 +1,40 @@
 # 📜 Changelog – WCEventsFP
 
+[2.1.1] – 2025-08-22
+
+## Intelligent Cache Busting System 🚀
+
+### Added
+
+🎯 **Development Mode Cache Busting**: Intelligent cache management system that automatically detects development environments and appends file modification timestamps to version numbers, ensuring changes are immediately visible without manual cache clearing.
+
+🛠️ **WCEFP_Cache_Manager**: New cache management class providing comprehensive cache invalidation, development mode detection, and manual cache clearing capabilities.
+
+⚡ **Admin Bar Cache Control**: Quick "Clear WCEFP Cache" button in admin bar for instant cache clearing during development.
+
+🔄 **Automatic Cache Invalidation**: System automatically clears all caches when plugin files are modified, eliminating the common developer frustration of cached assets.
+
+### Enhanced
+
+📈 **Dynamic Asset Versioning**: CSS and JavaScript assets now use dynamic versioning in development mode while maintaining static versions in production for optimal performance.
+
+🧹 **Multi-tier Cache Clearing**: Comprehensive cache clearing that handles memory cache, object cache, transients, file cache, and performance optimization caches.
+
+🎛️ **Configurable Development Detection**: Multiple methods to detect development environments including WP_DEBUG, local domains, and custom constants.
+
+### Developer Experience
+
+✨ **Zero Configuration**: Works out of the box when WP_DEBUG is enabled
+📝 **Comprehensive Documentation**: Complete documentation with examples and API reference
+🧪 **Testing Tools**: Included test script to verify cache busting functionality
+
+### Fixed
+
+🐛 **Cache Persistence Issues**: Resolves the issue where plugin changes weren't reflected due to aggressive caching
+🔧 **Asset Version Conflicts**: Eliminates conflicts between static version numbers and cached assets
+
+---
+
 [2.1.0] – 2025-08-22
 
 ## Major WSOD Cleanup & Architecture Improvements 🛡️

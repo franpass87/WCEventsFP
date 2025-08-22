@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WCEventsFP
  * Description: Plugin di prenotazione eventi & esperienze avanzato per WooCommerce. Sistema enterprise per competere con RegionDo/Bokun: gestione risorse (guide, attrezzature, veicoli), distribuzione multi-canale (Booking.com, Expedia, GetYourGuide), sistema commissioni/reseller, Google Reviews, tracking avanzato GA4/Meta, automazioni Brevo, AI recommendations, analytics real-time.
- * Version:     2.1.0
+ * Version:     2.1.1
  * Author:      Francesco Passeri
  * Text Domain: wceventsfp
  * Domain Path: /languages
@@ -32,10 +32,15 @@ if (!defined('WCEFP_WSOD_PROTECTION_ACTIVE')) {
 }
 
 // Plugin constants - essential definitions only
-if (!defined('WCEFP_VERSION')) define('WCEFP_VERSION', '2.1.0');
+if (!defined('WCEFP_VERSION')) define('WCEFP_VERSION', '2.1.1');
 if (!defined('WCEFP_PLUGIN_FILE')) define('WCEFP_PLUGIN_FILE', __FILE__);
 if (!defined('WCEFP_PLUGIN_DIR')) define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 if (!defined('WCEFP_PLUGIN_URL')) define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
+
+// Load cache manager for development mode and cache busting
+if (file_exists(WCEFP_PLUGIN_DIR . 'includes/class-wcefp-cache-manager.php')) {
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-cache-manager.php';
+}
 
 // Initialize global error storage
 $GLOBALS['wcefp_emergency_errors'] = [];
@@ -188,7 +193,13 @@ class WCEFP_Simple_Plugin {
      * Plugin version
      * @var string
      */
-    private $version = '2.1.0';
+    private $version = '2.1.1';
+    
+    /**
+     * Cache manager instance
+     * @var WCEFP_Cache_Manager|null
+     */
+    private $cache_manager;
     
     /**
      * Singleton instance
@@ -217,7 +228,10 @@ class WCEFP_Simple_Plugin {
      * Private constructor to prevent direct instantiation
      */
     private function __construct() {
-        // Prevent multiple instantiation
+        // Initialize cache manager if available
+        if (class_exists('WCEFP_Cache_Manager')) {
+            $this->cache_manager = WCEFP_Cache_Manager::get_instance();
+        }
     }
     
     /**
@@ -378,11 +392,17 @@ class WCEFP_Simple_Plugin {
     }
     
     /**
-     * Get plugin version
+     * Get plugin version with cache busting in development mode
+     * @param bool $force_static Force static version (for database storage)
      * @return string
      */
-    public function get_version() {
-        return $this->version;
+    public function get_version($force_static = false) {
+        if ($force_static || !$this->cache_manager) {
+            return $this->version;
+        }
+        
+        // Use cache manager for dynamic versioning in development
+        return $this->cache_manager->get_cache_busting_version($this->version);
     }
     
     /**

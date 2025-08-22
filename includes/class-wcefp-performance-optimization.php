@@ -567,6 +567,38 @@ class WCEFP_Performance_Optimization {
     }
     
     /**
+     * Clear all performance caches
+     */
+    public function clear_all_caches() {
+        // Clear memory cache
+        $this->memory_cache = [];
+        
+        // Clear object cache
+        if ($this->object_cache_available) {
+            wp_cache_flush_group('wcefp');
+        }
+        
+        // Clear transients
+        global $wpdb;
+        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_wcefp_%' OR option_name LIKE '_transient_timeout_wcefp_%'");
+        
+        // Clear file cache
+        if (is_dir($this->file_cache_dir)) {
+            $files = glob($this->file_cache_dir . '*.cache');
+            foreach ($files as $file) {
+                if (is_file($file)) {
+                    unlink($file);
+                }
+            }
+        }
+        
+        // Reset cache stats
+        $this->cache_stats = [];
+        
+        return true;
+    }
+    
+    /**
      * Initialize performance optimization
      */
     public static function init() {
