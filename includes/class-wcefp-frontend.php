@@ -108,15 +108,22 @@ class WCEFP_Frontend {
 
     /* ---------- Render automatico su pagina prodotto ---------- */
     public static function render_booking_widget_auto() {
-        global $product;
-        if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
-        echo self::shortcode_booking(['product_id' => $product->get_id()]);
-        self::render_gift_form();
+        try {
+            global $product;
+            if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
+            echo self::shortcode_booking(['product_id' => $product->get_id()]);
+            self::render_gift_form();
+        } catch (Error $e) {
+            error_log('WCEFP: Fatal error in render_booking_widget_auto: ' . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('WCEFP: Exception in render_booking_widget_auto: ' . $e->getMessage());
+        }
     }
 
     public static function render_gift_form() {
-        global $product;
-        if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
+        try {
+            global $product;
+            if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
         ?>
         <div id="wcefp-gift">
             <label><input type="checkbox" id="wcefp-gift-toggle" name="wcefp_gift_toggle" value="1"> <?php _e('Regala un’esperienza','wceventsfp'); ?></label>
@@ -127,12 +134,24 @@ class WCEFP_Frontend {
             </div>
         </div>
         <?php
+        } catch (Error $e) {
+            error_log('WCEFP: Fatal error in render_gift_form: ' . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('WCEFP: Exception in render_gift_form: ' . $e->getMessage());
+        }
     }
 
     public static function render_product_details() {
-        global $product;
-        if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
-        $pid = $product->get_id();
+        try {
+            global $product;
+            if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
+            
+            // Safety check for required functions and variables
+            if (!function_exists('get_post_meta') || !function_exists('get_woocommerce_currency')) {
+                return;
+            }
+            
+            $pid = $product->get_id();
 
         $duration = intval(get_post_meta($pid, '_wcefp_duration_minutes', true));
         $languages = sanitize_text_field(get_post_meta($pid, '_wcefp_languages', true));
@@ -237,6 +256,11 @@ class WCEFP_Frontend {
         }
 
         echo '</div>';
+        } catch (Error $e) {
+            error_log('WCEFP: Fatal error in render_product_details: ' . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('WCEFP: Exception in render_product_details: ' . $e->getMessage());
+        }
     }
 
     /* ---------- AJAX: occorrenze pubbliche per data ---------- */

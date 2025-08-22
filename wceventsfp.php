@@ -590,8 +590,10 @@ class WCEFP_Plugin {
         add_action('woocommerce_thankyou', [$this, 'render_ics_downloads'], 30);
 
         /* Render su pagina prodotto */
-        add_action('woocommerce_single_product_summary', ['WCEFP_Frontend','render_product_details'], 15);
-        add_action('woocommerce_single_product_summary', ['WCEFP_Frontend','render_booking_widget_auto'], 35);
+        if (class_exists('WCEFP_Frontend')) {
+            add_action('woocommerce_single_product_summary', ['WCEFP_Frontend','render_product_details'], 15);
+            add_action('woocommerce_single_product_summary', ['WCEFP_Frontend','render_booking_widget_auto'], 35);
+        }
 
         /* Brevo */
         add_action('woocommerce_order_status_completed', [$this, 'brevo_on_completed']);
@@ -616,18 +618,22 @@ class WCEFP_Plugin {
 
         /* Shortcode + AJAX pubblici */
         add_shortcode('wcefp_booking', ['WCEFP_Frontend', 'shortcode_booking']);
-        add_action('wp_ajax_nopriv_wcefp_public_occurrences', ['WCEFP_Frontend', 'ajax_public_occurrences']);
-        add_action('wp_ajax_wcefp_public_occurrences', ['WCEFP_Frontend', 'ajax_public_occurrences']);
-        add_action('wp_ajax_nopriv_wcefp_add_to_cart', ['WCEFP_Frontend', 'ajax_add_to_cart']);
-        add_action('wp_ajax_wcefp_add_to_cart', ['WCEFP_Frontend', 'ajax_add_to_cart']);
+        if (class_exists('WCEFP_Frontend')) {
+            add_action('wp_ajax_nopriv_wcefp_public_occurrences', ['WCEFP_Frontend', 'ajax_public_occurrences']);
+            add_action('wp_ajax_wcefp_public_occurrences', ['WCEFP_Frontend', 'ajax_public_occurrences']);
+            add_action('wp_ajax_nopriv_wcefp_add_to_cart', ['WCEFP_Frontend', 'ajax_add_to_cart']);
+            add_action('wp_ajax_wcefp_add_to_cart', ['WCEFP_Frontend', 'ajax_add_to_cart']);
+        }
         
         /* Analytics tracking AJAX */
         add_action('wp_ajax_wcefp_track_analytics', [$this, 'ajax_track_analytics']);
         add_action('wp_ajax_nopriv_wcefp_track_analytics', [$this, 'ajax_track_analytics']);
 
         /* Prezzo dinamico + meta */
-        add_action('woocommerce_before_calculate_totals', ['WCEFP_Frontend', 'apply_dynamic_price']);
-        add_action('woocommerce_checkout_create_order_line_item', ['WCEFP_Frontend', 'add_line_item_meta'], 10, 4);
+        if (class_exists('WCEFP_Frontend')) {
+            add_action('woocommerce_before_calculate_totals', ['WCEFP_Frontend', 'apply_dynamic_price']);
+            add_action('woocommerce_checkout_create_order_line_item', ['WCEFP_Frontend', 'add_line_item_meta'], 10, 4);
+        }
 
         /* Anti-overbooking */
         add_action('woocommerce_order_status_processing', [$this, 'allocate_seats_on_status']);
@@ -1041,74 +1047,97 @@ class WCEFP_Plugin {
 
     /* ---------- Frontend & GA4 ---------- */
     public function enqueue_frontend() {
-        wp_register_style('wcefp-frontend', WCEFP_PLUGIN_URL.'assets/css/frontend.css', [], WCEFP_VERSION);
-        wp_register_script('wcefp-frontend', WCEFP_PLUGIN_URL.'assets/js/frontend.js', ['jquery'], WCEFP_VERSION, true);
-        wp_register_script('wcefp-advanced', WCEFP_PLUGIN_URL.'assets/js/advanced-features.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
-        
-        // Enhanced UI Components and Features
-        wp_register_style('wcefp-modern-components', WCEFP_PLUGIN_URL.'assets/css/modern-components.css', ['wcefp-frontend'], WCEFP_VERSION);
-        wp_register_style('wcefp-google-reviews', WCEFP_PLUGIN_URL.'assets/css/google-reviews.css', ['wcefp-frontend'], WCEFP_VERSION);
-        
-        wp_register_script('wcefp-ai-recommendations', WCEFP_PLUGIN_URL.'assets/js/ai-recommendations.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
-        wp_register_script('wcefp-google-reviews', WCEFP_PLUGIN_URL.'assets/js/google-reviews.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
-        
-        // Conversion optimization assets
-        wp_register_style('wcefp-conversion', WCEFP_PLUGIN_URL.'assets/css/conversion-optimization.css', ['wcefp-frontend'], WCEFP_VERSION);
-        wp_register_script('wcefp-conversion', WCEFP_PLUGIN_URL.'assets/js/conversion-optimization.js', ['jquery', 'wcefp-advanced'], WCEFP_VERSION, true);
-        
-        wp_localize_script('wcefp-frontend', 'WCEFPData', [
-            'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce'   => wp_create_nonce('wcefp_public'),
-            'ga4_enabled' => (get_option('wcefp_ga4_enable', '1') === '1'),
-            'meta_pixel_id' => sanitize_text_field(get_option('wcefp_meta_pixel_id','')),
-            'google_ads_id' => sanitize_text_field(get_option('wcefp_google_ads_id','')),
-            'enable_server_analytics' => (get_option('wcefp_enable_server_analytics', false) === true),
-            'conversion_optimization' => (get_option('wcefp_conversion_optimization', true) === true),
-            'enable_gamification' => (get_option('wcefp_enable_gamification', true) === true),
-            'enable_ai_recommendations' => (get_option('wcefp_enable_ai_recommendations', true) === true),
-            'enable_dark_theme' => (get_option('wcefp_enable_dark_theme', true) === true),
-            'locale' => str_replace('_', '-', get_locale()),
-            'currency' => get_woocommerce_currency(),
-        ]);
+        try {
+            // Safety check for required constants and functions
+            if (!defined('WCEFP_PLUGIN_URL') || !function_exists('wp_register_style')) {
+                return;
+            }
+            
+            wp_register_style('wcefp-frontend', WCEFP_PLUGIN_URL.'assets/css/frontend.css', [], WCEFP_VERSION);
+            wp_register_script('wcefp-frontend', WCEFP_PLUGIN_URL.'assets/js/frontend.js', ['jquery'], WCEFP_VERSION, true);
+            wp_register_script('wcefp-advanced', WCEFP_PLUGIN_URL.'assets/js/advanced-features.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
+            
+            // Enhanced UI Components and Features
+            wp_register_style('wcefp-modern-components', WCEFP_PLUGIN_URL.'assets/css/modern-components.css', ['wcefp-frontend'], WCEFP_VERSION);
+            wp_register_style('wcefp-google-reviews', WCEFP_PLUGIN_URL.'assets/css/google-reviews.css', ['wcefp-frontend'], WCEFP_VERSION);
+            
+            wp_register_script('wcefp-ai-recommendations', WCEFP_PLUGIN_URL.'assets/js/ai-recommendations.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
+            wp_register_script('wcefp-google-reviews', WCEFP_PLUGIN_URL.'assets/js/google-reviews.js', ['jquery', 'wcefp-frontend'], WCEFP_VERSION, true);
+            
+            // Conversion optimization assets
+            wp_register_style('wcefp-conversion', WCEFP_PLUGIN_URL.'assets/css/conversion-optimization.css', ['wcefp-frontend'], WCEFP_VERSION);
+            wp_register_script('wcefp-conversion', WCEFP_PLUGIN_URL.'assets/js/conversion-optimization.js', ['jquery', 'wcefp-advanced'], WCEFP_VERSION, true);
+            
+            // Safety check for WooCommerce functions before localization
+            $currency = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'EUR';
+            
+            wp_localize_script('wcefp-frontend', 'WCEFPData', [
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce'   => wp_create_nonce('wcefp_public'),
+                'ga4_enabled' => (get_option('wcefp_ga4_enable', '1') === '1'),
+                'meta_pixel_id' => sanitize_text_field(get_option('wcefp_meta_pixel_id','')),
+                'google_ads_id' => sanitize_text_field(get_option('wcefp_google_ads_id','')),
+                'enable_server_analytics' => (get_option('wcefp_enable_server_analytics', false) === true),
+                'conversion_optimization' => (get_option('wcefp_conversion_optimization', true) === true),
+                'enable_gamification' => (get_option('wcefp_enable_gamification', true) === true),
+                'enable_ai_recommendations' => (get_option('wcefp_enable_ai_recommendations', true) === true),
+                'enable_dark_theme' => (get_option('wcefp_enable_dark_theme', true) === true),
+                'locale' => str_replace('_', '-', get_locale()),
+                'currency' => $currency,
+            ]);
 
-        $leaflet_css_url = apply_filters('wcefp_leaflet_url', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', 'css');
-        $leaflet_js_url  = apply_filters('wcefp_leaflet_url', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', 'js');
+            $leaflet_css_url = apply_filters('wcefp_leaflet_url', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', 'css');
+            $leaflet_js_url  = apply_filters('wcefp_leaflet_url', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', 'js');
 
-        wp_register_style('leaflet', $leaflet_css_url, [], '1.9.4');
-        wp_register_script('leaflet', $leaflet_js_url, [], '1.9.4', true);
+            wp_register_style('leaflet', $leaflet_css_url, [], '1.9.4');
+            wp_register_script('leaflet', $leaflet_js_url, [], '1.9.4', true);
 
-        // Enqueue core assets
-        wp_enqueue_style('wcefp-frontend');
-        wp_enqueue_script('wcefp-frontend');
-        wp_enqueue_script('wcefp-advanced');
-        
-        // Enqueue enhanced features
-        wp_enqueue_style('wcefp-modern-components');
-        wp_enqueue_style('wcefp-google-reviews');
-        wp_enqueue_script('wcefp-google-reviews');
-        
-        if (get_option('wcefp_enable_ai_recommendations', true)) {
-            wp_enqueue_script('wcefp-ai-recommendations');
+            // Enqueue core assets
+            wp_enqueue_style('wcefp-frontend');
+            wp_enqueue_script('wcefp-frontend');
+            wp_enqueue_script('wcefp-advanced');
+            
+            // Enqueue enhanced features
+            wp_enqueue_style('wcefp-modern-components');
+            wp_enqueue_style('wcefp-google-reviews');
+            wp_enqueue_script('wcefp-google-reviews');
+            
+            if (get_option('wcefp_enable_ai_recommendations', true)) {
+                wp_enqueue_script('wcefp-ai-recommendations');
+            }
+            
+            // Enqueue conversion optimization if enabled
+            if (get_option('wcefp_conversion_optimization', true)) {
+                wp_enqueue_style('wcefp-conversion');
+                wp_enqueue_script('wcefp-conversion');
+            }
+            
+            wp_enqueue_style('leaflet');
+            wp_enqueue_script('leaflet');
+            
+        } catch (Error $e) {
+            error_log('WCEFP: Fatal error in enqueue_frontend: ' . $e->getMessage());
+            wcefp_emergency_error_display('Errore durante il caricamento degli assets CSS/JS. Dettagli: ' . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('WCEFP: Exception in enqueue_frontend: ' . $e->getMessage());
         }
-        
-        // Enqueue conversion optimization if enabled
-        if (get_option('wcefp_conversion_optimization', true)) {
-            wp_enqueue_style('wcefp-conversion');
-            wp_enqueue_script('wcefp-conversion');
-        }
-        
-        wp_enqueue_style('leaflet');
-        wp_enqueue_script('leaflet');
     }
 
     /* Iniezione GA4/GTM (se impostati) */
     public function inject_ga_scripts() {
-        if (is_admin()) return;
-        $gtm_id = trim(get_option('wcefp_gtm_id',''));
-        $ga4_id = trim(get_option('wcefp_ga4_id',''));
-        $google_ads_id = trim(get_option('wcefp_google_ads_id',''));
-        $ga4_enabled = (get_option('wcefp_ga4_enable','1') === '1');
-        if (!$ga4_enabled) return;
+        try {
+            if (is_admin()) return;
+            
+            // Safety check for WordPress functions
+            if (!function_exists('get_option')) {
+                return;
+            }
+            
+            $gtm_id = trim(get_option('wcefp_gtm_id',''));
+            $ga4_id = trim(get_option('wcefp_ga4_id',''));
+            $google_ads_id = trim(get_option('wcefp_google_ads_id',''));
+            $ga4_enabled = (get_option('wcefp_ga4_enable','1') === '1');
+            if (!$ga4_enabled) return;
 
         if ($gtm_id) {
             ?>
@@ -1162,6 +1191,13 @@ class WCEFP_Plugin {
             </script>
             <!-- End Google Ads -->
             <?php
+        }
+        
+        } catch (Error $e) {
+            error_log('WCEFP: Fatal error in inject_ga_scripts: ' . $e->getMessage());
+            wcefp_emergency_error_display('Errore durante l\'iniezione degli script GA4/GTM. Dettagli: ' . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('WCEFP: Exception in inject_ga_scripts: ' . $e->getMessage());
         }
     }
 
@@ -1290,28 +1326,42 @@ class WCEFP_Plugin {
 
     /* ---------- Meta Pixel ---------- */
     public function inject_meta_pixel_base() {
-        if (is_admin()) return;
-        $pixel_id = trim(get_option('wcefp_meta_pixel_id',''));
-        if (!$pixel_id) return;
-        ?>
-        <!-- Meta Pixel Code (WCEventsFP) -->
-        <script>
-          !function(f,b,e,v,n,t,s)
-          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-          if(!f._fbq)f._fbq=n; n.push=n; n.loaded=!0; n.version='2.0';
-          n.queue=[]; t=b.createElement(e); t.async=!0;
-          t.src=v; s=b.getElementsByTagName(e)[0];
-          s.parentNode.insertBefore(t,s)}(window, document,'script',
-          'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '<?php echo esc_js($pixel_id); ?>');
-          fbq('track', 'PageView');
-        </script>
-        <noscript><img height="1" width="1" style="display:none"
-          src="https://www.facebook.com/tr?id=<?php echo esc_attr($pixel_id); ?>&ev=PageView&noscript=1"
-        /></noscript>
-        <!-- End Meta Pixel Code -->
-        <?php
+        try {
+            if (is_admin()) return;
+            
+            // Safety check for WordPress functions  
+            if (!function_exists('get_option')) {
+                return;
+            }
+            
+            $pixel_id = trim(get_option('wcefp_meta_pixel_id',''));
+            if (!$pixel_id) return;
+            ?>
+            <!-- Meta Pixel Code (WCEventsFP) -->
+            <script>
+              !function(f,b,e,v,n,t,s)
+              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+              if(!f._fbq)f._fbq=n; n.push=n; n.loaded=!0; n.version='2.0';
+              n.queue=[]; t=b.createElement(e); t.async=!0;
+              t.src=v; s=b.getElementsByTagName(e)[0];
+              s.parentNode.insertBefore(t,s)}(window, document,'script',
+              'https://connect.facebook.net/en_US/fbevents.js');
+              fbq('init', '<?php echo esc_js($pixel_id); ?>');
+              fbq('track', 'PageView');
+            </script>
+            <noscript><img height="1" width="1" style="display:none"
+              src="https://www.facebook.com/tr?id=<?php echo esc_attr($pixel_id); ?>&ev=PageView&noscript=1"
+            /></noscript>
+            <!-- End Meta Pixel Code -->
+            <?php
+            
+        } catch (Error $e) {
+            error_log('WCEFP: Fatal error in inject_meta_pixel_base: ' . $e->getMessage());
+            wcefp_emergency_error_display('Errore durante l\'iniezione del Meta Pixel. Dettagli: ' . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('WCEFP: Exception in inject_meta_pixel_base: ' . $e->getMessage());
+        }
     }
 
     public function meta_pixel_purchase($order_id) {
