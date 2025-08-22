@@ -17,80 +17,91 @@ define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 /* ---- Attivazione: tabelle principali ---- */
 register_activation_hook(__FILE__, function () {
-    global $wpdb;
-    $charset = $wpdb->get_charset_collate();
+    try {
+        global $wpdb;
+        $charset = $wpdb->get_charset_collate();
 
-    // Occorrenze
-    $tbl1 = $wpdb->prefix . 'wcefp_occurrences';
-    $sql1 = "CREATE TABLE IF NOT EXISTS $tbl1 (
-      id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      product_id BIGINT UNSIGNED NOT NULL,
-      start_datetime DATETIME NOT NULL,
-      end_datetime DATETIME NULL,
-      capacity INT NOT NULL DEFAULT 0,
-      booked INT NOT NULL DEFAULT 0,
-      status VARCHAR(20) NOT NULL DEFAULT 'active',
-      meta LONGTEXT NULL,
-      UNIQUE KEY uniq_prod_start (product_id, start_datetime),
-      INDEX (start_datetime),
-      INDEX (product_id),
-      INDEX (status)
-    ) $charset;";
+        // Occorrenze
+        $tbl1 = $wpdb->prefix . 'wcefp_occurrences';
+        $sql1 = "CREATE TABLE IF NOT EXISTS $tbl1 (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          product_id BIGINT UNSIGNED NOT NULL,
+          start_datetime DATETIME NOT NULL,
+          end_datetime DATETIME NULL,
+          capacity INT NOT NULL DEFAULT 0,
+          booked INT NOT NULL DEFAULT 0,
+          status VARCHAR(20) NOT NULL DEFAULT 'active',
+          meta LONGTEXT NULL,
+          UNIQUE KEY uniq_prod_start (product_id, start_datetime),
+          INDEX (start_datetime),
+          INDEX (product_id),
+          INDEX (status)
+        ) $charset;";
 
-    // Chiusure straordinarie
-    $tbl2 = $wpdb->prefix . 'wcefp_closures';
-    $sql2 = "CREATE TABLE IF NOT EXISTS $tbl2 (
-      id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      product_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-      start_date DATE NOT NULL,
-      end_date DATE NOT NULL,
-      note VARCHAR(255) NULL,
-      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      INDEX (product_id),
-      INDEX (start_date),
-      INDEX (end_date)
-    ) $charset;";
+        // Chiusure straordinarie
+        $tbl2 = $wpdb->prefix . 'wcefp_closures';
+        $sql2 = "CREATE TABLE IF NOT EXISTS $tbl2 (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          product_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+          start_date DATE NOT NULL,
+          end_date DATE NOT NULL,
+          note VARCHAR(255) NULL,
+          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          INDEX (product_id),
+          INDEX (start_date),
+          INDEX (end_date)
+        ) $charset;";
 
-    // Voucher regalo
-    $tbl3 = $wpdb->prefix . 'wcefp_vouchers';
-    $sql3 = "CREATE TABLE IF NOT EXISTS $tbl3 (
-      id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      code VARCHAR(48) NOT NULL UNIQUE,
-      product_id BIGINT UNSIGNED NOT NULL,
-      order_id BIGINT UNSIGNED NOT NULL,
-      recipient_name VARCHAR(180) NULL,
-      recipient_email VARCHAR(180) NULL,
-      message_text TEXT NULL,
-      status VARCHAR(20) NOT NULL DEFAULT 'unused',
-      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      redeemed_at DATETIME NULL,
-      INDEX (product_id),
-      INDEX (order_id),
-      INDEX (status)
-    ) $charset;";
+        // Voucher regalo
+        $tbl3 = $wpdb->prefix . 'wcefp_vouchers';
+        $sql3 = "CREATE TABLE IF NOT EXISTS $tbl3 (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          code VARCHAR(48) NOT NULL UNIQUE,
+          product_id BIGINT UNSIGNED NOT NULL,
+          order_id BIGINT UNSIGNED NOT NULL,
+          recipient_name VARCHAR(180) NULL,
+          recipient_email VARCHAR(180) NULL,
+          message_text TEXT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'unused',
+          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          redeemed_at DATETIME NULL,
+          INDEX (product_id),
+          INDEX (order_id),
+          INDEX (status)
+        ) $charset;";
 
-    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    dbDelta($sql1);
-    dbDelta($sql2);
-    dbDelta($sql3);
-    
-    // Extra associati ai prodotti
-    $tbl4 = $wpdb->prefix . 'wcefp_product_extras';
-    $sql4 = "CREATE TABLE IF NOT EXISTS $tbl4 (
-      id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      product_id BIGINT UNSIGNED NOT NULL,
-      extra_id BIGINT UNSIGNED NOT NULL,
-      pricing_type VARCHAR(20) NOT NULL DEFAULT 'per_order',
-      price DECIMAL(10,2) NOT NULL DEFAULT 0,
-      required TINYINT(1) NOT NULL DEFAULT 0,
-      max_qty INT UNSIGNED NOT NULL DEFAULT 0,
-      stock INT UNSIGNED NOT NULL DEFAULT 0,
-      sort_order INT UNSIGNED NOT NULL DEFAULT 0,
-      UNIQUE KEY uniq_prod_extra (product_id,extra_id),
-      INDEX (product_id),
-      INDEX (extra_id)
-    ) $charset;";
-    dbDelta($sql4);
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        $result1 = dbDelta($sql1);
+        $result2 = dbDelta($sql2);
+        $result3 = dbDelta($sql3);
+        
+        // Extra associati ai prodotti
+        $tbl4 = $wpdb->prefix . 'wcefp_product_extras';
+        $sql4 = "CREATE TABLE IF NOT EXISTS $tbl4 (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          product_id BIGINT UNSIGNED NOT NULL,
+          extra_id BIGINT UNSIGNED NOT NULL,
+          pricing_type VARCHAR(20) NOT NULL DEFAULT 'per_order',
+          price DECIMAL(10,2) NOT NULL DEFAULT 0,
+          required TINYINT(1) NOT NULL DEFAULT 0,
+          max_qty INT UNSIGNED NOT NULL DEFAULT 0,
+          stock INT UNSIGNED NOT NULL DEFAULT 0,
+          sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+          UNIQUE KEY uniq_prod_extra (product_id,extra_id),
+          INDEX (product_id),
+          INDEX (extra_id)
+        ) $charset;";
+        $result4 = dbDelta($sql4);
+        
+        // Log any database errors but don't crash
+        if (!empty($wpdb->last_error)) {
+            error_log('WCEFP activation database error: ' . $wpdb->last_error);
+        }
+        
+    } catch (Exception $e) {
+        error_log('WCEFP activation error: ' . $e->getMessage());
+        // Don't throw - let WordPress handle the activation gracefully
+    }
 });
 
 add_action('plugins_loaded', function () {
@@ -130,19 +141,43 @@ require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-commission-management.php'
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-debug-tools.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-webhook-system.php';
 
-    // Include admin (nuova classe)
-    require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin.php';
-    require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin-settings.php';
-    require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-analytics-dashboard.php';
-    require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-meetingpoints.php';
-    require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-table.php';
-    require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-admin.php';
-    require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-orders-bridge.php';
-    WCEFP_Admin::init();
-    WCEFP_Vouchers_Admin::init();
-    WCEFP_Orders_Bridge::init();
+    // Include admin (nuova classe) - only in admin context
+    if (is_admin()) {
+        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin.php';
+        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin-settings.php';
+        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-analytics-dashboard.php';
+        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-meetingpoints.php';
+        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-table.php';
+        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-admin.php';
+        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-orders-bridge.php';
+        
+        // Initialize admin classes with error handling
+        try {
+            WCEFP_Admin::init();
+            WCEFP_Vouchers_Admin::init();
+            WCEFP_Orders_Bridge::init();
+        } catch (Exception $e) {
+            error_log('WCEFP Admin initialization error: ' . $e->getMessage());
+            add_action('admin_notices', function() use ($e) {
+                echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
+                     esc_html(sprintf(__('Errore di inizializzazione: %s', 'wceventsfp'), $e->getMessage())) . 
+                     '</p></div>';
+            });
+        }
+    }
 
-    WCEFP()->init();
+    // Initialize main plugin with error handling
+    try {
+        WCEFP()->init();
+    } catch (Exception $e) {
+        error_log('WCEFP Plugin initialization error: ' . $e->getMessage());
+        add_action('admin_notices', function() use ($e) {
+            echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
+                 esc_html(sprintf(__('Errore di inizializzazione plugin: %s', 'wceventsfp'), $e->getMessage())) . 
+                 '</p></div>';
+        });
+        return; // Stop further execution
+    }
 });
 
 function WCEFP() {
@@ -154,21 +189,24 @@ function WCEFP() {
 class WCEFP_Plugin {
 
     public function init() {
+        // Initialize database schema with error handling
         $this->ensure_db_schema();
 
-        add_action('init', [$this, 'register_extra_cpt']);
+        // Register hooks with error handling
+        try {
+            add_action('init', [$this, 'register_extra_cpt']);
 
-        /* Tipi prodotto */
-        add_filter('product_type_selector', [$this, 'register_product_types']);
-        add_filter('woocommerce_product_class', [$this, 'map_product_class'], 10, 2);
+            /* Tipi prodotto */
+            add_filter('product_type_selector', [$this, 'register_product_types']);
+            add_filter('woocommerce_product_class', [$this, 'map_product_class'], 10, 2);
 
-        /* Tab prodotto & salvataggio */
-        add_filter('woocommerce_product_data_tabs', [$this, 'add_product_data_tab']);
-        add_action('woocommerce_product_data_panels', [$this, 'render_product_data_panel']);
-        add_action('woocommerce_admin_process_product_object', [$this, 'save_product_fields']);
+            /* Tab prodotto & salvataggio */
+            add_filter('woocommerce_product_data_tabs', [$this, 'add_product_data_tab']);
+            add_action('woocommerce_product_data_panels', [$this, 'render_product_data_panel']);
+            add_action('woocommerce_admin_process_product_object', [$this, 'save_product_fields']);
 
-        /* Esclusione archivi Woo */
-        add_action('pre_get_posts', [$this, 'hide_from_archives']);
+            /* Esclusione archivi Woo */
+            add_action('pre_get_posts', [$this, 'hide_from_archives']);
 
         /* Frontend assets */
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend']);
@@ -242,57 +280,91 @@ class WCEFP_Plugin {
 
         /* Gift */
         WCEFP_Gift::init();
+        
+        } catch (Exception $e) {
+            error_log('WCEFP Hook registration error: ' . $e->getMessage());
+            throw $e; // Re-throw to be caught by the main initialization handler
+        }
     }
 
     private function ensure_db_schema(){
         global $wpdb;
-        $tbl = $wpdb->prefix.'wcefp_occurrences';
-        $cols = $wpdb->get_results("SHOW COLUMNS FROM $tbl", ARRAY_A);
-        $names = array_map(function($c){ return $c['Field']; }, (array)$cols);
-        if (!in_array('status', $names, true)) {
-            $wpdb->query("ALTER TABLE $tbl ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active'");
-            $wpdb->query("CREATE INDEX status ON $tbl (status)");
+        
+        try {
+            $charset = $wpdb->get_charset_collate();
+            
+            // Check if main table exists before trying to modify it
+            $tbl = $wpdb->prefix.'wcefp_occurrences';
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$tbl'");
+            
+            if ($table_exists) {
+                // Only try to get columns if table exists
+                $cols = $wpdb->get_results("SHOW COLUMNS FROM $tbl", ARRAY_A);
+                if ($cols) {
+                    $names = array_map(function($c){ return $c['Field']; }, $cols);
+                    if (!in_array('status', $names, true)) {
+                        $wpdb->query("ALTER TABLE $tbl ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active'");
+                        // Check if index creation is needed and safe
+                        $indices = $wpdb->get_results("SHOW INDEX FROM $tbl WHERE Key_name = 'status'");
+                        if (empty($indices)) {
+                            $wpdb->query("CREATE INDEX status ON $tbl (status)");
+                        }
+                    }
+                }
+            }
+            
+            // Create additional tables with error handling
+            $tables_to_create = [
+                'wcefp_closures' => "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wcefp_closures (
+                    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    product_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+                    start_date DATE NOT NULL,
+                    end_date DATE NOT NULL,
+                    note VARCHAR(255) NULL,
+                    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    INDEX (product_id), INDEX (start_date), INDEX (end_date)
+                ) $charset",
+                
+                'wcefp_vouchers' => "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wcefp_vouchers (
+                    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    code VARCHAR(48) NOT NULL UNIQUE,
+                    product_id BIGINT UNSIGNED NOT NULL,
+                    order_id BIGINT UNSIGNED NOT NULL,
+                    recipient_name VARCHAR(180) NULL,
+                    recipient_email VARCHAR(180) NULL,
+                    message_text TEXT NULL,
+                    status VARCHAR(20) NOT NULL DEFAULT 'unused',
+                    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    redeemed_at DATETIME NULL,
+                    INDEX (product_id), INDEX (order_id), INDEX (status)
+                ) $charset",
+                
+                'wcefp_product_extras' => "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wcefp_product_extras (
+                    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    product_id BIGINT UNSIGNED NOT NULL,
+                    extra_id BIGINT UNSIGNED NOT NULL,
+                    pricing_type VARCHAR(20) NOT NULL DEFAULT 'per_order',
+                    price DECIMAL(10,2) NOT NULL DEFAULT 0,
+                    required TINYINT(1) NOT NULL DEFAULT 0,
+                    max_qty INT UNSIGNED NOT NULL DEFAULT 0,
+                    stock INT UNSIGNED NOT NULL DEFAULT 0,
+                    sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+                    UNIQUE KEY uniq_prod_extra (product_id,extra_id),
+                    INDEX (product_id), INDEX (extra_id)
+                ) $charset"
+            ];
+            
+            foreach ($tables_to_create as $table_name => $sql) {
+                $result = $wpdb->query($sql);
+                if ($result === false && !empty($wpdb->last_error)) {
+                    error_log("WCEFP: Failed to create/update table $table_name: " . $wpdb->last_error);
+                }
+            }
+            
+        } catch (Exception $e) {
+            error_log('WCEFP Database schema error: ' . $e->getMessage());
+            // Continue execution - don't crash the plugin
         }
-        $charset = $wpdb->get_charset_collate();
-        $tbl2 = $wpdb->prefix.'wcefp_closures';
-        $wpdb->query("CREATE TABLE IF NOT EXISTS $tbl2 (
-            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            product_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-            start_date DATE NOT NULL,
-            end_date DATE NOT NULL,
-            note VARCHAR(255) NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            INDEX (product_id), INDEX (start_date), INDEX (end_date)
-        ) $charset");
-        $tbl3 = $wpdb->prefix.'wcefp_vouchers';
-        $wpdb->query("CREATE TABLE IF NOT EXISTS $tbl3 (
-            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            code VARCHAR(48) NOT NULL UNIQUE,
-            product_id BIGINT UNSIGNED NOT NULL,
-            order_id BIGINT UNSIGNED NOT NULL,
-            recipient_name VARCHAR(180) NULL,
-            recipient_email VARCHAR(180) NULL,
-            message_text TEXT NULL,
-            status VARCHAR(20) NOT NULL DEFAULT 'unused',
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            redeemed_at DATETIME NULL,
-            INDEX (product_id), INDEX (order_id), INDEX (status)
-        ) $charset");
-
-        $tbl4 = $wpdb->prefix.'wcefp_product_extras';
-        $wpdb->query("CREATE TABLE IF NOT EXISTS $tbl4 (
-            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            product_id BIGINT UNSIGNED NOT NULL,
-            extra_id BIGINT UNSIGNED NOT NULL,
-            pricing_type VARCHAR(20) NOT NULL DEFAULT 'per_order',
-            price DECIMAL(10,2) NOT NULL DEFAULT 0,
-            required TINYINT(1) NOT NULL DEFAULT 0,
-            max_qty INT UNSIGNED NOT NULL DEFAULT 0,
-            stock INT UNSIGNED NOT NULL DEFAULT 0,
-            sort_order INT UNSIGNED NOT NULL DEFAULT 0,
-            UNIQUE KEY uniq_prod_extra (product_id,extra_id),
-            INDEX (product_id), INDEX (extra_id)
-        ) $charset");
     }
 
     public function register_extra_cpt(){
