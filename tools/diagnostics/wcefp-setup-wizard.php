@@ -13,6 +13,11 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
 
+// Load shared utilities for consistent diagnostics
+if (file_exists(__DIR__ . '/wcefp-shared-utilities.php')) {
+    require_once __DIR__ . '/wcefp-shared-utilities.php';
+}
+
 // Prevent direct access unless called properly
 if (!isset($_GET['wcefp_setup']) && !defined('WCEFP_SETUP_WIZARD_ACTIVE')) {
     wp_die('Setup wizard must be accessed through WordPress admin', 'WCEventsFP Setup');
@@ -656,17 +661,20 @@ class WCEFP_Setup_Wizard {
      * @return int
      */
     private function convert_memory_to_bytes($val) {
+        // Use shared utilities if available
+        if (function_exists('wcefp_convert_memory_to_bytes')) {
+            return wcefp_convert_memory_to_bytes($val);
+        }
+        
+        // Fallback implementation
         $val = trim($val);
         $unit = strtolower($val[strlen($val) - 1]);
         $val = (int) $val;
         
         switch ($unit) {
-            case 'g':
-                $val *= 1024;
-            case 'm':
-                $val *= 1024;
-            case 'k':
-                $val *= 1024;
+            case 'g': $val *= 1024;
+            case 'm': $val *= 1024;
+            case 'k': $val *= 1024;
         }
         
         return $val;

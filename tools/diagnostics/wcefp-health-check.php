@@ -5,20 +5,28 @@
  * Usage: php wcefp-health-check.php
  */
 
+// Load shared utilities
+require_once __DIR__ . '/wcefp-shared-utilities.php';
+
 if (!defined('WCEFP_PLUGIN_DIR')) {
-    define('WCEFP_PLUGIN_DIR', dirname(__FILE__) . '/');
+    define('WCEFP_PLUGIN_DIR', dirname(__DIR__) . '/');
 }
 
 echo "=== WCEventsFP Plugin Health Check ===\n\n";
 
-// Check PHP version
-echo "1. Checking PHP version...\n";
-$php_version = phpversion();
-echo "   Current PHP version: $php_version\n";
-if (version_compare($php_version, '7.4.0', '<')) {
-    echo "   ⚠️  WARNING: PHP 7.4+ is recommended\n";
-} else {
-    echo "   ✅ PHP version OK\n";
+// Use comprehensive environment check from shared utilities
+$env_check = wcefp_comprehensive_environment_check();
+
+wcefp_display_section_header("Environment Checks", 1);
+
+// Display all environment check results
+foreach ($env_check['checks'] as $check_name => $check_result) {
+    $display_name = ucwords(str_replace('_', ' ', $check_name));
+    wcefp_display_test_result(
+        $display_name,
+        $check_result['status'],
+        $check_result['message']
+    );
 }
 
 // Check required files

@@ -8,6 +8,9 @@
  * This script tests the plugin loading without actually activating it.
  */
 
+// Load shared utilities
+require_once __DIR__ . '/wcefp-shared-utilities.php';
+
 if (!defined('ABSPATH')) {
     // Running standalone - simulate WordPress environment minimally
     define('ABSPATH', true);
@@ -16,51 +19,52 @@ if (!defined('ABSPATH')) {
 
 echo "=== WCEventsFP Activation Safety Test ===\n\n";
 
-// Check PHP version
-echo "1. Checking PHP Version...\n";
-if (version_compare(PHP_VERSION, '7.4.0', '<')) {
-    echo "   ❌ ERROR: PHP 7.4+ required. Current: " . PHP_VERSION . "\n";
-    echo "   → Update PHP before activating the plugin.\n\n";
-    exit(1);
-} else {
-    echo "   ✅ PHP Version OK: " . PHP_VERSION . "\n\n";
-}
+// Perform comprehensive environment check using shared utilities
+$env_check = wcefp_comprehensive_environment_check();
 
-// Check required PHP extensions
-echo "2. Checking Required PHP Extensions...\n";
-$required_extensions = ['mysqli', 'json', 'mbstring'];
-$missing_extensions = [];
-foreach ($required_extensions as $ext) {
-    if (!extension_loaded($ext)) {
-        $missing_extensions[] = $ext;
-        echo "   ❌ Missing: $ext\n";
-    } else {
-        echo "   ✅ Found: $ext\n";
+wcefp_display_section_header("Basic Environment Checks", 1);
+
+// Display PHP version check
+wcefp_display_test_result(
+    "PHP Version", 
+    $env_check['checks']['php_version']['status'],
+    $env_check['checks']['php_version']['message']
+);
+
+// Display PHP extensions check
+wcefp_display_test_result(
+    "PHP Extensions", 
+    $env_check['checks']['php_extensions']['status'],
+    $env_check['checks']['php_extensions']['message'],
+    $env_check['checks']['php_extensions']['status'] ? null : [
+        'Missing' => implode(', ', $env_check['checks']['php_extensions']['missing'])
+    ]
+);
+
+// Display memory check
+wcefp_display_test_result(
+    "Memory Limit", 
+    $env_check['checks']['memory']['status'],
+    $env_check['checks']['memory']['message']
+);
+
+// Exit with error if critical issues found
+if (!$env_check['overall_status']) {
+    echo "\n❌ CRITICAL ERRORS FOUND - DO NOT ACTIVATE PLUGIN:\n";
+    foreach ($env_check['critical_errors'] as $error) {
+        echo "   → {$error}\n";
     }
-}
-
-if (!empty($missing_extensions)) {
-    echo "\n   → Install missing extensions: " . implode(', ', $missing_extensions) . "\n\n";
+    echo "\n";
     exit(1);
 }
-echo "\n";
 
-// Check memory limit
-echo "3. Checking Memory Limit...\n";
-$memory_limit = ini_get('memory_limit');
-if ($memory_limit && $memory_limit !== '-1') {
-    $memory_limit_bytes = wcefp_convert_memory_to_bytes($memory_limit);
-    $recommended_bytes = 134217728; // 128MB
-    
-    if ($memory_limit_bytes < $recommended_bytes) {
-        echo "   ⚠️  WARNING: Memory limit is low (" . round($memory_limit_bytes / 1024 / 1024, 1) . "MB)\n";
-        echo "   → Recommended: 128MB or higher\n";
-        echo "   → Add to wp-config.php: ini_set('memory_limit', '256M');\n\n";
-    } else {
-        echo "   ✅ Memory Limit OK: $memory_limit\n\n";
+// Show warnings if any
+if (!empty($env_check['warnings'])) {
+    echo "\n⚠️  WARNINGS (plugin may still work with limitations):\n";
+    foreach ($env_check['warnings'] as $warning) {
+        echo "   → {$warning}\n";
     }
-} else {
-    echo "   ✅ Memory Limit: Unlimited\n\n";
+    echo "\n";
 }
 
 // Test plugin file syntax

@@ -15,6 +15,11 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Load shared utilities if available  
+if (file_exists(__DIR__ . '/wcefp-shared-utilities.php')) {
+    require_once __DIR__ . '/wcefp-shared-utilities.php';
+}
+
 // Ensure we haven't already loaded this prevention system
 if (defined('WCEFP_WSOD_PREVENTER_LOADED')) {
     return;
@@ -130,24 +135,27 @@ function wcefp_ultra_safe_environment_check() {
 }
 
 /**
- * Bulletproof memory limit conversion - matches main file version
+ * Bulletproof memory limit conversion - now using shared utilities
  * 
  * @param string|int|null $val Memory value from ini_get
  * @return int Memory in bytes or 0 if invalid
  */
 function wcefp_safe_memory_conversion($val) {
-    // Handle null, false, empty values
+    // Use the centralized implementation from shared utilities if available
+    if (function_exists('wcefp_convert_memory_to_bytes')) {
+        return wcefp_convert_memory_to_bytes($val);
+    }
+    
+    // Fallback implementation (should not be needed if shared utilities are loaded)
     if ($val === null || $val === false || $val === '') {
         return 0;
     }
     
-    // Handle numeric values (already in bytes)
     if (is_numeric($val)) {
         $bytes = (int) $val;
         return $bytes < 0 ? 0 : $bytes;
     }
     
-    // Handle string values
     if (!is_string($val)) {
         return 0;
     }
@@ -157,36 +165,28 @@ function wcefp_safe_memory_conversion($val) {
         return 0;
     }
     
-    // Special case: unlimited memory
     if ($val === '-1') {
         return -1;
     }
     
-    // Extract numeric part and unit - more robust pattern
     if (!preg_match('/^(\d+(?:\.\d+)?)\s*([kmgtKMGT]?)$/i', $val, $matches)) {
-        return 0; // Invalid format
+        return 0;
     }
     
     $number = (float) $matches[1];
     $unit = isset($matches[2]) ? strtolower($matches[2]) : '';
     
-    // Prevent negative or zero values
     if ($number <= 0) {
         return 0;
     }
     
-    // Convert based on unit
     switch ($unit) {
-        case 't': $number *= 1024; // fall through
-        case 'g': $number *= 1024; // fall through
-        case 'm': $number *= 1024; // fall through
-        case 'k': $number *= 1024; break;
-        case '':  // No unit = bytes
-        default:  // Unknown unit = treat as bytes
-            break;
+        case 't': $number *= 1024;
+        case 'g': $number *= 1024;
+        case 'm': $number *= 1024;
+        case 'k': $number *= 1024;
     }
     
-    // Ensure positive integer result
     $result = (int) $number;
     return $result < 0 ? 0 : $result;
 }
