@@ -27,6 +27,9 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
      * @return void
      */
     public function register() {
+        // Load stub classes
+        require_once __DIR__ . '/Stubs.php';
+        
         // Register feature classes
         $this->container->singleton('features.vouchers', function($container) {
             // Wrap existing WCEFP_Gift class

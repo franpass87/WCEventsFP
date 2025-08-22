@@ -27,6 +27,10 @@ class DatabaseServiceProvider extends \WCEFP\Core\ServiceProvider {
      * @return void
      */
     public function register() {
+        // Load model classes
+        require_once __DIR__ . '/Models.php';
+        require_once __DIR__ . '/QueryBuilder.php';
+        
         // Register database models
         $this->container->singleton('db.occurrences', function($container) {
             return new Models\OccurrenceModel();

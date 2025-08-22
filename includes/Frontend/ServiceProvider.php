@@ -31,6 +31,9 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
+        // Load stub classes
+        require_once __DIR__ . '/Stubs.php';
+        
         // Register frontend classes with the container
         $this->container->singleton('frontend.widgets', function($container) {
             return new WidgetManager($container);

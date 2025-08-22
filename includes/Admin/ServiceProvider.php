@@ -31,6 +31,9 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
+        // Load stub classes
+        require_once __DIR__ . '/Stubs.php';
+        
         // Register admin classes with the container
         $this->container->singleton('admin.menu', function($container) {
             return new MenuManager($container);
