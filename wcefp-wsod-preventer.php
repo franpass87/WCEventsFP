@@ -82,6 +82,7 @@ function wcefp_safe_deactivate($reason) {
  */
 function wcefp_ultra_safe_environment_check() {
     $errors = [];
+    $warnings = [];
     
     // PHP version check
     if (version_compare(PHP_VERSION, '7.4.0', '<')) {
@@ -98,12 +99,12 @@ function wcefp_ultra_safe_environment_check() {
         $errors[] = "WooCommerce non è attivo o non installato";
     }
     
-    // Memory check
+    // Memory check – low memory becomes a warning instead of fatal
     $memory_limit = ini_get('memory_limit');
     if ($memory_limit !== '-1') {
         $memory_bytes = wcefp_safe_memory_conversion($memory_limit);
         if ($memory_bytes > 0 && $memory_bytes < 134217728) { // 128MB
-            $errors[] = "Memoria PHP insufficiente. Minimo raccomandato: 256MB, attuale: {$memory_limit}";
+            $warnings[] = "Memoria PHP limitata ({$memory_limit}). Funzionalità avanzate potrebbero essere limitate";
         }
     }
     
@@ -116,11 +117,15 @@ function wcefp_ultra_safe_environment_check() {
     }
     
     if (!empty($errors)) {
-        wcefp_emergency_display("Controlli ambiente falliti", $errors);
+        wcefp_emergency_display("Controlli ambiente falliti", array_merge($errors, $warnings));
         wcefp_safe_deactivate("Ambiente non compatibile");
         return false;
     }
-    
+
+    if (!empty($warnings)) {
+        wcefp_emergency_display("Avvisi ambiente", $warnings);
+    }
+
     return true;
 }
 
