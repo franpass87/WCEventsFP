@@ -1,44 +1,44 @@
-# WCEventsFP (v1.9.0) - Advanced Booking Platform
+# WCEventsFP (v2.0.0) - Enterprise Booking Platform
 
-**Sistema di prenotazione avanzato per competere con RegionDo e Bokun**
+**Sistema di prenotazione enterprise per competere direttamente con RegionDo, Bokun e GetYourGuide**
 
-Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità enterprise-level per massimizzare le conversioni e automatizzare la gestione clienti.
-Eventi & Esperienze per WooCommerce con funzionalità avanzate simili a Bokun, Regiondo e GetYourGuide.
+Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità di livello enterprise per massimizzare le conversioni, gestire risorse operative e automatizzare la distribuzione multi-canale.
 
-## 🚀 Nuove Funzionalità v1.8.1
+## 🚀 Nuove Funzionalità v2.0.0 - Competitive Edge
 
-### 🎨 Design Moderno e UX Migliorata
-- **Interfaccia completamente ridisegnata** con gradients moderni e animazioni fluide
-- **Filtri avanzati** con ricerca in tempo reale, filtro per tipo e fascia prezzo
-- **Social proof dinamico** con indicatori di prenotazioni recenti e disponibilità
-- **Sistema di recensioni** integrato con stelle e testimonial rotativi
-- **Widget di prenotazione multi-step** con progress indicator
+### 🏗️ Sistema di Gestione Risorse
+- **Guide e Staff**: Gestione completa delle guide con competenze, disponibilità e costi
+- **Attrezzature**: Inventario attrezzature con tracking utilizzo e manutenzione
+- **Veicoli**: Fleet management per tour e trasferimenti
+- **Location**: Gestione venues e meeting points con capacità
+- **Calendario Risorse**: Pianificazione e allocazione automatica risorse
+- **Conflitti**: Prevenzione automatica overbooking risorse
 
-### 🗺️ Mappe Interactive
-- **Integrazione Leaflet** per visualizzare meeting points
-- **Marker personalizzati** con popup informativi
-- **Link diretti** a Google Maps per navigazione
-- **Design responsive** ottimizzato per mobile
+### 🌐 Distribuzione Multi-Canale
+- **OTA Integration**: Distribuzione automatica su Booking.com, Expedia, GetYourGuide, Viator, Klook, Tiqets
+- **Inventory Sync**: Sincronizzazione real-time disponibilità e prezzi
+- **Commission Management**: Gestione automatica commissioni per canale
+- **Markup dinamico**: Pricing specifico per canale con buffer disponibilità
+- **Error Handling**: Sistema robusto di gestione errori sync
+- **Analytics per Canale**: Performance tracking per ogni canale di distribuzione
 
-### ⭐ Sistema di Recensioni
-- **Shortcode `[wcefp_reviews id="123"]`** per mostrare recensioni clienti
-- **Shortcode `[wcefp_testimonials limit="3"]`** con slider automatico
-- **Rating visivi** con stelle e statistiche
-- **Testimonianze multilingue** con avatars
+### 💰 Sistema Commissioni e Reseller
+- **Affiliate Program**: Sistema completo affiliazione con codici referral
+- **Tier System**: Livelli Bronze/Silver/Gold/Platinum con commissioni progressive
+- **Reseller Dashboard**: Dashboard dedicata per partner e affiliati
+- **Payout Automation**: Gestione automatica pagamenti commissioni
+- **Performance Tracking**: Analytics dettagliati per ogni reseller
+- **White Label Options**: Opzioni personalizzazione per top reseller
 
-### 🎯 Social Proof & Urgency
-- **Indicatori di attività** ("Marco ha prenotato 2 ore fa")
-- **Badge di urgenza** (Ultimi posti!, Popolare, Bestseller)
-- **Contatori disponibilità** in tempo reale
-- **Animazioni di social proof** con effetti di comparsa
+### ⭐ Google Reviews Integration
+- **API Integration**: Connessione diretta con Google Places API
+- **Reviews Display**: Visualizzazione elegante recensioni Google genuine
+- **Overall Rating**: Mostra rating complessivo e numero recensioni
+- **Caching**: Sistema cache per performance ottimali
+- **Fallback**: Recensioni di esempio quando API non disponibile
+- **Shortcode**: `[wcefp_google_reviews place_id="..." limit="5"]`
 
-### 📱 Mobile Experience
-- **Design completamente responsive**
-- **Touch gestures** per gallery e slider
-- **Interfaccia touch-friendly** per tutti i controlli
-- **Ottimizzazione prestazioni** per dispositivi mobili
-
-## 🏗️ Funzionalità Base Esistenti
+## 🏗️ Architettura Enterprise
 Con:
 - Ricorrenze settimanali, slot orari, prezzi Adulto/Bambino
 - Extra riutilizzabili (CPT dedicato, tabella ponte, tariffazione per ordine/persona/adulto/bambino, quantità massime, obbligatorietà, stock con allocazione automatica)

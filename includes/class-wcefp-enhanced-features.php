@@ -285,19 +285,161 @@ class WCEFP_Enhanced_Features {
         return $query->posts;
     }
 
-    // Google Reviews Methods
-    public static function ajax_get_google_reviews() {
-        check_ajax_referer('wcefp_public', 'nonce');
+    // Google Reviews shortcode (replaces internal review system as per user request)
+    public static function google_reviews_shortcode($atts) {
+        $a = shortcode_atts([
+            'place_id' => get_option('wcefp_google_place_id', ''),
+            'limit' => 5,
+            'style' => 'default',
+            'show_overall_rating' => true,
+            'show_google_logo' => true
+        ], $atts);
         
-        $place_id = sanitize_text_field($_POST['place_id'] ?? '');
-        $api_key = get_option('wcefp_google_places_api_key', '');
-        
-        if (empty($place_id) || empty($api_key)) {
-            wp_send_json_error(['msg' => 'Missing Place ID or API key']);
+        if (empty($a['place_id'])) {
+            return '<p style="color: #856404; background: #fff3cd; padding: 10px; border-radius: 5px;">Per visualizzare le recensioni Google, configura il Place ID nelle impostazioni WCEventsFP.</p>';
         }
         
-        $reviews = self::get_google_reviews($place_id, $api_key);
-        wp_send_json_success($reviews);
+        // Get cached reviews or fallback
+        $api_key = get_option('wcefp_google_places_api_key', '');
+        $reviews_data = self::get_google_reviews($a['place_id'], $api_key);
+        
+        if (empty($reviews_data['reviews'])) {
+            return '<p>Nessuna recensione disponibile al momento.</p>';
+        }
+        
+        $reviews = array_slice($reviews_data['reviews'], 0, intval($a['limit']));
+        $overall_rating = $reviews_data['overall_rating'] ?? 4.5;
+        
+        ob_start();
+        ?>
+        <div class="wcefp-google-reviews wcefp-google-reviews-<?php echo esc_attr($a['style']); ?>">
+            <?php if ($a['show_overall_rating']): ?>
+                <div class="wcefp-overall-rating">
+                    <div class="wcefp-rating-score">
+                        <span class="wcefp-rating-number"><?php echo number_format($overall_rating, 1); ?></span>
+                        <div class="wcefp-rating-stars">
+                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <span class="wcefp-star <?php echo $i <= round($overall_rating) ? 'wcefp-star-filled' : 'wcefp-star-empty'; ?>">★</span>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
+                    <?php if ($a['show_google_logo']): ?>
+                        <div class="wcefp-google-logo">
+                            <span style="color: #4285f4; font-weight: 600;">Recensioni Google</span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+            
+            <div class="wcefp-reviews-list">
+                <?php foreach ($reviews as $review): ?>
+                    <div class="wcefp-review-item">
+                        <div class="wcefp-review-header">
+                            <div class="wcefp-review-author">
+                                <?php if (!empty($review['profile_photo_url'])): ?>
+                                    <img src="<?php echo esc_url($review['profile_photo_url']); ?>" 
+                                         alt="<?php echo esc_attr($review['author_name']); ?>" 
+                                         class="wcefp-author-avatar">
+                                <?php else: ?>
+                                    <div class="wcefp-author-avatar wcefp-author-avatar-placeholder">
+                                        <?php echo esc_html(substr($review['author_name'], 0, 1)); ?>
+                                    </div>
+                                <?php endif; ?>
+                                <div class="wcefp-author-info">
+                                    <span class="wcefp-author-name"><?php echo esc_html($review['author_name']); ?></span>
+                                    <div class="wcefp-review-rating">
+                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                            <span class="wcefp-star <?php echo $i <= $review['rating'] ? 'wcefp-star-filled' : 'wcefp-star-empty'; ?>">★</span>
+                                        <?php endfor; ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="wcefp-review-date">
+                                <?php echo esc_html($review['relative_time_description']); ?>
+                            </div>
+                        </div>
+                        
+                        <?php if (!empty($review['text'])): ?>
+                            <div class="wcefp-review-text">
+                                <?php echo esc_html($review['text']); ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            
+            <?php if ($a['show_google_logo']): ?>
+                <div class="wcefp-powered-by-google" style="text-align: center; margin-top: 20px; color: #666; font-size: 12px;">
+                    Recensioni da Google
+                </div>
+            <?php endif; ?>
+        </div>
+        
+        <style>
+        .wcefp-google-reviews { 
+            background: #fff; border-radius: 12px; padding: 25px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .wcefp-overall-rating { 
+            text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #f0f0f0; 
+        }
+        .wcefp-rating-score { display: flex; align-items: center; justify-content: center; gap: 15px; }
+        .wcefp-rating-number { 
+            font-size: 3em; font-weight: 700; color: #1a73e8; 
+        }
+        .wcefp-rating-stars .wcefp-star { 
+            font-size: 24px; margin: 0 2px; 
+        }
+        .wcefp-star-filled { color: #fbbc04; }
+        .wcefp-star-empty { color: #e0e0e0; }
+        .wcefp-google-logo { 
+            margin-top: 10px; font-size: 14px; 
+        }
+        .wcefp-reviews-list { 
+            display: flex; flex-direction: column; gap: 20px; 
+        }
+        .wcefp-review-item { 
+            padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #1a73e8;
+        }
+        .wcefp-review-header { 
+            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; 
+        }
+        .wcefp-review-author { 
+            display: flex; align-items: center; gap: 12px; 
+        }
+        .wcefp-author-avatar { 
+            width: 48px; height: 48px; border-radius: 50%; object-fit: cover; 
+        }
+        .wcefp-author-avatar-placeholder { 
+            background: linear-gradient(135deg, #1a73e8, #4285f4); color: white; 
+            display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 18px;
+        }
+        .wcefp-author-name { 
+            font-weight: 600; color: #202124; font-size: 15px; 
+        }
+        .wcefp-review-rating { 
+            margin-top: 4px; 
+        }
+        .wcefp-review-rating .wcefp-star { 
+            font-size: 14px; margin: 0 1px; 
+        }
+        .wcefp-review-date { 
+            color: #5f6368; font-size: 13px; 
+        }
+        .wcefp-review-text { 
+            color: #3c4043; line-height: 1.6; font-size: 14px; 
+        }
+        
+        @media (max-width: 768px) {
+            .wcefp-google-reviews { padding: 20px; }
+            .wcefp-rating-score { flex-direction: column; gap: 10px; }
+            .wcefp-rating-number { font-size: 2.5em; }
+            .wcefp-review-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
+        </style>
+        <?php
+        
+        return ob_get_clean();
     }
     
     public static function get_google_reviews($place_id, $api_key) {

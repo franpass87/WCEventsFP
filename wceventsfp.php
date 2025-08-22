@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: WCEventsFP
- * Description: Plugin di prenotazione eventi & esperienze avanzato per WooCommerce. Sistema completo per competere con RegionDo/Bokun: tracking Google Analytics/Ads/Meta avanzato, ottimizzazione conversioni con urgency indicators, social proof, dynamic pricing, live chat, A/B testing, analytics server-side, funnel tracking, performance monitoring, cross-device tracking, automazioni Brevo avanzate.
- * Version:     1.9.0
+ * Description: Plugin di prenotazione eventi & esperienze avanzato per WooCommerce. Sistema enterprise per competere con RegionDo/Bokun: gestione risorse (guide, attrezzature, veicoli), distribuzione multi-canale (Booking.com, Expedia, GetYourGuide), sistema commissioni/reseller, Google Reviews, tracking avanzato GA4/Meta, automazioni Brevo, AI recommendations, analytics real-time.
+ * Version:     2.0.0
  * Author:      Francesco Passeri
  * Text Domain: wceventsfp
  * Domain Path: /languages
@@ -10,7 +10,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('WCEFP_VERSION', '1.9.0');
+define('WCEFP_VERSION', '2.0.0');
 define('WCEFP_PLUGIN_FILE', __FILE__);
 define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -113,6 +113,9 @@ add_action('plugins_loaded', function () {
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-templates.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-product-types.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-enhanced-features.php';
+require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-resource-management.php';
+require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-channel-management.php';
+require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-commission-management.php';
 
     // Include admin (nuova classe)
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin.php';

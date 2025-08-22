@@ -279,15 +279,6 @@ class WCEFP_Frontend {
 
     /* ---------- AJAX: add to cart con check capienza + voucher ---------- */
     public static function ajax_add_to_cart() {
-        check_ajax_referer('wcefp_public','nonce');
-        global $wpdb; $tbl = $wpdb->prefix.'wcefp_occurrences';
-
-        $pid  = intval($_POST['product_id'] ?? 0);
-        $occ  = intval($_POST['occurrence_id'] ?? 0);
-        $ad   = max(0, intval($_POST['adults'] ?? 0));
-        $ch   = max(0, intval($_POST['children'] ?? 0));
-    /* ---------- AJAX: add to cart con check capienza + voucher ---------- */
-    public static function ajax_add_to_cart() {
         try {
             check_ajax_referer('wcefp_public','nonce');
             
@@ -389,9 +380,8 @@ class WCEFP_Frontend {
                     $voucherCode = WC()->session->get('wcefp_voucher_code', '');
                 }
             }
-        }
 
-        // Sanitizza e valida extra
+            // Sanitizza e valida extra
         $tbl_ex = $wpdb->prefix.'wcefp_product_extras';
         $extras = [];
         foreach ($extras_in as $ex) {
@@ -482,6 +472,14 @@ class WCEFP_Frontend {
         WC()->session->set('wcefp_dl_add_to_cart', $dl);
 
         wp_send_json_success(['cart_url'=>wc_get_cart_url()]);
+        
+        } catch (Exception $e) {
+            WCEFP_Logger::error('Booking error in ajax_add_to_cart', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            wp_send_json_error(['msg' => __('Errore durante la prenotazione. Riprova.', 'wceventsfp')]);
+        }
     }
 
     /* ---------- Prezzo dinamico + voucher ---------- */
