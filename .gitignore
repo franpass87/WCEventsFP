@@ -64,6 +64,7 @@ config-local.php
 test.php
 dev-notes.md
 todo.md
+test_wcefp_admin.php
 
 # Build / Distribuzione
 /dist/
