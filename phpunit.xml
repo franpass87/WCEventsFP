@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         bootstrap="tests/bootstrap.php"
+         backupGlobals="false"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
+    <coverage>
+        <include>
+            <directory suffix=".php">./includes</directory>
+            <directory suffix=".php">./admin</directory>
+        </include>
+        <exclude>
+            <directory>./vendor</directory>
+            <directory>./tests</directory>
+        </exclude>
+        <report>
+            <html outputDirectory="coverage" lowUpperBound="50" highLowerBound="85"/>
+            <text outputFile="php://stdout" showOnlySummary="true"/>
+        </report>
+    </coverage>
+    <testsuites>
+        <testsuite name="WCEventsFP Test Suite">
+            <directory>./tests</directory>
+        </testsuite>
+    </testsuites>
+    <logging>
+        <junit outputFile="phpunit-report.xml"/>
+    </logging>
+</phpunit>
