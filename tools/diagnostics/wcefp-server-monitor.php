@@ -13,6 +13,11 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Load shared utilities for consistent memory conversion
+if (file_exists(__DIR__ . '/wcefp-shared-utilities.php')) {
+    require_once __DIR__ . '/wcefp-shared-utilities.php';
+}
+
 /**
  * Server Resources Monitor Class
  */
@@ -133,6 +138,12 @@ class WCEFP_Server_Monitor {
      * @return int
      */
     private static function convert_memory_to_bytes($val) {
+        // Use shared utilities if available
+        if (function_exists('wcefp_convert_memory_to_bytes')) {
+            return wcefp_convert_memory_to_bytes($val);
+        }
+        
+        // Fallback implementation
         if (is_numeric($val)) {
             return (int) $val;
         }
