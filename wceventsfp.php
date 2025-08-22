@@ -37,6 +37,22 @@ if (!defined('WCEFP_PLUGIN_FILE')) define('WCEFP_PLUGIN_FILE', __FILE__);
 if (!defined('WCEFP_PLUGIN_DIR')) define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 if (!defined('WCEFP_PLUGIN_URL')) define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
+// ===== IMPROVED AUTOLOADING SYSTEM =====
+// Load our manual autoloader BEFORE any class usage
+if (!defined('WCEFP_AUTOLOADER_LOADED')) {
+    require_once __DIR__ . '/wcefp-autoloader.php';
+}
+
+// Verify autoloader is working
+if (!function_exists('wcefp_get_autoloader')) {
+    wcefp_emergency_error('Failed to load autoloader system', 'error');
+    return;
+}
+
+// ===== SERVER RESOURCES MONITORING =====
+// Load server monitor for resource-aware initialization
+require_once __DIR__ . '/wcefp-server-monitor.php';
+
 // Initialize global error storage
 $GLOBALS['wcefp_emergency_errors'] = [];
 
@@ -500,7 +516,20 @@ register_activation_hook(__FILE__, function() {
             wp_die(sprintf('WCEventsFP requires PHP 7.4 or higher. Current version: %s', PHP_VERSION), 'Plugin Activation Error');
         }
         
-        // Load installation manager
+        // ===== RESOURCE-AWARE ACTIVATION =====
+        // Check server resources before proceeding
+        $recommended_mode = WCEFP_Server_Monitor::get_recommended_loading_mode();
+        $resource_score = WCEFP_Server_Monitor::get_resource_score();
+        
+        wcefp_debug_log("Activation resource analysis: mode={$recommended_mode}, score={$resource_score}");
+        
+        // For ultra-minimal resources, do minimal setup only
+        if ($recommended_mode === WCEFP_Server_Monitor::MODE_ULTRA_MINIMAL) {
+            wcefp_ultra_minimal_activation();
+            return;
+        }
+        
+        // Load installation manager (with resource awareness)
         if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Core/InstallationManager.php')) {
             require_once WCEFP_PLUGIN_DIR . 'includes/Core/InstallationManager.php';
             
@@ -509,6 +538,13 @@ register_activation_hook(__FILE__, function() {
                 
                 // Check if this is first activation or if wizard was skipped before
                 $skip_wizard = get_option('wcefp_skip_wizard', false);
+                
+                // For minimal resources, skip wizard and go straight to minimal mode
+                if ($recommended_mode === WCEFP_Server_Monitor::MODE_MINIMAL) {
+                    update_option('wcefp_skip_wizard', true);
+                    $skip_wizard = true;
+                    wcefp_debug_log('Skipping wizard due to limited server resources');
+                }
                 
                 if (!$skip_wizard && $installation_manager->needs_setup_wizard()) {
                     // Set status to require wizard
@@ -553,6 +589,38 @@ register_activation_hook(__FILE__, function() {
                'Plugin Activation Error', ['back_link' => true]);
     }
 });
+
+/**
+ * Ultra-minimal activation for severely resource-constrained servers
+ * 
+ * @return void
+ */
+function wcefp_ultra_minimal_activation() {
+    wcefp_debug_log('Starting ultra-minimal activation - emergency mode');
+
+    // Only the most essential options
+    add_option('wcefp_version', '2.1.0');
+    add_option('wcefp_activated_at', current_time('mysql'));
+    add_option('wcefp_activation_mode', 'ultra_minimal');
+    add_option('wcefp_installation_status', 'ultra_minimal_complete');
+    add_option('wcefp_loading_mode', 'ultra_minimal');
+    add_option('wcefp_skip_wizard', true); // Never show wizard in ultra-minimal mode
+    
+    // Record resource constraints
+    $resource_report = WCEFP_Server_Monitor::generate_report();
+    update_option('wcefp_resource_constraints', $resource_report);
+    
+    // No feature installation - just survival mode
+    update_option('wcefp_selected_features', ['emergency_only']);
+    update_option('wcefp_performance_settings', [
+        'loading_mode' => 'ultra_minimal',
+        'enable_caching' => false,
+        'enable_logging' => false,  // Disable logging to save resources
+        'max_features' => 0
+    ]);
+    
+    wcefp_debug_log('Ultra-minimal activation completed - emergency mode configured');
+}
 
 /**
  * Minimal activation fallback
@@ -632,9 +700,28 @@ add_action('plugins_loaded', function() {
     try {
         wcefp_debug_log('Starting intelligent plugin initialization');
         
-        // Load installation manager first
+        // ===== RESOURCE-AWARE INITIALIZATION =====
+        // Check server resources first
+        $recommended_mode = WCEFP_Server_Monitor::get_recommended_loading_mode();
+        $resource_score = WCEFP_Server_Monitor::get_resource_score();
+        
+        wcefp_debug_log("Resource analysis: mode={$recommended_mode}, score={$resource_score}");
+        
+        // Ultra-minimal mode for severely constrained servers
+        if ($recommended_mode === WCEFP_Server_Monitor::MODE_ULTRA_MINIMAL) {
+            wcefp_ultra_minimal_init();
+            return;
+        }
+        
+        // Load installation manager (if resources allow)
         if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Core/InstallationManager.php')) {
-            require_once WCEFP_PLUGIN_DIR . 'includes/Core/InstallationManager.php';
+            try {
+                require_once WCEFP_PLUGIN_DIR . 'includes/Core/InstallationManager.php';
+            } catch (Exception $e) {
+                wcefp_debug_log('Failed to load InstallationManager: ' . $e->getMessage());
+                wcefp_ultra_minimal_init();
+                return;
+            }
         }
         
         // Check installation status
@@ -648,8 +735,16 @@ add_action('plugins_loaded', function() {
                 return;
             }
             
-            // Initialize based on installation mode
+            // Initialize based on installation mode (but respect resource limits)
             $installation_mode = $installation_manager->get_installation_mode();
+            
+            // Override installation mode if resources are too limited
+            if ($recommended_mode === WCEFP_Server_Monitor::MODE_MINIMAL && 
+                in_array($installation_mode, ['standard', 'full'])) {
+                $installation_mode = 'minimal';
+                wcefp_debug_log('Overriding installation mode to minimal due to server resources');
+            }
+            
             wcefp_debug_log("Plugin installation mode: {$installation_mode}");
             
             switch ($installation_mode) {
@@ -673,13 +768,97 @@ add_action('plugins_loaded', function() {
     } catch (Exception $e) {
         wcefp_debug_log('Plugin initialization exception: ' . $e->getMessage());
         wcefp_emergency_error('Plugin initialization failed: ' . $e->getMessage());
-        wcefp_fallback_init(); // Try fallback
+        wcefp_ultra_minimal_init(); // Ultimate fallback
     } catch (Error $e) {
         wcefp_debug_log('Plugin initialization fatal error: ' . $e->getMessage());
         wcefp_emergency_error('Fatal error during plugin initialization: ' . $e->getMessage());
-        wcefp_fallback_init(); // Try fallback
+        wcefp_ultra_minimal_init(); // Ultimate fallback
     }
 }, 20); // Load after WooCommerce
+
+/**
+ * Ultra-minimal initialization for severely resource-constrained servers
+ * This is the absolute minimum required to keep the plugin from causing WSOD
+ * 
+ * @return void
+ */
+function wcefp_ultra_minimal_init() {
+    wcefp_debug_log('Starting ultra-minimal plugin initialization - emergency mode');
+    
+    // Only the most essential functionality
+    // No feature loading, no admin menus, just basic survival mode
+    
+    if (is_admin()) {
+        // Show a notice that we're running in emergency mode
+        add_action('admin_notices', function() {
+            echo '<div class="notice notice-warning is-dismissible">';
+            echo '<p><strong>WCEventsFP:</strong> Plugin running in minimal emergency mode due to server resource limitations. ';
+            echo 'Contact your hosting provider to increase PHP memory limit and execution time for full functionality.</p>';
+            echo '<p><small>Current resources: ' . round(memory_get_usage(true) / 1048576, 1) . 'MB used, ';
+            echo ini_get('memory_limit') . ' limit, ' . ini_get('max_execution_time') . 's max execution time</small></p>';
+            echo '</div>';
+        });
+        
+        // Minimal admin menu - just a status page
+        add_action('admin_menu', function() {
+            add_options_page(
+                'WCEventsFP Status', 
+                'WCEventsFP Status', 
+                'manage_options', 
+                'wcefp-status', 
+                function() {
+                    echo '<div class="wrap">';
+                    echo '<h1>WCEventsFP Status</h1>';
+                    echo '<div class="notice notice-warning"><p><strong>Emergency Mode Active</strong></p>';
+                    echo '<p>The plugin is running in ultra-minimal mode due to server limitations.</p></div>';
+                    
+                    $report = WCEFP_Server_Monitor::generate_report();
+                    echo '<h2>Server Resources</h2>';
+                    echo '<table class="form-table">';
+                    echo '<tr><th>Memory Limit</th><td>' . $report['memory_limit_mb'] . ' MB</td></tr>';
+                    echo '<tr><th>Memory Used</th><td>' . $report['memory_usage_mb'] . ' MB</td></tr>';
+                    echo '<tr><th>Memory Available</th><td>' . $report['memory_available_mb'] . ' MB</td></tr>';
+                    echo '<tr><th>Max Execution Time</th><td>' . $report['execution_time'] . ' seconds</td></tr>';
+                    echo '<tr><th>PHP Version</th><td>' . $report['php_version'] . '</td></tr>';
+                    echo '<tr><th>Resource Score</th><td>' . $report['resource_score'] . '/100</td></tr>';
+                    echo '<tr><th>Status</th><td>' . esc_html($report['status']) . '</td></tr>';
+                    echo '</table>';
+                    
+                    echo '<h3>Recommendations</h3>';
+                    echo '<ul>';
+                    echo '<li>Increase PHP memory limit to at least 256MB</li>';
+                    echo '<li>Increase max execution time to at least 60 seconds</li>';
+                    echo '<li>Contact your hosting provider for assistance</li>';
+                    echo '</ul>';
+                    echo '</div>';
+                }
+            );
+        });
+    }
+    
+    // WooCommerce compatibility (minimal)
+    add_action('before_woocommerce_init', function() {
+        if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
+            try {
+                \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', WCEFP_PLUGIN_FILE, true);
+                \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('cart_checkout_blocks', WCEFP_PLUGIN_FILE, false);
+            } catch (Exception $e) {
+                wcefp_debug_log('WooCommerce compatibility declaration failed: ' . $e->getMessage());
+            }
+        }
+    });
+    
+    // Mark plugin as loaded in ultra-minimal mode
+    if (!defined('WCEFP_PLUGIN_LOADED')) {
+        define('WCEFP_PLUGIN_LOADED', 'ultra_minimal');
+    }
+    
+    // Update status option
+    update_option('wcefp_loading_mode', 'ultra_minimal');
+    update_option('wcefp_last_load_status', 'emergency');
+    
+    wcefp_debug_log('Ultra-minimal initialization completed - emergency mode active');
+}
 
 /**
  * Show setup wizard notice to administrators
