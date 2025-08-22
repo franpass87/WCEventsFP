@@ -6,9 +6,9 @@
 ```pot
 msgid ""
 msgstr ""
-"Project-Id-Version: WCEventsFP 1.6.1\n"
+"Project-Id-Version: WCEventsFP 2.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-17 00:00+0000\n"
+"POT-Creation-Date: 2025-08-22 20:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Language: \n"
 "Language-Team: \n"
