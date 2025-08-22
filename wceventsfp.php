@@ -326,6 +326,11 @@ class WCEFP_Simple_Plugin {
         // Admin-only hooks
         if (is_admin()) {
             add_action('admin_notices', [$this, 'display_admin_notices']);
+            
+            // Initialize feature manager if admin features are enabled
+            if ($this->should_load_feature_manager()) {
+                $this->init_feature_manager();
+            }
         }
         
         // WooCommerce HPOS compatibility declaration
@@ -387,6 +392,36 @@ class WCEFP_Simple_Plugin {
     public function is_initialized() {
         return $this->initialized;
     }
+    
+    /**
+     * Check if we should load the feature manager
+     * @return bool
+     */
+    private function should_load_feature_manager() {
+        // Always load feature manager for admins
+        return current_user_can('manage_options');
+    }
+    
+    /**
+     * Initialize feature manager
+     * @return void
+     */
+    private function init_feature_manager() {
+        $feature_manager_file = WCEFP_PLUGIN_DIR . 'includes/Admin/FeatureManager.php';
+        
+        if (file_exists($feature_manager_file)) {
+            try {
+                require_once $feature_manager_file;
+                
+                if (class_exists('WCEFP\\Admin\\FeatureManager')) {
+                    new \WCEFP\Admin\FeatureManager();
+                    wcefp_debug_log('Feature manager initialized');
+                }
+            } catch (Exception $e) {
+                wcefp_debug_log('Failed to initialize feature manager: ' . $e->getMessage());
+            }
+        }
+    }
 }
 
 /**
@@ -421,27 +456,118 @@ if (!function_exists('register_activation_hook') || !function_exists('register_d
     return;
 }
 
-// Simplified, bulletproof activation hook
+// Enhanced activation hook with wizard integration
 register_activation_hook(__FILE__, function() {
     try {
+        wcefp_debug_log('Starting enhanced plugin activation');
+        
         // Essential checks only
         if (version_compare(PHP_VERSION, '7.4.0', '<')) {
             wp_die(sprintf('WCEventsFP requires PHP 7.4 or higher. Current version: %s', PHP_VERSION), 'Plugin Activation Error');
         }
         
-        // Don't require WooCommerce during activation - allow graceful degradation
-        if (!class_exists('WooCommerce')) {
-            // Just log a warning, don't fail activation
-            error_log('WCEventsFP: WooCommerce not detected during activation - plugin will run in limited mode');
+        // Load installation manager
+        if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Core/InstallationManager.php')) {
+            require_once WCEFP_PLUGIN_DIR . 'includes/Core/InstallationManager.php';
+            
+            if (class_exists('WCEFP\\Core\\InstallationManager')) {
+                $installation_manager = new \WCEFP\Core\InstallationManager();
+                
+                // Check if this is first activation or if wizard was skipped before
+                $skip_wizard = get_option('wcefp_skip_wizard', false);
+                
+                if (!$skip_wizard && $installation_manager->needs_setup_wizard()) {
+                    // Set status to require wizard
+                    update_option('wcefp_installation_status', 'wizard_required');
+                    
+                    // Redirect to wizard after activation (will happen on next admin page load)
+                    update_option('wcefp_redirect_to_wizard', true);
+                    
+                    wcefp_debug_log('Activation completed - wizard required');
+                    return;
+                }
+                
+                // If wizard was skipped, do progressive installation
+                if ($installation_manager->start_progressive_installation()) {
+                    wcefp_debug_log('Progressive installation started successfully');
+                } else {
+                    wcefp_debug_log('Progressive installation failed - falling back to minimal');
+                    wcefp_minimal_activation_fallback();
+                }
+            }
+        } else {
+            // Fallback activation without installation manager
+            wcefp_minimal_activation_fallback();
         }
         
-        // Simple activation setup
-        wcefp_safe_activation_fallback();
+        wcefp_debug_log('Plugin activation completed');
         
     } catch (Exception $e) {
-        wp_die('WCEventsFP activation failed: ' . esc_html($e->getMessage()), 'Plugin Activation Error', ['back_link' => true]);
+        wcefp_debug_log('Activation exception: ' . $e->getMessage());
+        
+        // Try minimal activation as fallback
+        try {
+            wcefp_minimal_activation_fallback();
+        } catch (Exception $fallback_e) {
+            wp_die('WCEventsFP activation failed: ' . esc_html($e->getMessage()) . 
+                   ' (Fallback also failed: ' . esc_html($fallback_e->getMessage()) . ')', 
+                   'Plugin Activation Error', ['back_link' => true]);
+        }
+        
     } catch (Error $e) {
-        wp_die('WCEventsFP activation failed with fatal error: ' . esc_html($e->getMessage()), 'Plugin Activation Error', ['back_link' => true]);
+        wp_die('WCEventsFP activation failed with fatal error: ' . esc_html($e->getMessage()), 
+               'Plugin Activation Error', ['back_link' => true]);
+    }
+});
+
+/**
+ * Minimal activation fallback
+ * 
+ * @return void
+ */
+function wcefp_minimal_activation_fallback() {
+    wcefp_debug_log('Starting minimal activation fallback');
+    
+    // Set basic plugin options
+    add_option('wcefp_version', '2.1.0');
+    add_option('wcefp_activated_at', current_time('mysql'));
+    add_option('wcefp_activation_mode', 'minimal_fallback');
+    add_option('wcefp_installation_status', 'minimal_complete');
+    
+    // Set minimal feature set
+    update_option('wcefp_selected_features', ['core']);
+    update_option('wcefp_performance_settings', [
+        'loading_mode' => 'minimal',
+        'enable_caching' => false,
+        'enable_logging' => true
+    ]);
+    
+    // Flush rewrite rules
+    flush_rewrite_rules();
+    
+    wcefp_debug_log('Minimal activation fallback completed');
+}
+
+// Handle wizard redirect after activation
+add_action('admin_init', function() {
+    if (get_option('wcefp_redirect_to_wizard') && is_admin() && current_user_can('manage_options')) {
+        delete_option('wcefp_redirect_to_wizard');
+        
+        $wizard_url = admin_url('admin.php?wcefp_setup=1');
+        wp_redirect($wizard_url);
+        exit;
+    }
+});
+
+// Add action for progressive installation continuation
+add_action('wcefp_continue_installation', function() {
+    if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Core/InstallationManager.php')) {
+        require_once WCEFP_PLUGIN_DIR . 'includes/Core/InstallationManager.php';
+        
+        if (class_exists('WCEFP\\Core\\InstallationManager')) {
+            $installation_manager = new \WCEFP\Core\InstallationManager();
+            $installation_manager->continue_progressive_installation();
+        }
     }
 });
 
@@ -455,44 +581,351 @@ register_deactivation_hook(__FILE__, function() {
     }
 });
 
-// Bulletproof plugin initialization - this is where the magic happens
+// Hook for setup wizard access
+add_action('admin_init', function() {
+    if (isset($_GET['wcefp_setup']) && is_admin()) {
+        // Load setup wizard
+        define('WCEFP_SETUP_WIZARD_ACTIVE', true);
+        require_once WCEFP_PLUGIN_DIR . 'wcefp-setup-wizard.php';
+        exit; // Wizard handles its own output
+    }
+});
+
+// Check if we need installation wizard or progressive loading
 add_action('plugins_loaded', function() {
     try {
-        wcefp_debug_log('Starting bulletproof plugin initialization');
+        wcefp_debug_log('Starting intelligent plugin initialization');
         
-        // Get our simple, reliable plugin instance
-        $plugin = WCEFP();
-        
-        if (!$plugin) {
-            wcefp_emergency_error('Failed to create plugin instance');
-            return;
+        // Load installation manager first
+        if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Core/InstallationManager.php')) {
+            require_once WCEFP_PLUGIN_DIR . 'includes/Core/InstallationManager.php';
         }
         
-        // Initialize the plugin
-        if (method_exists($plugin, 'init')) {
-            $success = $plugin->init();
-            if (!$success) {
-                wcefp_debug_log('Plugin initialization returned false - running in limited mode');
-            } else {
-                wcefp_debug_log('Plugin initialized successfully');
+        // Check installation status
+        if (class_exists('WCEFP\\Core\\InstallationManager')) {
+            $installation_manager = new \WCEFP\Core\InstallationManager();
+            
+            // If setup wizard is needed, show admin notice and minimal functionality
+            if ($installation_manager->needs_setup_wizard() && is_admin()) {
+                wcefp_show_wizard_notice($installation_manager->get_setup_wizard_url());
+                wcefp_minimal_admin_init();
+                return;
+            }
+            
+            // Initialize based on installation mode
+            $installation_mode = $installation_manager->get_installation_mode();
+            wcefp_debug_log("Plugin installation mode: {$installation_mode}");
+            
+            switch ($installation_mode) {
+                case 'minimal':
+                    wcefp_minimal_init($installation_manager);
+                    break;
+                case 'progressive':
+                    wcefp_progressive_init($installation_manager);
+                    break;
+                case 'standard':
+                case 'full':
+                default:
+                    wcefp_standard_init($installation_manager);
+                    break;
             }
         } else {
-            wcefp_debug_log('Plugin instance has no init method - this should not happen');
-        }
-        
-        // Mark plugin as loaded
-        if (!defined('WCEFP_PLUGIN_LOADED')) {
-            define('WCEFP_PLUGIN_LOADED', true);
+            // Fallback to simple initialization if InstallationManager not available
+            wcefp_fallback_init();
         }
         
     } catch (Exception $e) {
         wcefp_debug_log('Plugin initialization exception: ' . $e->getMessage());
         wcefp_emergency_error('Plugin initialization failed: ' . $e->getMessage());
+        wcefp_fallback_init(); // Try fallback
     } catch (Error $e) {
         wcefp_debug_log('Plugin initialization fatal error: ' . $e->getMessage());
         wcefp_emergency_error('Fatal error during plugin initialization: ' . $e->getMessage());
+        wcefp_fallback_init(); // Try fallback
     }
 }, 20); // Load after WooCommerce
+
+/**
+ * Show setup wizard notice to administrators
+ * 
+ * @param string $wizard_url
+ * @return void
+ */
+function wcefp_show_wizard_notice($wizard_url) {
+    add_action('admin_notices', function() use ($wizard_url) {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        
+        ?>
+        <div class="notice notice-info is-dismissible">
+            <h3><?php _e('WCEventsFP Setup Required', 'wceventsfp'); ?></h3>
+            <p><?php _e('Welcome to WCEventsFP! To prevent any loading issues and configure the plugin safely, please run the setup wizard.', 'wceventsfp'); ?></p>
+            <p>
+                <a href="<?php echo esc_url($wizard_url); ?>" class="button button-primary">
+                    <?php _e('🚀 Start Setup Wizard', 'wceventsfp'); ?>
+                </a>
+                <button type="button" class="button" onclick="jQuery(this).closest('.notice').fadeOut();">
+                    <?php _e('Skip for Now', 'wceventsfp'); ?>
+                </button>
+            </p>
+            <p><small><?php _e('The wizard will guide you through safe plugin activation and feature selection to prevent WSOD.', 'wceventsfp'); ?></small></p>
+        </div>
+        <?php
+    });
+}
+
+/**
+ * Minimal admin initialization for wizard mode
+ * 
+ * @return void
+ */
+function wcefp_minimal_admin_init() {
+    // Only load essential admin functionality
+    add_action('admin_menu', function() {
+        add_options_page(
+            __('WCEventsFP Setup', 'wceventsfp'),
+            __('WCEventsFP Setup', 'wceventsfp'),
+            'manage_options',
+            'wcefp-setup',
+            function() {
+                $wizard_url = admin_url('admin.php?wcefp_setup=1');
+                wp_redirect($wizard_url);
+                exit;
+            }
+        );
+    });
+    
+    wcefp_debug_log('Minimal admin initialization completed - wizard mode');
+}
+
+/**
+ * Minimal plugin initialization
+ * 
+ * @param \WCEFP\Core\InstallationManager $installation_manager
+ * @return void
+ */
+function wcefp_minimal_init($installation_manager) {
+    wcefp_debug_log('Starting minimal plugin initialization');
+    
+    // Load only core functionality
+    $core_files = [
+        'includes/Utils/Logger.php',
+        'includes/class-wcefp-logger.php'
+    ];
+    
+    foreach ($core_files as $file) {
+        $path = WCEFP_PLUGIN_DIR . $file;
+        if (file_exists($path)) {
+            try {
+                require_once $path;
+            } catch (Exception $e) {
+                wcefp_debug_log("Failed to load minimal file {$file}: " . $e->getMessage());
+            }
+        }
+    }
+    
+    // Create simple plugin instance with minimal features
+    $plugin = WCEFP();
+    if ($plugin && method_exists($plugin, 'init')) {
+        $plugin->init();
+    }
+    
+    // Mark plugin as loaded in minimal mode
+    if (!defined('WCEFP_PLUGIN_LOADED')) {
+        define('WCEFP_PLUGIN_LOADED', 'minimal');
+    }
+    
+    wcefp_debug_log('Minimal initialization completed');
+}
+
+/**
+ * Progressive plugin initialization
+ * 
+ * @param \WCEFP\Core\InstallationManager $installation_manager
+ * @return void
+ */
+function wcefp_progressive_init($installation_manager) {
+    wcefp_debug_log('Starting progressive plugin initialization');
+    
+    // Start with minimal init
+    wcefp_minimal_init($installation_manager);
+    
+    // Load additional features based on what's enabled and installed
+    $enabled_features = $installation_manager->get_enabled_features();
+    $batch_size = 2; // Load 2 features at a time to prevent overload
+    $loaded_count = 0;
+    
+    foreach ($enabled_features as $feature) {
+        if ($loaded_count >= $batch_size) {
+            // Schedule remaining features for next page load
+            wcefp_schedule_feature_loading($enabled_features, $loaded_count);
+            break;
+        }
+        
+        try {
+            wcefp_load_feature($feature);
+            $loaded_count++;
+        } catch (Exception $e) {
+            wcefp_debug_log("Failed to load feature {$feature}: " . $e->getMessage());
+        }
+    }
+    
+    // Continue installation if needed
+    if ($installation_manager->get_installation_status() === 'in_progress') {
+        $installation_manager->continue_progressive_installation();
+    }
+    
+    // Mark plugin as loaded in progressive mode
+    if (!defined('WCEFP_PLUGIN_LOADED')) {
+        define('WCEFP_PLUGIN_LOADED', 'progressive');
+    }
+    
+    wcefp_debug_log('Progressive initialization completed');
+}
+
+/**
+ * Standard plugin initialization
+ * 
+ * @param \WCEFP\Core\InstallationManager $installation_manager
+ * @return void
+ */
+function wcefp_standard_init($installation_manager) {
+    wcefp_debug_log('Starting standard plugin initialization');
+    
+    // Get our plugin instance
+    $plugin = WCEFP();
+    
+    if (!$plugin) {
+        wcefp_emergency_error('Failed to create plugin instance');
+        return;
+    }
+    
+    // Initialize the plugin
+    if (method_exists($plugin, 'init')) {
+        $success = $plugin->init();
+        if (!$success) {
+            wcefp_debug_log('Plugin initialization returned false - falling back to minimal mode');
+            wcefp_minimal_init($installation_manager);
+            return;
+        }
+    }
+    
+    // Load all enabled features
+    $enabled_features = $installation_manager->get_enabled_features();
+    foreach ($enabled_features as $feature) {
+        try {
+            wcefp_load_feature($feature);
+        } catch (Exception $e) {
+            wcefp_debug_log("Failed to load feature {$feature}: " . $e->getMessage());
+        }
+    }
+    
+    // Mark plugin as loaded
+    if (!defined('WCEFP_PLUGIN_LOADED')) {
+        define('WCEFP_PLUGIN_LOADED', 'standard');
+    }
+    
+    wcefp_debug_log('Standard initialization completed');
+}
+
+/**
+ * Fallback initialization when InstallationManager is not available
+ * 
+ * @return void
+ */
+function wcefp_fallback_init() {
+    wcefp_debug_log('Starting fallback plugin initialization');
+    
+    // Create simple plugin instance
+    $plugin = WCEFP();
+    
+    if ($plugin && method_exists($plugin, 'init')) {
+        $success = $plugin->init();
+        if (!$success) {
+            wcefp_debug_log('Fallback initialization returned false - running in emergency mode');
+        }
+    }
+    
+    // Mark plugin as loaded in fallback mode
+    if (!defined('WCEFP_PLUGIN_LOADED')) {
+        define('WCEFP_PLUGIN_LOADED', 'fallback');
+    }
+    
+    wcefp_debug_log('Fallback initialization completed');
+}
+
+/**
+ * Load individual feature based on key
+ * 
+ * @param string $feature_key
+ * @return void
+ */
+function wcefp_load_feature($feature_key) {
+    $feature_files = [
+        'admin_enhanced' => [
+            'includes/Admin/MenuManager.php',
+            'includes/Admin/ProductAdmin.php'
+        ],
+        'resources' => [
+            'includes/class-wcefp-resource-management.php'
+        ],
+        'channels' => [
+            'includes/class-wcefp-channel-management.php'
+        ],
+        'commissions' => [
+            'includes/class-wcefp-commission-management.php'
+        ],
+        'reviews' => [
+            'includes/class-wcefp-reviews.php'
+        ],
+        'tracking' => [
+            'includes/class-wcefp-tracking.php'
+        ],
+        'automation' => [
+            'includes/class-wcefp-automation.php'
+        ],
+        'ai_recommendations' => [
+            'includes/class-wcefp-ai-recommendations.php'
+        ],
+        'realtime' => [
+            'includes/class-wcefp-realtime-features.php'
+        ]
+    ];
+    
+    if (!isset($feature_files[$feature_key])) {
+        wcefp_debug_log("Unknown feature key: {$feature_key}");
+        return;
+    }
+    
+    foreach ($feature_files[$feature_key] as $file) {
+        $path = WCEFP_PLUGIN_DIR . $file;
+        if (file_exists($path)) {
+            try {
+                require_once $path;
+                wcefp_debug_log("Loaded feature file: {$file}");
+            } catch (Exception $e) {
+                throw new Exception("Failed to load feature file {$file}: " . $e->getMessage());
+            }
+        } else {
+            wcefp_debug_log("Feature file not found: {$file}");
+        }
+    }
+}
+
+/**
+ * Schedule feature loading for next page load
+ * 
+ * @param array $features
+ * @param int $start_index
+ * @return void
+ */
+function wcefp_schedule_feature_loading($features, $start_index) {
+    $remaining_features = array_slice($features, $start_index);
+    update_option('wcefp_pending_features', $remaining_features);
+    
+    wcefp_debug_log('Scheduled remaining features for next load: ' . implode(', ', $remaining_features));
+}
 
 // === Legacy Compatibility Functions ===
 // Keep only essential legacy functions for backward compatibility
