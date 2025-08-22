@@ -318,7 +318,7 @@ if (function_exists('register_activation_hook')) {
 });
 
 // Only initialize when WordPress is ready and this is not a plugin scanning context
-if (defined('ABSPATH') && !defined('WP_INSTALLING') && did_action('plugins_loaded') === 0) {
+if (defined('ABSPATH') && !defined('WP_INSTALLING') && function_exists('did_action') && did_action('plugins_loaded') === 0) {
     add_action('plugins_loaded', function () {
     try {
         // Load textdomain early and safely
@@ -2031,4 +2031,6 @@ function wcefp_save_days_metabox($post_id){
         delete_post_meta($post_id, '_wcefp_days');
     }
 }
+
+} // Close the activation hook conditional
 
