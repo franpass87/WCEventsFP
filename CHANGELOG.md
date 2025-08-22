@@ -1,5 +1,41 @@
 # 📜 Changelog – WCEventsFP
 
+[2.1.1] – 2025-08-23
+
+## 🛡️ Complete WSOD Resolution & System Stability
+
+### Added
+
+🏗️ **Advanced Autoloading System**: Bulletproof PSR-4 autoloading system (`wcefp-autoloader.php`) with intelligent fallback mapping and comprehensive error handling, eliminating dependency on Composer for core functionality.
+
+🖥️ **Server Resource Monitor**: Real-time server analysis system (`wcefp-server-monitor.php`) with adaptive operation modes based on available memory, execution time, and server load capacity.
+
+⚡ **Resource-Aware Initialization**: Intelligent plugin initialization that adapts feature loading based on server capabilities, ensuring optimal performance across all hosting environments.
+
+🚨 **Emergency Recovery System**: Comprehensive error tracking and automatic recovery mechanisms for critical situations, preventing plugin failures from affecting site functionality.
+
+### Enhanced
+
+🔒 **Universal Server Compatibility**: Guaranteed functionality from shared hosting (ultra_minimal mode) to dedicated servers (full mode) with automatic adaptation and user-friendly messaging.
+
+🧠 **Smart Feature Loading**: Dynamic feature activation based on real-time server resource analysis, preventing overload and ensuring stable operation.
+
+🛡️ **Memory Safety Systems**: Advanced memory management with overflow prevention, intelligent allocation, and graceful degradation when resources are limited.
+
+📊 **Intelligent Scoring System**: 0-100 server capability scoring with automatic feature recommendations and hosting upgrade suggestions for optimal performance.
+
+### Fixed
+
+✅ **WSOD Prevention**: Complete elimination of White Screen of Death scenarios through comprehensive pre-flight checks and safe initialization processes.
+
+🔄 **Loading Chain Reliability**: Bulletproof class loading with multiple fallback strategies and detailed error context for troubleshooting.
+
+⚙️ **Server Resource Conflicts**: Resolved memory limit conflicts and execution timeout issues through intelligent resource management and adaptive loading.
+
+🗂️ **File Discovery Automation**: Automatic scanning and mapping of plugin classes, eliminating manual dependency management and loading failures.
+
+---
+
 [2.1.0] – 2025-08-22
 
 ## Major WSOD Cleanup & Architecture Improvements 🛡️

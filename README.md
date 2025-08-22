@@ -1,10 +1,24 @@
-# WCEventsFP (v2.1.0) - Enterprise Booking Platform
+# WCEventsFP (v2.1.1) - Enterprise Booking Platform
 
 **Sistema di prenotazione enterprise per competere direttamente con RegionDo, Bokun e GetYourGuide**
 
 Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità di livello enterprise per massimizzare le conversioni, gestire risorse operative e automatizzare la distribuzione multi-canale.
 
-## 🚀 Nuove Funzionalità v2.1.0 - Major WSOD Cleanup & Architecture Improvements
+## 🚀 Nuove Funzionalità v2.1.1 - WSOD Resolution Complete
+
+### 🛡️ Complete WSOD (White Screen of Death) Resolution
+- **Advanced Autoloading System**: Bulletproof PSR-4 autoloading without Composer dependency, with intelligent fallback and error handling
+- **Server Resource Monitor**: Real-time server analysis with adaptive modes (ultra_minimal → minimal → progressive → standard → full) based on available resources  
+- **Resource-Aware Initialization**: Plugin automatically adapts to server capabilities, ensuring functionality even on limited hosting environments
+- **Emergency Recovery System**: Comprehensive error tracking and automatic recovery mechanisms for critical situations
+
+### 🔧 Enhanced System Stability  
+- **Smart Feature Loading**: Dynamic feature activation based on server resources to prevent overload
+- **Memory Safety**: Bulletproof memory management with overflow prevention and intelligent allocation
+- **Graceful Degradation**: Plugin continues to function even when server resources are limited
+- **Universal Compatibility**: Guaranteed functionality across all hosting environments from shared hosting to dedicated servers
+
+## 🚀 Previous Features v2.1.0 - Major WSOD Cleanup & Architecture Improvements
 
 ### 🛡️ Bulletproof WSOD Prevention System
 - **Complete Architecture Simplification**: Removed complex multi-layer bootstrap system, replaced with single `WCEFP_Simple_Plugin` class

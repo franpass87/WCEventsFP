@@ -6,7 +6,7 @@
  * configure the plugin step-by-step with progressive feature loading.
  * 
  * @package WCEventsFP
- * @version 2.1.0
+ * @version 2.1.1
  */
 
 if (!defined('ABSPATH')) {
