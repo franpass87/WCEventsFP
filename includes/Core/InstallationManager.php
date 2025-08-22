@@ -10,6 +10,7 @@
 namespace WCEFP\Core;
 
 use WCEFP\Utils\Logger;
+use WCEFP\Utils\Environment;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -490,110 +491,63 @@ class InstallationManager {
      * @return bool
      */
     private function should_force_minimal_mode() {
-        // Check memory constraints
-        $memory_limit = ini_get('memory_limit');
-        if ($memory_limit !== '-1') {
-            $memory_bytes = $this->convert_memory_to_bytes($memory_limit);
-            if ($memory_bytes < 134217728) { // Less than 128MB
-                return true;
-            }
-        }
+        // Use Environment utility for consistent checking
+        $performance_score = Environment::get_performance_score();
+        $recommended_mode = Environment::get_recommended_mode();
         
-        // Check execution time constraints
-        $max_execution_time = ini_get('max_execution_time');
-        if ($max_execution_time > 0 && $max_execution_time < 30) {
-            return true;
-        }
-        
-        return false;
+        return $recommended_mode === 'minimal' || $performance_score < 40;
     }
     
-    /**
-     * Convert memory limit to bytes
-     * @param string $val
-     * @return int
-     */
-    private function convert_memory_to_bytes($val) {
-        $val = trim($val);
-        if (empty($val)) return 0;
-        
-        $unit = strtolower(substr($val, -1));
-        $val = (int) $val;
-        
-        switch ($unit) {
-            case 'g':
-                $val *= 1024;
-            case 'm':
-                $val *= 1024;
-            case 'k':
-                $val *= 1024;
-        }
-        
-        return $val;
-    }
     
     /**
      * Get loading mode recommendations
      * @return array
      */
     public function get_loading_mode_recommendations() {
-        $memory_score = $this->calculate_memory_score();
-        $execution_score = $this->calculate_execution_score();
-        $overall_score = ($memory_score + $execution_score) / 2;
+        $performance_score = Environment::get_performance_score();
+        $recommended_mode = Environment::get_recommended_mode();
         
-        if ($overall_score >= 80) {
-            return [
-                'recommended_mode' => self::MODE_STANDARD,
-                'message' => __('Your server can handle standard loading mode.', 'wceventsfp'),
-                'features_limit' => 10
-            ];
-        } elseif ($overall_score >= 60) {
-            return [
-                'recommended_mode' => self::MODE_PROGRESSIVE,
-                'message' => __('Progressive loading recommended for your server.', 'wceventsfp'),
-                'features_limit' => 6
-            ];
-        } else {
-            return [
-                'recommended_mode' => self::MODE_MINIMAL,
-                'message' => __('Minimal mode recommended due to server limitations.', 'wceventsfp'),
-                'features_limit' => 3
-            ];
+        $mode_map = [
+            'minimal' => self::MODE_MINIMAL,
+            'progressive' => self::MODE_PROGRESSIVE, 
+            'standard' => self::MODE_STANDARD,
+            'full' => self::MODE_FULL
+        ];
+        
+        $features_limits = [
+            'minimal' => 3,
+            'progressive' => 6,
+            'standard' => 10,
+            'full' => 15
+        ];
+        
+        return [
+            'recommended_mode' => $mode_map[$recommended_mode] ?? self::MODE_PROGRESSIVE,
+            'message' => $this->get_mode_message($recommended_mode, $performance_score),
+            'features_limit' => $features_limits[$recommended_mode] ?? 6,
+            'performance_score' => $performance_score
+        ];
+    }
+    
+    /**
+     * Get recommendation message based on mode and score
+     * @param string $mode
+     * @param int $score
+     * @return string
+     */
+    private function get_mode_message($mode, $score) {
+        switch ($mode) {
+            case 'minimal':
+                return __('Minimal mode recommended due to server limitations.', 'wceventsfp');
+            case 'progressive':
+                return __('Progressive loading recommended for your server.', 'wceventsfp');
+            case 'standard':
+                return __('Your server can handle standard loading mode.', 'wceventsfp');
+            case 'full':
+                return __('Your high-performance server can handle full loading.', 'wceventsfp');
+            default:
+                return sprintf(__('Performance score: %d/100. Progressive mode recommended.', 'wceventsfp'), $score);
         }
-    }
-    
-    /**
-     * Calculate memory score
-     * @return int
-     */
-    private function calculate_memory_score() {
-        $memory_limit = ini_get('memory_limit');
-        
-        if ($memory_limit === '-1') return 100;
-        
-        $memory_bytes = $this->convert_memory_to_bytes($memory_limit);
-        
-        if ($memory_bytes >= 536870912) return 100;      // 512MB+
-        if ($memory_bytes >= 268435456) return 80;       // 256MB+
-        if ($memory_bytes >= 134217728) return 60;       // 128MB+
-        if ($memory_bytes >= 67108864) return 40;        // 64MB+
-        
-        return 20;
-    }
-    
-    /**
-     * Calculate execution time score
-     * @return int
-     */
-    private function calculate_execution_score() {
-        $max_execution_time = ini_get('max_execution_time');
-        
-        if ($max_execution_time == 0) return 100; // Unlimited
-        if ($max_execution_time >= 120) return 90;
-        if ($max_execution_time >= 60) return 70;
-        if ($max_execution_time >= 30) return 50;
-        
-        return 20;
     }
     
     /**
