@@ -2,11 +2,18 @@
 /**
  * WCEventsFP Activation Safety Test
  * 
- * Run this script BEFORE activating the plugin to check for potential WSOD issues.
- * Usage: php wcefp-activation-test.php
+ * ⚠️ DEPRECATION NOTICE ⚠️ 
+ * This file is DEPRECATED and will be removed in future versions.
+ * Please use wcefp-pre-activation-test.php instead for more comprehensive testing.
  * 
- * This script tests the plugin loading without actually activating it.
+ * @deprecated Use wcefp-pre-activation-test.php instead
+ * @see wcefp-pre-activation-test.php
  */
+
+echo "⚠️  DEPRECATION WARNING ⚠️\n";
+echo "This diagnostic tool is deprecated.\n";
+echo "Please use wcefp-pre-activation-test.php for comprehensive pre-activation testing.\n";  
+echo "Running deprecated version for compatibility...\n\n";
 
 // Load shared utilities
 require_once __DIR__ . '/wcefp-shared-utilities.php';
