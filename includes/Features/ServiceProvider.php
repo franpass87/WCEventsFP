@@ -30,18 +30,11 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
         // Load stub classes
         require_once __DIR__ . '/Stubs.php';
         
-        // Register feature classes
+        // Only register classes that have actual implementations
+        // Voucher and Cache managers wrap existing legacy classes
         $this->container->singleton('features.vouchers', function($container) {
             // Wrap existing WCEFP_Gift class
             return new VoucherManager();
-        });
-        
-        $this->container->singleton('features.analytics', function($container) {
-            return new AnalyticsTracker();
-        });
-        
-        $this->container->singleton('features.notifications', function($container) {
-            return new NotificationSystem();
         });
         
         $this->container->singleton('features.caching', function($container) {
@@ -49,9 +42,10 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
             return new CacheManager();
         });
         
-        $this->container->singleton('features.security', function($container) {
-            return new SecurityManager();
-        });
+        // TODO: Implement and register when ready:
+        // - AnalyticsTracker
+        // - NotificationSystem  
+        // - SecurityManager
     }
     
     /**
@@ -60,9 +54,8 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
      * @return void
      */
     public function boot() {
-        // Initialize core features
-        $this->container->get('features.analytics');
-        $this->container->get('features.security');
+        // Initialize only implemented features
         $this->container->get('features.caching');
+        // $this->container->get('features.vouchers'); // Initialize when needed
     }
 }
