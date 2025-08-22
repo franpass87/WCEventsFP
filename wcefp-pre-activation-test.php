@@ -103,21 +103,27 @@ try {
         echo "   ⚠️  Composer autoloader not found\n";
     }
     
-    // Test manual autoloader (the one from wceventsfp.php)
-    spl_autoload_register(function($class_name) {
-        if (strpos($class_name, 'WCEFP\\') !== 0) {
-            return;
-        }
-        
-        $relative_class = str_replace('WCEFP\\', '', $class_name);
-        $file_path = str_replace('\\', DIRECTORY_SEPARATOR, $relative_class) . '.php';
-        $full_path = WCEFP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . $file_path;
-        
-        if (file_exists($full_path)) {
-            require_once $full_path;
-        }
-    });
-    echo "   ✅ Manual autoloader configured\n";
+    // Load our improved manual autoloader
+    if (file_exists(WCEFP_PLUGIN_DIR . 'wcefp-autoloader.php')) {
+        require_once WCEFP_PLUGIN_DIR . 'wcefp-autoloader.php';
+        echo "   ✅ Manual autoloader configured\n";
+    } else {
+        // Fallback to basic autoloader
+        spl_autoload_register(function($class_name) {
+            if (strpos($class_name, 'WCEFP\\') !== 0) {
+                return;
+            }
+            
+            $relative_class = str_replace('WCEFP\\', '', $class_name);
+            $file_path = str_replace('\\', DIRECTORY_SEPARATOR, $relative_class) . '.php';
+            $full_path = WCEFP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . $file_path;
+            
+            if (file_exists($full_path)) {
+                require_once $full_path;
+            }
+        });
+        echo "   ✅ Basic manual autoloader configured\n";
+    }
     
 } catch (Exception $e) {
     $critical_errors[] = 'Plugin loading simulation failed: ' . $e->getMessage();
@@ -224,9 +230,9 @@ try {
 echo "\n6. Testing Service Provider Loading...\n";
 $service_providers = [
     'WCEFP\\Admin\\AdminServiceProvider' => 'Admin service provider',
-    'WCEFP\\Frontend\\FrontendServiceProvider' => 'Frontend service provider',
+    'WCEFP\\Frontend\\FrontendServiceProvider' => 'Frontend service provider', 
     'WCEFP\\Features\\FeaturesServiceProvider' => 'Features service provider',
-    'WCEFP\\Core\\Database\\DatabaseServiceProvider' => 'Database service provider'
+    'WCEFP\\Core\\Database\\ServiceProvider' => 'Database service provider'
 ];
 
 foreach ($service_providers as $class => $description) {
