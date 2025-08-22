@@ -95,10 +95,15 @@ class WCEFP_Logger {
         $user_id = get_current_user_id();
         $ip = $this->get_client_ip();
         
+        // Ensure plugin identification is clear
+        if (!isset($context['plugin'])) {
+            $context['plugin'] = 'WCEventsFP';
+        }
+        
         $context_str = empty($context) ? '' : ' ' . wp_json_encode($context);
         
         $log_entry = sprintf(
-            "[%s] %s [User:%d] [IP:%s] %s%s\n",
+            "[%s] WCEventsFP-%s [User:%d] [IP:%s] %s%s\n",
             $timestamp,
             $level,
             $user_id,
@@ -106,6 +111,11 @@ class WCEFP_Logger {
             $message,
             $context_str
         );
+        
+        // Also log to PHP error log for critical errors
+        if ($level === 'ERROR') {
+            error_log("WCEventsFP {$level}: {$message}");
+        }
         
         return file_put_contents($this->log_file, $log_entry, FILE_APPEND | LOCK_EX);
     }
@@ -184,5 +194,80 @@ class WCEFP_Logger {
         }
         
         self::info('Log files cleared by admin');
+    }
+    
+    /**
+     * Check if a log entry is from WCEventsFP plugin
+     * 
+     * @param string $log_entry Raw log entry line
+     * @return bool True if from WCEventsFP, false otherwise
+     */
+    public static function is_wcefp_log_entry($log_entry) {
+        // Check for WCEventsFP identifier patterns
+        $wcefp_patterns = [
+            '/WCEventsFP[-\s]/',           // WCEventsFP- or WCEventsFP 
+            '/\[plugin.*WCEventsFP\]/i',   // [plugin: WCEventsFP]
+            '/WCEventsFP Security:/i',     // WCEventsFP Security:
+        ];
+        
+        foreach ($wcefp_patterns as $pattern) {
+            if (preg_match($pattern, $log_entry)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get log statistics to help identify error sources
+     * 
+     * @return array Statistics about log entries
+     */
+    public static function get_log_statistics() {
+        $instance = self::get_instance();
+        
+        if (!file_exists($instance->log_file)) {
+            return [
+                'total_entries' => 0,
+                'wcefp_entries' => 0,
+                'other_entries' => 0,
+                'error_entries' => 0,
+                'warning_entries' => 0,
+                'info_entries' => 0
+            ];
+        }
+        
+        $logs = file($instance->log_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (!$logs) {
+            return [];
+        }
+        
+        $stats = [
+            'total_entries' => count($logs),
+            'wcefp_entries' => 0,
+            'other_entries' => 0,
+            'error_entries' => 0,
+            'warning_entries' => 0,
+            'info_entries' => 0
+        ];
+        
+        foreach ($logs as $log_entry) {
+            if (self::is_wcefp_log_entry($log_entry)) {
+                $stats['wcefp_entries']++;
+            } else {
+                $stats['other_entries']++;
+            }
+            
+            if (strpos($log_entry, 'ERROR') !== false) {
+                $stats['error_entries']++;
+            } elseif (strpos($log_entry, 'WARNING') !== false) {
+                $stats['warning_entries']++;
+            } elseif (strpos($log_entry, 'INFO') !== false) {
+                $stats['info_entries']++;
+            }
+        }
+        
+        return $stats;
     }
 }

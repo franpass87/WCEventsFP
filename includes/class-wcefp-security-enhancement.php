@@ -20,6 +20,7 @@ class WCEFP_Security_Enhancement {
     private function __construct() {
         // Initialize security features
         add_action('init', [$this, 'init_security_headers']);
+        add_action('init', [$this, 'check_host_security']);
         add_action('wp_ajax_wcefp_check_rate_limit', [$this, 'check_rate_limit_before_action']);
         add_action('wp_ajax_nopriv_wcefp_check_rate_limit', [$this, 'check_rate_limit_before_action']);
         
@@ -127,11 +128,13 @@ class WCEFP_Security_Enhancement {
         );
         
         if ($this->is_rate_limited($rate_key, $limit_config['requests'], $limit_config['window'])) {
-            WCEFP_Logger::warning('Rate limit exceeded', [
+            WCEFP_Logger::warning('WCEventsFP Security: Rate limit exceeded', [
+                'plugin' => 'WCEventsFP',
                 'ip' => $user_ip,
                 'user_id' => $user_id,
                 'action' => $action,
-                'limit' => $limit_config
+                'limit' => $limit_config,
+                'timestamp' => current_time('c')
             ]);
             
             wp_send_json_error([
@@ -212,10 +215,12 @@ class WCEFP_Security_Enhancement {
      * Log failed login attempts for security monitoring
      */
     public function log_failed_login($username) {
-        WCEFP_Logger::warning('Failed login attempt', [
+        WCEFP_Logger::warning('WCEventsFP Security: Failed login attempt', [
+            'plugin' => 'WCEventsFP',
             'username' => $username,
             'ip' => $this->get_client_ip(),
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
+            'timestamp' => current_time('c')
         ]);
     }
     
@@ -223,10 +228,12 @@ class WCEFP_Security_Enhancement {
      * Log successful logins
      */
     public function log_successful_login($user_login, $user) {
-        WCEFP_Logger::info('Successful login', [
+        WCEFP_Logger::info('WCEventsFP Security: Successful login', [
+            'plugin' => 'WCEventsFP',
             'username' => $user_login,
             'user_id' => $user->ID,
-            'ip' => $this->get_client_ip()
+            'ip' => $this->get_client_ip(),
+            'timestamp' => current_time('c')
         ]);
     }
     
@@ -247,15 +254,115 @@ class WCEFP_Security_Enhancement {
         
         foreach ($suspicious_patterns as $pattern) {
             if (preg_match($pattern, $request_data)) {
-                WCEFP_Logger::error('Suspicious request pattern detected', [
+                WCEFP_Logger::error('WCEventsFP Security: Suspicious request pattern detected', [
+                    'plugin' => 'WCEventsFP',
                     'pattern' => $pattern,
                     'ip' => $this->get_client_ip(),
                     'request_data' => $request_data,
-                    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
+                    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
+                    'timestamp' => current_time('c')
                 ]);
                 
                 // Block the request
                 wp_die('Suspicious activity detected', 'Security Warning', ['response' => 403]);
+            }
+        }
+    }
+
+    /**
+     * Validate host/domain for security purposes
+     * Helps distinguish legitimate domains from suspicious ones
+     */
+    public function validate_host_security($host) {
+        if (empty($host)) {
+            return ['valid' => false, 'reason' => 'Empty host'];
+        }
+        
+        // Sanitize the host
+        $host = strtolower(trim($host));
+        
+        // Remove protocol if present
+        $host = preg_replace('#^https?://#', '', $host);
+        
+        // Remove path and query parameters
+        $host = parse_url('http://' . $host, PHP_URL_HOST);
+        
+        if (!$host) {
+            return ['valid' => false, 'reason' => 'Invalid host format'];
+        }
+        
+        // Check for suspicious patterns in domain
+        $suspicious_domain_patterns = [
+            '/\d+\.\d+\.\d+\.\d+/',         // Raw IP addresses (potentially suspicious)
+            '/[0-9]+[a-z]+[0-9]+/',         // Mixed numbers and letters in unusual patterns
+            '/(.)\1{4,}/',                  // Repeated characters (e.g., aaaa.com)
+            '/^[0-9-]+\.[a-z]{2,}$/',      // Only numbers and hyphens in subdomain
+        ];
+        
+        foreach ($suspicious_domain_patterns as $pattern) {
+            if (preg_match($pattern, $host)) {
+                WCEFP_Logger::warning('WCEventsFP Security: Potentially suspicious host pattern detected', [
+                    'plugin' => 'WCEventsFP',
+                    'host' => $host,
+                    'pattern' => $pattern,
+                    'ip' => $this->get_client_ip(),
+                    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
+                    'note' => 'This is a security alert, not necessarily malicious',
+                    'timestamp' => current_time('c')
+                ]);
+                return ['valid' => false, 'reason' => 'Suspicious host pattern', 'severity' => 'warning'];
+            }
+        }
+        
+        // Check against whitelist of known legitimate domains (for false positive reduction)
+        $legitimate_domains = [
+            'fattoriadianella.it',          // Legitimate Italian business
+            'booking.com',
+            'expedia.com', 
+            'getyourguide.com',
+            'viator.com',
+            'airbnb.com',
+            'tripadvisor.com',
+            'google.com',
+            'googleapis.com',
+            'facebook.com',
+            'instagram.com'
+        ];
+        
+        // Check if it's a known legitimate domain or subdomain
+        foreach ($legitimate_domains as $legit_domain) {
+            if ($host === $legit_domain || str_ends_with($host, '.' . $legit_domain)) {
+                return ['valid' => true, 'reason' => 'Whitelisted legitimate domain'];
+            }
+        }
+        
+        // Default to valid for other domains (innocent until proven guilty approach)
+        return ['valid' => true, 'reason' => 'No suspicious patterns detected'];
+    }
+
+    /**
+     * Check if a referrer or host is suspicious and log appropriately
+     */
+    public function check_host_security() {
+        $current_host = $_SERVER['HTTP_HOST'] ?? '';
+        $referrer = $_SERVER['HTTP_REFERER'] ?? '';
+        
+        if ($referrer) {
+            $referrer_host = parse_url($referrer, PHP_URL_HOST);
+            if ($referrer_host && $referrer_host !== $current_host) {
+                $validation = $this->validate_host_security($referrer_host);
+                
+                if (!$validation['valid'] && $validation['severity'] !== 'warning') {
+                    WCEFP_Logger::error('WCEventsFP Security: Suspicious referrer host detected', [
+                        'plugin' => 'WCEventsFP',
+                        'referrer_host' => $referrer_host,
+                        'current_host' => $current_host,
+                        'reason' => $validation['reason'],
+                        'ip' => $this->get_client_ip(),
+                        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
+                        'timestamp' => current_time('c')
+                    ]);
+                }
             }
         }
     }
