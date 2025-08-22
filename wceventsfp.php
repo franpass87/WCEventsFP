@@ -787,7 +787,7 @@ class WCEFP_Plugin {
                             ],
                         ]
                     );
-                    echo '<em style="opacity:.7;display:block;margin-top:4px;">' . esc_html__('Suggerimento: usa elenchi puntati e frasi brevi.', 'wceventsfp') . '</em>';
+                    echo '<em style="opacity:.7;display:block;margin-top:4px;">' . esc_html(wcefp_safe_translate('Suggerimento: usa elenchi puntati e frasi brevi.')) . '</em>';
                     echo '</span></p>';
                 }
                 ?>
@@ -1337,7 +1337,7 @@ class WCEFP_Plugin {
             $ics[] = ['title'=> $item->get_name(), 'url'=>$ics_url];
         }
         if (!$ics) return;
-        echo '<div class="wcefp-ics"><h3>'.esc_html__('Aggiungi al calendario','wceventsfp').'</h3><ul>';
+        echo '<div class="wcefp-ics"><h3>'.esc_html(wcefp_safe_translate('Aggiungi al calendario')).'</h3><ul>';
         foreach ($ics as $row) {
             printf('<li><a class="button" href="%s">%s</a></li>', esc_url($row['url']), esc_html($row['title']));
         }
@@ -1451,8 +1451,8 @@ class WCEFP_Plugin {
         } else {
             $payload = [
                 'to' => [['email'=>$email, 'name'=>$firstname]],
-                'subject' => sprintf(__('Conferma prenotazione #%s','wceventsfp'), $order->get_order_number()),
-                'htmlContent' => '<h2>'.esc_html__('Grazie per la prenotazione','wceventsfp').'</h2><ul>'.$items_html.'</ul><p>'.$ics_note.'</p>',
+                'subject' => wcefp_safe_sprintf('Conferma prenotazione #%s', $order->get_order_number()),
+                'htmlContent' => '<h2>'.esc_html(wcefp_safe_translate('Grazie per la prenotazione')).'</h2><ul>'.$items_html.'</ul><p>'.$ics_note.'</p>',
                 'sender' => ['email'=>$from_email, 'name'=>$from_name],
             ];
         }
