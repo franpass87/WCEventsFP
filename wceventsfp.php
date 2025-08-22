@@ -16,6 +16,108 @@ define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 /**
+ * Safe translation function that works even if textdomain isn't loaded
+ * Prevents WSOD when translation functions are called too early
+ * 
+ * @param string $text Text to translate
+ * @param string $textdomain Text domain
+ * @return string Translated text or fallback
+ */
+function wcefp_safe_translate($text, $textdomain = 'wceventsfp') {
+    if (function_exists('__') && function_exists('is_textdomain_loaded')) {
+        // Check if textdomain is loaded, if not, load it
+        if (!is_textdomain_loaded($textdomain)) {
+            load_plugin_textdomain($textdomain, false, dirname(plugin_basename(__FILE__)) . '/languages');
+        }
+        return __($text, $textdomain);
+    }
+    return $text; // Fallback to original text
+}
+
+/**
+ * Safe sprintf translation function
+ * 
+ * @param string $text Text to translate with placeholders
+ * @param mixed ...$args Arguments for sprintf
+ * @return string Translated and formatted text
+ */
+function wcefp_safe_sprintf($text, ...$args) {
+    $translated = wcefp_safe_translate($text);
+    return sprintf($translated, ...$args);
+}
+
+/**
+ * Emergency error display - works even when WordPress admin notices fail
+ * Creates a simple HTML error message that's always visible
+ * 
+ * @param string $message Error message to display
+ * @param string $type Error type (error, warning, info)
+ */
+function wcefp_emergency_error_display($message, $type = 'error') {
+    // Store error for later display
+    $GLOBALS['wcefp_emergency_errors'] = $GLOBALS['wcefp_emergency_errors'] ?? [];
+    $GLOBALS['wcefp_emergency_errors'][] = [
+        'message' => $message,
+        'type' => $type
+    ];
+    
+    // Hook to display errors as soon as possible
+    if (!has_action('wp_head', 'wcefp_display_emergency_errors')) {
+        add_action('wp_head', 'wcefp_display_emergency_errors', 1);
+        add_action('admin_head', 'wcefp_display_emergency_errors', 1);
+    }
+}
+
+/**
+ * Display emergency errors in HTML head - always visible
+ */
+function wcefp_display_emergency_errors() {
+    if (empty($GLOBALS['wcefp_emergency_errors'])) return;
+    
+    echo '<style>
+    .wcefp-emergency-error {
+        position: fixed !important;
+        top: 32px !important;
+        left: 0 !important;
+        width: 100% !important;
+        background: #dc3232 !important;
+        color: white !important;
+        padding: 15px !important;
+        z-index: 999999 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif !important;
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,.13) !important;
+    }
+    .wcefp-emergency-error.warning {
+        background: #ffb900 !important;
+        color: #000 !important;
+    }
+    .wcefp-emergency-error strong {
+        font-weight: 600 !important;
+    }
+    .wcefp-emergency-error-close {
+        float: right !important;
+        background: none !important;
+        border: none !important;
+        color: inherit !important;
+        font-size: 18px !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        margin-left: 15px !important;
+    }
+    </style>';
+    
+    foreach ($GLOBALS['wcefp_emergency_errors'] as $index => $error) {
+        $class = 'wcefp-emergency-error ' . $error['type'];
+        echo '<div class="' . $class . '" id="wcefp-error-' . $index . '">';
+        echo '<button class="wcefp-emergency-error-close" onclick="document.getElementById(\'wcefp-error-' . $index . '\').style.display=\'none\'">&times;</button>';
+        echo '<strong>WCEventsFP Plugin Error:</strong> ' . esc_html($error['message']);
+        echo '</div>';
+    }
+}
+
+/**
  * Convert memory limit string to bytes
  * 
  * @param string $val Memory limit value (e.g., '128M', '1G')
@@ -59,8 +161,14 @@ register_activation_hook(__FILE__, function () {
     try {
         // Early PHP version check to prevent WSOD
         if (version_compare(PHP_VERSION, '7.4.0', '<')) {
-            error_log('WCEFP activation error: PHP 7.4+ required, current version: ' . PHP_VERSION);
-            wp_die(__('WCEventsFP requires PHP 7.4 or higher. Current version: ' . PHP_VERSION, 'wceventsfp'));
+            $error_msg = 'WCEventsFP requires PHP 7.4 or higher. Current version: ' . PHP_VERSION;
+            error_log('WCEFP activation error: ' . $error_msg);
+            // Use safe error display that works even if translations fail
+            if (function_exists('wp_die')) {
+                wp_die(wcefp_safe_translate($error_msg));
+            } else {
+                die($error_msg);
+            }
         }
 
         // Check critical PHP extensions
@@ -72,8 +180,13 @@ register_activation_hook(__FILE__, function () {
             }
         }
         if (!empty($missing_extensions)) {
-            error_log('WCEFP activation error: Missing PHP extensions: ' . implode(', ', $missing_extensions));
-            wp_die(__('WCEventsFP requires PHP extensions: ' . implode(', ', $missing_extensions), 'wceventsfp'));
+            $error_msg = 'WCEventsFP requires PHP extensions: ' . implode(', ', $missing_extensions);
+            error_log('WCEFP activation error: ' . $error_msg);
+            if (function_exists('wp_die')) {
+                wp_die(wcefp_safe_translate($error_msg));
+            } else {
+                die($error_msg);
+            }
         }
 
         // Check if WooCommerce is available before doing anything
@@ -196,10 +309,16 @@ register_activation_hook(__FILE__, function () {
 
 add_action('plugins_loaded', function () {
     try {
-        load_plugin_textdomain('wceventsfp', false, dirname(plugin_basename(__FILE__)) . '/languages');
+        // Load textdomain early and safely
+        $textdomain_loaded = load_plugin_textdomain('wceventsfp', false, dirname(plugin_basename(__FILE__)) . '/languages');
+        if (!$textdomain_loaded) {
+            error_log('WCEFP: Could not load textdomain - translations may not work properly');
+        }
+        
         if (!class_exists('WooCommerce')) {
             add_action('admin_notices', function () {
-                echo '<div class="notice notice-error"><p><strong>WCEventsFP</strong> richiede WooCommerce attivo.</p></div>';
+                $message = wcefp_safe_translate('WCEventsFP richiede WooCommerce attivo.', 'wceventsfp');
+                echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . esc_html($message) . '</p></div>';
             });
             return;
         }
@@ -218,8 +337,11 @@ add_action('plugins_loaded', function () {
                     error_log('WCEFP Warning: Low memory available (' . round($available_memory / 1024 / 1024, 1) . 'MB). Consider increasing memory_limit.');
                     if (is_admin()) {
                         add_action('admin_notices', function () use ($available_memory) {
-                            echo '<div class="notice notice-warning"><p><strong>WCEventsFP:</strong> Memoria disponibile bassa (' . 
-                                 round($available_memory / 1024 / 1024, 1) . 'MB). Considera di aumentare memory_limit per prestazioni ottimali.</p></div>';
+                            $message = wcefp_safe_sprintf(
+                                'Memoria disponibile bassa (%sMB). Considera di aumentare memory_limit per prestazioni ottimali.',
+                                round($available_memory / 1024 / 1024, 1)
+                            );
+                            echo '<div class="notice notice-warning"><p><strong>WCEventsFP:</strong> ' . esc_html($message) . '</p></div>';
                         });
                     }
                 }
@@ -264,17 +386,19 @@ add_action('plugins_loaded', function () {
             } catch (Exception $e) {
                 error_log('WCEFP: Failed to load ' . $class_file . ': ' . $e->getMessage());
                 add_action('admin_notices', function() use ($class_file, $e) {
-                    echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
-                         esc_html(sprintf(__('Errore caricamento classe %s: %s', 'wceventsfp'), basename($class_file), $e->getMessage())) . 
-                         '</p></div>';
+                    $message = wcefp_safe_sprintf(
+                        'Errore caricamento classe %s: %s',
+                        basename($class_file),
+                        $e->getMessage()
+                    );
+                    echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . esc_html($message) . '</p></div>';
                 });
             }
         } else {
             error_log('WCEFP: Missing required class file: ' . $class_file);
             add_action('admin_notices', function() use ($class_file) {
-                echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
-                     esc_html(sprintf(__('File classe mancante: %s', 'wceventsfp'), $class_file)) . 
-                     '</p></div>';
+                $message = wcefp_safe_sprintf('File classe mancante: %s', $class_file);
+                echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . esc_html($message) . '</p></div>';
             });
         }
     }
@@ -312,9 +436,8 @@ add_action('plugins_loaded', function () {
         } catch (Exception $e) {
             error_log('WCEFP Admin initialization error: ' . $e->getMessage());
             add_action('admin_notices', function() use ($e) {
-                echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
-                     esc_html(sprintf(__('Errore di inizializzazione: %s', 'wceventsfp'), $e->getMessage())) . 
-                     '</p></div>';
+                $message = wcefp_safe_sprintf('Errore di inizializzazione: %s', $e->getMessage());
+                echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . esc_html($message) . '</p></div>';
             });
         }
     }
@@ -325,37 +448,49 @@ add_action('plugins_loaded', function () {
     } catch (Exception $e) {
         error_log('WCEFP Plugin initialization error: ' . $e->getMessage());
         add_action('admin_notices', function() use ($e) {
-            echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
-                 esc_html(sprintf(__('Errore di inizializzazione plugin: %s', 'wceventsfp'), $e->getMessage())) . 
-                 '</p></div>';
+            $message = wcefp_safe_sprintf('Errore di inizializzazione plugin: %s', $e->getMessage());
+            echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . esc_html($message) . '</p></div>';
         });
         return; // Stop further execution
     }
 } catch (Error $e) {
     // Handle fatal errors (PHP 7+ Error class)
-    error_log('WCEFP Fatal Error in plugins_loaded: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-    add_action('admin_notices', function() use ($e) {
-        echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
-             esc_html(__('Errore fatale durante il caricamento del plugin. Controlla i log per dettagli.', 'wceventsfp')) . 
-             '</p></div>';
+    $error_msg = 'WCEFP Fatal Error in plugins_loaded: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine();
+    error_log($error_msg);
+    
+    $user_message = wcefp_safe_translate('Errore fatale durante il caricamento del plugin. Controlla i log per dettagli.');
+    
+    // Show both WordPress admin notice AND emergency error display
+    add_action('admin_notices', function() use ($user_message) {
+        echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . esc_html($user_message) . '</p></div>';
     });
+    
+    // Emergency error display that works even if admin notices fail
+    wcefp_emergency_error_display($user_message . ' Dettagli: ' . $e->getMessage());
     
     // Attempt to deactivate plugin on fatal error to prevent WSOD
     if (function_exists('deactivate_plugins') && is_admin()) {
         deactivate_plugins(plugin_basename(__FILE__));
         if (function_exists('wp_die')) {
-            wp_die(__('WCEventsFP è stato disattivato automaticamente a causa di un errore fatale. Controlla i log del server per maggiori dettagli.', 'wceventsfp'));
+            $deactivation_message = wcefp_safe_translate('WCEventsFP è stato disattivato automaticamente a causa di un errore fatale. Controlla i log del server per maggiori dettagli.');
+            wp_die($deactivation_message);
         }
     }
     return;
 } catch (Exception $e) {
     // Handle regular exceptions
-    error_log('WCEFP Exception in plugins_loaded: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-    add_action('admin_notices', function() use ($e) {
-        echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
-             esc_html(sprintf(__('Errore durante il caricamento del plugin: %s', 'wceventsfp'), $e->getMessage())) . 
-             '</p></div>';
+    $error_msg = 'WCEFP Exception in plugins_loaded: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine();
+    error_log($error_msg);
+    
+    $user_message = wcefp_safe_sprintf('Errore durante il caricamento del plugin: %s', $e->getMessage());
+    
+    // Show both WordPress admin notice AND emergency error display
+    add_action('admin_notices', function() use ($user_message) {
+        echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . esc_html($user_message) . '</p></div>';
     });
+    
+    // Emergency error display
+    wcefp_emergency_error_display($user_message);
     return;
 }
 });
