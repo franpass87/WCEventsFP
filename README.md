@@ -1,10 +1,38 @@
-# WCEventsFP (v2.0.0) - Enterprise Booking Platform
+# WCEventsFP (v2.0.1) - Enterprise Booking Platform
 
 **Sistema di prenotazione enterprise per competere direttamente con RegionDo, Bokun e GetYourGuide**
 
 Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità di livello enterprise per massimizzare le conversioni, gestire risorse operative e automatizzare la distribuzione multi-canale.
 
-## 🚀 Nuove Funzionalità v2.0.1 - Competitive Edge
+## 🚀 Nuove Funzionalità v2.0.1 - System Improvements
+
+### 🛠️ Enhanced Error Handling & Debugging
+- **Advanced Error System**: Comprehensive error management with user-friendly messages and detailed logging
+- **Developer Debug Tools**: Real-time debugging panel with performance monitoring, SQL query logging, and system diagnostics
+- **Admin Bar Integration**: Quick access to debug tools and system status from WordPress admin bar
+- **Error Recovery**: Automatic error handling with fallback mechanisms and detailed error context
+
+### 🌍 Advanced Internationalization (i18n)
+- **Global Market Support**: 10 supported locales (EN, IT, ES, FR, DE, PT-BR, JP, KO, ZH-CN)
+- **Dynamic Language Switching**: Client-side language switching with localStorage preference saving
+- **Locale-Specific Formatting**: Automatic date, time, price, and number formatting based on user locale
+- **RTL Language Support**: Full right-to-left language support for Arabic, Hebrew, and Persian
+- **Emergency Translations**: Fallback translation system for critical booking terms
+
+### 📡 Enhanced Webhook System
+- **Comprehensive Event Coverage**: Webhooks for all booking lifecycle events, payments, and reviews
+- **Reliable Delivery**: Queue-based processing with retry logic and exponential backoff
+- **Signature Verification**: HMAC-SHA256 signature verification for security
+- **Admin Interface**: Webhook management, testing, and monitoring through admin panel
+- **Performance Optimized**: Asynchronous processing to avoid blocking user interactions
+
+### 🧪 Improved Development Experience
+- **Fixed Test Infrastructure**: Resolved Jest configuration issues with proper jQuery mocking
+- **Performance Monitoring**: Core Web Vitals tracking and real-time performance metrics
+- **System Health Checks**: Automated monitoring with alerts for system issues
+- **Code Quality Tools**: Enhanced linting, testing, and debugging capabilities
+
+## 🚀 Nuove Funzionalità v2.0.0 - Competitive Edge
 
 ### 🏗️ Sistema di Gestione Risorse
 - **Guide e Staff**: Gestione completa delle guide con competenze, disponibilità e costi

@@ -1,5 +1,47 @@
 # 📜 Changelog – WCEventsFP
 
+[2.0.1] – 2025-08-22
+
+## Added
+
+🛠️ **Enhanced Error Handling System**: Comprehensive error management with user-friendly messages, developer debugging tools, and detailed logging for better troubleshooting.
+
+🌍 **Advanced Internationalization (i18n)**: Enhanced multi-language support for global markets with 10 supported locales, automatic translations, dynamic language switching, and locale-specific formatting for dates, prices, and numbers.
+
+🔧 **Developer Debug Tools**: Advanced debugging utilities including performance monitoring, SQL query logging, system information display, admin bar integration, and real-time debug panel with tabbed interface.
+
+📡 **Enhanced Webhook System**: Robust webhook management for third-party integrations with retry logic, queue processing, comprehensive event coverage (booking lifecycle, payments, reviews), signature verification, and detailed logging.
+
+🧪 **Improved Testing Infrastructure**: Fixed JavaScript test framework with proper Jest configuration, jQuery mocking, and comprehensive test coverage for advanced features.
+
+## Enhanced
+
+🔍 **Error Logging**: Database-backed error logging with admin interface for reviewing and managing system errors.
+
+🌐 **Global Market Ready**: Support for multiple currencies (USD, EUR, GBP, JPY, KRW, CNY, BRL), RTL languages, and locale-specific date/time formats.
+
+⚡ **Performance Monitoring**: Real-time performance tracking with Core Web Vitals monitoring, memory usage tracking, and query performance analysis.
+
+🔌 **API Integration**: Enhanced webhook system supports all major booking events with reliable delivery, retry mechanisms, and comprehensive error handling.
+
+## Developer Experience
+
+🎯 **Debug Panel**: Floating debug panel accessible via Alt+D with tabs for logs, performance metrics, system info, and database queries.
+
+📊 **System Monitoring**: Real-time monitoring of memory usage, query counts, loading times, and system health metrics.
+
+🧹 **Code Quality**: Improved test coverage, better error handling, and enhanced logging for easier debugging and maintenance.
+
+## Fixed
+
+✅ **JavaScript Tests**: Fixed test infrastructure issues and improved test reliability.
+
+🔧 **Class Loading**: Proper loading order for new enhancement classes in main plugin file.
+
+🌍 **Language Support**: Enhanced language detection and fallback mechanisms for better international user experience.
+
+---
+
 [1.8.1] – 2025-08-21
 
 ## Added
