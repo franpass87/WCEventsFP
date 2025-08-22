@@ -23,18 +23,32 @@ define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
  */
 function wcefp_convert_memory_to_bytes($val) {
     $val = trim($val);
-    if (empty($val)) return 0;
+    if (empty($val) || !is_string($val)) return 0;
+    
+    // Handle numeric-only values (already in bytes)
+    if (is_numeric($val)) {
+        return (int)$val;
+    }
     
     $last = strtolower($val[strlen($val)-1]);
     $num = (int)$val;
     
+    // Validate we have a positive number
+    if ($num <= 0) return 0;
+    
     switch($last) {
         case 'g':
             $num *= 1024;
+            // fallthrough
         case 'm':
             $num *= 1024;
+            // fallthrough 
         case 'k':
             $num *= 1024;
+            break;
+        default:
+            // If no suffix, treat as bytes
+            break;
     }
     
     return $num;
@@ -43,6 +57,25 @@ function wcefp_convert_memory_to_bytes($val) {
 /* ---- Attivazione: tabelle principali ---- */
 register_activation_hook(__FILE__, function () {
     try {
+        // Early PHP version check to prevent WSOD
+        if (version_compare(PHP_VERSION, '7.4.0', '<')) {
+            error_log('WCEFP activation error: PHP 7.4+ required, current version: ' . PHP_VERSION);
+            wp_die(__('WCEventsFP requires PHP 7.4 or higher. Current version: ' . PHP_VERSION, 'wceventsfp'));
+        }
+
+        // Check critical PHP extensions
+        $required_extensions = ['mysqli', 'json', 'mbstring'];
+        $missing_extensions = [];
+        foreach ($required_extensions as $ext) {
+            if (!extension_loaded($ext)) {
+                $missing_extensions[] = $ext;
+            }
+        }
+        if (!empty($missing_extensions)) {
+            error_log('WCEFP activation error: Missing PHP extensions: ' . implode(', ', $missing_extensions));
+            wp_die(__('WCEventsFP requires PHP extensions: ' . implode(', ', $missing_extensions), 'wceventsfp'));
+        }
+
         // Check if WooCommerce is available before doing anything
         if (!class_exists('WooCommerce') && !function_exists('WC')) {
             // Log the issue but don't prevent activation - user will see admin notice later
@@ -162,33 +195,38 @@ register_activation_hook(__FILE__, function () {
 });
 
 add_action('plugins_loaded', function () {
-    load_plugin_textdomain('wceventsfp', false, dirname(plugin_basename(__FILE__)) . '/languages');
-    if (!class_exists('WooCommerce')) {
-        add_action('admin_notices', function () {
-            echo '<div class="notice notice-error"><p><strong>WCEventsFP</strong> richiede WooCommerce attivo.</p></div>';
-        });
-        return;
-    }
+    try {
+        load_plugin_textdomain('wceventsfp', false, dirname(plugin_basename(__FILE__)) . '/languages');
+        if (!class_exists('WooCommerce')) {
+            add_action('admin_notices', function () {
+                echo '<div class="notice notice-error"><p><strong>WCEventsFP</strong> richiede WooCommerce attivo.</p></div>';
+            });
+            return;
+        }
 
-    // Resource availability check to prevent memory issues
-    $memory_limit = ini_get('memory_limit');
-    if ($memory_limit && $memory_limit !== '-1') {
-        // Convert memory limit to bytes (simplified version of wp_convert_hr_to_bytes)
-        $memory_limit_bytes = wcefp_convert_memory_to_bytes($memory_limit);
-        $memory_usage = memory_get_usage(true);
-        $available_memory = $memory_limit_bytes - $memory_usage;
-        
-        // If less than 64MB available, show warning but continue
-        if ($available_memory < 67108864) { // 64MB
-            error_log('WCEFP Warning: Low memory available (' . round($available_memory / 1024 / 1024, 1) . 'MB). Consider increasing memory_limit.');
-            if (is_admin()) {
-                add_action('admin_notices', function () use ($available_memory) {
-                    echo '<div class="notice notice-warning"><p><strong>WCEventsFP:</strong> Memoria disponibile bassa (' . 
-                         round($available_memory / 1024 / 1024, 1) . 'MB). Considera di aumentare memory_limit per prestazioni ottimali.</p></div>';
-                });
+        // Resource availability check to prevent memory issues
+        $memory_limit = ini_get('memory_limit');
+        if ($memory_limit && $memory_limit !== '-1') {
+            try {
+                // Convert memory limit to bytes (simplified version of wp_convert_hr_to_bytes)
+                $memory_limit_bytes = wcefp_convert_memory_to_bytes($memory_limit);
+                $memory_usage = memory_get_usage(true);
+                $available_memory = $memory_limit_bytes - $memory_usage;
+                
+                // If less than 64MB available, show warning but continue
+                if ($available_memory < 67108864) { // 64MB
+                    error_log('WCEFP Warning: Low memory available (' . round($available_memory / 1024 / 1024, 1) . 'MB). Consider increasing memory_limit.');
+                    if (is_admin()) {
+                        add_action('admin_notices', function () use ($available_memory) {
+                            echo '<div class="notice notice-warning"><p><strong>WCEventsFP:</strong> Memoria disponibile bassa (' . 
+                                 round($available_memory / 1024 / 1024, 1) . 'MB). Considera di aumentare memory_limit per prestazioni ottimali.</p></div>';
+                        });
+                    }
+                }
+            } catch (Exception $e) {
+                error_log('WCEFP: Memory check failed: ' . $e->getMessage() . ' - continuing anyway');
             }
         }
-    }
 
     // Include core classes with error handling
     $core_classes = [
@@ -293,11 +331,48 @@ add_action('plugins_loaded', function () {
         });
         return; // Stop further execution
     }
+} catch (Error $e) {
+    // Handle fatal errors (PHP 7+ Error class)
+    error_log('WCEFP Fatal Error in plugins_loaded: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    add_action('admin_notices', function() use ($e) {
+        echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
+             esc_html(__('Errore fatale durante il caricamento del plugin. Controlla i log per dettagli.', 'wceventsfp')) . 
+             '</p></div>';
+    });
+    
+    // Attempt to deactivate plugin on fatal error to prevent WSOD
+    if (function_exists('deactivate_plugins') && is_admin()) {
+        deactivate_plugins(plugin_basename(__FILE__));
+        if (function_exists('wp_die')) {
+            wp_die(__('WCEventsFP è stato disattivato automaticamente a causa di un errore fatale. Controlla i log del server per maggiori dettagli.', 'wceventsfp'));
+        }
+    }
+    return;
+} catch (Exception $e) {
+    // Handle regular exceptions
+    error_log('WCEFP Exception in plugins_loaded: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    add_action('admin_notices', function() use ($e) {
+        echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
+             esc_html(sprintf(__('Errore durante il caricamento del plugin: %s', 'wceventsfp'), $e->getMessage())) . 
+             '</p></div>';
+    });
+    return;
+}
 });
 
 function WCEFP() {
     static $inst = null;
-    if ($inst === null) $inst = new WCEFP_Plugin();
+    if ($inst === null) {
+        try {
+            $inst = new WCEFP_Plugin();
+        } catch (Error $e) {
+            error_log('WCEFP: Fatal error creating plugin instance: ' . $e->getMessage());
+            return null;
+        } catch (Exception $e) {
+            error_log('WCEFP: Exception creating plugin instance: ' . $e->getMessage());
+            return null;
+        }
+    }
     return $inst;
 }
 
