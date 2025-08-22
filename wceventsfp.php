@@ -166,7 +166,9 @@ function wcefp_convert_memory_to_bytes($val) {
  */
 function wcefp_safe_activation_fallback() {
     // Only do essential setup without complex dependencies
-    
+
+    wcefp_clear_transients();
+
     // Set basic plugin options
     add_option('wcefp_version', '2.1.0');
     add_option('wcefp_activated_at', current_time('mysql'));
@@ -437,6 +439,36 @@ function wcefp_debug_log($message) {
 }
 
 /**
+ * Clear all plugin-specific transients and cached data.
+ *
+ * @return void
+ */
+function wcefp_clear_transients() {
+    $cache_file = WCEFP_PLUGIN_DIR . 'includes/class-wcefp-cache.php';
+
+    if (file_exists($cache_file)) {
+        require_once $cache_file;
+
+        if (class_exists('WCEFP_Cache')) {
+            WCEFP_Cache::clear_all();
+        }
+    }
+}
+
+/**
+ * Flush transients when the plugin version changes.
+ *
+ * @return void
+ */
+function wcefp_maybe_clear_transients_on_load() {
+    if (get_option('wcefp_version') !== WCEFP_VERSION) {
+        wcefp_clear_transients();
+        update_option('wcefp_version', WCEFP_VERSION);
+    }
+}
+add_action('plugins_loaded', 'wcefp_maybe_clear_transients_on_load');
+
+/**
  * Get the main plugin instance - simplified, bulletproof approach
  * 
  * @return WCEFP_Simple_Plugin
@@ -460,7 +492,9 @@ if (!function_exists('register_activation_hook') || !function_exists('register_d
 register_activation_hook(__FILE__, function() {
     try {
         wcefp_debug_log('Starting enhanced plugin activation');
-        
+
+        wcefp_clear_transients();
+
         // Essential checks only
         if (version_compare(PHP_VERSION, '7.4.0', '<')) {
             wp_die(sprintf('WCEventsFP requires PHP 7.4 or higher. Current version: %s', PHP_VERSION), 'Plugin Activation Error');
@@ -527,7 +561,9 @@ register_activation_hook(__FILE__, function() {
  */
 function wcefp_minimal_activation_fallback() {
     wcefp_debug_log('Starting minimal activation fallback');
-    
+
+    wcefp_clear_transients();
+
     // Set basic plugin options
     add_option('wcefp_version', '2.1.0');
     add_option('wcefp_activated_at', current_time('mysql'));
