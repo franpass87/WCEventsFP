@@ -201,9 +201,14 @@ class Plugin {
         
         foreach ($service_providers as $provider_class) {
             if (class_exists($provider_class)) {
-                $provider = new $provider_class($this->container);
-                if ($provider instanceof ServiceProvider) {
-                    $provider->register();
+                try {
+                    $provider = new $provider_class($this->container);
+                    if ($provider instanceof ServiceProvider) {
+                        $provider->register();
+                        $provider->boot();
+                    }
+                } catch (\Exception $e) {
+                    Logger::error("Failed to initialize service provider {$provider_class}: " . $e->getMessage());
                 }
             }
         }
