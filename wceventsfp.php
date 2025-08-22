@@ -307,7 +307,9 @@ register_activation_hook(__FILE__, function () {
     }
 });
 
-add_action('plugins_loaded', function () {
+// Only initialize when WordPress is ready and this is not a plugin scanning context
+if (defined('ABSPATH') && !defined('WP_INSTALLING') && did_action('plugins_loaded') === 0) {
+    add_action('plugins_loaded', function () {
     try {
         // Load textdomain early and safely
         $textdomain_loaded = load_plugin_textdomain('wceventsfp', false, dirname(plugin_basename(__FILE__)) . '/languages');
@@ -445,6 +447,35 @@ add_action('plugins_loaded', function () {
     // Initialize main plugin with error handling
     try {
         WCEFP()->init();
+        // Mark plugin as fully loaded to enable additional hooks
+        define('WCEFP_PLUGIN_LOADED', true);
+        
+        // Register additional hooks that need to be active when plugin is loaded
+        add_action('add_meta_boxes', 'wcefp_add_days_metabox', 10, 2);
+        add_action('save_post_product', 'wcefp_save_days_metabox');
+        
+        add_action('admin_head', function(){ ?>
+<style>
+  #wcefp_product_data .form-field .wrap .wp-editor-wrap{ max-width: 900px; }
+  #_wcefp_languages{ max-width: 600px; }
+  #_wcefp_languages[data-hint]::after{
+    content: attr(data-hint);
+    display:block; font-size:12px; opacity:.65; margin-top:4px;
+  }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  var el = document.getElementById('_wcefp_languages');
+  if(!el) return;
+  function hint(){
+    var v = (el.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+    el.setAttribute('data-hint', v.length ? ('Badge: '+v.join(' · ')) : 'Esempio: IT, EN');
+  }
+  el.addEventListener('input', hint); hint();
+});
+</script>
+<?php });
+        
     } catch (Exception $e) {
         error_log('WCEFP Plugin initialization error: ' . $e->getMessage());
         add_action('admin_notices', function() use ($e) {
@@ -494,6 +525,7 @@ add_action('plugins_loaded', function () {
     return;
 }
 });
+}
 
 function WCEFP() {
     static $inst = null;
@@ -1919,8 +1951,6 @@ function wcefp_get_weekday_labels() {
 
 /* ---- Meta box: Giorni disponibili ---- */
 
-add_action('add_meta_boxes', 'wcefp_add_days_metabox', 10, 2);
-
 /**
  * Register meta box for available weekdays.
  *
@@ -1991,26 +2021,4 @@ function wcefp_save_days_metabox($post_id){
         delete_post_meta($post_id, '_wcefp_days');
     }
 }
-add_action('save_post_product', 'wcefp_save_days_metabox');
 
-add_action('admin_head', function(){ ?>
-<style>
-  #wcefp_product_data .form-field .wrap .wp-editor-wrap{ max-width: 900px; }
-  #_wcefp_languages{ max-width: 600px; }
-  #_wcefp_languages[data-hint]::after{
-    content: attr(data-hint);
-    display:block; font-size:12px; opacity:.65; margin-top:4px;
-  }
-</style>
-<script>
-document.addEventListener('DOMContentLoaded',function(){
-  var el = document.getElementById('_wcefp_languages');
-  if(!el) return;
-  function hint(){
-    var v = (el.value||'').split(',').map(s=>s.trim()).filter(Boolean);
-    el.setAttribute('data-hint', v.length ? ('Badge: '+v.join(' · ')) : 'Esempio: IT, EN');
-  }
-  el.addEventListener('input', hint); hint();
-});
-</script>
-<?php });
