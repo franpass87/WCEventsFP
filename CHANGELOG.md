@@ -1,6 +1,32 @@
 # 📜 Changelog – WCEventsFP
 
-[2.1.0] – 2025-08-22
+## [2.1.1] – 2025-01-20
+
+### WSOD Issue Complete Resolution & Documentation Consolidation 📚
+
+#### Added
+- 📖 **Comprehensive Documentation**: Consolidated all WSOD troubleshooting, installation guides, and technical documentation into single `DOCUMENTATION.md` file
+- 📋 **Simplified README**: Streamlined main README with focus on quick start and WSOD prevention
+- 🧪 **Enhanced Test Instructions**: Clear pre-activation testing procedures to prevent WSOD issues
+- 🆘 **Emergency Procedures**: Detailed emergency recovery procedures in consolidated documentation
+
+#### Fixed  
+- 🛡️ **WSOD Prevention**: Identified and resolved remaining edge cases in plugin initialization that could cause WSOD despite existing prevention system
+- 🔧 **Setup Wizard**: Improved reliability of setup wizard integration after plugin activation
+- 📝 **Version Consistency**: Updated all version references to 2.1.1 across plugin files
+
+#### Enhanced
+- 📖 **Documentation Structure**: All WSOD-related files consolidated into comprehensive guide with clear navigation
+- 🚀 **Installation Process**: Clearer pre-activation testing requirements and setup procedures
+- 🆘 **Support Information**: Centralized support resources and troubleshooting procedures
+
+#### Removed
+- 🗑️ **Scattered WSOD Files**: Consolidated multiple WSOD troubleshooting files into unified documentation
+- 📄 **Redundant Documentation**: Removed duplicate information across multiple markdown files
+
+---
+
+## [2.1.0] – 2025-08-22
 
 ## Major WSOD Cleanup & Architecture Improvements 🛡️
 

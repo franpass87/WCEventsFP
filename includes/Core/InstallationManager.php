@@ -9,8 +9,6 @@
 
 namespace WCEFP\Core;
 
-use WCEFP\Utils\Logger;
-
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -124,7 +122,7 @@ class InstallationManager {
      */
     public function start_progressive_installation() {
         try {
-            Logger::info('Starting progressive installation');
+            $this->safe_log('Starting progressive installation');
             
             // Update status
             $this->installation_status = 'in_progress';
@@ -138,11 +136,11 @@ class InstallationManager {
                 $this->schedule_next_installation_phase();
             }
             
-            Logger::info('Progressive installation phase completed');
+            $this->safe_log('Progressive installation phase completed');
             return true;
             
         } catch (\Exception $e) {
-            Logger::error('Progressive installation failed: ' . $e->getMessage());
+            $this->safe_log('Progressive installation failed: ' . $e->getMessage(), 'error');
             $this->installation_status = 'failed';
             update_option('wcefp_installation_status', $this->installation_status);
             return false;
@@ -154,7 +152,7 @@ class InstallationManager {
      * @return void
      */
     private function install_core_features() {
-        Logger::debug('Installing core features');
+        $this->safe_log('Installing core features', 'debug');
         
         // Essential database tables
         $this->create_essential_tables();
@@ -165,7 +163,7 @@ class InstallationManager {
         // Mark core as installed
         update_option('wcefp_core_installed', true);
         
-        Logger::debug('Core features installed successfully');
+        $this->safe_log('Core features installed successfully', 'debug');
     }
     
     /**
@@ -186,9 +184,9 @@ class InstallationManager {
         foreach ($tables as $table_name => $sql) {
             try {
                 dbDelta($sql);
-                Logger::debug("Created table: {$table_name}");
+                $this->safe_log("Created table: {$table_name}", 'debug');
             } catch (\Exception $e) {
-                Logger::error("Failed to create table {$table_name}: " . $e->getMessage());
+                $this->safe_log("Failed to create table {$table_name}: " . $e->getMessage(), 'error');
                 throw $e;
             }
         }
@@ -265,7 +263,7 @@ class InstallationManager {
         // Schedule installation of additional features
         if (!wp_next_scheduled('wcefp_continue_installation')) {
             wp_schedule_single_event(time() + 30, 'wcefp_continue_installation');
-            Logger::debug('Scheduled next installation phase in 30 seconds');
+            $this->safe_log('Scheduled next installation phase in 30 seconds', 'debug');
         }
     }
     
@@ -624,6 +622,22 @@ class InstallationManager {
         $this->installation_status = 'not_started';
         $this->enabled_features = ['core'];
         
-        Logger::info('Installation reset completed');
+        $this->safe_log('Installation reset completed');
+    }
+    
+    /**
+     * Safe logging method that doesn't depend on Logger class
+     * 
+     * @param string $message Log message
+     * @param string $level Log level (info, error, debug)
+     * @return void
+     */
+    private function safe_log($message, $level = 'info') {
+        // Use the existing wcefp_debug_log function which is already loaded
+        if (function_exists('wcefp_debug_log')) {
+            wcefp_debug_log("[InstallationManager][{$level}] {$message}");
+        } elseif (function_exists('error_log')) {
+            error_log("WCEventsFP InstallationManager [{$level}]: {$message}");
+        }
     }
 }
