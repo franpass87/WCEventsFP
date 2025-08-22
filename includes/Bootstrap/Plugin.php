@@ -1,0 +1,322 @@
+<?php
+/**
+ * Main Plugin Bootstrap Class
+ * 
+ * @package WCEFP
+ * @subpackage Bootstrap
+ * @since 2.0.1
+ */
+
+namespace WCEFP\Bootstrap;
+
+use WCEFP\Core\Container;
+use WCEFP\Core\ServiceProvider;
+use WCEFP\Utils\Logger;
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * Main plugin bootstrap class responsible for initialization and dependency management.
+ */
+class Plugin {
+    
+    /**
+     * Plugin version
+     * 
+     * @var string
+     */
+    private $version = '2.0.1';
+    
+    /**
+     * Dependency injection container
+     * 
+     * @var Container
+     */
+    private $container;
+    
+    /**
+     * Plugin file path
+     * 
+     * @var string
+     */
+    private $plugin_file;
+    
+    /**
+     * Plugin directory path
+     * 
+     * @var string
+     */
+    private $plugin_dir;
+    
+    /**
+     * Plugin URL
+     * 
+     * @var string
+     */
+    private $plugin_url;
+    
+    /**
+     * Constructor
+     * 
+     * @param string $plugin_file Main plugin file path
+     */
+    public function __construct($plugin_file) {
+        $this->plugin_file = $plugin_file;
+        $this->plugin_dir = plugin_dir_path($plugin_file);
+        $this->plugin_url = plugin_dir_url($plugin_file);
+        
+        $this->container = new Container();
+        
+        // Register core services
+        $this->register_core_services();
+    }
+    
+    /**
+     * Initialize the plugin
+     * 
+     * @return void
+     */
+    public function init() {
+        try {
+            // Check dependencies
+            if (!$this->check_dependencies()) {
+                return;
+            }
+            
+            // Load textdomain
+            $this->load_textdomain();
+            
+            // Initialize services
+            $this->init_services();
+            
+            // Register hooks
+            $this->register_hooks();
+            
+            Logger::info('WCEventsFP plugin initialized successfully');
+            
+        } catch (\Exception $e) {
+            Logger::error('Failed to initialize WCEventsFP plugin: ' . $e->getMessage());
+            $this->handle_initialization_error($e);
+        }
+    }
+    
+    /**
+     * Get plugin version
+     * 
+     * @return string
+     */
+    public function get_version() {
+        return $this->version;
+    }
+    
+    /**
+     * Get plugin directory path
+     * 
+     * @return string
+     */
+    public function get_plugin_dir() {
+        return $this->plugin_dir;
+    }
+    
+    /**
+     * Get plugin URL
+     * 
+     * @return string
+     */
+    public function get_plugin_url() {
+        return $this->plugin_url;
+    }
+    
+    /**
+     * Get dependency injection container
+     * 
+     * @return Container
+     */
+    public function get_container() {
+        return $this->container;
+    }
+    
+    /**
+     * Register core services in the container
+     * 
+     * @return void
+     */
+    private function register_core_services() {
+        $this->container->singleton('plugin', $this);
+        $this->container->singleton('logger', Logger::class);
+    }
+    
+    /**
+     * Check plugin dependencies
+     * 
+     * @return bool
+     */
+    private function check_dependencies() {
+        // Check WooCommerce
+        if (!class_exists('WooCommerce')) {
+            add_action('admin_notices', [$this, 'woocommerce_missing_notice']);
+            return false;
+        }
+        
+        // Check PHP version
+        if (version_compare(PHP_VERSION, '7.4.0', '<')) {
+            add_action('admin_notices', [$this, 'php_version_notice']);
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Load plugin textdomain
+     * 
+     * @return void
+     */
+    private function load_textdomain() {
+        $loaded = load_plugin_textdomain(
+            'wceventsfp',
+            false,
+            dirname(plugin_basename($this->plugin_file)) . '/languages'
+        );
+        
+        if (!$loaded) {
+            Logger::warning('Failed to load textdomain - translations may not work properly');
+        }
+    }
+    
+    /**
+     * Initialize plugin services
+     * 
+     * @return void
+     */
+    private function init_services() {
+        $service_providers = [
+            \WCEFP\Admin\AdminServiceProvider::class,
+            \WCEFP\Frontend\FrontendServiceProvider::class,
+            \WCEFP\Core\Database\DatabaseServiceProvider::class,
+            \WCEFP\Features\FeaturesServiceProvider::class,
+        ];
+        
+        foreach ($service_providers as $provider_class) {
+            if (class_exists($provider_class)) {
+                $provider = new $provider_class($this->container);
+                if ($provider instanceof ServiceProvider) {
+                    $provider->register();
+                }
+            }
+        }
+    }
+    
+    /**
+     * Register WordPress hooks
+     * 
+     * @return void
+     */
+    private function register_hooks() {
+        add_action('init', [$this, 'init_hook']);
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
+    }
+    
+    /**
+     * Handle initialization hook
+     * 
+     * @return void
+     */
+    public function init_hook() {
+        // Register custom post types, taxonomies, etc.
+        do_action('wcefp_init', $this);
+    }
+    
+    /**
+     * Enqueue frontend assets
+     * 
+     * @return void
+     */
+    public function enqueue_frontend_assets() {
+        wp_enqueue_style(
+            'wcefp-frontend',
+            $this->plugin_url . 'assets/css/frontend.css',
+            [],
+            $this->version
+        );
+        
+        wp_enqueue_script(
+            'wcefp-frontend',
+            $this->plugin_url . 'assets/js/frontend.js',
+            ['jquery'],
+            $this->version,
+            true
+        );
+    }
+    
+    /**
+     * Enqueue admin assets
+     * 
+     * @return void
+     */
+    public function enqueue_admin_assets() {
+        $screen = get_current_screen();
+        
+        // Only load on relevant admin pages
+        if (strpos($screen->id, 'wcefp') !== false || $screen->post_type === 'product') {
+            wp_enqueue_style(
+                'wcefp-admin',
+                $this->plugin_url . 'assets/css/admin.css',
+                [],
+                $this->version
+            );
+            
+            wp_enqueue_script(
+                'wcefp-admin',
+                $this->plugin_url . 'assets/js/admin.js',
+                ['jquery'],
+                $this->version,
+                true
+            );
+        }
+    }
+    
+    /**
+     * Handle initialization errors
+     * 
+     * @param \Exception $e Exception that occurred during initialization
+     * @return void
+     */
+    private function handle_initialization_error(\Exception $e) {
+        if (is_admin()) {
+            add_action('admin_notices', function() use ($e) {
+                $message = sprintf(
+                    __('WCEventsFP initialization error: %s', 'wceventsfp'),
+                    $e->getMessage()
+                );
+                echo '<div class="notice notice-error"><p><strong>' . esc_html($message) . '</strong></p></div>';
+            });
+        }
+    }
+    
+    /**
+     * Display WooCommerce missing notice
+     * 
+     * @return void
+     */
+    public function woocommerce_missing_notice() {
+        $message = __('WCEventsFP requires WooCommerce to be installed and activated.', 'wceventsfp');
+        echo '<div class="notice notice-error"><p><strong>' . esc_html($message) . '</strong></p></div>';
+    }
+    
+    /**
+     * Display PHP version notice
+     * 
+     * @return void
+     */
+    public function php_version_notice() {
+        $message = sprintf(
+            __('WCEventsFP requires PHP 7.4 or higher. Current version: %s', 'wceventsfp'),
+            PHP_VERSION
+        );
+        echo '<div class="notice notice-error"><p><strong>' . esc_html($message) . '</strong></p></div>';
+    }
+}
