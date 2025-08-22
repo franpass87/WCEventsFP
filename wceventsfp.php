@@ -113,6 +113,26 @@ add_action('plugins_loaded', function () {
         return;
     }
 
+    // Resource availability check to prevent memory issues
+    $memory_limit = ini_get('memory_limit');
+    if ($memory_limit && $memory_limit !== '-1') {
+        // Convert memory limit to bytes (simplified version of wp_convert_hr_to_bytes)
+        $memory_limit_bytes = wcefp_convert_memory_to_bytes($memory_limit);
+        $memory_usage = memory_get_usage(true);
+        $available_memory = $memory_limit_bytes - $memory_usage;
+        
+        // If less than 64MB available, show warning but continue
+        if ($available_memory < 67108864) { // 64MB
+            error_log('WCEFP Warning: Low memory available (' . round($available_memory / 1024 / 1024, 1) . 'MB). Consider increasing memory_limit.');
+            if (is_admin()) {
+                add_action('admin_notices', function () use ($available_memory) {
+                    echo '<div class="notice notice-warning"><p><strong>WCEventsFP:</strong> Memoria disponibile bassa (' . 
+                         round($available_memory / 1024 / 1024, 1) . 'MB). Considera di aumentare memory_limit per prestazioni ottimali.</p></div>';
+                });
+            }
+        }
+    }
+
     // Include core
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-logger.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-validator.php';
@@ -1590,6 +1610,31 @@ function wcefp_get_weekday_labels() {
         6 => __('Sabato', 'wceventsfp'),
         0 => __('Domenica', 'wceventsfp'),
     ];
+}
+
+/**
+ * Convert memory limit string to bytes
+ * 
+ * @param string $val Memory limit value (e.g., '128M', '1G')
+ * @return int Memory limit in bytes
+ */
+function wcefp_convert_memory_to_bytes($val) {
+    $val = trim($val);
+    if (empty($val)) return 0;
+    
+    $last = strtolower($val[strlen($val)-1]);
+    $num = (int)$val;
+    
+    switch($last) {
+        case 'g':
+            $num *= 1024;
+        case 'm':
+            $num *= 1024;
+        case 'k':
+            $num *= 1024;
+    }
+    
+    return $num;
 }
 
 /* ---- Meta box: Giorni disponibili ---- */
