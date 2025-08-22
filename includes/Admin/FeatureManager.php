@@ -4,7 +4,7 @@
  * 
  * @package WCEFP
  * @subpackage Admin
- * @since 2.1.0
+ * @since 2.1.1
  */
 
 namespace WCEFP\Admin;
