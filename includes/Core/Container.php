@@ -80,15 +80,34 @@ class Container {
             return $this->instances[$name];
         }
         
-        // Create instance
-        $instance = $this->create_instance($service['definition']);
-        
-        // Store singleton instance
-        if ($service['singleton']) {
-            $this->instances[$name] = $instance;
+        try {
+            // Create instance
+            $instance = $this->create_instance($service['definition']);
+            
+            // Store singleton instance
+            if ($service['singleton']) {
+                $this->instances[$name] = $instance;
+            }
+            
+            return $instance;
+            
+        } catch (\Exception $e) {
+            // Log the error but don't propagate to prevent WSOD
+            if (function_exists('error_log')) {
+                error_log("WCEventsFP Container: Failed to create instance of service '{$name}': " . $e->getMessage());
+            }
+            
+            // Return a safe stub or null instead of crashing
+            return $this->create_safe_stub($name);
+            
+        } catch (\Error $e) {
+            // Handle fatal errors
+            if (function_exists('error_log')) {
+                error_log("WCEventsFP Container: Fatal error creating service '{$name}': " . $e->getMessage());
+            }
+            
+            return $this->create_safe_stub($name);
         }
-        
-        return $instance;
     }
     
     /**
@@ -130,5 +149,32 @@ class Container {
      */
     public function get_services() {
         return array_keys($this->services);
+    }
+    
+    /**
+     * Create a safe stub for failed service instantiation
+     * 
+     * @param string $name Service name
+     * @return mixed
+     */
+    private function create_safe_stub($name) {
+        // Create a safe stub object that won't cause further errors
+        return new class {
+            public function __call($method, $args) {
+                // Log attempted method calls on stub
+                if (function_exists('error_log') && defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log("WCEventsFP: Method '{$method}' called on safe stub service");
+                }
+                return null;
+            }
+            
+            public function __get($property) {
+                return null;
+            }
+            
+            public function __set($property, $value) {
+                // Do nothing
+            }
+        };
     }
 }
