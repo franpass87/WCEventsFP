@@ -117,6 +117,11 @@ require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-resource-management.php';
 require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-channel-management.php';
 require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-commission-management.php';
 
+    // Load new enhancement classes
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-security-enhancement.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-realtime-features.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-advanced-monitoring.php';
+
     // Include admin (nuova classe)
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin.php';
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin-settings.php';

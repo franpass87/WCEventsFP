@@ -24,6 +24,13 @@ yarn-error.log*
 package-lock.json
 pnpm-lock.yaml
 
+# Build artifacts & Testing
+/dist/
+/coverage/
+phpunit-report.xml
+phpunit.phar
+.phpunit.result.cache
+
 # Cache & Log
 *.log
 *.cache
