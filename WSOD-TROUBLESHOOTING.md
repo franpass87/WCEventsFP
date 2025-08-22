@@ -21,6 +21,9 @@ Il plugin include già diverse protezioni contro il WSOD:
 9. **🆕 Protezione plugins_loaded**: Hook principale protetto da try-catch comprehensivo
 10. **🆕 Auto-disattivazione**: Il plugin si disattiva automaticamente in caso di errore fatale
 11. **🆕 Validazione Memoria Robusta**: Gestione sicura di valori memory_limit non validi
+12. **🔥 NUOVO: Traduzione Sicura**: Funzioni di traduzione che non causano WSOD se chiamate prima del caricamento textdomain
+13. **🔥 NUOVO: Display Errori di Emergenza**: Sistema di visualizzazione errori che funziona anche quando le admin notices di WordPress falliscono
+14. **🔥 NUOVO: Test di Attivazione Pre-Flight**: Script per testare la sicurezza del plugin prima dell'attivazione
 
 ## 🛠️ Strumenti Diagnostici
 
@@ -36,8 +39,9 @@ php wcefp-diagnostic-tool.php
 
 ### 3. **🆕 Diagnostic Tool Specifico per Attivazione**
 ```bash
-php wcefp-activation-diagnostic.php
+php wcefp-activation-test.php
 ```
+**Nuovo strumento v2.0.1:** Testa la sicurezza di attivazione prima di attivare il plugin
 
 ### 4. **🆕 Test di Caricamento Plugin**
 ```bash
@@ -45,8 +49,19 @@ php wcefp-load-test.php
 ```
 
 **Nuovi strumenti diagnostici v2.0.1:**
-- `wcefp-activation-diagnostic.php`: Verifica specifica per problemi di attivazione
+- `wcefp-activation-test.php`: Verifica specifica per problemi di attivazione - **ESEGUI PRIMA DI ATTIVARE IL PLUGIN**
 - `wcefp-load-test.php`: Testa il caricamento del plugin senza errori fatali
+
+## 🔥 Miglioramenti v2.0.1 - Risoluzione WSOD Definitiva
+
+### Problema Identificato
+Il problema principale era che le funzioni di traduzione (`__()`, `sprintf()`) venivano chiamate prima che il textdomain fosse caricato, causando errori fatali in alcune configurazioni del server.
+
+### Soluzioni Implementate
+1. **Funzioni di Traduzione Sicure**: `wcefp_safe_translate()` e `wcefp_safe_sprintf()` che non causano WSOD
+2. **Display di Emergenza**: Sistema di visualizzazione errori che bypassa le admin notices di WordPress
+3. **Test Pre-Attivazione**: Script per verificare la compatibilità prima dell'attivazione
+4. **Gestione Robusta Textdomain**: Caricamento sicuro delle traduzioni con fallback
 
 ## 🚨 Risoluzione Immediata
 
