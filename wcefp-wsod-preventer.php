@@ -125,35 +125,65 @@ function wcefp_ultra_safe_environment_check() {
 }
 
 /**
- * Safe memory limit conversion (won't crash on invalid values)
+ * Bulletproof memory limit conversion - matches main file version
  * 
- * @param string $val Memory value from ini_get
+ * @param string|int|null $val Memory value from ini_get
  * @return int Memory in bytes or 0 if invalid
  */
 function wcefp_safe_memory_conversion($val) {
-    if (empty($val) || !is_string($val)) {
+    // Handle null, false, empty values
+    if ($val === null || $val === false || $val === '') {
+        return 0;
+    }
+    
+    // Handle numeric values (already in bytes)
+    if (is_numeric($val)) {
+        $bytes = (int) $val;
+        return $bytes < 0 ? 0 : $bytes;
+    }
+    
+    // Handle string values
+    if (!is_string($val)) {
         return 0;
     }
     
     $val = trim($val);
-    if ($val === '-1') {
-        return -1; // Unlimited
+    if ($val === '' || $val === '0') {
+        return 0;
     }
     
-    if (!preg_match('/^(\d+)([kmg]?)$/i', $val, $matches)) {
+    // Special case: unlimited memory
+    if ($val === '-1') {
+        return -1;
+    }
+    
+    // Extract numeric part and unit - more robust pattern
+    if (!preg_match('/^(\d+(?:\.\d+)?)\s*([kmgtKMGT]?)$/i', $val, $matches)) {
         return 0; // Invalid format
     }
     
-    $num = (int)$matches[1];
-    $unit = strtolower($matches[2] ?? '');
+    $number = (float) $matches[1];
+    $unit = isset($matches[2]) ? strtolower($matches[2]) : '';
     
-    switch ($unit) {
-        case 'g': $num *= 1024;
-        case 'm': $num *= 1024;
-        case 'k': $num *= 1024;
+    // Prevent negative or zero values
+    if ($number <= 0) {
+        return 0;
     }
     
-    return $num;
+    // Convert based on unit
+    switch ($unit) {
+        case 't': $number *= 1024; // fall through
+        case 'g': $number *= 1024; // fall through
+        case 'm': $number *= 1024; // fall through
+        case 'k': $number *= 1024; break;
+        case '':  // No unit = bytes
+        default:  // Unknown unit = treat as bytes
+            break;
+    }
+    
+    // Ensure positive integer result
+    $result = (int) $number;
+    return $result < 0 ? 0 : $result;
 }
 
 /**
