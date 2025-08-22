@@ -118,7 +118,9 @@
         if(r && r.success){
           $out.html('<span>Occorrenze create: <strong>'+r.data.created+'</strong></span>');
         } else {
-          $out.html('<span style="color:#b32d2e">Errore: '+(r && r.data && r.data.msg ? r.data.msg : 'unknown')+'</span>');
+          // Escape the error message to prevent XSS
+          const errorMsg = r && r.data && r.data.msg ? $('<div>').text(r.data.msg).html() : 'unknown';
+          $out.html('<span style="color:#b32d2e">Errore: '+errorMsg+'</span>');
         }
       });
     });

@@ -231,7 +231,11 @@ class WCEFP_Gift {
             // facoltativo: nessun obbligo login
         }
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['wcefp_voucher_code'])) {
-            $code = sanitize_text_field($_POST['wcefp_voucher_code']);
+            // CSRF protection: verify nonce
+            if (!wp_verify_nonce($_POST['wcefp_redeem_nonce'] ?? '', 'wcefp_redeem_voucher')) {
+                $out .= '<div class="wcefp-redeem-err">'.esc_html__('Richiesta non valida. Ricarica la pagina e riprova.','wceventsfp').'</div>';
+            } else {
+                $code = sanitize_text_field($_POST['wcefp_voucher_code']);
             $res = self::validate_and_lock_voucher($code);
             if ($res['ok']) {
                 // memorizza in sessione Woo il voucher per applicare prezzo 0 sul prodotto corrispondente
@@ -243,9 +247,11 @@ class WCEFP_Gift {
             } else {
                 $out .= '<div class="wcefp-redeem-err">'.esc_html($res['msg']).'</div>';
             }
+            }
         }
 
         $out .= '<form method="post" class="wcefp-redeem-form">';
+        $out .= wp_nonce_field('wcefp_redeem_voucher', 'wcefp_redeem_nonce', true, false);
         $out .= '<label>'.esc_html__('Inserisci il codice voucher','wceventsfp').'</label><br/>';
         $out .= '<input type="text" name="wcefp_voucher_code" required style="max-width:260px" /> ';
         $out .= '<button type="submit" class="button">'.esc_html__('Riscatta','wceventsfp').'</button>';
@@ -260,9 +266,20 @@ class WCEFP_Gift {
      */
     private static function validate_and_lock_voucher($code){
         global $wpdb; $tbl = $wpdb->prefix.'wcefp_vouchers';
-        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tbl WHERE code=%s", $code));
+        
+        // Use FOR UPDATE to lock the row and prevent race conditions
+        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tbl WHERE code=%s FOR UPDATE", $code));
         if (!$row) return ['ok'=>false,'msg'=>__('Codice non trovato','wceventsfp')];
         if ($row->status !== 'unused') return ['ok'=>false,'msg'=>__('Il codice è già stato utilizzato','wceventsfp')];
+        
+        // Additional check: ensure session hasn't already locked another voucher
+        if (function_exists('WC')) {
+            $existing_voucher = WC()->session->get('wcefp_voucher_code');
+            if ($existing_voucher && $existing_voucher !== $code) {
+                return ['ok'=>false,'msg'=>__('Hai già un voucher attivo. Completa l\'acquisto o rimuovilo prima di procedere.','wceventsfp')];
+            }
+        }
+        
         return ['ok'=>true,'product_id'=>(int)$row->product_id];
     }
 
