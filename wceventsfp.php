@@ -15,10 +15,49 @@ define('WCEFP_PLUGIN_FILE', __FILE__);
 define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
+/**
+ * Convert memory limit string to bytes
+ * 
+ * @param string $val Memory limit value (e.g., '128M', '1G')
+ * @return int Memory limit in bytes
+ */
+function wcefp_convert_memory_to_bytes($val) {
+    $val = trim($val);
+    if (empty($val)) return 0;
+    
+    $last = strtolower($val[strlen($val)-1]);
+    $num = (int)$val;
+    
+    switch($last) {
+        case 'g':
+            $num *= 1024;
+        case 'm':
+            $num *= 1024;
+        case 'k':
+            $num *= 1024;
+    }
+    
+    return $num;
+}
+
 /* ---- Attivazione: tabelle principali ---- */
 register_activation_hook(__FILE__, function () {
     try {
+        // Check if WooCommerce is available before doing anything
+        if (!class_exists('WooCommerce') && !function_exists('WC')) {
+            // Log the issue but don't prevent activation - user will see admin notice later
+            error_log('WCEFP: WooCommerce not found during activation. Plugin activated but requires WooCommerce to function.');
+            return;
+        }
+
         global $wpdb;
+        
+        // Ensure we have database access
+        if (!$wpdb || !$wpdb->get_var("SELECT 1")) {
+            error_log('WCEFP activation error: Unable to connect to database');
+            return;
+        }
+
         $charset = $wpdb->get_charset_collate();
 
         // Occorrenze
@@ -70,10 +109,21 @@ register_activation_hook(__FILE__, function () {
           INDEX (status)
         ) $charset;";
 
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-        $result1 = dbDelta($sql1);
-        $result2 = dbDelta($sql2);
-        $result3 = dbDelta($sql3);
+        // Check if wp-admin/includes/upgrade.php is available
+        if (!function_exists('dbDelta')) {
+            $upgrade_file = ABSPATH . 'wp-admin/includes/upgrade.php';
+            if (file_exists($upgrade_file)) {
+                require_once $upgrade_file;
+            } else {
+                error_log('WCEFP activation error: Cannot find wp-admin/includes/upgrade.php');
+                return;
+            }
+        }
+        
+        $table_results = [];
+        $table_results['occurrences'] = dbDelta($sql1);
+        $table_results['closures'] = dbDelta($sql2);
+        $table_results['vouchers'] = dbDelta($sql3);
         
         // Extra associati ai prodotti
         $tbl4 = $wpdb->prefix . 'wcefp_product_extras';
@@ -91,7 +141,14 @@ register_activation_hook(__FILE__, function () {
           INDEX (product_id),
           INDEX (extra_id)
         ) $charset;";
-        $result4 = dbDelta($sql4);
+        $table_results['product_extras'] = dbDelta($sql4);
+        
+        // Log successful table creation
+        foreach ($table_results as $table_name => $result) {
+            if (is_array($result) && !empty($result)) {
+                error_log("WCEFP: Successfully processed table '$table_name': " . implode(', ', $result));
+            }
+        }
         
         // Log any database errors but don't crash
         if (!empty($wpdb->last_error)) {
@@ -133,49 +190,87 @@ add_action('plugins_loaded', function () {
         }
     }
 
-    // Include core
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-logger.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-validator.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-cache.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-recurring.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-closures.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-gift.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-frontend.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-templates.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-product-types.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-enhanced-features.php';
-require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-resource-management.php';
-require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-channel-management.php';
-require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-commission-management.php';
-
-    // Load new enhancement classes
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-security-enhancement.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-realtime-features.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-advanced-monitoring.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-accessibility-enhancement.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-performance-optimization.php';
+    // Include core classes with error handling
+    $core_classes = [
+        'includes/class-wcefp-logger.php',
+        'includes/class-wcefp-validator.php',
+        'includes/class-wcefp-cache.php',
+        'includes/class-wcefp-recurring.php',
+        'includes/class-wcefp-closures.php',
+        'includes/class-wcefp-gift.php',
+        'includes/class-wcefp-frontend.php',
+        'includes/class-wcefp-templates.php',
+        'includes/class-wcefp-product-types.php',
+        'includes/class-wcefp-enhanced-features.php',
+        'includes/class-wcefp-resource-management.php',
+        'includes/class-wcefp-channel-management.php',
+        'includes/class-wcefp-commission-management.php',
+        // Enhanced features
+        'includes/class-wcefp-security-enhancement.php',
+        'includes/class-wcefp-realtime-features.php',
+        'includes/class-wcefp-advanced-monitoring.php',
+        'includes/class-wcefp-accessibility-enhancement.php',
+        'includes/class-wcefp-performance-optimization.php',
+        // System improvements v2.0.1
+        'includes/class-wcefp-error-handler.php',
+        'includes/class-wcefp-i18n-enhancement.php',
+        'includes/class-wcefp-debug-tools.php',
+        'includes/class-wcefp-webhook-system.php'
+    ];
     
-    // Load system improvement classes v2.0.1
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-error-handler.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-i18n-enhancement.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-debug-tools.php';
-    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-webhook-system.php';
+    foreach ($core_classes as $class_file) {
+        $file_path = WCEFP_PLUGIN_DIR . $class_file;
+        if (file_exists($file_path)) {
+            try {
+                require_once $file_path;
+            } catch (Exception $e) {
+                error_log('WCEFP: Failed to load ' . $class_file . ': ' . $e->getMessage());
+                add_action('admin_notices', function() use ($class_file, $e) {
+                    echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
+                         esc_html(sprintf(__('Errore caricamento classe %s: %s', 'wceventsfp'), basename($class_file), $e->getMessage())) . 
+                         '</p></div>';
+                });
+            }
+        } else {
+            error_log('WCEFP: Missing required class file: ' . $class_file);
+            add_action('admin_notices', function() use ($class_file) {
+                echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
+                     esc_html(sprintf(__('File classe mancante: %s', 'wceventsfp'), $class_file)) . 
+                     '</p></div>';
+            });
+        }
+    }
 
-    // Include admin (nuova classe) - only in admin context
+    // Include admin classes (only in admin context) with error handling
     if (is_admin()) {
-        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin.php';
-        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin-settings.php';
-        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-analytics-dashboard.php';
-        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-meetingpoints.php';
-        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-table.php';
-        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-admin.php';
-        require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-orders-bridge.php';
+        $admin_classes = [
+            'admin/class-wcefp-admin.php',
+            'admin/class-wcefp-admin-settings.php',
+            'admin/class-wcefp-analytics-dashboard.php',
+            'admin/class-wcefp-meetingpoints.php',
+            'admin/class-wcefp-vouchers-table.php',
+            'admin/class-wcefp-vouchers-admin.php',
+            'admin/class-wcefp-orders-bridge.php'
+        ];
+        
+        foreach ($admin_classes as $class_file) {
+            $file_path = WCEFP_PLUGIN_DIR . $class_file;
+            if (file_exists($file_path)) {
+                try {
+                    require_once $file_path;
+                } catch (Exception $e) {
+                    error_log('WCEFP: Failed to load admin class ' . $class_file . ': ' . $e->getMessage());
+                }
+            } else {
+                error_log('WCEFP: Missing admin class file: ' . $class_file);
+            }
+        }
         
         // Initialize admin classes with error handling
         try {
-            WCEFP_Admin::init();
-            WCEFP_Vouchers_Admin::init();
-            WCEFP_Orders_Bridge::init();
+            if (class_exists('WCEFP_Admin')) WCEFP_Admin::init();
+            if (class_exists('WCEFP_Vouchers_Admin')) WCEFP_Vouchers_Admin::init();
+            if (class_exists('WCEFP_Orders_Bridge')) WCEFP_Orders_Bridge::init();
         } catch (Exception $e) {
             error_log('WCEFP Admin initialization error: ' . $e->getMessage());
             add_action('admin_notices', function() use ($e) {
@@ -1610,31 +1705,6 @@ function wcefp_get_weekday_labels() {
         6 => __('Sabato', 'wceventsfp'),
         0 => __('Domenica', 'wceventsfp'),
     ];
-}
-
-/**
- * Convert memory limit string to bytes
- * 
- * @param string $val Memory limit value (e.g., '128M', '1G')
- * @return int Memory limit in bytes
- */
-function wcefp_convert_memory_to_bytes($val) {
-    $val = trim($val);
-    if (empty($val)) return 0;
-    
-    $last = strtolower($val[strlen($val)-1]);
-    $num = (int)$val;
-    
-    switch($last) {
-        case 'g':
-            $num *= 1024;
-        case 'm':
-            $num *= 1024;
-        case 'k':
-            $num *= 1024;
-    }
-    
-    return $num;
 }
 
 /* ---- Meta box: Giorni disponibili ---- */
