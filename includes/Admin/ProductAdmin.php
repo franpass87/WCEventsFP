@@ -34,7 +34,30 @@ class ProductAdmin {
      */
     public function __construct(Container $container) {
         $this->container = $container;
+        $this->load_product_classes();
         $this->init();
+    }
+    
+    /**
+     * Load required product classes
+     * 
+     * @return void
+     */
+    private function load_product_classes() {
+        // Ensure WooCommerce product classes exist
+        if (!class_exists('WC_Product_Evento')) {
+            $evento_path = WCEFP_PLUGIN_DIR . 'includes/WooCommerce/ProductEvento.php';
+            if (file_exists($evento_path)) {
+                require_once $evento_path;
+            }
+        }
+        
+        if (!class_exists('WC_Product_Esperienza')) {
+            $esperienza_path = WCEFP_PLUGIN_DIR . 'includes/WooCommerce/ProductEsperienza.php';
+            if (file_exists($esperienza_path)) {
+                require_once $esperienza_path;
+            }
+        }
     }
     
     /**

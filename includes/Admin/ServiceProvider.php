@@ -62,27 +62,14 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
-        // Initialize admin services conditionally
-        // Only initialize new menu manager if no existing WCEFP admin menu exists
-        if (!$this->has_existing_admin_menu()) {
-            $this->container->get('admin.menu');
-        }
+        // Initialize all admin services
+        // Always initialize menu manager - multiple admin menus can coexist
+        $this->container->get('admin.menu');
         
         // Always initialize product admin and settings
         $this->container->get('admin.product');
         $this->container->get('admin.settings');
         $this->container->get('admin.dashboard');
     }
-    
-    /**
-     * Check if existing admin menu system is already present
-     * 
-     * @return bool
-     */
-    private function has_existing_admin_menu() {
-        // Check if legacy classes have already added admin menus
-        return class_exists('WCEFP_Channel_Management') || 
-               class_exists('WCEFP_Resource_Management') ||
-               class_exists('WCEFP_Commission_Management');
-    }
+
 }
