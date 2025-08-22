@@ -25,6 +25,18 @@ class WCEFP_Autoloader {
     ];
     
     /**
+     * Legacy class name to file mapping
+     * 
+     * @var array
+     */
+    private static $legacy_classes = [
+        'WCEFP_Logger' => 'includes/Legacy/class-wcefp-logger.php',
+        'WCEFP_Cache' => 'includes/Legacy/class-wcefp-cache.php',
+        'WCEFP_Enhanced_Features' => 'includes/Legacy/class-wcefp-enhanced-features.php',
+        'WCEFP_Product_Types' => 'includes/Legacy/class-wcefp-product-types.php'
+    ];
+    
+    /**
      * Initialize the autoloader
      * 
      * @return void
@@ -40,7 +52,16 @@ class WCEFP_Autoloader {
      * @return bool
      */
     public static function load_class($class_name) {
-        // Check if this is a WCEFP class
+        // Try legacy classes first
+        if (isset(self::$legacy_classes[$class_name])) {
+            $file_path = WCEFP_PLUGIN_DIR . self::$legacy_classes[$class_name];
+            if (file_exists($file_path)) {
+                require_once $file_path;
+                return true;
+            }
+        }
+        
+        // Check if this is a WCEFP namespaced class
         if (strpos($class_name, 'WCEFP\\') !== 0) {
             return false;
         }
