@@ -1,10 +1,30 @@
-# WCEventsFP (v2.0.1) - Enterprise Booking Platform
+# WCEventsFP (v2.1.0) - Enterprise Booking Platform
 
 **Sistema di prenotazione enterprise per competere direttamente con RegionDo, Bokun e GetYourGuide**
 
 Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità di livello enterprise per massimizzare le conversioni, gestire risorse operative e automatizzare la distribuzione multi-canale.
 
-## 🚀 Nuove Funzionalità v2.0.1 - System Improvements
+## 🚀 Nuove Funzionalità v2.1.0 - Major WSOD Cleanup & Architecture Improvements
+
+### 🛡️ Bulletproof WSOD Prevention System
+- **Complete Architecture Simplification**: Removed complex multi-layer bootstrap system, replaced with single `WCEFP_Simple_Plugin` class
+- **Enhanced WSOD Preventer**: Bulletproof error handling with comprehensive memory conversion and safety checks
+- **Graceful Degradation**: Plugin no longer fails completely if WooCommerce is missing - shows user-friendly messages instead
+- **Emergency Error System**: Comprehensive error tracking and recovery mechanisms for critical situations
+
+### 🏗️ Simplified Plugin Architecture
+- **Single Plugin Class**: `WCEFP_Simple_Plugin` with singleton pattern eliminates complex dependencies and loading chains
+- **Bulletproof Memory Handling**: Enhanced `wcefp_convert_memory_to_bytes()` function handles all edge cases (null, numeric, string, overflow prevention)
+- **Streamlined Loading**: Direct class instantiation instead of multi-layer fallback systems
+- **Reduced Complexity**: Removed unused Bootstrap classes and complex service providers
+
+### 🔧 Enhanced Error Handling & Recovery
+- **Unified Error Management**: Consistent error handling approach throughout the plugin
+- **Safe Activation/Deactivation**: Removed complex dependency chains, prevents activation errors
+- **Memory Safety**: Comprehensive memory limit detection and conversion with overflow protection
+- **Critical File Checks**: Validates essential plugin files before initialization
+
+## 🚀 Previous Features (v2.0.1) - System Improvements
 
 ### 🛠️ Enhanced Error Handling & Debugging
 - **Advanced Error System**: Comprehensive error management with user-friendly messages and detailed logging

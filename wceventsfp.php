@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WCEventsFP
  * Description: Plugin di prenotazione eventi & esperienze avanzato per WooCommerce. Sistema enterprise per competere con RegionDo/Bokun: gestione risorse (guide, attrezzature, veicoli), distribuzione multi-canale (Booking.com, Expedia, GetYourGuide), sistema commissioni/reseller, Google Reviews, tracking avanzato GA4/Meta, automazioni Brevo, AI recommendations, analytics real-time.
- * Version:     2.0.1
+ * Version:     2.1.0
  * Author:      Francesco Passeri
  * Text Domain: wceventsfp
  * Domain Path: /languages
@@ -32,7 +32,7 @@ if (!defined('WCEFP_WSOD_PROTECTION_ACTIVE')) {
 }
 
 // Plugin constants - essential definitions only
-if (!defined('WCEFP_VERSION')) define('WCEFP_VERSION', '2.0.1');
+if (!defined('WCEFP_VERSION')) define('WCEFP_VERSION', '2.1.0');
 if (!defined('WCEFP_PLUGIN_FILE')) define('WCEFP_PLUGIN_FILE', __FILE__);
 if (!defined('WCEFP_PLUGIN_DIR')) define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 if (!defined('WCEFP_PLUGIN_URL')) define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -168,7 +168,7 @@ function wcefp_safe_activation_fallback() {
     // Only do essential setup without complex dependencies
     
     // Set basic plugin options
-    add_option('wcefp_version', '2.0.1');
+    add_option('wcefp_version', '2.1.0');
     add_option('wcefp_activated_at', current_time('mysql'));
     add_option('wcefp_activation_mode', 'safe_fallback');
     
@@ -188,7 +188,7 @@ class WCEFP_Simple_Plugin {
      * Plugin version
      * @var string
      */
-    private $version = '2.0.1';
+    private $version = '2.1.0';
     
     /**
      * Singleton instance

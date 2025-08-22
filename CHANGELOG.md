@@ -1,5 +1,47 @@
 # 📜 Changelog – WCEventsFP
 
+[2.1.0] – 2025-08-22
+
+## Major WSOD Cleanup & Architecture Improvements 🛡️
+
+### Added
+
+🏗️ **Simplified Plugin Architecture**: Complete architectural overhaul with single `WCEFP_Simple_Plugin` class replacing complex multi-layer bootstrap system, providing bulletproof initialization and eliminating dependency chains.
+
+🛡️ **Bulletproof WSOD Prevention**: Enhanced WSOD prevention system with comprehensive error handling, memory safety checks, and graceful degradation when WooCommerce is missing.
+
+🔧 **Enhanced Memory Conversion**: Completely rewritten `wcefp_convert_memory_to_bytes()` function with bulletproof handling of all edge cases including null values, numeric inputs, string formats, and overflow prevention.
+
+🚀 **Emergency Error System**: Comprehensive emergency error tracking and recovery mechanisms for critical situations with user-friendly error messages.
+
+### Enhanced
+
+⚡ **Streamlined Loading**: Direct class instantiation instead of complex multi-layer fallback systems, reducing initialization overhead and potential failure points.
+
+🛠️ **Unified Error Handling**: Consistent error handling approach throughout the plugin with proper error context and recovery mechanisms.
+
+🔒 **Safe Activation Process**: Removed complex dependency chains from activation/deactivation hooks, preventing common activation errors.
+
+### Removed
+
+🧹 **Complex Bootstrap System**: Eliminated unused Bootstrap classes and complex service providers that were causing loading issues.
+
+🗑️ **Problematic PSR-4 Autoloader**: Removed complex legacy class loading that was contributing to WSOD scenarios.
+
+### Architecture Changes
+
+- **Single Plugin Class**: `WCEFP_Simple_Plugin` with singleton pattern, no complex dependencies
+- **Graceful Degradation**: Plugin shows user-friendly messages instead of fatal errors when WooCommerce is missing
+- **Bulletproof Memory Handling**: Handles all memory format variations with overflow protection
+- **Simplified Loading**: Direct class instantiation eliminates multi-layer failure points
+- **Reduced Complexity**: Significant code simplification while maintaining backward compatibility
+
+### Impact
+
+The plugin now has a much simpler, more reliable architecture that eliminates most WSOD scenarios while maintaining full functionality and backward compatibility.
+
+---
+
 [2.0.1] – 2025-08-22
 
 ## Added
