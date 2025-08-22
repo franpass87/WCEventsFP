@@ -73,11 +73,21 @@ class Logger {
      * @return void
      */
     private function setup_log_file() {
-        $upload_dir = wp_upload_dir();
-        $log_dir = $upload_dir['basedir'] . '/wcefp-logs';
+        // Check if WordPress functions are available
+        if (function_exists('wp_upload_dir')) {
+            $upload_dir = wp_upload_dir();
+            $log_dir = $upload_dir['basedir'] . '/wcefp-logs';
+        } else {
+            // Fallback for non-WordPress contexts
+            $log_dir = sys_get_temp_dir() . '/wcefp-logs';
+        }
         
         if (!file_exists($log_dir)) {
-            wp_mkdir_p($log_dir);
+            if (function_exists('wp_mkdir_p')) {
+                wp_mkdir_p($log_dir);
+            } else {
+                mkdir($log_dir, 0755, true);
+            }
             // Add .htaccess to prevent direct access
             file_put_contents($log_dir . '/.htaccess', "Deny from all\n");
         }

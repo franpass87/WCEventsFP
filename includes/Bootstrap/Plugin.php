@@ -64,8 +64,19 @@ class Plugin {
      */
     public function __construct($plugin_file) {
         $this->plugin_file = $plugin_file;
-        $this->plugin_dir = plugin_dir_path($plugin_file);
-        $this->plugin_url = plugin_dir_url($plugin_file);
+        
+        // Safely get plugin paths
+        if (function_exists('plugin_dir_path')) {
+            $this->plugin_dir = plugin_dir_path($plugin_file);
+        } else {
+            $this->plugin_dir = dirname($plugin_file) . '/';
+        }
+        
+        if (function_exists('plugin_dir_url')) {
+            $this->plugin_url = plugin_dir_url($plugin_file);
+        } else {
+            $this->plugin_url = '';
+        }
         
         $this->container = new Container();
         
@@ -200,15 +211,43 @@ class Plugin {
         ];
         
         foreach ($service_providers as $provider_class) {
-            if (class_exists($provider_class)) {
-                try {
+            try {
+                if (class_exists($provider_class)) {
                     $provider = new $provider_class($this->container);
                     if ($provider instanceof ServiceProvider) {
                         $provider->register();
                         $provider->boot();
+                        Logger::debug("Service provider {$provider_class} loaded successfully");
                     }
-                } catch (\Exception $e) {
-                    Logger::error("Failed to initialize service provider {$provider_class}: " . $e->getMessage());
+                } else {
+                    Logger::warning("Service provider {$provider_class} not found - skipping");
+                }
+            } catch (\Exception $e) {
+                Logger::error("Failed to initialize service provider {$provider_class}: " . $e->getMessage());
+                
+                // Don't let service provider failures break the entire plugin
+                // Add admin notice for debugging but continue loading
+                if (is_admin()) {
+                    add_action('admin_notices', function() use ($provider_class, $e) {
+                        if (current_user_can('manage_options') && defined('WP_DEBUG') && WP_DEBUG) {
+                            echo '<div class="notice notice-warning"><p>';
+                            echo '<strong>WCEventsFP Debug:</strong> Service provider ' . esc_html($provider_class) . ' failed to load: ';
+                            echo esc_html($e->getMessage());
+                            echo '</p></div>';
+                        }
+                    });
+                }
+            } catch (\Error $e) {
+                Logger::error("Fatal error in service provider {$provider_class}: " . $e->getMessage());
+                
+                // Handle fatal errors in service providers
+                if (is_admin() && current_user_can('manage_options') && defined('WP_DEBUG') && WP_DEBUG) {
+                    add_action('admin_notices', function() use ($provider_class, $e) {
+                        echo '<div class="notice notice-error"><p>';
+                        echo '<strong>WCEventsFP Debug:</strong> Fatal error in ' . esc_html($provider_class) . ': ';
+                        echo esc_html($e->getMessage());
+                        echo '</p></div>';
+                    });
                 }
             }
         }

@@ -109,6 +109,52 @@ function wcefp_convert_memory_to_bytes($val) {
     return $num;
 }
 
+/**
+ * Safe activation fallback when main activation handler fails
+ * 
+ * @return void
+ */
+function wcefp_safe_activation_fallback() {
+    // Only do essential setup without complex dependencies
+    
+    // Set basic plugin options
+    add_option('wcefp_version', '2.0.1');
+    add_option('wcefp_activated_at', current_time('mysql'));
+    add_option('wcefp_activation_mode', 'safe_fallback');
+    
+    // Log the fallback activation
+    error_log('WCEventsFP: Using safe fallback activation - full initialization will happen on plugin load');
+    
+    // Flush rewrite rules
+    flush_rewrite_rules();
+}
+
+/**
+ * Create minimal plugin instance for emergency situations
+ * 
+ * @return object
+ */
+function wcefp_create_minimal_plugin_instance() {
+    return new class {
+        public function init() {
+            // Minimal initialization - just ensure basic legacy support
+            wcefp_emergency_error('Plugin running in minimal emergency mode', 'warning');
+        }
+        
+        public function get_version() {
+            return '2.0.1';
+        }
+        
+        public function __call($method, $args) {
+            // Log method calls for debugging
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("WCEventsFP Minimal Mode: Method '{$method}' called");
+            }
+            return null;
+        }
+    };
+}
+
 // Check basic requirements early
 if (version_compare(PHP_VERSION, '7.4.0', '<')) {
     wcefp_emergency_error(sprintf('PHP 7.4+ required. Current: %s', PHP_VERSION));
@@ -165,7 +211,7 @@ foreach ($legacy_classes as $file => $class_name) {
 /**
  * Get the main plugin instance
  * 
- * @return \WCEFP\Bootstrap\Plugin|null
+ * @return \WCEFP\Bootstrap\Plugin|WCEFP_Plugin|null
  */
 function WCEFP() {
     static $instance = null;
@@ -174,40 +220,70 @@ function WCEFP() {
         try {
             if (class_exists('\WCEFP\Bootstrap\Plugin')) {
                 $instance = new \WCEFP\Bootstrap\Plugin(__FILE__);
-            } else {
+            } elseif (class_exists('WCEFP_Plugin')) {
                 // Fallback to legacy system
-                if (class_exists('WCEFP_Plugin')) {
-                    $instance = new WCEFP_Plugin();
-                } else {
-                    wcefp_emergency_error('Plugin bootstrap classes not found');
-                    return null;
-                }
+                $instance = new WCEFP_Plugin();
+            } else {
+                // Emergency fallback - create a safe stub
+                wcefp_emergency_error('Plugin bootstrap classes not found - using minimal mode');
+                $instance = wcefp_create_minimal_plugin_instance();
             }
         } catch (Exception $e) {
             wcefp_emergency_error('Failed to create plugin instance: ' . $e->getMessage());
-            return null;
+            $instance = wcefp_create_minimal_plugin_instance();
         } catch (Error $e) {
             wcefp_emergency_error('Fatal error creating plugin instance: ' . $e->getMessage());
-            return null;
+            $instance = wcefp_create_minimal_plugin_instance();
         }
     }
     
     return $instance;
 }
 
-// Plugin activation
+// Plugin activation with enhanced WSOD prevention
 register_activation_hook(__FILE__, function() {
+    // Prevent WSOD by capturing all errors and displaying them properly
+    $activation_errors = [];
+    
     try {
+        // Pre-flight safety checks
+        if (version_compare(PHP_VERSION, '7.4.0', '<')) {
+            throw new Exception(sprintf('PHP 7.4+ required. Current: %s', PHP_VERSION));
+        }
+        
+        if (!class_exists('WooCommerce')) {
+            throw new Exception('WooCommerce plugin is required and must be activated before WCEventsFP.');
+        }
+        
+        // Try to load the activation handler safely
         if (class_exists('\WCEFP\Core\ActivationHandler')) {
             \WCEFP\Core\ActivationHandler::activate();
         } else {
-            // Basic fallback activation
-            if (!class_exists('WooCommerce')) {
-                wp_die(__('WCEventsFP requires WooCommerce to be installed and activated.', 'wceventsfp'));
-            }
+            // Safe fallback activation without complex dependencies
+            wcefp_safe_activation_fallback();
         }
+        
     } catch (Exception $e) {
-        wp_die(sprintf(__('Plugin activation failed: %s', 'wceventsfp'), $e->getMessage()));
+        $activation_errors[] = $e->getMessage();
+    } catch (Error $e) {
+        $activation_errors[] = 'Fatal error during activation: ' . $e->getMessage();
+    } catch (Throwable $e) {
+        $activation_errors[] = 'Unexpected error during activation: ' . $e->getMessage();
+    }
+    
+    // If there are errors, display them safely without causing WSOD
+    if (!empty($activation_errors)) {
+        $error_message = 'WCEventsFP Plugin Activation Failed:<br/><br/>';
+        foreach ($activation_errors as $error) {
+            $error_message .= '• ' . esc_html($error) . '<br/>';
+        }
+        $error_message .= '<br/>Please fix these issues and try activating the plugin again.<br/>';
+        $error_message .= 'For support, visit the plugin documentation or contact support with these error details.';
+        
+        wp_die($error_message, 'Plugin Activation Error', [
+            'response' => 500,
+            'back_link' => true
+        ]);
     }
 });
 
@@ -226,6 +302,7 @@ register_deactivation_hook(__FILE__, function() {
 // Initialize plugin when WordPress is ready
 add_action('plugins_loaded', function() {
     try {
+        // Check WooCommerce dependency
         if (!class_exists('WooCommerce')) {
             add_action('admin_notices', function() {
                 echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
@@ -235,13 +312,22 @@ add_action('plugins_loaded', function() {
             return;
         }
         
+        // Get plugin instance safely
         $plugin = WCEFP();
         if ($plugin && method_exists($plugin, 'init')) {
             $plugin->init();
+        } elseif ($plugin) {
+            // Plugin instance exists but no init method - that's ok
+            wcefp_emergency_error('Plugin instance loaded without init method', 'warning');
+        } else {
+            // No plugin instance - this should not happen but let's handle it
+            wcefp_emergency_error('Failed to get plugin instance during plugins_loaded', 'error');
         }
         
     } catch (Exception $e) {
         wcefp_emergency_error('Plugin initialization failed: ' . $e->getMessage());
+    } catch (Error $e) {
+        wcefp_emergency_error('Fatal error during plugin initialization: ' . $e->getMessage());
     }
 }, 20); // Load after WooCommerce
 
