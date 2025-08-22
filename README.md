@@ -4,7 +4,7 @@
 
 Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità di livello enterprise per massimizzare le conversioni, gestire risorse operative e automatizzare la distribuzione multi-canale.
 
-## 🚀 Nuove Funzionalità v2.0.0 - Competitive Edge
+## 🚀 Nuove Funzionalità v2.0.1 - Competitive Edge
 
 ### 🏗️ Sistema di Gestione Risorse
 - **Guide e Staff**: Gestione completa delle guide con competenze, disponibilità e costi
@@ -37,6 +37,51 @@ Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità
 - **Caching**: Sistema cache per performance ottimali
 - **Fallback**: Recensioni di esempio quando API non disponibile
 - **Shortcode**: `[wcefp_google_reviews place_id="..." limit="5"]`
+
+### 🔒 Security & Monitoring Enhancements (v2.0.1)
+- **Rate Limiting**: Protezione automatica contro spam e attacchi DDoS
+- **Content Security Policy**: Headers CSP configurabili per maggiore sicurezza
+- **Real-time Monitoring**: Sistema di monitoraggio avanzato con alert automatici
+- **Health Checks**: Controlli automatici dello stato del sistema
+- **Performance Metrics**: Tracciamento Core Web Vitals e metriche di performance
+- **Alert System**: Notifiche via email, Slack, e webhook per problemi critici
+
+### 🚀 Real-time Features (v2.0.1)  
+- **Live Updates**: Aggiornamenti in tempo reale di prenotazioni e disponibilità
+- **WebSocket-like Communication**: Sistema di polling avanzato per aggiornamenti live
+- **Push Notifications**: Notifiche push per amministratori e utenti
+- **Session Management**: Gestione sessioni real-time con riconnessione automatica
+- **Live Dashboard**: Dashboard amministratore con metriche in tempo reale
+
+### ♿ Accessibility Enhancements (v2.0.1)
+- **WCAG 2.1 AA Compliance**: Conformità completa alle linee guida per l'accessibilità
+- **Screen Reader Support**: Supporto completo per lettori di schermo
+- **Keyboard Navigation**: Navigazione completa da tastiera
+- **High Contrast Mode**: Modalità alto contrasto per utenti con disabilità visive  
+- **Focus Management**: Gestione avanzata del focus per migliore usabilità
+- **Accessibility Toolbar**: Barra strumenti accessibilità personalizzabile
+
+### ⚡ Performance Optimization (v2.0.1)
+- **Multi-tier Caching**: Sistema cache avanzato a più livelli (Memory, Object, File)
+- **Image Optimization**: Conversione automatica WebP con fallback
+- **Lazy Loading**: Caricamento pigro di immagini e contenuti
+- **Critical CSS**: Inlining automatico CSS critico above-the-fold
+- **Asset Optimization**: Minificazione e combinazione CSS/JS automatica
+- **Database Optimization**: Query ottimizzate e caching intelligente
+
+### 🧪 Testing & Quality Assurance (v2.0.1)
+- **Unit Testing**: Framework PHPUnit completo con mocking WordPress
+- **JavaScript Testing**: Test Jest per componenti frontend
+- **Code Coverage**: Reporting copertura codice completo
+- **Static Analysis**: PHPStan per analisi statica del codice
+- **Continuous Integration**: Setup completo per CI/CD
+
+### 📚 Developer Experience (v2.0.1)
+- **Dependency Management**: Composer e npm per gestione dipendenze
+- **API Documentation**: Documentazione API completa e esempi
+- **Contributing Guidelines**: Linee guida dettagliate per contribuitori
+- **Coding Standards**: Standard di codifica WordPress e PSR-12
+- **Development Tools**: Strumenti di sviluppo e debugging avanzati
 
 ## 🏗️ Architettura Enterprise
 Con:

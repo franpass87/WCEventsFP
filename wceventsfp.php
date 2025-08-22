@@ -121,6 +121,8 @@ require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-commission-management.php'
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-security-enhancement.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-realtime-features.php';
     require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-advanced-monitoring.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-accessibility-enhancement.php';
+    require_once WCEFP_PLUGIN_DIR . 'includes/class-wcefp-performance-optimization.php';
 
     // Include admin (nuova classe)
     require_once WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin.php';
