@@ -12,8 +12,15 @@ if (!defined('ABSPATH')) exit;
 
 define('WCEFP_VERSION', '2.0.1');
 define('WCEFP_PLUGIN_FILE', __FILE__);
-define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
+// Use safe path/URL definitions that work even when WordPress functions aren't loaded
+if (function_exists('plugin_dir_path')) {
+    define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
+    define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
+} else {
+    // Fallback for when WordPress isn't fully loaded
+    define('WCEFP_PLUGIN_DIR', dirname(__FILE__) . '/');
+    define('WCEFP_PLUGIN_URL', ''); // Will be set later when WordPress is loaded
+}
 
 /**
  * Safe translation function that works even if textdomain isn't loaded
@@ -24,7 +31,7 @@ define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
  * @return string Translated text or fallback
  */
 function wcefp_safe_translate($text, $textdomain = 'wceventsfp') {
-    if (function_exists('__') && function_exists('is_textdomain_loaded')) {
+    if (function_exists('__') && function_exists('is_textdomain_loaded') && function_exists('load_plugin_textdomain') && function_exists('plugin_basename')) {
         // Check if textdomain is loaded, if not, load it
         if (!is_textdomain_loaded($textdomain)) {
             load_plugin_textdomain($textdomain, false, dirname(plugin_basename(__FILE__)) . '/languages');
@@ -61,10 +68,12 @@ function wcefp_emergency_error_display($message, $type = 'error') {
         'type' => $type
     ];
     
-    // Hook to display errors as soon as possible
-    if (!has_action('wp_head', 'wcefp_display_emergency_errors')) {
-        add_action('wp_head', 'wcefp_display_emergency_errors', 1);
-        add_action('admin_head', 'wcefp_display_emergency_errors', 1);
+    // Hook to display errors as soon as possible (only if WordPress is loaded)
+    if (function_exists('has_action') && function_exists('add_action')) {
+        if (!has_action('wp_head', 'wcefp_display_emergency_errors')) {
+            add_action('wp_head', 'wcefp_display_emergency_errors', 1);
+            add_action('admin_head', 'wcefp_display_emergency_errors', 1);
+        }
     }
 }
 
@@ -157,7 +166,8 @@ function wcefp_convert_memory_to_bytes($val) {
 }
 
 /* ---- Attivazione: tabelle principali ---- */
-register_activation_hook(__FILE__, function () {
+if (function_exists('register_activation_hook')) {
+    register_activation_hook(__FILE__, function () {
     try {
         // Early PHP version check to prevent WSOD
         if (version_compare(PHP_VERSION, '7.4.0', '<')) {
