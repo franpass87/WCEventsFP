@@ -217,7 +217,7 @@ if (file_exists('../../../wp-load.php')) {
         <?php endif; ?>
         
         <hr style="margin: 30px 0;">
-        <p><small>Test eseguito il <?php echo date('d/m/Y H:i:s'); ?> - WCEventsFP v2.0.1</small></p>
+        <p><small>Test eseguito il <?php echo date('d/m/Y H:i:s'); ?> - WCEventsFP v2.1.0</small></p>
     </div>
 </body>
 </html>

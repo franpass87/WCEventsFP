@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WCEventsFP
  * Description: Plugin di prenotazione eventi & esperienze avanzato per WooCommerce. Sistema enterprise per competere con RegionDo/Bokun: gestione risorse (guide, attrezzature, veicoli), distribuzione multi-canale (Booking.com, Expedia, GetYourGuide), sistema commissioni/reseller, Google Reviews, tracking avanzato GA4/Meta, automazioni Brevo, AI recommendations, analytics real-time.
- * Version:     2.0.1
+ * Version:     2.1.0
  * Author:      Francesco Passeri
  * Text Domain: wceventsfp
  * Domain Path: /languages
@@ -17,24 +17,27 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
 
-// ===== WSOD PREVENTION SYSTEM =====
-// Include bulletproof WSOD prevention BEFORE anything else
-require_once __DIR__ . '/wcefp-wsod-preventer.php';
-
-// If WSOD protection failed to initialize, the preventer file will have 
-// already handled the error and possibly deactivated the plugin
-if (!defined('WCEFP_WSOD_PROTECTION_ACTIVE')) {
-    // Something went wrong with WSOD protection, abort safely
-    return;
+// ===== BULLETPROOF WSOD PREVENTION SYSTEM =====
+// Include WSOD prevention FIRST - this is our safety net
+if (!file_exists(__DIR__ . '/wcefp-wsod-preventer.php')) {
+    // Emergency fallback if preventer file is missing
+    wp_die('WCEventsFP: Critical file missing (wcefp-wsod-preventer.php). Plugin cannot load safely.', 'Plugin Error');
 }
 
-// Plugin constants
-define('WCEFP_VERSION', '2.0.1');
-define('WCEFP_PLUGIN_FILE', __FILE__);
-define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
+require_once __DIR__ . '/wcefp-wsod-preventer.php';
 
-// Global error storage for emergency situations
+// Verify WSOD protection is active before proceeding
+if (!defined('WCEFP_WSOD_PROTECTION_ACTIVE')) {
+    return; // Safety abort - preventer handles the error display
+}
+
+// Plugin constants - essential definitions only
+if (!defined('WCEFP_VERSION')) define('WCEFP_VERSION', '2.1.0');
+if (!defined('WCEFP_PLUGIN_FILE')) define('WCEFP_PLUGIN_FILE', __FILE__);
+if (!defined('WCEFP_PLUGIN_DIR')) define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
+if (!defined('WCEFP_PLUGIN_URL')) define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
+
+// Initialize global error storage
 $GLOBALS['wcefp_emergency_errors'] = [];
 
 /**
@@ -95,29 +98,65 @@ function wcefp_display_emergency_errors() {
 }
 
 /**
- * Safe memory conversion function
+ * Bulletproof memory conversion - completely safe, no edge cases
  * 
- * @param string $val Memory value (e.g., '128M')
- * @return int Memory in bytes
+ * @param string|int|null $val Memory value (e.g., '128M', '1G', 256000, null)
+ * @return int Memory in bytes, or 0 if invalid/empty
  */
 function wcefp_convert_memory_to_bytes($val) {
-    if (empty($val) || !is_string($val)) return 0;
-    
-    $val = trim($val);
-    if (is_numeric($val)) return (int)$val;
-    
-    $last = strtolower(substr($val, -1));
-    $num = (int)$val;
-    
-    if ($num <= 0) return 0;
-    
-    switch($last) {
-        case 'g': $num *= 1024; // fallthrough
-        case 'm': $num *= 1024; // fallthrough  
-        case 'k': $num *= 1024; break;
+    // Handle null, false, empty values
+    if ($val === null || $val === false || $val === '') {
+        return 0;
     }
     
-    return $num;
+    // Handle numeric values (already in bytes)
+    if (is_numeric($val)) {
+        $bytes = (int) $val;
+        return $bytes < 0 ? 0 : $bytes;
+    }
+    
+    // Handle string values
+    if (!is_string($val)) {
+        return 0;
+    }
+    
+    $val = trim($val);
+    if ($val === '' || $val === '0') {
+        return 0;
+    }
+    
+    // Special case: unlimited memory
+    if ($val === '-1') {
+        return -1;
+    }
+    
+    // Extract numeric part and unit
+    if (!preg_match('/^(\d+(?:\.\d+)?)\s*([kmgtKMGT]?)$/i', $val, $matches)) {
+        return 0; // Invalid format
+    }
+    
+    $number = (float) $matches[1];
+    $unit = isset($matches[2]) ? strtolower($matches[2]) : '';
+    
+    // Prevent negative or zero values
+    if ($number <= 0) {
+        return 0;
+    }
+    
+    // Convert based on unit (case insensitive)
+    switch ($unit) {
+        case 't': $number *= 1024; // fall through
+        case 'g': $number *= 1024; // fall through
+        case 'm': $number *= 1024; // fall through  
+        case 'k': $number *= 1024; break;
+        case '':  // No unit = bytes
+        default:  // Unknown unit = treat as bytes
+            break;
+    }
+    
+    // Ensure we return a positive integer, prevent overflow
+    $result = (int) $number;
+    return $result < 0 ? 0 : $result; // Handle potential overflow
 }
 
 /**
@@ -129,7 +168,7 @@ function wcefp_safe_activation_fallback() {
     // Only do essential setup without complex dependencies
     
     // Set basic plugin options
-    add_option('wcefp_version', '2.0.1');
+    add_option('wcefp_version', '2.1.0');
     add_option('wcefp_activated_at', current_time('mysql'));
     add_option('wcefp_activation_mode', 'safe_fallback');
     
@@ -141,39 +180,213 @@ function wcefp_safe_activation_fallback() {
 }
 
 /**
- * Create minimal plugin instance for emergency situations
- * 
- * @return object
+ * Bulletproof main plugin class - single point of control
  */
-function wcefp_create_minimal_plugin_instance() {
-    return new class {
-        public function init() {
-            // Minimal initialization - just ensure basic legacy support
-            wcefp_emergency_error('Plugin running in minimal emergency mode', 'warning');
+class WCEFP_Simple_Plugin {
+    
+    /**
+     * Plugin version
+     * @var string
+     */
+    private $version = '2.1.0';
+    
+    /**
+     * Singleton instance
+     * @var self|null
+     */
+    private static $instance = null;
+    
+    /**
+     * Plugin initialization status
+     * @var bool
+     */
+    private $initialized = false;
+    
+    /**
+     * Get singleton instance
+     * @return self
+     */
+    public static function instance() {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+    
+    /**
+     * Private constructor to prevent direct instantiation
+     */
+    private function __construct() {
+        // Prevent multiple instantiation
+    }
+    
+    /**
+     * Initialize the plugin safely
+     * @return bool True if successful, false otherwise
+     */
+    public function init() {
+        if ($this->initialized) {
+            return true; // Already initialized
+        }
+        
+        try {
+            wcefp_debug_log('Starting simple plugin initialization');
             
-            // Try to add basic admin notice
-            if (function_exists('add_action') && function_exists('is_admin') && is_admin()) {
+            // Essential dependency checks first
+            if (!$this->check_essential_dependencies()) {
+                return false;
+            }
+            
+            // Load only critical components
+            $this->load_critical_components();
+            
+            // Register essential hooks
+            $this->register_essential_hooks();
+            
+            // Mark as initialized
+            $this->initialized = true;
+            
+            wcefp_debug_log('Simple plugin initialization completed successfully');
+            return true;
+            
+        } catch (Exception $e) {
+            wcefp_debug_log('Plugin initialization failed: ' . $e->getMessage());
+            wcefp_emergency_error('Plugin initialization failed: ' . $e->getMessage());
+            return false;
+        } catch (Error $e) {
+            wcefp_debug_log('Fatal error during plugin initialization: ' . $e->getMessage());
+            wcefp_emergency_error('Fatal error during plugin initialization: ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Check only the most essential dependencies
+     * @return bool
+     */
+    private function check_essential_dependencies() {
+        // WordPress loaded check
+        if (!function_exists('add_action') || !function_exists('wp_die')) {
+            wcefp_emergency_error('WordPress is not properly loaded');
+            return false;
+        }
+        
+        // WooCommerce check (but don't fail if missing - degrade gracefully)
+        if (!class_exists('WooCommerce')) {
+            if (is_admin()) {
                 add_action('admin_notices', function() {
                     echo '<div class="notice notice-warning is-dismissible">';
-                    echo '<p><strong>WCEventsFP:</strong> Plugin running in minimal emergency mode. ';
-                    echo 'Some features may not be available. Please check error logs and contact support.</p>';
+                    echo '<p><strong>WCEventsFP:</strong> WooCommerce is required for full functionality. ';
+                    echo 'Some features will not be available until WooCommerce is activated.</p>';
                     echo '</div>';
                 });
             }
+            wcefp_debug_log('WooCommerce not found - plugin will run in limited mode');
         }
         
-        public function get_version() {
-            return '2.0.1';
-        }
+        return true;
+    }
+    
+    /**
+     * Load only the most critical components
+     * @return void
+     */
+    private function load_critical_components() {
+        // Simple, safe loading without complex dependencies
+        $critical_files = [
+            'includes/class-wcefp-logger.php'
+        ];
         
-        public function __call($method, $args) {
-            // Log method calls for debugging
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                wcefp_debug_log("Emergency instance: called method {$method}");
+        foreach ($critical_files as $file) {
+            $path = WCEFP_PLUGIN_DIR . $file;
+            if (file_exists($path)) {
+                try {
+                    require_once $path;
+                    wcefp_debug_log("Loaded critical file: {$file}");
+                } catch (Exception $e) {
+                    wcefp_debug_log("Failed to load {$file}: " . $e->getMessage());
+                    // Continue loading other files - don't let one failure stop everything
+                }
+            } else {
+                wcefp_debug_log("Critical file not found: {$file} - continuing without it");
             }
-            return null;
         }
-    };
+    }
+    
+    /**
+     * Register only the most essential hooks
+     * @return void
+     */
+    private function register_essential_hooks() {
+        // Only register hooks that are absolutely necessary and safe
+        if (class_exists('WooCommerce')) {
+            add_action('init', [$this, 'init_woocommerce_integration'], 20);
+        }
+        
+        // Admin-only hooks
+        if (is_admin()) {
+            add_action('admin_notices', [$this, 'display_admin_notices']);
+        }
+        
+        // WooCommerce HPOS compatibility declaration
+        add_action('before_woocommerce_init', [$this, 'declare_woo_compatibility']);
+    }
+    
+    /**
+     * Initialize WooCommerce integration safely
+     * @return void
+     */
+    public function init_woocommerce_integration() {
+        if (!class_exists('WooCommerce')) {
+            return;
+        }
+        
+        try {
+            // Only add the most essential WooCommerce hooks here
+            wcefp_debug_log('WooCommerce integration initialized');
+        } catch (Exception $e) {
+            wcefp_debug_log('WooCommerce integration failed: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Display any admin notices
+     * @return void
+     */
+    public function display_admin_notices() {
+        wcefp_display_emergency_errors();
+    }
+    
+    /**
+     * Declare WooCommerce compatibility
+     * @return void
+     */
+    public function declare_woo_compatibility() {
+        if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
+            try {
+                \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', WCEFP_PLUGIN_FILE, true);
+                \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('cart_checkout_blocks', WCEFP_PLUGIN_FILE, false);
+            } catch (Exception $e) {
+                wcefp_debug_log('WooCommerce compatibility declaration failed: ' . $e->getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Get plugin version
+     * @return string
+     */
+    public function get_version() {
+        return $this->version;
+    }
+    
+    /**
+     * Check if plugin is initialized
+     * @return bool
+     */
+    public function is_initialized() {
+        return $this->initialized;
+    }
 }
 
 /**
@@ -189,54 +402,12 @@ function wcefp_debug_log($message) {
 }
 
 /**
- * Safely try to load Bootstrap system
+ * Get the main plugin instance - simplified, bulletproof approach
  * 
- * @return bool True if successful, false otherwise
+ * @return WCEFP_Simple_Plugin
  */
-function wcefp_safe_load_bootstrap() {
-    $required_files = [
-        'includes/Core/Container.php',
-        'includes/Utils/Logger.php', 
-        'includes/Bootstrap/Plugin.php'
-    ];
-    
-    try {
-        foreach ($required_files as $file) {
-            $path = WCEFP_PLUGIN_DIR . $file;
-            if (!file_exists($path)) {
-                wcefp_debug_log("Bootstrap loading failed: missing {$file}");
-                return false;
-            }
-            
-            require_once $path;
-        }
-        
-        // Check if the class actually exists after loading
-        if (!class_exists('\WCEFP\Bootstrap\Plugin')) {
-            wcefp_debug_log("Bootstrap loading failed: class not found after require");
-            return false;
-        }
-        
-        wcefp_debug_log("Bootstrap system loaded successfully");
-        return true;
-        
-    } catch (Throwable $e) {
-        wcefp_debug_log("Bootstrap loading exception: " . $e->getMessage());
-        return false;
-    }
-}
-
-/**
- * Safely try to load legacy system
- * 
- * @return bool True if successful, false otherwise  
- */
-function wcefp_safe_load_legacy() {
-    // For now, return false - we can implement legacy loading later if needed
-    // The original backup file shows there was a legacy system, but we'll focus
-    // on the minimal emergency system for now
-    wcefp_debug_log("Legacy system not implemented in this version");
-    return false;
+function WCEFP() {
+    return WCEFP_Simple_Plugin::instance();
 }
 
 // Check basic requirements early
@@ -250,188 +421,63 @@ if (!function_exists('register_activation_hook') || !function_exists('register_d
     return;
 }
 
-// Composer autoloader
-$autoloader = WCEFP_PLUGIN_DIR . 'vendor/autoload.php';
-if (file_exists($autoloader)) {
-    require_once $autoloader;
-}
-
-// Manual fallback class loader for backwards compatibility
-spl_autoload_register(function($class_name) {
-    if (strpos($class_name, 'WCEFP\\') !== 0) {
-        return;
-    }
-    
-    // Convert namespace to file path
-    $relative_class = str_replace('WCEFP\\', '', $class_name);
-    $file_path = str_replace('\\', DIRECTORY_SEPARATOR, $relative_class) . '.php';
-    $full_path = WCEFP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . $file_path;
-    
-    if (file_exists($full_path)) {
-        require_once $full_path;
-    }
-});
-
-// Load legacy classes for backwards compatibility
-$legacy_classes = [
-    'includes/class-wcefp-logger.php' => 'WCEFP_Logger',
-    'includes/class-wcefp-cache.php' => 'WCEFP_Cache', 
-    'includes/class-wcefp-gift.php' => 'WCEFP_Gift',
-    'includes/class-wcefp-frontend.php' => 'WCEFP_Frontend',
-    'includes/class-wcefp-closures.php' => 'WCEFP_Closures',
-    'includes/class-wcefp-validator.php' => 'WCEFP_Validator',
-];
-
-foreach ($legacy_classes as $file => $class_name) {
-    if (file_exists(WCEFP_PLUGIN_DIR . $file) && !class_exists($class_name)) {
-        try {
-            require_once WCEFP_PLUGIN_DIR . $file;
-        } catch (Exception $e) {
-            wcefp_emergency_error("Failed to load {$file}: " . $e->getMessage());
-        }
-    }
-}
-
-/**
- * Get the main plugin instance with bulletproof error handling
- * 
- * @return \WCEFP\Bootstrap\Plugin|WCEFP_Plugin|object
- */
-function WCEFP() {
-    static $instance = null;
-    
-    if ($instance === null) {
-        // Multi-layer fallback system to prevent WSOD
-        
-        // Layer 1: Try modern Bootstrap system
-        try {
-            if (wcefp_safe_load_bootstrap()) {
-                $instance = new \WCEFP\Bootstrap\Plugin(__FILE__);
-                wcefp_debug_log('Successfully loaded Bootstrap Plugin instance');
-            }
-        } catch (Throwable $e) {
-            wcefp_debug_log('Bootstrap Plugin failed: ' . $e->getMessage());
-        }
-        
-        // Layer 2: Try legacy system if Bootstrap failed
-        if (!$instance) {
-            try {
-                if (wcefp_safe_load_legacy()) {
-                    $instance = new WCEFP_Plugin();
-                    wcefp_debug_log('Successfully loaded legacy Plugin instance');
-                }
-            } catch (Throwable $e) {
-                wcefp_debug_log('Legacy Plugin failed: ' . $e->getMessage());
-            }
-        }
-        
-        // Layer 3: Create minimal emergency instance
-        if (!$instance) {
-            wcefp_debug_log('Creating minimal emergency plugin instance');
-            $instance = wcefp_create_minimal_plugin_instance();
-        }
-    }
-    
-    return $instance;
-}
-
-// Plugin activation with enhanced WSOD prevention
+// Simplified, bulletproof activation hook
 register_activation_hook(__FILE__, function() {
-    // Prevent WSOD by capturing all errors and displaying them properly
-    $activation_errors = [];
-    
     try {
-        // Pre-flight safety checks
+        // Essential checks only
         if (version_compare(PHP_VERSION, '7.4.0', '<')) {
-            throw new Exception(sprintf('PHP 7.4+ required. Current: %s', PHP_VERSION));
+            wp_die(sprintf('WCEventsFP requires PHP 7.4 or higher. Current version: %s', PHP_VERSION), 'Plugin Activation Error');
         }
         
+        // Don't require WooCommerce during activation - allow graceful degradation
         if (!class_exists('WooCommerce')) {
-            throw new Exception('WooCommerce plugin is required and must be activated before WCEventsFP.');
+            // Just log a warning, don't fail activation
+            error_log('WCEventsFP: WooCommerce not detected during activation - plugin will run in limited mode');
         }
         
-        // Try to load the activation handler safely
-        if (class_exists('\WCEFP\Core\ActivationHandler')) {
-            \WCEFP\Core\ActivationHandler::activate();
-        } else {
-            // Safe fallback activation without complex dependencies
-            wcefp_safe_activation_fallback();
-        }
+        // Simple activation setup
+        wcefp_safe_activation_fallback();
         
     } catch (Exception $e) {
-        $activation_errors[] = $e->getMessage();
+        wp_die('WCEventsFP activation failed: ' . esc_html($e->getMessage()), 'Plugin Activation Error', ['back_link' => true]);
     } catch (Error $e) {
-        $activation_errors[] = 'Fatal error during activation: ' . $e->getMessage();
-    } catch (Throwable $e) {
-        $activation_errors[] = 'Unexpected error during activation: ' . $e->getMessage();
-    }
-    
-    // If there are errors, display them safely without causing WSOD
-    if (!empty($activation_errors)) {
-        $error_message = 'WCEventsFP Plugin Activation Failed:<br/><br/>';
-        foreach ($activation_errors as $error) {
-            $error_message .= '• ' . esc_html($error) . '<br/>';
-        }
-        $error_message .= '<br/>Please fix these issues and try activating the plugin again.<br/>';
-        $error_message .= 'For support, visit the plugin documentation or contact support with these error details.';
-        
-        wp_die($error_message, 'Plugin Activation Error', [
-            'response' => 500,
-            'back_link' => true
-        ]);
+        wp_die('WCEventsFP activation failed with fatal error: ' . esc_html($e->getMessage()), 'Plugin Activation Error', ['back_link' => true]);
     }
 });
 
-// Plugin deactivation  
+// Simple deactivation hook
 register_deactivation_hook(__FILE__, function() {
     try {
-        if (class_exists('\WCEFP\Core\ActivationHandler')) {
-            \WCEFP\Core\ActivationHandler::deactivate();
-        }
         flush_rewrite_rules();
+        wcefp_debug_log('Plugin deactivated successfully');
     } catch (Exception $e) {
         error_log('WCEventsFP deactivation error: ' . $e->getMessage());
     }
 });
 
-// Initialize plugin when WordPress is ready - with bulletproof error handling
+// Bulletproof plugin initialization - this is where the magic happens
 add_action('plugins_loaded', function() {
-    // Wrap everything in try-catch to prevent any possibility of WSOD
     try {
-        wcefp_debug_log('Starting plugin initialization in plugins_loaded hook');
+        wcefp_debug_log('Starting bulletproof plugin initialization');
         
-        // Double-check WooCommerce dependency
-        if (!class_exists('WooCommerce')) {
-            wcefp_debug_log('WooCommerce not found during plugins_loaded');
-            
-            add_action('admin_notices', function() {
-                echo '<div class="notice notice-error"><p><strong>WCEventsFP:</strong> ' . 
-                     esc_html__('WooCommerce is required and must be activated.', 'wceventsfp') . 
-                     '</p></div>';
-            });
-            return;
-        }
-        
-        wcefp_debug_log('WooCommerce detected, proceeding with plugin instance creation');
-        
-        // Get plugin instance safely with multiple fallback layers
+        // Get our simple, reliable plugin instance
         $plugin = WCEFP();
         
         if (!$plugin) {
-            wcefp_debug_log('Failed to get plugin instance - this should never happen');
-            wcefp_emergency_display('Failed to initialize plugin instance');
+            wcefp_emergency_error('Failed to create plugin instance');
             return;
         }
         
-        wcefp_debug_log('Plugin instance created successfully, calling init()');
-        
-        // Initialize the plugin safely
+        // Initialize the plugin
         if (method_exists($plugin, 'init')) {
-            $plugin->init();
-            wcefp_debug_log('Plugin init() completed successfully');
+            $success = $plugin->init();
+            if (!$success) {
+                wcefp_debug_log('Plugin initialization returned false - running in limited mode');
+            } else {
+                wcefp_debug_log('Plugin initialized successfully');
+            }
         } else {
-            wcefp_debug_log('Plugin instance has no init() method - using minimal mode');
-            wcefp_emergency_error('Plugin instance loaded without init method', 'warning');
+            wcefp_debug_log('Plugin instance has no init method - this should not happen');
         }
         
         // Mark plugin as loaded
@@ -439,26 +485,18 @@ add_action('plugins_loaded', function() {
             define('WCEFP_PLUGIN_LOADED', true);
         }
         
-        wcefp_debug_log('Plugin initialization completed successfully');
-        
-    } catch (Throwable $e) {
-        // Catch ALL possible errors, including Fatal Errors
-        $error_message = 'Critical error during plugin initialization: ' . $e->getMessage();
-        wcefp_debug_log($error_message . ' in ' . $e->getFile() . ':' . $e->getLine());
-        
-        // Try to display error safely
-        wcefp_emergency_display($error_message, [
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        
-        // Try to deactivate plugin to prevent further issues
-        wcefp_safe_deactivate('Critical initialization error');
+    } catch (Exception $e) {
+        wcefp_debug_log('Plugin initialization exception: ' . $e->getMessage());
+        wcefp_emergency_error('Plugin initialization failed: ' . $e->getMessage());
+    } catch (Error $e) {
+        wcefp_debug_log('Plugin initialization fatal error: ' . $e->getMessage());
+        wcefp_emergency_error('Fatal error during plugin initialization: ' . $e->getMessage());
     }
 }, 20); // Load after WooCommerce
 
-// Legacy support - maintain existing global function for backwards compatibility
+// === Legacy Compatibility Functions ===
+// Keep only essential legacy functions for backward compatibility
+
 if (!function_exists('wcefp_get_weekday_labels')) {
     function wcefp_get_weekday_labels() {
         return [
@@ -472,49 +510,3 @@ if (!function_exists('wcefp_get_weekday_labels')) {
         ];
     }
 }
-
-// Legacy admin metabox support
-add_action('add_meta_boxes', function($post_type, $post) {
-    if ($post_type === 'product') {
-        add_meta_box(
-            'wcefp_days_metabox',
-            __('Giorni disponibili', 'wceventsfp'),
-            'wcefp_add_days_metabox',
-            'product',
-            'normal',
-            'default'
-        );
-    }
-}, 10, 2);
-
-function wcefp_add_days_metabox($post) {
-    // Legacy metabox implementation
-    $days = get_post_meta($post->ID, '_wcefp_days', true) ?: [];
-    wp_nonce_field('wcefp_days_nonce', 'wcefp_days_nonce');
-    
-    echo '<div class="wcefp-weekdays-grid">';
-    foreach (wcefp_get_weekday_labels() as $key => $label) {
-        $checked = in_array($key, $days) ? 'checked' : '';
-        echo "<div class='wcefp-weekday'>";
-        echo "<input type='checkbox' name='_wcefp_days[]' value='{$key}' {$checked} id='wcefp_day_{$key}'>";
-        echo "<label for='wcefp_day_{$key}'>{$label}</label>";
-        echo "</div>";
-    }
-    echo '</div>';
-}
-
-// Save legacy metabox data
-add_action('woocommerce_admin_process_product_object', function($product) {
-    if (isset($_POST['wcefp_days_nonce']) && wp_verify_nonce($_POST['wcefp_days_nonce'], 'wcefp_days_nonce')) {
-        $days = isset($_POST['_wcefp_days']) ? array_map('sanitize_text_field', $_POST['_wcefp_days']) : [];
-        $product->update_meta_data('_wcefp_days', $days);
-    }
-});
-
-// Declare WooCommerce HPOS compatibility
-add_action('before_woocommerce_init', function() {
-    if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
-        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
-        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('cart_checkout_blocks', __FILE__, false);
-    }
-});

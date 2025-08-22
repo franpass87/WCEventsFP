@@ -1,4 +1,4 @@
-# 🚀 WCEventsFP System Improvements Summary v2.0.1
+# 🚀 WCEventsFP System Improvements Summary v2.1.0
 
 ## Overview
 This document summarizes the comprehensive system improvements implemented to answer "altre migliorie al sistema?" (other improvements to the system?).
@@ -132,7 +132,7 @@ The new system provides:
 
 ---
 
-**Version:** 2.0.1  
+**Version:** 2.1.0  
 **Release Date:** August 22, 2025  
 **Compatibility:** WordPress 5.0+, WooCommerce 3.0+  
 **PHP Requirements:** 7.4+
