@@ -1,4 +1,4 @@
-# WCEventsFP (v2.1.2) - Enterprise Booking Platform<!-- x-release-please-version -->
+# WCEventsFP (v2.1.3) - Enterprise Booking Platform<!-- x-release-please-version -->
 
 > **📦 COME SCARICARE IL PLUGIN** - [Guida Completa per Utenti](DOWNLOAD-INSTALL-GUIDE.md)  
 > **⚠️ NON usare "Code → Download ZIP"** - Scarica dalle [GitHub Releases](https://github.com/franpass87/WCEventsFP/releases)
@@ -9,7 +9,28 @@
 
 Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità di livello enterprise per massimizzare le conversioni, gestire risorse operative e automatizzare la distribuzione multi-canale.
 
-## 🚀 Nuove Funzionalità v2.1.2 - Bug Fixes & Code Cleanup
+## 🚀 Nuove Funzionalità v2.1.3 - Advanced Bug Fixes & Code Optimization
+
+### 🐛 Bug Fixes Risolti
+- **Deprecated Functions**: Sostituita funzione WooCommerce deprecata `get_woocommerce_currency()` con `get_option('woocommerce_currency')`
+- **Legacy Logger Redundancy**: Eliminata inizializzazione ridondante del sistema di logging legacy in wceventsfp.php
+- **Code Quality**: Rimossi riferimenti non necessari che causavano duplicazione di codice
+- **Compatibility**: Migliorata compatibilità con versioni più recenti di WordPress/WooCommerce
+
+### 🧹 Code Cleanup & Optimization
+- **Redundancy Elimination**: Rimossa inizializzazione del logger legacy deprecato dal bootstrap principale
+- **Function Modernization**: Aggiornate chiamate a funzioni WordPress/WooCommerce per utilizzare le versioni più recenti
+- **Performance**: Ridotte operazioni non necessarie durante l'inizializzazione del plugin
+- **Code Standards**: Migliorata aderenza agli standard di codifica WordPress moderni
+
+### 📝 Documentation Updates
+- **Version Consistency**: Aggiornati tutti i riferimenti di versione a v2.1.3
+- **Installation Guide**: Aggiornate le istruzioni di installazione con la nuova versione
+- **Diagnostic Tools**: Aggiornati gli strumenti di diagnosi per riflettere la versione corrente
+
+## Previous Releases
+
+### v2.1.2 - Bug Fixes & Code Cleanup
 
 ### 🐛 Bug Fixes Risolti
 - **Logger Deprecato**: Rimossi tutti i riferimenti al vecchio sistema WCEFP_Logger, ora usa WCEFP\Utils\Logger

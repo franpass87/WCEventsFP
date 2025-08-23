@@ -7,6 +7,31 @@ e questo progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 
 ---
 
+## [2.1.3] – 2025-08-23
+
+### 🐛 Advanced Bug Fixes & Code Optimization
+
+#### Fixed
+- **Deprecated WooCommerce Functions**: Sostituita la funzione deprecata `get_woocommerce_currency()` con `get_option('woocommerce_currency')` per compatibilità futura
+- **Legacy Logger Redundancy**: Eliminata inizializzazione ridondante del sistema WCEFP_Logger deprecato dal file principale wceventsfp.php
+- **Function Safety Checks**: Corretti i controlli di sicurezza per le funzioni WooCommerce per utilizzare funzioni non deprecate
+
+#### Code Quality
+- **Redundancy Removal**: Rimossa completamente l'inizializzazione del logger legacy che creava duplicazione di codice
+- **Performance Optimization**: Ridotte le operazioni non necessarie durante il bootstrap del plugin
+- **Code Standards**: Migliorata aderenza agli standard WordPress moderni per le chiamate API
+
+#### Documentation
+- **Version Consistency**: Aggiornati tutti i file di documentazione e diagnostica alla versione 2.1.3
+- **Installation Guide**: Aggiornate le guide di installazione per riflettere la versione corrente
+- **Compatibility Notes**: Aggiornate le note di compatibilità nelle istruzioni utente
+
+#### Security
+- **Dependency Analysis**: Analizzate le vulnerabilità npm (45 identificate, principalmente in dipendenze di sviluppo)
+- **Function Updates**: Migrate da funzioni deprecate per ridurre i rischi di sicurezza futuri
+
+---
+
 ## [2.1.2] – 2025-01-23
 
 ### 🐛 Bug Fixes & Code Cleanup
