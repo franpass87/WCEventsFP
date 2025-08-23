@@ -310,7 +310,7 @@ class DiagnosticLogger {
             'woocommerce' => [
                 'active' => class_exists('WooCommerce'),
                 'version' => defined('WC_VERSION') ? WC_VERSION : 'Unknown',
-                'base_currency' => get_woocommerce_currency(),
+                'base_currency' => get_option('woocommerce_currency'),
                 'store_country' => get_option('woocommerce_default_country', 'Unknown')
             ],
             'plugin_settings' => [

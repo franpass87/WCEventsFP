@@ -19,6 +19,7 @@
 		init() {
 			this.bindEvents();
 			this.initializeTable();
+			this.initVoucherRedeemForm();
 		},
 
 		/**
@@ -959,6 +960,86 @@
 			};
 
 			return labels[ status ] || status;
+		},
+
+		/**
+		 * Initialize voucher redeem functionality
+		 */
+		initVoucherRedeemForm() {
+			const form = document.querySelector('.wcefp-voucher-redeem-form');
+			const statusDiv = document.getElementById('wcefp-voucher-status');
+			
+			if (!form) return;
+			
+			form.addEventListener('submit', (e) => {
+				e.preventDefault();
+				
+				const formData = new FormData(form);
+				const voucherCode = formData.get('voucher_code');
+				
+				if (!voucherCode.trim()) {
+					if (window.WCEFPModals) {
+						WCEFPModals.showError(wcefpVoucherManager.strings.enter_voucher_code || 'Inserisci un codice voucher.');
+					}
+					return;
+				}
+				
+				// Show loading state
+				const submitBtn = form.querySelector('button[type="submit"]');
+				const originalText = submitBtn.textContent;
+				submitBtn.textContent = wcefpVoucherManager.strings.verifying || 'Verifica in corso...';
+				submitBtn.disabled = true;
+				
+				// Make AJAX request to verify voucher
+				fetch(wcefpVoucherManager.ajaxUrl, {
+					method: 'POST',
+					body: new URLSearchParams({
+						action: 'wcefp_verify_voucher',
+						voucher_code: voucherCode,
+						nonce: formData.get('wcefp_voucher_nonce')
+					})
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.success) {
+						if (window.WCEFPModals) {
+							WCEFPModals.showSuccess(data.data.message);
+						}
+						
+						// Show voucher details if status display is enabled
+						if (statusDiv && data.data.voucher_details) {
+							statusDiv.innerHTML = data.data.voucher_details;
+							statusDiv.style.display = 'block';
+						}
+						
+						// Redirect if specified and URL is provided
+						if (wcefpVoucherManager.successRedirect && data.data.redirect_url) {
+							setTimeout(() => {
+								window.location.href = data.data.redirect_url;
+							}, 2000);
+						}
+					} else {
+						if (window.WCEFPModals) {
+							WCEFPModals.showError(data.data || (wcefpVoucherManager.strings.verification_failed || 'Verifica fallita'));
+						}
+						
+						if (statusDiv) {
+							statusDiv.style.display = 'none';
+						}
+					}
+				})
+				.catch(error => {
+					console.error('Voucher verification error:', error);
+					if (window.WCEFPModals) {
+						WCEFPModals.showError(wcefpVoucherManager.strings.network_error || 'Errore di rete. Riprova.');
+					}
+				})
+				.finally(() => {
+					// Restore button state
+					submitBtn.textContent = originalText;
+					submitBtn.disabled = false;
+				});
+			});
 		},
 	};
 

@@ -513,6 +513,33 @@ class VoucherManager {
         wp_enqueue_script('wcefp-widgets');
         wp_enqueue_style('wcefp-widgets');
         
+        // Also enqueue voucher manager for redeem functionality
+        $this->enqueue_admin_scripts();
+        
+        // Update localization to include redeem-specific data
+        wp_localize_script('wcefp-voucher-manager', 'wcefpVoucherManager', array_merge(
+            [
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('wcefp_voucher_action'),
+                'strings' => [
+                    'confirm_cancel' => __('Sei sicuro di voler annullare questo voucher?', 'wceventsfp'),
+                    'confirm_resend' => __('Vuoi inviare nuovamente l\'email del voucher?', 'wceventsfp'),
+                    'voucher_cancelled' => __('Voucher annullato con successo.', 'wceventsfp'),
+                    'email_resent' => __('Email del voucher inviata nuovamente.', 'wceventsfp'),
+                    'error_occurred' => __('Si è verificato un errore. Riprova.', 'wceventsfp'),
+                    'loading' => __('Caricamento...', 'wceventsfp'),
+                    // Redeem-specific strings
+                    'enter_voucher_code' => __('Inserisci un codice voucher.', 'wceventsfp'),
+                    'verifying' => __('Verifica in corso...', 'wceventsfp'),
+                    'verification_failed' => __('Errore durante la verifica del voucher.', 'wceventsfp'),
+                    'network_error' => __('Errore di rete. Riprova.', 'wceventsfp'),
+                ]
+            ],
+            [
+                'successRedirect' => !empty($atts['success_redirect']) ? $atts['success_redirect'] : false
+            ]
+        ));
+        
         ob_start();
         ?>
         <div class="wcefp-widget wcefp-voucher-redeem-widget" data-="<?php echo esc_attr(esc_attr($atts['style'])); ?>">
@@ -548,72 +575,6 @@ class VoucherManager {
             <?php endif; ?>
         </div>
         
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('.wcefp-voucher-redeem-form');
-            const statusDiv = document.getElementById('wcefp-voucher-status');
-            
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const formData = new FormData(form);
-                    const voucherCode = formData.get('voucher_code');
-                    
-                    if (!voucherCode.trim()) {
-                        WCEFPModals.showError('<?php esc_js_e('Inserisci un codice voucher.', 'wceventsfp'); ?>');
-                        return;
-                    }
-                    
-                    // Show loading state
-                    const submitBtn = form.querySelector('button[type="submit"]');
-                    const originalText = submitBtn.textContent;
-                    submitBtn.textContent = '<?php esc_js_e('Verifica in corso...', 'wceventsfp'); ?>';
-                    submitBtn.disabled = true;
-                    
-                    // Make AJAX request to verify voucher
-                    fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
-                        method: 'POST',
-                        body: new URLSearchParams({
-                            action: 'wcefp_verify_voucher',
-                            voucher_code: voucherCode,
-                            nonce: formData.get('wcefp_voucher_nonce')
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            WCEFPModals.showSuccess(data.data.message);
-                            
-                            // Show voucher details if status display is enabled
-                            if (statusDiv && data.data.voucher_details) {
-                                statusDiv.innerHTML = data.data.voucher_details;
-                                statusDiv.style.display = 'block';
-                            }
-                            
-                            // Redirect if specified
-                            if ('<?php echo esc_js($atts['success_redirect']); ?>' && data.data.redirect_url) {
-                                setTimeout(() => {
-                                    window.location.href = data.data.redirect_url;
-                                }, 2000);
-                            }
-                        } else {
-                            WCEFPModals.showError(data.data.message || '<?php esc_js_e('Errore durante la verifica del voucher.', 'wceventsfp'); ?>');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Voucher verification error:', error);
-                        WCEFPModals.showError('<?php esc_js_e('Errore di rete. Riprova.', 'wceventsfp'); ?>');
-                    })
-                    .finally(() => {
-                        // Restore button state
-                        submitBtn.textContent = originalText;
-                        submitBtn.disabled = false;
-                    });
-                });
-            }
-        });
-        </script>
         <?php
         return ob_get_clean();
     }

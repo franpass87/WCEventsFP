@@ -16,6 +16,7 @@
 			this.initTabs();
 			this.initHelpTips();
 			this.initFormValidation();
+			this.initRateLimiterControls();
 		},
 
 		/**
@@ -486,6 +487,71 @@
 					$tooltip.hide();
 				}
 			);
+		},
+
+		/**
+		 * Initialize rate limiter controls
+		 */
+		initRateLimiterControls() {
+			const saveButton = document.getElementById('save-rate-limits');
+			const resetButton = document.getElementById('reset-rate-limits');
+			
+			if (saveButton) {
+				saveButton.addEventListener('click', (e) => {
+					e.preventDefault();
+					
+					const form = document.getElementById('wcefp-rate-limits-form');
+					if (!form) return;
+					
+					const formData = new FormData(form);
+					formData.append('action', 'wcefp_update_rate_limits');
+					
+					fetch(ajaxurl, {
+						method: 'POST',
+						body: formData
+					})
+					.then(response => response.json())
+					.then(data => {
+						if (data.success) {
+							this.showNotice('Rate limits updated successfully', 'success');
+							setTimeout(() => location.reload(), 1500);
+						} else {
+							this.showNotice('Failed to update rate limits', 'error');
+						}
+					})
+					.catch(error => {
+						console.error('Rate limiter error:', error);
+						this.showNotice('Network error occurred', 'error');
+					});
+				});
+			}
+			
+			if (resetButton) {
+				resetButton.addEventListener('click', () => {
+					if (!confirm(wcefpSettings?.strings?.resetRateLimitsConfirm || 'Reset all rate limits to default values?')) {
+						return;
+					}
+					
+					const formData = new FormData();
+					formData.append('action', 'wcefp_update_rate_limits');
+					formData.append('reset', '1');
+					formData.append('_wpnonce', wcefpSettings?.nonce || '');
+					
+					fetch(ajaxurl, {
+						method: 'POST',
+						body: formData
+					})
+					.then(response => response.json())
+					.then(data => {
+						if (data.success) {
+							location.reload();
+						}
+					})
+					.catch(error => {
+						console.error('Rate limiter reset error:', error);
+					});
+				});
+			}
 		},
 	};
 

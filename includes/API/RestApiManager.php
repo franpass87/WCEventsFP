@@ -465,7 +465,7 @@ class RestApiManager {
                 'last_name' => $order ? $order->get_billing_last_name() : ''
             ],
             'total' => $order ? $order->get_total() : 0,
-            'currency' => $order ? $order->get_currency() : get_woocommerce_currency()
+            'currency' => $order ? $order->get_currency() : get_option('woocommerce_currency')
         ];
     }
     
