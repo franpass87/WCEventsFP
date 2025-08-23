@@ -31,7 +31,7 @@ if (class_exists('WC_Product_Simple')) {
              * @return string
              */
             public function get_type() {
-                return 'wcefp_event';
+                return 'evento';
             }
             
             /**
@@ -78,7 +78,7 @@ if (class_exists('WC_Product_Simple')) {
              * @return string
              */
             public function get_type() {
-                return 'wcefp_experience';
+                return 'esperienza';
             }
             
             /**

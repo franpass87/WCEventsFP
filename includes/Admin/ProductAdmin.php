@@ -44,8 +44,36 @@ class ProductAdmin {
      * @return void
      */
     private function load_product_classes() {
-        // Product classes are now handled by the main autoloader
-        // Legacy product types (wcefp_event, wcefp_experience) are loaded as needed
+        // Load legacy product classes
+        $legacy_file = WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-product-types.php';
+        if (file_exists($legacy_file)) {
+            require_once $legacy_file;
+        }
+        
+        // Register custom product types with WooCommerce
+        add_action('init', [$this, 'register_product_types'], 20);
+    }
+    
+    /**
+     * Register custom product types with WooCommerce
+     * 
+     * @return void
+     */
+    public function register_product_types() {
+        // Ensure WooCommerce is loaded
+        if (!class_exists('WooCommerce')) {
+            return;
+        }
+        
+        // Register evento product type
+        if (!in_array('evento', wc_get_product_types())) {
+            // This will be handled by the add_product_types filter
+        }
+        
+        // Register esperienza product type  
+        if (!in_array('esperienza', wc_get_product_types())) {
+            // This will be handled by the add_product_types filter
+        }
     }
     
     /**
@@ -59,6 +87,8 @@ class ProductAdmin {
         add_filter('woocommerce_product_data_tabs', [$this, 'add_product_data_tab']);
         add_action('woocommerce_product_data_panels', [$this, 'add_product_data_panels']);
         add_action('woocommerce_admin_process_product_object', [$this, 'save_product_data']);
+        add_action('save_post', [$this, 'preserve_product_type'], 10, 2);
+        add_filter('woocommerce_product_type_query', [$this, 'filter_product_type_query'], 10, 2);
     }
     
     /**
@@ -81,10 +111,10 @@ class ProductAdmin {
      * @return string Product class name
      */
     public function product_class($classname, $product_type) {
-        if ($product_type === 'wcefp_event') {
+        if ($product_type === 'evento' || $product_type === 'wcefp_event') {
             return 'WC_Product_WCEFP_Event';
         }
-        if ($product_type === 'wcefp_experience') {
+        if ($product_type === 'esperienza' || $product_type === 'wcefp_experience') {
             return 'WC_Product_WCEFP_Experience';
         }
         return $classname;
@@ -169,6 +199,50 @@ class ProductAdmin {
         echo '</div>'; // End field row
         echo '</div>'; // End options_group
         
+        // Weekly Schedule & Time Slots Section
+        echo '<div class="options_group">';
+        echo '<h4>📅 ' . __('Ricorrenze settimanali & Slot', 'wceventsfp') . '</h4>';
+        
+        // Weekdays selection
+        $weekdays = get_post_meta($post->ID, '_wcefp_weekdays', true);
+        if (!is_array($weekdays)) {
+            $weekdays = [];
+        }
+        
+        $day_labels = [
+            1 => __('Lunedì', 'wceventsfp'),
+            2 => __('Martedì', 'wceventsfp'), 
+            3 => __('Mercoledì', 'wceventsfp'),
+            4 => __('Giovedì', 'wceventsfp'),
+            5 => __('Venerdì', 'wceventsfp'),
+            6 => __('Sabato', 'wceventsfp'),
+            0 => __('Domenica', 'wceventsfp')
+        ];
+        
+        echo '<div class="wcefp-weekdays-selection">';
+        echo '<label class="wcefp-field-label"><strong>🗓️ ' . __('Giorni della settimana disponibili:', 'wceventsfp') . '</strong></label>';
+        echo '<div class="wcefp-checkbox-grid">';
+        foreach ($day_labels as $day_num => $day_name) {
+            $checked = in_array($day_num, $weekdays) ? 'checked="checked"' : '';
+            echo '<label class="wcefp-checkbox-item">';
+            echo '<input type="checkbox" name="_wcefp_weekdays[]" value="' . $day_num . '" ' . $checked . ' />';
+            echo '<span>' . $day_name . '</span>';
+            echo '</label>';
+        }
+        echo '</div>';
+        echo '<p class="description">' . __('Seleziona i giorni in cui l\'esperienza è disponibile', 'wceventsfp') . '</p>';
+        echo '</div>';
+        
+        // Time slots input
+        $time_slots = get_post_meta($post->ID, '_wcefp_time_slots', true);
+        echo '<div class="wcefp-time-slots-section">';
+        echo '<label class="wcefp-field-label" for="_wcefp_time_slots"><strong>⏰ ' . __('Slot orari:', 'wceventsfp') . '</strong></label>';
+        echo '<input type="text" id="_wcefp_time_slots" name="_wcefp_time_slots" value="' . esc_attr($time_slots) . '" class="regular-text" placeholder="09:00, 14:00, 16:30" />';
+        echo '<p class="description">' . __('Orari degli slot separati da virgola (formato HH:MM, es: 09:00, 14:00, 16:30)', 'wceventsfp') . '</p>';
+        echo '</div>';
+        
+        echo '</div>'; // End options_group
+        
         // Experience Details Section
         echo '<div class="options_group">';
         echo '<h4>🌟 ' . __('Dettagli Esperienza', 'wceventsfp') . '</h4>';
@@ -240,6 +314,84 @@ class ProductAdmin {
         
         // Add inline script for enhanced field behavior
         ?>
+        <style>
+        .wcefp-weekdays-selection {
+            margin: 15px 0;
+        }
+        
+        .wcefp-field-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .wcefp-checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .wcefp-checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .wcefp-checkbox-item:hover {
+            background: #f0f8ff;
+            border-color: #0073aa;
+        }
+        
+        .wcefp-checkbox-item input[type="checkbox"] {
+            margin-right: 6px;
+            margin-left: 0;
+        }
+        
+        .wcefp-checkbox-item input[type="checkbox"]:checked + span {
+            color: #0073aa;
+            font-weight: 600;
+        }
+        
+        .wcefp-time-slots-section {
+            margin: 15px 0;
+        }
+        
+        .wcefp-time-slots-section input[type="text"] {
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        /* Validation feedback styles */
+        .form-field.has-error {
+            border-left: 3px solid #dc3232;
+            padding-left: 8px;
+        }
+        
+        .form-field.has-success {
+            border-left: 3px solid #46b450;
+            padding-left: 8px;
+        }
+        
+        .form-field.has-error input,
+        .form-field.has-error textarea {
+            border-color: #dc3232;
+        }
+        
+        .form-field.has-success input,
+        .form-field.has-success textarea {
+            border-color: #46b450;
+        }
+        </style>
         <script>
         jQuery(document).ready(function($) {
             // Add enhanced validation and visual feedback
@@ -300,9 +452,71 @@ class ProductAdmin {
                     $(this).closest('.form-field').addClass('has-success').removeClass('has-error');
                 }
             });
+            
+            // Time slots validation and formatting
+            $('#_wcefp_time_slots').on('blur', function() {
+                var value = $(this).val().trim();
+                var $field = $(this).closest('.wcefp-time-slots-section');
+                
+                if (value) {
+                    // Validate time format (HH:MM)
+                    var timePattern = /^(\d{1,2}:\d{2})(\s*,\s*\d{1,2}:\d{2})*$/;
+                    if (timePattern.test(value)) {
+                        // Additional validation: check each time is valid
+                        var times = value.split(',').map(t => t.trim());
+                        var allValid = times.every(function(time) {
+                            var parts = time.split(':');
+                            var hours = parseInt(parts[0]);
+                            var minutes = parseInt(parts[1]);
+                            return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+                        });
+                        
+                        if (allValid) {
+                            $field.removeClass('has-error').addClass('has-success');
+                            // Format nicely
+                            $(this).val(times.join(', '));
+                        } else {
+                            $field.removeClass('has-success').addClass('has-error');
+                        }
+                    } else {
+                        $field.removeClass('has-success').addClass('has-error');
+                    }
+                } else {
+                    $field.removeClass('has-error has-success');
+                }
+            });
+            
+            // Visual feedback for weekday selection
+            $('input[name="_wcefp_weekdays[]"]').on('change', function() {
+                var checkedCount = $('input[name="_wcefp_weekdays[]"]:checked').length;
+                var $container = $('.wcefp-weekdays-selection');
+                
+                if (checkedCount > 0) {
+                    $container.removeClass('has-error').addClass('has-success');
+                } else {
+                    $container.removeClass('has-success has-error');
+                }
+            });
+            
+            // Product type preservation
+            if ($('#product-type').val() === 'evento' || $('#product-type').val() === 'esperienza') {
+                // Store original type in a hidden field
+                var originalType = $('#product-type').val();
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: '_wcefp_original_type',
+                    value: originalType
+                }).appendTo('#product-type').parent();
+                
+                // Prevent type change on form submission
+                $('#publish, #save-post').on('click', function() {
+                    $('#product-type').val(originalType);
+                });
+            }
         });
         </script>
         <?php
+    }
     
     /**
      * Save product data
@@ -320,7 +534,8 @@ class ProductAdmin {
             '_wcefp_meeting_point',
             '_wcefp_included',
             '_wcefp_excluded',
-            '_wcefp_cancellation'
+            '_wcefp_cancellation',
+            '_wcefp_time_slots'
         ];
         
         foreach ($fields as $field) {
@@ -332,5 +547,65 @@ class ProductAdmin {
                 $product->update_meta_data($field, $value);
             }
         }
+        
+        // Handle weekdays array separately
+        if (isset($_POST['_wcefp_weekdays']) && is_array($_POST['_wcefp_weekdays'])) {
+            $weekdays = array_map('intval', $_POST['_wcefp_weekdays']);
+            $product->update_meta_data('_wcefp_weekdays', $weekdays);
+        } else {
+            $product->update_meta_data('_wcefp_weekdays', []);
+        }
+        
+        // Ensure product type is preserved for evento/esperienza products
+        $product_type = $product->get_type();
+        if (in_array($product_type, ['evento', 'esperienza'])) {
+            $product->update_meta_data('_wcefp_product_type', $product_type);
+            
+            // Force the product type to be saved correctly
+            if (isset($_POST['product-type'])) {
+                $_POST['product-type'] = $product_type;
+            }
+        }
+    }
+    
+    /**
+     * Preserve product type on save to prevent reverting to simple product
+     * 
+     * @param int $post_id Post ID
+     * @param \WP_Post $post Post object
+     * @return void
+     */
+    public function preserve_product_type($post_id, $post) {
+        if ($post->post_type !== 'product') {
+            return;
+        }
+        
+        // Get the stored product type
+        $stored_type = get_post_meta($post_id, '_wcefp_product_type', true);
+        
+        if ($stored_type && in_array($stored_type, ['evento', 'esperienza'])) {
+            // Update the product type term
+            wp_set_object_terms($post_id, $stored_type, 'product_type');
+            
+            // Ensure the meta is preserved
+            update_post_meta($post_id, '_wcefp_product_type', $stored_type);
+        }
+    }
+    
+    /**
+     * Filter product type query to handle our custom types
+     * 
+     * @param string $query_type Query type
+     * @param int $product_id Product ID
+     * @return string Product type
+     */
+    public function filter_product_type_query($query_type, $product_id) {
+        $stored_type = get_post_meta($product_id, '_wcefp_product_type', true);
+        
+        if ($stored_type && in_array($stored_type, ['evento', 'esperienza'])) {
+            return $stored_type;
+        }
+        
+        return $query_type;
     }
 }
