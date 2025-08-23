@@ -287,6 +287,14 @@ class WCEFP_Enhanced_Features {
 
     // Google Reviews shortcode (replaces internal review system as per user request)
     public static function google_reviews_shortcode($atts) {
+        // Enqueue external CSS file
+        wp_enqueue_style(
+            'wcefp-google-reviews', 
+            WCEFP_PLUGIN_URL . 'assets/css/google-reviews.css', 
+            [], 
+            WCEFP_VERSION
+        );
+        
         $a = shortcode_atts([
             'place_id' => get_option('wcefp_google_place_id', ''),
             'limit' => 5,
@@ -375,68 +383,6 @@ class WCEFP_Enhanced_Features {
             <?php endif; ?>
         </div>
         
-        <style>
-        .wcefp-google-reviews { 
-            background: #fff; border-radius: 12px; padding: 25px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        .wcefp-overall-rating { 
-            text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #f0f0f0; 
-        }
-        .wcefp-rating-score { display: flex; align-items: center; justify-content: center; gap: 15px; }
-        .wcefp-rating-number { 
-            font-size: 3em; font-weight: 700; color: #1a73e8; 
-        }
-        .wcefp-rating-stars .wcefp-star { 
-            font-size: 24px; margin: 0 2px; 
-        }
-        .wcefp-star-filled { color: #fbbc04; }
-        .wcefp-star-empty { color: #e0e0e0; }
-        .wcefp-google-logo { 
-            margin-top: 10px; font-size: 14px; 
-        }
-        .wcefp-reviews-list { 
-            display: flex; flex-direction: column; gap: 20px; 
-        }
-        .wcefp-review-item { 
-            padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #1a73e8;
-        }
-        .wcefp-review-header { 
-            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; 
-        }
-        .wcefp-review-author { 
-            display: flex; align-items: center; gap: 12px; 
-        }
-        .wcefp-author-avatar { 
-            width: 48px; height: 48px; border-radius: 50%; object-fit: cover; 
-        }
-        .wcefp-author-avatar-placeholder { 
-            background: linear-gradient(135deg, #1a73e8, #4285f4); color: white; 
-            display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 18px;
-        }
-        .wcefp-author-name { 
-            font-weight: 600; color: #202124; font-size: 15px; 
-        }
-        .wcefp-review-rating { 
-            margin-top: 4px; 
-        }
-        .wcefp-review-rating .wcefp-star { 
-            font-size: 14px; margin: 0 1px; 
-        }
-        .wcefp-review-date { 
-            color: #5f6368; font-size: 13px; 
-        }
-        .wcefp-review-text { 
-            color: #3c4043; line-height: 1.6; font-size: 14px; 
-        }
-        
-        @media (max-width: 768px) {
-            .wcefp-google-reviews { padding: 20px; }
-            .wcefp-rating-score { flex-direction: column; gap: 10px; }
-            .wcefp-rating-number { font-size: 2.5em; }
-            .wcefp-review-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-        }
-        </style>
         <?php
         
         return ob_get_clean();

@@ -122,7 +122,7 @@ class AnalyticsDashboardManager {
                 'danger' => '#d63638',
                 'info' => '#72aee6'
             ],
-            'currency_symbol' => get_woocommerce_currency_symbol(),
+            'currency_symbol' => html_entity_decode(get_woocommerce_currency_symbol(get_option('woocommerce_currency'))),
             'date_format' => get_option('date_format')
         ]);
     }

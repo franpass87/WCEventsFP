@@ -147,7 +147,7 @@ class WCEFP_Frontend {
             if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
             
             // Safety check for required functions and variables
-            if (!function_exists('get_post_meta') || !function_exists('get_woocommerce_currency_symbol')) {
+            if (!function_exists('get_post_meta') || !function_exists('get_option')) {
                 return;
             }
             

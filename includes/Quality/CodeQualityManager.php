@@ -288,6 +288,7 @@ class CodeQualityManager {
     private static function check_deprecated_functions($file, $content) {
         $deprecated_functions = [
             'get_woocommerce_currency()' => "get_option('woocommerce_currency')",
+            'get_woocommerce_currency_symbol()' => "get_woocommerce_currency_symbol(get_option('woocommerce_currency'))",
             'mysql_query' => 'wpdb methods',
             'create_function' => 'anonymous functions'
         ];

@@ -89,7 +89,7 @@ class ShortcodeManager {
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('wcefp_shortcode'),
                 'currency' => get_option('woocommerce_currency'),
-                'currency_symbol' => get_woocommerce_currency_symbol(),
+                'currency_symbol' => html_entity_decode(get_woocommerce_currency_symbol(get_option('woocommerce_currency'))),
                 'date_format' => get_option('date_format'),
                 'strings' => [
                     'loading' => __('Loading...', 'wceventsfp'),
