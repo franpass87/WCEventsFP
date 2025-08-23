@@ -126,7 +126,7 @@ class SystemStatus {
         <div class="wrap wcefp-system-status">
             <h1>
                 <?php esc_html_e('WCEventsFP System Status', 'wceventsfp'); ?>
-                <span class="wcefp-health-badge wcefp-health-<?php echo esc_attr($health_status['level']); ?>">
+                <span class="wcefp-health-badge wcefp-health-<?php echo esc_attr(esc_attr($health_status['level'])); ?>">
                     <?php echo esc_html($health_status['label']); ?>
                 </span>
             </h1>
@@ -299,7 +299,7 @@ class SystemStatus {
             
             <div class="wcefp-checks-grid">
                 <?php foreach ($checks as $check_id => $check): ?>
-                    <div class="wcefp-check-item wcefp-check-<?php echo esc_attr($check['status']); ?>" data-check="<?php echo esc_attr($check_id); ?>">
+                    <div class="wcefp-check-item wcefp-check-<?php echo esc_attr(esc_attr($check['status'])); ?>" data-="<?php echo esc_attr(esc_attr($check_id)); ?>">
                         <div class="wcefp-check-header">
                             <div class="wcefp-check-icon">
                                 <?php if ($check['status'] === 'pass'): ?>
@@ -311,7 +311,7 @@ class SystemStatus {
                                 <?php endif; ?>
                             </div>
                             <h4><?php echo esc_html($check['title']); ?></h4>
-                            <button type="button" class="button button-small wcefp-run-test" data-test="<?php echo esc_attr($check_id); ?>">
+                            <button type="button" class="button button-small wcefp-run-test" data-="<?php echo esc_attr(esc_attr($check_id)); ?>">
                                 <?php esc_html_e('Test', 'wceventsfp'); ?>
                             </button>
                         </div>
@@ -374,10 +374,10 @@ class SystemStatus {
                         </thead>
                         <tbody>
                             <?php foreach ($logs as $log): ?>
-                                <tr class="wcefp-log-<?php echo esc_attr(strtolower($log['level'])); ?>">
+                                <tr class="wcefp-log-<?php echo esc_attr(esc_attr(strtolower($log['level']))); ?>">
                                     <td><?php echo esc_html(date('M j, H:i:s', strtotime($log['timestamp']))); ?></td>
                                     <td>
-                                        <span class="wcefp-log-level wcefp-log-level-<?php echo esc_attr(strtolower($log['level'])); ?>">
+                                        <span class="wcefp-log-level wcefp-log-level-<?php echo esc_attr(esc_attr(strtolower($log['level']))); ?>">
                                             <?php echo esc_html($log['level']); ?>
                                         </span>
                                     </td>

@@ -509,7 +509,7 @@ class VoucherManager {
         
         ob_start();
         ?>
-        <div class="wcefp-widget wcefp-voucher-redeem-widget" data-style="<?php echo esc_attr($atts['style']); ?>">
+        <div class="wcefp-widget wcefp-voucher-redeem-widget" data-="<?php echo esc_attr(esc_attr($atts['style'])); ?>">
             <div class="wcefp-widget-header">
                 <h3><?php _e('Riscatta il tuo Voucher', 'wceventsfp'); ?></h3>
                 <p><?php _e('Inserisci il codice del tuo voucher per utilizzarlo.', 'wceventsfp'); ?></p>
@@ -638,7 +638,7 @@ class VoucherManager {
         
         ob_start();
         ?>
-        <div class="wcefp-widget wcefp-voucher-status-widget" data-style="<?php echo esc_attr($atts['style']); ?>">
+        <div class="wcefp-widget wcefp-voucher-status-widget" data-="<?php echo esc_attr(esc_attr($atts['style'])); ?>">
             <div class="wcefp-voucher-status-header">
                 <h4><?php _e('Stato Voucher', 'wceventsfp'); ?></h4>
                 <span class="wcefp-voucher-code"><?php echo esc_html($voucher->code); ?></span>
@@ -649,7 +649,7 @@ class VoucherManager {
                     <strong><?php echo wc_price($voucher->amount); ?></strong>
                 </div>
                 
-                <div class="wcefp-voucher-status wcefp-status-<?php echo esc_attr($voucher->status); ?>">
+                <div class="wcefp-voucher-status wcefp-status-<?php echo esc_attr(esc_attr($voucher->status)); ?>">
                     <?php echo esc_html($this->get_status_label($voucher->status)); ?>
                 </div>
                 

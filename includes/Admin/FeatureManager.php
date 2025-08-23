@@ -98,10 +98,10 @@ class FeatureManager {
                 <div class="wcefp-status-card">
                     <h3><?php _e('Performance Score', 'wceventsfp'); ?></h3>
                     <div class="performance-score">
-                        <span class="score-number"><?php echo $performance_score; ?></span>
+                        <span class="score-number"><?php echo esc_html($performance_score); ?></span>
                         <span class="score-label">/100</span>
                         <div class="score-bar">
-                            <div class="score-fill" style="width: <?php echo $performance_score; ?>%"></div>
+                            <div class="score-fill" style="width: <?php echo esc_html($performance_score); ?>%"></div>
                         </div>
                     </div>
                 </div>

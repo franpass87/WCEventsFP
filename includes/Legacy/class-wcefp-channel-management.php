@@ -179,23 +179,23 @@ class WCEFP_Channel_Management {
             
             <nav class="nav-tab-wrapper">
                 <a href="?post_type=wcefp_event&page=wcefp-channels&tab=overview" 
-                   class="nav-tab <?php echo $active_tab === 'overview' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'overview' ? 'nav-tab-active' : '')); ?>">
                    Panoramica
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-channels&tab=channels" 
-                   class="nav-tab <?php echo $active_tab === 'channels' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'channels' ? 'nav-tab-active' : '')); ?>">
                    Canali
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-channels&tab=mappings" 
-                   class="nav-tab <?php echo $active_tab === 'mappings' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'mappings' ? 'nav-tab-active' : '')); ?>">
                    Mappature
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-channels&tab=sync" 
-                   class="nav-tab <?php echo $active_tab === 'sync' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'sync' ? 'nav-tab-active' : '')); ?>">
                    Sincronizzazione
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-channels&tab=analytics" 
-                   class="nav-tab <?php echo $active_tab === 'analytics' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'analytics' ? 'nav-tab-active' : '')); ?>">
                    Analytics
                 </a>
             </nav>
@@ -260,19 +260,19 @@ class WCEFP_Channel_Management {
         <div class="wcefp-overview-content">
             <div class="wcefp-stats-grid">
                 <div class="wcefp-stat-card">
-                    <span class="wcefp-stat-number"><?php echo $total_channels; ?></span>
+                    <span class="wcefp-stat-number"><?php echo esc_html($total_channels); ?></span>
                     <span class="wcefp-stat-label">Canali Configurati</span>
                 </div>
                 <div class="wcefp-stat-card">
-                    <span class="wcefp-stat-number"><?php echo $active_channels; ?></span>
+                    <span class="wcefp-stat-number"><?php echo esc_html($active_channels); ?></span>
                     <span class="wcefp-stat-label">Canali Attivi</span>
                 </div>
                 <div class="wcefp-stat-card">
-                    <span class="wcefp-stat-number"><?php echo $total_mappings; ?></span>
+                    <span class="wcefp-stat-number"><?php echo esc_html($total_mappings); ?></span>
                     <span class="wcefp-stat-label">Prodotti Distribuiti</span>
                 </div>
                 <div class="wcefp-stat-card">
-                    <span class="wcefp-stat-number"><?php echo $synced_today; ?></span>
+                    <span class="wcefp-stat-number"><?php echo esc_html($synced_today); ?></span>
                     <span class="wcefp-stat-label">Sync Oggi</span>
                 </div>
             </div>
@@ -295,10 +295,10 @@ class WCEFP_Channel_Management {
                         </div>
                         <div class="wcefp-channel-actions">
                             <?php if (self::is_channel_configured($key)): ?>
-                                <button class="button" onclick="configureChannel('<?php echo $key; ?>')">Modifica</button>
-                                <button class="button button-primary" onclick="testChannel('<?php echo $key; ?>')">Test</button>
+                                <button class="button" onclick="configureChannel('<?php echo esc_html($key); ?>')">Modifica</button>
+                                <button class="button button-primary" onclick="testChannel('<?php echo esc_html($key); ?>')">Test</button>
                             <?php else: ?>
-                                <button class="button button-primary" onclick="configureChannel('<?php echo $key; ?>')">Configura</button>
+                                <button class="button button-primary" onclick="configureChannel('<?php echo esc_html($key); ?>')">Configura</button>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -398,7 +398,7 @@ class WCEFP_Channel_Management {
                                         <small style="color: #666;"><?php echo esc_html($channel->channel_key); ?></small>
                                     </td>
                                     <td>
-                                        <span class="wcefp-channel-status <?php echo $channel->status; ?>">
+                                        <span class="wcefp-channel-status <?php echo esc_attr($channel->status); ?>">
                                             <?php echo ucfirst($channel->status); ?>
                                         </span>
                                         <?php if ($channel->sync_status === 'error'): ?>
@@ -657,7 +657,7 @@ class WCEFP_Channel_Management {
                         ?>
                         <div style="margin-bottom: 8px; font-size: 12px;">
                             <strong><?php echo $channel->channel_name ?? 'Canale sconosciuto'; ?>:</strong>
-                            <span class="wcefp-sync-status <?php echo $mapping->sync_status; ?>">
+                            <span class="wcefp-sync-status <?php echo esc_attr($mapping->sync_status); ?>">
                                 <?php echo ucfirst($mapping->sync_status); ?>
                             </span>
                             <?php if ($mapping->last_sync): ?>

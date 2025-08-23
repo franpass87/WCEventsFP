@@ -185,8 +185,8 @@ class WCEFP_Admin {
                         <div class="wcefp-kpi-icon">🎯</div>
                     </div>
                     <p class="wcefp-kpi-value"><?php echo esc_html($kpi['fill_rate']); ?>%</p>
-                    <div class="wcefp-kpi-change <?php echo $kpi['fill_rate'] >= 70 ? 'positive' : 'negative'; ?>">
-                        <span><?php echo $kpi['fill_rate'] >= 70 ? '+5%' : '-2%'; ?></span>
+                    <div class="wcefp-kpi-change <?php echo esc_attr(esc_attr($kpi['fill_rate'] >= 70 ? 'positive' : 'negative')); ?>">
+                        <span><?php echo esc_html($kpi['fill_rate'] >= 70 ? '+5%' : '-2%'); ?></span>
                         <span><?php _e('capacità media', 'wceventsfp'); ?></span>
                     </div>
                 </div>

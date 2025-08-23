@@ -304,7 +304,7 @@ class GutenbergManager {
         }
         
         ?>
-        <div class="<?php echo esc_attr(implode(' ', $css_classes)); ?>">
+        <div class="<?php echo esc_attr(esc_attr(implode(' ', $css_classes))); ?>">
             <?php if ($attributes['showTitle'] ?? true): ?>
                 <h3 class="wcefp-block-title"><?php echo esc_html($product->get_name()); ?></h3>
             <?php endif; ?>
@@ -373,7 +373,7 @@ class GutenbergManager {
         }
         
         ?>
-        <div class="<?php echo esc_attr(implode(' ', $css_classes)); ?>">
+        <div class="<?php echo esc_attr(esc_attr(implode(' ', $css_classes))); ?>">
             <?php foreach ($events as $event): ?>
                 <?php 
                 $product = wc_get_product($event->ID);

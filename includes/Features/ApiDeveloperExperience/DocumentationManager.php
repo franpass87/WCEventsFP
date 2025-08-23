@@ -381,7 +381,7 @@ X-RateLimit-Reset: 1640995200</code></pre>
                 ?>
                 <div class="endpoint-item">
                     <div class="endpoint-header">
-                        <span class="http-method <?php echo strtolower($method); ?>"><?php echo strtoupper($method); ?></span>
+                        <span class="http-method <?php echo esc_attr(strtolower($method)); ?>"><?php echo strtoupper($method); ?></span>
                         <code><?php echo esc_html($path); ?></code>
                         <h4><?php echo esc_html($details['summary'] ?? 'API Endpoint'); ?></h4>
                     </div>

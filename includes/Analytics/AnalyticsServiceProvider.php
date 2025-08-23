@@ -263,10 +263,10 @@ class AnalyticsServiceProvider {
         
         ?>
         <div class="wcefp-analytics-summary">
-            <p><strong><?php _e('Total Bookings:', 'wceventsfp'); ?></strong> <?php echo $bookings_count; ?></p>
+            <p><strong><?php _e('Total Bookings:', 'wceventsfp'); ?></strong> <?php echo esc_html($bookings_count); ?></p>
             <p><strong><?php _e('Total Revenue:', 'wceventsfp'); ?></strong> <?php echo wc_price($revenue); ?></p>
             <?php if ($next_occurrence): ?>
-            <p><strong><?php _e('Next Occurrence:', 'wceventsfp'); ?></strong> <?php echo $next_occurrence; ?></p>
+            <p><strong><?php _e('Next Occurrence:', 'wceventsfp'); ?></strong> <?php echo esc_html($next_occurrence); ?></p>
             <?php endif; ?>
             <p>
                 <a href="<?php echo admin_url('edit.php?post_type=booking&page=wcefp-analytics-dashboard&event_id=' . $post->ID); ?>" class="button">
@@ -324,7 +324,7 @@ class AnalyticsServiceProvider {
     public function display_event_columns($column, $post_id) {
         switch ($column) {
             case 'bookings_count':
-                echo $this->get_event_bookings_count($post_id);
+                echo esc_html($this->get_event_bookings_count($post_id));
                 break;
                 
             case 'revenue':
@@ -333,7 +333,7 @@ class AnalyticsServiceProvider {
                 
             case 'next_occurrence':
                 $next = $this->get_next_occurrence_date($post_id);
-                echo $next ?: __('None scheduled', 'wceventsfp');
+                echo esc_html($next ?: __('None scheduled', 'wceventsfp'));
                 break;
         }
     }

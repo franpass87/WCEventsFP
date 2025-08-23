@@ -175,27 +175,27 @@ class WCEFP_Resource_Management {
             
             <nav class="nav-tab-wrapper">
                 <a href="?post_type=wcefp_event&page=wcefp-resources&tab=overview" 
-                   class="nav-tab <?php echo $active_tab === 'overview' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'overview' ? 'nav-tab-active' : '')); ?>">
                    Panoramica
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-resources&tab=guides" 
-                   class="nav-tab <?php echo $active_tab === 'guides' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'guides' ? 'nav-tab-active' : '')); ?>">
                    Guide
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-resources&tab=equipment" 
-                   class="nav-tab <?php echo $active_tab === 'equipment' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'equipment' ? 'nav-tab-active' : '')); ?>">
                    Attrezzature
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-resources&tab=vehicles" 
-                   class="nav-tab <?php echo $active_tab === 'vehicles' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'vehicles' ? 'nav-tab-active' : '')); ?>">
                    Veicoli
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-resources&tab=locations" 
-                   class="nav-tab <?php echo $active_tab === 'locations' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'locations' ? 'nav-tab-active' : '')); ?>">
                    Locations
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-resources&tab=calendar" 
-                   class="nav-tab <?php echo $active_tab === 'calendar' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'calendar' ? 'nav-tab-active' : '')); ?>">
                    Calendario Risorse
                 </a>
             </nav>
@@ -270,23 +270,23 @@ class WCEFP_Resource_Management {
         <div class="wcefp-overview-content">
             <div class="wcefp-stats-grid">
                 <div class="wcefp-stat-card">
-                    <span class="wcefp-stat-number"><?php echo $guides_count; ?></span>
+                    <span class="wcefp-stat-number"><?php echo esc_html($guides_count); ?></span>
                     <span class="wcefp-stat-label">Guide Attive</span>
                 </div>
                 <div class="wcefp-stat-card">
-                    <span class="wcefp-stat-number"><?php echo $equipment_count; ?></span>
+                    <span class="wcefp-stat-number"><?php echo esc_html($equipment_count); ?></span>
                     <span class="wcefp-stat-label">Attrezzature</span>
                 </div>
                 <div class="wcefp-stat-card">
-                    <span class="wcefp-stat-number"><?php echo $vehicles_count; ?></span>
+                    <span class="wcefp-stat-number"><?php echo esc_html($vehicles_count); ?></span>
                     <span class="wcefp-stat-label">Veicoli</span>
                 </div>
                 <div class="wcefp-stat-card">
-                    <span class="wcefp-stat-number"><?php echo $locations_count; ?></span>
+                    <span class="wcefp-stat-number"><?php echo esc_html($locations_count); ?></span>
                     <span class="wcefp-stat-label">Locations</span>
                 </div>
                 <div class="wcefp-stat-card">
-                    <span class="wcefp-stat-number"><?php echo $assignments_today; ?></span>
+                    <span class="wcefp-stat-number"><?php echo esc_html($assignments_today); ?></span>
                     <span class="wcefp-stat-label">Impegni Oggi</span>
                 </div>
             </div>
@@ -312,8 +312,8 @@ class WCEFP_Resource_Management {
         ?>
         <div class="wcefp-resource-tab">
             <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 20px;">
-                <h2><?php echo $title; ?></h2>
-                <a href="post-new.php?post_type=<?php echo $post_type; ?>" class="button button-primary">
+                <h2><?php echo esc_html($title); ?></h2>
+                <a href="post-new.php?post_type=<?php echo esc_html($post_type); ?>" class="button button-primary">
                     Aggiungi <?php echo rtrim($title, 'i') === $title ? $title : rtrim($title, 'i'); ?>
                 </a>
             </div>
@@ -322,7 +322,7 @@ class WCEFP_Resource_Management {
                 <div class="wcefp-empty-state" style="text-align: center; padding: 40px; color: #646970;">
                     <h3>Nessun elemento trovato</h3>
                     <p>Inizia aggiungendo il primo elemento per questa categoria.</p>
-                    <a href="post-new.php?post_type=<?php echo $post_type; ?>" class="button button-primary">
+                    <a href="post-new.php?post_type=<?php echo esc_html($post_type); ?>" class="button button-primary">
                         Aggiungi Ora
                     </a>
                 </div>
@@ -333,7 +333,7 @@ class WCEFP_Resource_Management {
                         $assignments_count = self::get_resource_assignments_count($resource->ID);
                     ?>
                         <div class="wcefp-resource-card">
-                            <div class="wcefp-resource-status <?php echo $status['class']; ?>">
+                            <div class="wcefp-resource-status <?php echo esc_attr($status['class']); ?>">
                                 <?php echo $status['label']; ?>
                             </div>
                             
@@ -352,7 +352,7 @@ class WCEFP_Resource_Management {
                             <?php endif; ?>
                             
                             <div style="margin-top: 15px; font-size: 13px; color: #646970;">
-                                <strong>Impegni attivi:</strong> <?php echo $assignments_count; ?>
+                                <strong>Impegni attivi:</strong> <?php echo esc_html($assignments_count); ?>
                             </div>
                             
                             <div style="margin-top: 15px; display: flex; gap: 10px;">
@@ -518,7 +518,7 @@ class WCEFP_Resource_Management {
                     
                     foreach ($all_resources as $resource):
                     ?>
-                        <option value="<?php echo $resource['id']; ?>" data-type="<?php echo $resource['type']; ?>">
+                        <option value="<?php echo $resource['id']; ?>" data-="<?php echo esc_attr($resource['type']); ?>">
                             <?php echo $resource['title']; ?> (<?php echo ucfirst(str_replace('wcefp_', '', $resource['type'])); ?>)
                         </option>
                     <?php endforeach; ?>

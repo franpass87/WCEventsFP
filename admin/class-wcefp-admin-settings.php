@@ -427,9 +427,9 @@ class WCEFP_Admin_Settings {
         <nav class="nav-tab-wrapper wcefp-nav-tab-wrapper">
             <?php foreach ($this->settings_tabs as $tab_key => $tab): ?>
                 <a href="<?php echo esc_url(add_query_arg('tab', $tab_key)); ?>" 
-                   class="nav-tab <?php echo $this->current_tab === $tab_key ? 'nav-tab-active' : ''; ?>"
-                   data-tab="<?php echo esc_attr($tab_key); ?>">
-                    <span class="dashicons <?php echo esc_attr($tab['icon']); ?>"></span>
+                   class="nav-tab <?php echo esc_attr(esc_attr($this->current_tab === $tab_key ? 'nav-tab-active' : '')); ?>"
+                   data-="<?php echo esc_attr(esc_attr($tab_key)); ?>">
+                    <span class="dashicons <?php echo esc_attr(esc_attr($tab['icon'])); ?>"></span>
                     <?php echo esc_html($tab['title']); ?>
                 </a>
             <?php endforeach; ?>

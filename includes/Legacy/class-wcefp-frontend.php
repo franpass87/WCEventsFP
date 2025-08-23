@@ -42,7 +42,7 @@ class WCEFP_Frontend {
         }
 
         ob_start(); ?>
-        <div class="wcefp-widget" data-product="<?php echo esc_attr($pid); ?>" data-price-adult="<?php echo esc_attr($price_adult); ?>" data-price-child="<?php echo esc_attr($price_child); ?>" data-voucher="<?php echo $voucherActive?'1':'0'; ?>">
+        <div class="wcefp-widget" data-="<?php echo esc_attr(esc_attr($pid)); ?>" data-="<?php echo esc_attr(esc_attr($price_adult)); ?>" data-="<?php echo esc_attr(esc_attr($price_child)); ?>" data-="<?php echo esc_attr($voucherActive?'1':'0'); ?>">
             <?php if ($voucherActive): ?>
                 <div class="wcefp-voucher-banner"><?php _e('Voucher attivo: questa prenotazione sarà a costo 0€','wceventsfp'); ?></div>
             <?php endif; ?>
@@ -54,20 +54,20 @@ class WCEFP_Frontend {
             </div>
             <?php endif; ?>
             <div class="wcefp-row">
-                <label for="<?php echo $uid; ?>-date"><?php _e('Data','wceventsfp'); ?></label>
-                <input type="date" id="<?php echo $uid; ?>-date" class="wcefp-date" />
+                <label for="<?php echo esc_attr(esc_attr($uid)); ?>-date"><?php _e('Data','wceventsfp'); ?></label>
+                <input type="date" id="<?php echo esc_attr(esc_attr($uid)); ?>-date" class="wcefp-date" />
             </div>
             <div class="wcefp-row">
-                <label for="<?php echo $uid; ?>-slot"><?php _e('Slot','wceventsfp'); ?></label>
-                <select id="<?php echo $uid; ?>-slot" class="wcefp-slot"><option value=""><?php _e('Seleziona orario','wceventsfp'); ?></option></select>
+                <label for="<?php echo esc_attr(esc_attr($uid)); ?>-slot"><?php _e('Slot','wceventsfp'); ?></label>
+                <select id="<?php echo esc_attr(esc_attr($uid)); ?>-slot" class="wcefp-slot"><option value=""><?php _e('Seleziona orario','wceventsfp'); ?></option></select>
             </div>
             <div class="wcefp-row">
-                <label for="<?php echo $uid; ?>-adults"><?php _e('Adulti','wceventsfp'); ?></label>
-                <input type="number" id="<?php echo $uid; ?>-adults" class="wcefp-adults" min="0" value="1" />
+                <label for="<?php echo esc_attr(esc_attr($uid)); ?>-adults"><?php _e('Adulti','wceventsfp'); ?></label>
+                <input type="number" id="<?php echo esc_attr(esc_attr($uid)); ?>-adults" class="wcefp-adults" min="0" value="1" />
             </div>
             <div class="wcefp-row">
-                <label for="<?php echo $uid; ?>-children"><?php _e('Bambini','wceventsfp'); ?></label>
-                <input type="number" id="<?php echo $uid; ?>-children" class="wcefp-children" min="0" value="0" />
+                <label for="<?php echo esc_attr(esc_attr($uid)); ?>-children"><?php _e('Bambini','wceventsfp'); ?></label>
+                <input type="number" id="<?php echo esc_attr(esc_attr($uid)); ?>-children" class="wcefp-children" min="0" value="0" />
             </div>
             <?php if (!empty($extras)) : ?>
             <div class="wcefp-row">
@@ -76,12 +76,12 @@ class WCEFP_Frontend {
                     <?php foreach ($extras as $i=>$ex): ?>
                         <?php $toggle = ($ex['max_qty']==1 && !$ex['required']); ?>
                         <?php $desc_id = $uid . '-extra-desc-' . $i; ?>
-                        <div class="wcefp-extra-row" data-id="<?php echo esc_attr($ex['id']); ?>" data-name="<?php echo esc_attr($ex['name']); ?>" data-price="<?php echo esc_attr($ex['price']); ?>" data-pricing="<?php echo esc_attr($ex['pricing_type']); ?>">
+                        <div class="wcefp-extra-row" data-="<?php echo esc_attr(esc_attr(esc_attr($ex['id']))); ?>" data-="<?php echo esc_attr(esc_attr($ex['name'])); ?>" data-="<?php echo esc_attr(esc_attr($ex['price'])); ?>" data-="<?php echo esc_attr(esc_attr($ex['pricing_type'])); ?>">
                             <span class="wcefp-extra-label"><?php echo esc_html($ex['name']); ?> (+€<?php echo esc_html($ex['price']); ?>)</span>
                             <?php if($toggle): ?>
-                                <input type="checkbox" class="wcefp-extra-toggle" aria-describedby="<?php echo $desc_id; ?>" />
+                                <input type="checkbox" class="wcefp-extra-toggle" aria-describedby="<?php echo esc_html($desc_id); ?>" />
                             <?php else: ?>
-                                <input type="number" class="wcefp-extra-qty" min="<?php echo $ex['required']?1:0; ?>" value="<?php echo $ex['required']?1:0; ?>" <?php if($ex['required']) echo 'readonly'; ?> <?php if($ex['max_qty']>0) echo 'max="'.esc_attr($ex['max_qty']).'"'; ?> aria-describedby="<?php echo $desc_id; ?>" />
+                                <input type="number" class="wcefp-extra-qty" min="<?php echo $ex['required']?1:0; ?>" value="<?php echo $ex['required']?1:0; ?>" <?php if($ex['required']) echo 'readonly'; ?> <?php if($ex['max_qty']>0) echo 'max="'.esc_attr($ex['max_qty']).'"'; ?> aria-describedby="<?php echo esc_html($desc_id); ?>" />
                             <?php endif; ?>
                             <?php if($ex['desc']) echo '<small class="wcefp-extra-desc" id="'.$desc_id.'">'.esc_html($ex['desc']).'</small>'; ?>
                         </div>
@@ -98,7 +98,7 @@ class WCEFP_Frontend {
             <?php $fb_id = $uid . '-feedback'; ?>
             <div class="wcefp-row">
                 <button class="wcefp-add button" aria-describedby="<?php echo esc_attr($fb_id); ?>"><?php _e('Aggiungi al carrello','wceventsfp'); ?></button>
-                <span class="wcefp-feedback" id="<?php echo esc_attr($fb_id); ?>" role="status" style="margin-left:8px;"></span>
+                <span class="wcefp-feedback" id="<?php echo esc_attr(esc_attr($fb_id)); ?>" role="status" style="margin-left:8px;"></span>
             </div>
         </div>
         <script>window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'view_item',ecommerce:{items:[{item_id:'<?php echo esc_js($pid); ?>',item_name:'<?php echo esc_js(get_the_title($pid)); ?>',item_category:'event'}]}});</script>

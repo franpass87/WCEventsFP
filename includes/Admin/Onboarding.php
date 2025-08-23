@@ -250,7 +250,7 @@ class Onboarding {
             <div class="wcefp-progress-fill" style="width: <?php echo esc_attr($progress); ?>%"></div>
             <div class="wcefp-progress-steps">
                 <?php foreach ($this->steps as $step_key => $step_info): ?>
-                    <div class="wcefp-progress-step <?php echo $step_key === $this->current_step ? 'active' : ''; ?>">
+                    <div class="wcefp-progress-step <?php echo esc_attr($step_key === $this->current_step ? 'active' : ''); ?>">
                         <span class="step-number"><?php echo array_search($step_key, $steps) + 1; ?></span>
                         <span class="step-title"><?php echo esc_html($step_info['title']); ?></span>
                     </div>

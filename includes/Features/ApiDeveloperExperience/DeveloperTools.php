@@ -234,20 +234,20 @@ class DeveloperTools {
                         </thead>
                         <tbody id="api-logs-tbody">
                             <?php foreach ($api_logs as $log): ?>
-                            <tr class="log-entry log-<?php echo esc_attr($log['level']); ?>">
+                            <tr class="log-entry log-<?php echo esc_attr(esc_attr($log['level'])); ?>">
                                 <td><?php echo esc_html($log['timestamp']); ?></td>
-                                <td><span class="log-level-badge log-<?php echo esc_attr($log['level']); ?>"><?php echo esc_html(strtoupper($log['level'])); ?></span></td>
+                                <td><span class="log-level-badge log-<?php echo esc_attr(esc_attr($log['level'])); ?>"><?php echo esc_html(strtoupper($log['level'])); ?></span></td>
                                 <td><?php echo esc_html($log['method']); ?></td>
                                 <td><code><?php echo esc_html($log['endpoint']); ?></code></td>
                                 <td><?php echo esc_html($log['status']); ?></td>
                                 <td><?php echo esc_html($log['response_time']); ?>ms</td>
                                 <td>
-                                    <button class="button button-small toggle-details" data-log-id="<?php echo esc_attr($log['id']); ?>">
+                                    <button class="button button-small toggle-details" data-="<?php echo esc_attr(esc_attr(esc_attr($log['id']))); ?>">
                                         <?php _e('Details', 'wceventsfp'); ?>
                                     </button>
                                 </td>
                             </tr>
-                            <tr class="log-details" id="log-details-<?php echo esc_attr($log['id']); ?>" style="display:none;">
+                            <tr class="log-details" id="log-details-<?php echo esc_attr(esc_attr($log['id'])); ?>" style="display:none;">
                                 <td colspan="7">
                                     <pre><?php echo esc_html(json_encode($log['details'], JSON_PRETTY_PRINT)); ?></pre>
                                 </td>
@@ -357,7 +357,7 @@ class DeveloperTools {
                                 <td><?php echo esc_html($cache_item['size']); ?></td>
                                 <td><?php echo esc_html($cache_item['ttl']); ?>s</td>
                                 <td>
-                                    <button class="button button-small delete-cache-item" data-cache-key="<?php echo esc_attr($cache_item['key']); ?>">
+                                    <button class="button button-small delete-cache-item" data-="<?php echo esc_attr(esc_attr($cache_item['key'])); ?>">
                                         <?php _e('Delete', 'wceventsfp'); ?>
                                     </button>
                                 </td>

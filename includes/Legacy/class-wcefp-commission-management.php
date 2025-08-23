@@ -241,27 +241,27 @@ class WCEFP_Commission_Management {
             
             <nav class="nav-tab-wrapper">
                 <a href="?post_type=wcefp_event&page=wcefp-commissions&tab=overview" 
-                   class="nav-tab <?php echo $active_tab === 'overview' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'overview' ? 'nav-tab-active' : '')); ?>">
                    Dashboard
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-commissions&tab=resellers" 
-                   class="nav-tab <?php echo $active_tab === 'resellers' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'resellers' ? 'nav-tab-active' : '')); ?>">
                    Resellers
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-commissions&tab=commissions" 
-                   class="nav-tab <?php echo $active_tab === 'commissions' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'commissions' ? 'nav-tab-active' : '')); ?>">
                    Commissioni
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-commissions&tab=payouts" 
-                   class="nav-tab <?php echo $active_tab === 'payouts' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'payouts' ? 'nav-tab-active' : '')); ?>">
                    Pagamenti
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-commissions&tab=tiers" 
-                   class="nav-tab <?php echo $active_tab === 'tiers' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'tiers' ? 'nav-tab-active' : '')); ?>">
                    Livelli
                 </a>
                 <a href="?post_type=wcefp_event&page=wcefp-commissions&tab=settings" 
-                   class="nav-tab <?php echo $active_tab === 'settings' ? 'nav-tab-active' : ''; ?>">
+                   class="nav-tab <?php echo esc_attr(esc_attr($active_tab === 'settings' ? 'nav-tab-active' : '')); ?>">
                    Impostazioni
                 </a>
             </nav>
@@ -458,8 +458,8 @@ class WCEFP_Commission_Management {
                                         </code>
                                     </td>
                                     <td>
-                                        <span class="wcefp-tier-badge wcefp-tier-<?php echo $reseller->tier; ?>">
-                                            <?php echo ucfirst($reseller->tier); ?>
+                                        <span class="wcefp-tier-badge wcefp-tier-<?php echo esc_attr(esc_attr($reseller->tier)); ?>">
+                                            <?php echo esc_html(ucfirst($reseller->tier)); ?>
                                         </span>
                                         <br><small><?php echo number_format($reseller->commission_rate, 1); ?>%</small>
                                     </td>
@@ -480,14 +480,14 @@ class WCEFP_Commission_Management {
                                     </td>
                                     <td>
                                         <div style="display: flex; gap: 5px;">
-                                            <button class="button button-small" onclick="editReseller(<?php echo $reseller->id; ?>)">
+                                            <button class="button button-small" onclick="editReseller(<?php echo esc_js($reseller->id); ?>)">
                                                 Modifica
                                             </button>
-                                            <button class="button button-small" onclick="viewPerformance(<?php echo $reseller->id; ?>)">
+                                            <button class="button button-small" onclick="viewPerformance(<?php echo esc_js($reseller->id); ?>)">
                                                 Performance
                                             </button>
                                             <?php if ($reseller->pending_commissions > 0): ?>
-                                                <button class="button button-small button-primary" onclick="processPayment(<?php echo $reseller->id; ?>)">
+                                                <button class="button button-small button-primary" onclick="processPayment(<?php echo esc_js($reseller->id); ?>)">
                                                     Paga
                                                 </button>
                                             <?php endif; ?>
@@ -668,7 +668,7 @@ class WCEFP_Commission_Management {
                 <h3>Il Tuo Link Referral</h3>
                 <p>Usa questo link per promuovere i nostri eventi e guadagnare commissioni:</p>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <input type="text" value="<?php echo home_url('?ref=' . $reseller->reseller_code); ?>" 
+                    <input type="text" value="<?php echo esc_attr(home_url('?ref=' . $reseller->reseller_code)); ?>" 
                            readonly style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" 
                            id="referral-link">
                     <button onclick="copyReferralLink()" class="button">Copia</button>

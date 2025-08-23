@@ -3,30 +3,74 @@
          name="WCEventsFP"
          xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
 
-    <description>Coding standards for WCEventsFP plugin</description>
+    <description>WordPress Coding Standards for WCEventsFP plugin</description>
 
-    <!-- Limit sniffing to unit tests -->
-    <file>tests/Unit</file>
+    <!-- Scan plugin files -->
+    <file>wceventsfp.php</file>
+    <file>includes/</file>
+    <file>admin/</file>
+    <file>uninstall.php</file>
 
     <!-- Exclude patterns -->
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+    <exclude-pattern>*/languages/*</exclude-pattern>
+    <exclude-pattern>*/assets/*</exclude-pattern>
+    <exclude-pattern>*/templates/*</exclude-pattern>
 
-    <!-- Use PSR-12 as base standard -->
-    <rule ref="PSR12"/>
-
-    <!-- Allow non-camelCase method names in tests -->
-    <rule ref="PSR1.Methods.CamelCapsMethodName">
-        <severity>0</severity>
+    <!-- Use WordPress Coding Standards -->
+    <rule ref="WordPress">
+        <!-- Allow array short syntax -->
+        <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+        <!-- Allow short PHP tags for templates -->
+        <exclude name="Generic.PHP.DisallowShortOpenTag.EchoFound"/>
+        <!-- Allow file names with classes -->
+        <exclude name="WordPress.Files.FileName"/>
+        <!-- Allow multiple statements per line for compact code -->
+        <exclude name="Squiz.PHP.DisallowMultipleAssignments"/>
     </rule>
 
-    <!-- Allow side effects in test files -->
-    <rule ref="PSR1.Files.SideEffects">
-        <severity>0</severity>
+    <!-- Use WordPress Extra rules -->
+    <rule ref="WordPress-Extra">
+        <!-- Allow array short syntax -->
+        <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+    </rule>
+
+    <!-- Use WordPress Docs rules -->
+    <rule ref="WordPress-Docs">
+        <!-- Allow missing param docs for self-explanatory params -->
+        <exclude name="Squiz.Commenting.FunctionComment.MissingParamTag"/>
+        <!-- Allow missing return docs for obvious returns -->
+        <exclude name="Squiz.Commenting.FunctionComment.MissingReturn"/>
+    </rule>
+
+    <!-- Set minimum supported PHP version -->
+    <config name="minimum_supported_wp_version" value="5.0"/>
+    <config name="testVersion" value="7.4-"/>
+
+    <!-- Text domain check -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="wcefp"/>
+            </properties>
+        </rule>
+    </rule>
+
+    <!-- Prefix all globals -->
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="wcefp"/>
+                <element value="WCEFP"/>
+            </property>
+        </properties>
     </rule>
 
     <!-- Show progress and use colors -->
     <arg value="ps"/>
     <arg name="colors"/>
+    <arg name="extensions" value="php"/>
 
 </ruleset>

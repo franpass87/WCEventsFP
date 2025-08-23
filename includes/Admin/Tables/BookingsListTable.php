@@ -435,8 +435,8 @@ class BookingsListTable extends \WP_List_Table {
         }
         ?>
         <p class="search-box">
-            <label class="screen-reader-text" for="<?php echo esc_attr($input_id); ?>"><?php echo $text; ?>:</label>
-            <input type="search" id="<?php echo esc_attr($input_id); ?>" name="s" value="<?php _admin_search_query(); ?>" placeholder="<?php esc_attr_e('Search bookings...', 'wceventsfp'); ?>" />
+            <label class="screen-reader-text" for="<?php echo esc_attr(esc_attr($input_id)); ?>"><?php echo esc_html($text); ?>:</label>
+            <input type="search" id="<?php echo esc_attr(esc_attr($input_id)); ?>" name="s" value="<?php _admin_search_query(); ?>" placeholder="<?php esc_attr_e('Search bookings...', 'wceventsfp'); ?>" />
             <?php submit_button($text, 'button', '', false, ['id' => 'search-submit']); ?>
         </p>
         <?php
