@@ -31,11 +31,7 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
-        // Load stub classes
-        require_once __DIR__ . '/Stubs.php';
-        
-        // Only register functional frontend services when implemented
-        // TODO: Implement and register when ready:
+        // TODO: Implement and register frontend services when ready:
         // - WidgetManager
         // - ShortcodeManager  
         // - AjaxHandler

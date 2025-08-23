@@ -31,9 +31,6 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
-        // Load stub classes
-        require_once __DIR__ . '/Stubs.php';
-        
         // Register admin classes with the container
         $this->container->singleton('admin.menu', function($container) {
             return new MenuManager($container);
@@ -43,8 +40,9 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
             return new ProductAdmin($container);
         });
         
-        // Only register functional classes - remove empty stubs
-        // TODO: Implement SettingsManager and DashboardWidgets when needed
+        // TODO: Implement additional admin services when needed:
+        // - SettingsManager 
+        // - DashboardWidgets
     }
     
     /**
