@@ -62,6 +62,22 @@ class Container {
     }
     
     /**
+     * Create an alias for an existing service
+     * 
+     * @param string $alias Alias name
+     * @param string $original Original service name
+     * @return void
+     */
+    public function alias($alias, $original) {
+        $this->services[$alias] = [
+            'definition' => function($container) use ($original) {
+                return $container->get($original);
+            },
+            'singleton' => false
+        ];
+    }
+    
+    /**
      * Get a service
      * 
      * @param string $name Service name

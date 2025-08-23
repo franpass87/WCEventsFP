@@ -52,6 +52,9 @@ class DatabaseServiceProvider extends \WCEFP\Core\ServiceProvider {
         $this->container->singleton('db.query_builder', function($container) {
             return new QueryBuilder();
         });
+        
+        // Add backward compatibility aliases
+        $this->container->alias('query_builder', 'db.query_builder');
     }
     
     /**

@@ -34,17 +34,22 @@ class QueryBuilder {
     }
     
     /**
-     * Get occurrences for a product
+     * Get occurrences for a product or all occurrences
      * 
-     * @param int $product_id Product ID
+     * @param int $product_id Product ID (optional)
      * @param array $args Additional query arguments
      * @return array
      */
-    public function get_occurrences($product_id, $args = []) {
+    public function get_occurrences($product_id = null, $args = []) {
         $table = $this->wpdb->prefix . 'wcefp_occurrences';
         
-        $where = ['product_id = %d'];
-        $params = [$product_id];
+        $where = [];
+        $params = [];
+        
+        if ($product_id !== null) {
+            $where[] = 'product_id = %d';
+            $params[] = $product_id;
+        }
         
         if (!empty($args['status'])) {
             $where[] = 'status = %s';
@@ -61,17 +66,26 @@ class QueryBuilder {
             $params[] = $args['to_date'];
         }
         
-        $sql = "SELECT * FROM {$table} WHERE " . implode(' AND ', $where);
+        $sql = "SELECT * FROM {$table}";
+        
+        if (!empty($where)) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        
         $sql .= " ORDER BY start_datetime ASC";
         
         if (!empty($args['limit'])) {
             $sql .= ' LIMIT ' . intval($args['limit']);
         }
         
-        return $this->wpdb->get_results(
-            $this->wpdb->prepare($sql, $params),
-            ARRAY_A
-        );
+        if (!empty($params)) {
+            return $this->wpdb->get_results(
+                $this->wpdb->prepare($sql, $params),
+                ARRAY_A
+            );
+        } else {
+            return $this->wpdb->get_results($sql, ARRAY_A);
+        }
     }
     
     /**
