@@ -27,7 +27,7 @@ class Plugin {
      * 
      * @var string
      */
-    private $version = '2.1.2'; // x-release-please-version
+    private $version = '2.1.4'; // x-release-please-version
     
     /**
      * Dependency injection container

@@ -770,5 +770,5 @@ class WCEFP_Resource_Management {
     }
 }
 
-// Initialize the resource management system
-WCEFP_Resource_Management::init();
+// Auto-initialization removed - this class is now managed by the service provider system  
+// Use WCEFP\Admin\MenuManager for consolidated admin menu management

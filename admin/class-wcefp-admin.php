@@ -59,8 +59,16 @@ class WCEFP_Admin {
             wp_enqueue_script('wcefp-admin-settings', WCEFP_PLUGIN_URL.'assets/js/admin-settings.js', ['jquery'], WCEFP_VERSION, true);
         }
 
-        // Chart.js for advanced analytics
-        wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js', [], '4.4.0', true);
+        // Chart.js for advanced analytics - only load on pages that need it
+        $needs_charts = $is_wcefp_page && (
+            strpos($hook, 'wcefp_page_wcefp') !== false || 
+            strpos($hook, 'wcefp_page_wcefp-analytics') !== false ||
+            $hook === 'toplevel_page_wcefp' // Main dashboard page
+        );
+        
+        if ($needs_charts) {
+            wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js', [], '4.4.0', true);
+        }
         
         // FullCalendar solo nella pagina calendario
         if ($is_wcefp_page && strpos($hook,'wcefp_page_wcefp-calendar') !== false) {
@@ -68,7 +76,10 @@ class WCEFP_Admin {
             wp_enqueue_script('fullcalendar', 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js', [], '6.1.15', true);
         }
 
-        $deps = ['jquery', 'chartjs'];
+        $deps = ['jquery'];
+        if ($needs_charts) {
+            $deps[] = 'chartjs';
+        }
         if ($is_wcefp_page && strpos($hook,'wcefp_page_wcefp-calendar') !== false) $deps[] = 'fullcalendar';
 
         // JS admin principale
