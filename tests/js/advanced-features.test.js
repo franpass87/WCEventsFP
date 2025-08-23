@@ -91,19 +91,27 @@ describe('WCEFPNotifications', () => {
         }, 350);
     });
 
-    test.skip('should auto-dismiss notification after specified duration', (done) => {
-        // Skip this test as setTimeout doesn't work properly in jsdom environment
+    test('should auto-dismiss notification after specified duration', () => {
+        // Use fake timers for consistent test behavior
+        jest.useFakeTimers();
+        
         const id = notifications.show('Test message', 'info', 100);
         
         // Check it exists first
         expect($(`#${id}`).length).toBe(1);
         
-        setTimeout(() => {
-            // Should be dismissed by now
-            const element = $(`#${id}`);
-            expect(element.length).toBe(0);
-            done();
-        }, 200); // Increased timeout to account for animation
+        // Fast-forward time to trigger auto-dismiss
+        jest.advanceTimersByTime(150);
+        
+        // Fast-forward time for animation completion
+        jest.advanceTimersByTime(350);
+        
+        // Should be dismissed by now
+        const element = $(`#${id}`);
+        expect(element.length).toBe(0);
+        
+        // Restore real timers
+        jest.useRealTimers();
     });
 
     test('should handle different notification types', () => {

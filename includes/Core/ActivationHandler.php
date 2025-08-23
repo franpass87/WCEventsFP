@@ -327,7 +327,7 @@ class ActivationHandler {
             'wcefp_default_capacity' => 10,
             'wcefp_disable_woo_emails' => false,
             'wcefp_ga4_enabled' => false,
-            'wcefp_version' => '2.1.1',
+            'wcefp_version' => '2.1.2',
             'wcefp_activated_at' => current_time('mysql')
         ];
         

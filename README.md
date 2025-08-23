@@ -1,4 +1,4 @@
-# WCEventsFP (v2.1.1) - Enterprise Booking Platform<!-- x-release-please-version -->
+# WCEventsFP (v2.1.2) - Enterprise Booking Platform<!-- x-release-please-version -->
 
 > **📦 COME SCARICARE IL PLUGIN** - [Guida Completa per Utenti](DOWNLOAD-INSTALL-GUIDE.md)  
 > **⚠️ NON usare "Code → Download ZIP"** - Scarica dalle [GitHub Releases](https://github.com/franpass87/WCEventsFP/releases)
@@ -9,7 +9,18 @@
 
 Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità di livello enterprise per massimizzare le conversioni, gestire risorse operative e automatizzare la distribuzione multi-canale.
 
-## 🚀 Nuove Funzionalità v2.1.1 - Code Cleanup & Bug Fixes
+## 🚀 Nuove Funzionalità v2.1.2 - Bug Fixes & Code Cleanup
+
+### 🐛 Bug Fixes Risolti
+- **Logger Deprecato**: Rimossi tutti i riferimenti al vecchio sistema WCEFP_Logger, ora usa WCEFP\Utils\Logger
+- **Test JavaScript**: Risolto test Jest per auto-dismiss delle notifiche utilizzando fake timers
+- **Compatibilità**: Aggiornata compatibilità con WordPress 6.7+ e WooCommerce 9.3+
+- **Sicurezza**: Risolte vulnerabilità minori nelle dipendenze di sviluppo
+
+### 🧹 Code Cleanup
+- **Redundancy Removal**: Eliminata ridondanza nell'uso del sistema di logging legacy
+- **Code Quality**: Migliorata qualità del codice rimuovendo duplicazioni
+- **Performance**: Ottimizzazioni minori nelle performance
 
 ### 🛡️ Technical Improvements
 - **Product Type System Unified**: Eliminated duplicate product classes, standardized to wcefp_event/wcefp_experience

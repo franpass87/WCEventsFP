@@ -26,7 +26,7 @@
    ```
 
 2. **Scarica il file ZIP dalla release più recente:**
-   - Cerca l'ultima versione (es: v2.1.1)
+   - Cerca l'ultima versione (es: v2.1.2)
    - Scarica il file `wceventsfp-2.1.1.zip` (o versione simile)
    - **NON** scaricare "Source code (zip)"
 
@@ -112,7 +112,7 @@ cd WCEventsFP
 
 ## 🛡️ SISTEMA ANTI-WSOD INTEGRATO
 
-WCEventsFP v2.1.1+ include protezioni avanzate:
+WCEventsFP v2.1.2+ include protezioni avanzate:
 
 - ✅ **Nessuna dipendenza da Composer** - funziona sempre
 - ✅ **Autoloader personalizzato** - carica tutte le classi

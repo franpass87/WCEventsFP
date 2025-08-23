@@ -1,7 +1,7 @@
 {
     "name": "franpass87/wceventsfp",
     "description": "Enterprise booking platform plugin for WordPress/WooCommerce",
-    "version": "2.1.1",
+    "version": "2.1.2",
     "type": "wordpress-plugin",
     "keywords": ["wordpress", "woocommerce", "booking", "events", "enterprise"],
     "homepage": "https://github.com/franpass87/WCEventsFP",

@@ -127,7 +127,7 @@ class WCEFP_Security_Enhancement {
         );
         
         if ($this->is_rate_limited($rate_key, $limit_config['requests'], $limit_config['window'])) {
-            WCEFP_Logger::warning('Rate limit exceeded', [
+            \WCEFP\Utils\Logger::warning('Rate limit exceeded', [
                 'ip' => $user_ip,
                 'user_id' => $user_id,
                 'action' => $action,
@@ -212,7 +212,7 @@ class WCEFP_Security_Enhancement {
      * Log failed login attempts for security monitoring
      */
     public function log_failed_login($username) {
-        WCEFP_Logger::warning('Failed login attempt', [
+        \WCEFP\Utils\Logger::warning('Failed login attempt', [
             'username' => $username,
             'ip' => $this->get_client_ip(),
             'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
@@ -223,7 +223,7 @@ class WCEFP_Security_Enhancement {
      * Log successful logins
      */
     public function log_successful_login($user_login, $user) {
-        WCEFP_Logger::info('Successful login', [
+        \WCEFP\Utils\Logger::info('Successful login', [
             'username' => $user_login,
             'user_id' => $user->ID,
             'ip' => $this->get_client_ip()
@@ -247,7 +247,7 @@ class WCEFP_Security_Enhancement {
         
         foreach ($suspicious_patterns as $pattern) {
             if (preg_match($pattern, $request_data)) {
-                WCEFP_Logger::error('Suspicious request pattern detected', [
+                \WCEFP\Utils\Logger::error('Suspicious request pattern detected', [
                     'pattern' => $pattern,
                     'ip' => $this->get_client_ip(),
                     'request_data' => $request_data,

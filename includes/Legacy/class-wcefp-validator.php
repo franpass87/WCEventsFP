@@ -18,13 +18,13 @@ class WCEFP_Validator {
         $id = intval($product_id);
         
         if ($id <= 0) {
-            WCEFP_Logger::warning('Invalid product ID provided', ['value' => $product_id]);
+            \WCEFP\Utils\Logger::warning('Invalid product ID provided', ['value' => $product_id]);
             return false;
         }
         
         $product = wc_get_product($id);
         if (!$product || !in_array($product->get_type(), ['wcefp_event', 'wcefp_experience'], true)) {
-            WCEFP_Logger::warning('Product not found or invalid type', ['id' => $id]);
+            \WCEFP\Utils\Logger::warning('Product not found or invalid type', ['id' => $id]);
             return false;
         }
         
@@ -50,7 +50,7 @@ class WCEFP_Validator {
             return $datetime;
         }
         
-        WCEFP_Logger::warning('Invalid datetime format', [
+        \WCEFP\Utils\Logger::warning('Invalid datetime format', [
             'value' => $datetime,
             'expected_format' => $format
         ]);
@@ -80,7 +80,7 @@ class WCEFP_Validator {
         $capacity = intval($capacity);
         
         if ($capacity < $min_capacity || $capacity > $max_capacity) {
-            WCEFP_Logger::warning('Capacity out of range', [
+            \WCEFP\Utils\Logger::warning('Capacity out of range', [
                 'value' => $capacity,
                 'min' => $min_capacity,
                 'max' => $max_capacity
@@ -102,7 +102,7 @@ class WCEFP_Validator {
         $status = sanitize_text_field($status);
         
         if (!in_array($status, $valid_statuses, true)) {
-            WCEFP_Logger::warning('Invalid status provided', [
+            \WCEFP\Utils\Logger::warning('Invalid status provided', [
                 'value' => $status,
                 'valid_options' => $valid_statuses
             ]);
@@ -122,7 +122,7 @@ class WCEFP_Validator {
         $email = sanitize_email($email);
         
         if (!is_email($email)) {
-            WCEFP_Logger::warning('Invalid email format', ['email' => $email]);
+            \WCEFP\Utils\Logger::warning('Invalid email format', ['email' => $email]);
             return false;
         }
         
@@ -140,7 +140,7 @@ class WCEFP_Validator {
         
         // Voucher code should be alphanumeric, 8-20 characters
         if (!preg_match('/^[A-Z0-9]{8,20}$/', $code)) {
-            WCEFP_Logger::warning('Invalid voucher code format', ['code' => $code]);
+            \WCEFP\Utils\Logger::warning('Invalid voucher code format', ['code' => $code]);
             return false;
         }
         
@@ -158,7 +158,7 @@ class WCEFP_Validator {
         $quantity = intval($quantity);
         
         if ($quantity < 0 || $quantity > $max_quantity) {
-            WCEFP_Logger::warning('Invalid quantity', [
+            \WCEFP\Utils\Logger::warning('Invalid quantity', [
                 'value' => $quantity,
                 'max_allowed' => $max_quantity
             ]);
@@ -178,7 +178,7 @@ class WCEFP_Validator {
         $price = floatval($price);
         
         if ($price < 0 || $price > 99999.99) {
-            WCEFP_Logger::warning('Invalid price value', ['price' => $price]);
+            \WCEFP\Utils\Logger::warning('Invalid price value', ['price' => $price]);
             return false;
         }
         
@@ -196,7 +196,7 @@ class WCEFP_Validator {
         $text = sanitize_text_field($text);
         
         if (strlen($text) > $max_length) {
-            WCEFP_Logger::warning('Text too long', [
+            \WCEFP\Utils\Logger::warning('Text too long', [
                 'length' => strlen($text),
                 'max_length' => $max_length
             ]);
@@ -217,7 +217,7 @@ class WCEFP_Validator {
         $content = sanitize_textarea_field($content);
         
         if (strlen($content) > $max_length) {
-            WCEFP_Logger::warning('Textarea content too long', [
+            \WCEFP\Utils\Logger::warning('Textarea content too long', [
                 'length' => strlen($content),
                 'max_length' => $max_length
             ]);
@@ -248,7 +248,7 @@ class WCEFP_Validator {
         ));
         
         if (!$exists) {
-            WCEFP_Logger::warning('Occurrence not found', ['id' => $id]);
+            \WCEFP\Utils\Logger::warning('Occurrence not found', ['id' => $id]);
             return false;
         }
         
@@ -272,14 +272,14 @@ class WCEFP_Validator {
             $args = $config['args'] ?? [];
             
             if ($required && ($value === null || $value === '')) {
-                WCEFP_Logger::error("Required field missing: {$field}");
+                \WCEFP\Utils\Logger::error("Required field missing: {$field}");
                 return false;
             }
             
             if ($value !== null && $value !== '' && $method && method_exists(__CLASS__, $method)) {
                 $validated_value = call_user_func_array([__CLASS__, $method], array_merge([$value], $args));
                 if ($validated_value === false) {
-                    WCEFP_Logger::error("Validation failed for field: {$field}");
+                    \WCEFP\Utils\Logger::error("Validation failed for field: {$field}");
                     return false;
                 }
                 $validated[$field] = $validated_value;
