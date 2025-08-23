@@ -1,4 +1,4 @@
-# WCEventsFP (v2.1.3) - Enterprise Booking Platform<!-- x-release-please-version -->
+# WCEventsFP (v2.1.4) - Enterprise Booking Platform<!-- x-release-please-version -->
 
 > **📦 COME SCARICARE IL PLUGIN** - [Guida Completa per Utenti](DOWNLOAD-INSTALL-GUIDE.md)  
 > **⚠️ NON usare "Code → Download ZIP"** - Scarica dalle [GitHub Releases](https://github.com/franpass87/WCEventsFP/releases)
@@ -9,7 +9,27 @@
 
 Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità di livello enterprise per massimizzare le conversioni, gestire risorse operative e automatizzare la distribuzione multi-canale.
 
-## 🚀 Nuove Funzionalità v2.1.3 - Advanced Bug Fixes & Code Optimization
+## 🚀 Nuove Funzionalità v2.1.4 - Comprehensive Code Consolidation & Admin Menu Rationalization
+
+### 🔧 Admin Menu System Rationalization
+- **Menu Duplication Eliminated**: Risolti completamente i problemi di duplicazione del menu admin
+- **Single Source of Truth**: Consolidato tutto il sistema menu in `includes/Admin/MenuManager.php`
+- **Legacy Class Cleanup**: Rimossa l'auto-inizializzazione da 5 classi Legacy che causavano duplicazioni
+- **Architecture Consistency**: Implementata architettura moderna uniforme per la gestione admin
+
+### ⚡ Performance & Security Improvements
+- **Conditional Asset Loading**: Caricamento Chart.js solo nelle pagine che necessitano di analytics
+- **Input Sanitization**: Migliorata sicurezza con `absint()` invece di cast `(int)`
+- **Memory Optimization**: Ridotto caricamento di risorse non necessarie nelle pagine admin
+
+### 📚 Documentation & Code Quality
+- **Version Consistency**: Allineati tutti i riferimenti di versione a v2.1.4
+- **Code Documentation**: Aggiunti commenti esplicativi per sviluppatori futuri
+- **Architecture Documentation**: Documentate le modifiche architetturali per manutenzione
+
+---
+
+## 🚀 Previous Features v2.1.3 - Advanced Bug Fixes & Code Optimization
 
 ### 🐛 Bug Fixes Risolti
 - **Deprecated Functions**: Sostituita funzione WooCommerce deprecata `get_woocommerce_currency()` con `get_option('woocommerce_currency')`

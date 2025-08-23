@@ -7,6 +7,37 @@ e questo progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 
 ---
 
+## [2.1.4] – 2025-08-23
+
+### 🔧 Comprehensive Code Consolidation & Admin Menu Rationalization
+
+#### Fixed
+- **Admin Menu Duplication**: Eliminated duplicate admin menu registrations from 5 auto-initializing Legacy classes
+- **Version Consistency**: Fixed version mismatch where `WCEFP_VERSION` was 2.1.2 while documentation claimed 2.1.3
+- **Input Sanitization**: Improved security by replacing `(int)` casts with `absint()` in admin views
+- **Performance**: Optimized Chart.js loading to only enqueue on admin pages that need analytics
+
+#### Architecture Improvements  
+- **Single Menu Manager**: Consolidated all admin menu handling to `includes/Admin/MenuManager.php` as single source of truth
+- **Legacy Class Cleanup**: Removed auto-initialization from classes that created duplicate menus:
+  - `admin/class-wcefp-analytics-dashboard.php`
+  - `admin/class-wcefp-meetingpoints.php` 
+  - `includes/Legacy/class-wcefp-channel-management.php`
+  - `includes/Legacy/class-wcefp-resource-management.php`
+  - `includes/Legacy/class-wcefp-commission-management.php`
+- **Code Documentation**: Added explanatory comments for future developers about architectural changes
+
+#### Documentation vs Implementation Audit
+- **Feature Verification**: Confirmed that documented features (Google Reviews, Conversion Optimization) are actually implemented
+- **Asset Analysis**: Verified that CSS/JavaScript files are part of documented features, not dead code
+- **Integration Gap Identified**: Found that modern AssetManager exists but isn't connected to service providers
+
+#### Performance Optimization
+- **Conditional Asset Loading**: Chart.js CDN now loads only on dashboard/analytics pages instead of all admin pages
+- **Input Validation**: Improved security with proper WordPress sanitization functions
+
+---
+
 ## [2.1.3] – 2025-08-23
 
 ### 🐛 Advanced Bug Fixes & Code Optimization
