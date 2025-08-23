@@ -580,3 +580,56 @@ add_filter('wcefp_brevo_order_payload', function($payload, $order){ return $payl
 
 // Convalida voucher personalizzata
 add_filter('wcefp_validate_voucher', function($ok, $code, $row){ return $ok; }, 10, 3);
+
+
+## 🛠️ Development & Quality Assurance
+
+### Quality Scripts
+The plugin includes comprehensive quality assurance tools via Composer:
+
+```bash
+# Install development dependencies
+composer install
+
+# Code linting (WordPress Coding Standards)
+composer run lint:phpcs
+
+# Auto-fix code style issues  
+composer run fix:phpcbf
+
+# Static analysis (PHPStan Level 6)
+composer run stan
+
+# Run unit tests
+composer run test
+
+# Run all quality checks
+composer run quality
+```
+
+### Code Quality Standards
+- **PHPCS**: WordPress Coding Standards + PHPCompatibility
+- **PHPStan**: Level 6 static analysis with WordPress stubs
+- **Security**: All AJAX handlers protected with nonces and capability checks
+- **Performance**: Conditional asset loading, optimized autoload settings
+- **Types**: Full PHP 8.2 compatibility with typed properties and return types
+
+### Manual Quality Validation
+When Composer dependencies are unavailable, basic validation can be performed:
+
+```bash
+# PHP syntax check
+find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
+
+# Security analysis  
+grep -r "wp_verify_nonce\|sanitize_text_field\|current_user_can" includes/
+
+# Performance check
+grep -r "wp_enqueue\|update_option.*false" includes/
+```
+
+### Requirements
+- **PHP**: 7.4+ (Recommended: 8.2+)
+- **WordPress**: 6.0+ 
+- **WooCommerce**: 7.0+
+- **Development**: Composer, Node.js 16+ (for frontend assets)
