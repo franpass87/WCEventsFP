@@ -152,7 +152,17 @@ class MenuManager {
     public function render_occurrences_page() {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Occorrenze', 'wceventsfp') . '</h1>';
-        // TODO: Integrate with existing occurrence management
+        
+        // Integrate with existing occurrence management
+        if (class_exists('WCEFP_Recurring')) {
+            // Show occurrence generation interface
+            echo '<div class="wcefp-occurrences-manager">';
+            $this->render_occurrence_interface();
+            echo '</div>';
+        } else {
+            echo '<p>' . esc_html__('Occurrence management not available.', 'wceventsfp') . '</p>';
+        }
+        
         echo '</div>';
     }
     
@@ -164,7 +174,20 @@ class MenuManager {
     public function render_bookings_page() {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Prenotazioni', 'wceventsfp') . '</h1>';
-        // TODO: Integrate with existing booking management
+        
+        // Integrate with existing booking management using QueryBuilder
+        try {
+            $query_builder = $this->container->get('query_builder');
+            if ($query_builder) {
+                $bookings = $query_builder->get_bookings();
+                $this->render_bookings_list($bookings);
+            } else {
+                echo '<p>' . esc_html__('Booking management not available.', 'wceventsfp') . '</p>';
+            }
+        } catch (\Exception $e) {
+            echo '<p>' . esc_html__('Error loading bookings:', 'wceventsfp') . ' ' . esc_html($e->getMessage()) . '</p>';
+        }
+        
         echo '</div>';
     }
     
@@ -174,10 +197,16 @@ class MenuManager {
      * @return void
      */
     public function render_vouchers_page() {
-        echo '<div class="wrap">';
-        echo '<h1>' . esc_html__('Vouchers', 'wceventsfp') . '</h1>';
-        // TODO: Integrate with existing voucher management
-        echo '</div>';
+        // Integrate with existing voucher management
+        if (class_exists('WCEFP_Vouchers_Admin')) {
+            // Use existing voucher admin functionality
+            WCEFP_Vouchers_Admin::dispatch();
+        } else {
+            echo '<div class="wrap">';
+            echo '<h1>' . esc_html__('Vouchers', 'wceventsfp') . '</h1>';
+            echo '<p>' . esc_html__('Voucher management not available.', 'wceventsfp') . '</p>';
+            echo '</div>';
+        }
     }
     
     /**
@@ -209,6 +238,74 @@ class MenuManager {
         do_settings_sections('wcefp_settings');
         submit_button();
         echo '</form>';
+        echo '</div>';
+    }
+    
+    /**
+     * Render occurrence management interface
+     * 
+     * @return void
+     */
+    private function render_occurrence_interface() {
+        echo '<div class="wcefp-occurrence-generator">';
+        echo '<h3>' . esc_html__('Genera Occorrenze', 'wceventsfp') . '</h3>';
+        echo '<p>' . esc_html__('Use the recurring events system to generate occurrences.', 'wceventsfp') . '</p>';
+        
+        // Basic form to interface with WCEFP_Recurring
+        echo '<form method="post" action="admin-ajax.php" class="wcefp-occurrence-form">';
+        wp_nonce_field('wcefp_admin', 'nonce');
+        echo '<input type="hidden" name="action" value="wcefp_generate_occurrences" />';
+        
+        echo '<table class="form-table">';
+        echo '<tr><th><label for="product_id">' . esc_html__('Product ID:', 'wceventsfp') . '</label></th>';
+        echo '<td><input type="number" name="product_id" id="product_id" class="regular-text" /></td></tr>';
+        
+        echo '<tr><th><label for="from_date">' . esc_html__('From Date:', 'wceventsfp') . '</label></th>';
+        echo '<td><input type="date" name="from" id="from_date" class="regular-text" /></td></tr>';
+        
+        echo '<tr><th><label for="to_date">' . esc_html__('To Date:', 'wceventsfp') . '</label></th>';
+        echo '<td><input type="date" name="to" id="to_date" class="regular-text" /></td></tr>';
+        echo '</table>';
+        
+        echo '<p class="submit"><input type="submit" value="' . esc_attr__('Generate Occurrences', 'wceventsfp') . '" class="button-primary" /></p>';
+        echo '</form>';
+        echo '</div>';
+    }
+    
+    /**
+     * Render bookings list
+     * 
+     * @param array $bookings List of bookings
+     * @return void
+     */
+    private function render_bookings_list($bookings) {
+        if (empty($bookings)) {
+            echo '<p>' . esc_html__('No bookings found.', 'wceventsfp') . '</p>';
+            return;
+        }
+        
+        echo '<div class="wcefp-bookings-list">';
+        echo '<table class="wp-list-table widefat fixed striped">';
+        echo '<thead><tr>';
+        echo '<th>' . esc_html__('ID', 'wceventsfp') . '</th>';
+        echo '<th>' . esc_html__('Customer', 'wceventsfp') . '</th>';
+        echo '<th>' . esc_html__('Occurrence', 'wceventsfp') . '</th>';
+        echo '<th>' . esc_html__('Status', 'wceventsfp') . '</th>';
+        echo '<th>' . esc_html__('Date', 'wceventsfp') . '</th>';
+        echo '</tr></thead>';
+        echo '<tbody>';
+        
+        foreach ($bookings as $booking) {
+            echo '<tr>';
+            echo '<td>' . esc_html($booking['id'] ?? '') . '</td>';
+            echo '<td>' . esc_html($booking['customer_name'] ?? __('N/A', 'wceventsfp')) . '</td>';
+            echo '<td>' . esc_html($booking['occurrence_id'] ?? __('N/A', 'wceventsfp')) . '</td>';
+            echo '<td>' . esc_html($booking['status'] ?? __('N/A', 'wceventsfp')) . '</td>';
+            echo '<td>' . esc_html($booking['created_at'] ?? __('N/A', 'wceventsfp')) . '</td>';
+            echo '</tr>';
+        }
+        
+        echo '</tbody></table>';
         echo '</div>';
     }
 }
