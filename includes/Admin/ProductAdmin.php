@@ -50,6 +50,18 @@ class ProductAdmin {
             require_once $legacy_file;
         }
         
+        // Load modern product classes
+        $product_files = [
+            WCEFP_PLUGIN_DIR . 'includes/WooCommerce/ProductEvento.php',
+            WCEFP_PLUGIN_DIR . 'includes/WooCommerce/ProductEsperienza.php'
+        ];
+        
+        foreach ($product_files as $file) {
+            if (file_exists($file)) {
+                require_once $file;
+            }
+        }
+        
         // Register custom product types with WooCommerce
         add_action('init', [$this, 'register_product_types'], 20);
     }
@@ -111,11 +123,12 @@ class ProductAdmin {
      * @return string Product class name
      */
     public function product_class($classname, $product_type) {
+        // Use legacy classes for backward compatibility
         if ($product_type === 'evento' || $product_type === 'wcefp_event') {
-            return 'WC_Product_WCEFP_Event';
+            return class_exists('WC_Product_Evento') ? 'WC_Product_Evento' : 'WC_Product_WCEFP_Event';
         }
         if ($product_type === 'esperienza' || $product_type === 'wcefp_experience') {
-            return 'WC_Product_WCEFP_Experience';
+            return class_exists('WC_Product_Esperienza') ? 'WC_Product_Esperienza' : 'WC_Product_WCEFP_Experience';
         }
         return $classname;
     }

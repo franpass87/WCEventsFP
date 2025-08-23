@@ -80,6 +80,21 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
         if (class_exists('\WCEFP\Admin\FeatureManager')) {
             $this->container->get('admin.features');
         }
+        
+        // Register AJAX handlers for legacy classes
+        $this->register_ajax_handlers();
+    }
+    
+    /**
+     * Register AJAX handlers
+     * 
+     * @return void
+     */
+    private function register_ajax_handlers() {
+        // AJAX handler for generating occurrences
+        if (class_exists('WCEFP_Recurring')) {
+            add_action('wp_ajax_wcefp_generate_occurrences', ['WCEFP_Recurring', 'ajax_generate_occurrences']);
+        }
     }
 
 }

@@ -48,6 +48,31 @@ class MenuManager {
     }
     
     /**
+     * Load legacy admin classes
+     * 
+     * @return void
+     */
+    private function load_legacy_admin_classes() {
+        // Load legacy recurring class
+        $recurring_file = WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-recurring.php';
+        if (file_exists($recurring_file)) {
+            require_once $recurring_file;
+        }
+        
+        // Load legacy vouchers admin class
+        $vouchers_file = WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-admin.php';
+        if (file_exists($vouchers_file)) {
+            require_once $vouchers_file;
+            
+            // Also load the vouchers table class
+            $vouchers_table_file = WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-table.php';
+            if (file_exists($vouchers_table_file)) {
+                require_once $vouchers_table_file;
+            }
+        }
+    }
+    
+    /**
      * Add admin menu items
      * 
      * @return void
@@ -56,6 +81,9 @@ class MenuManager {
         if (!current_user_can('manage_woocommerce')) {
             return;
         }
+        
+        // Load legacy admin classes if they exist
+        $this->load_legacy_admin_classes();
         
         // Main menu page
         add_menu_page(
@@ -158,7 +186,7 @@ class MenuManager {
         $has_query_builder = false;
         
         try {
-            $query_builder = $this->container->get('query_builder');
+            $query_builder = $this->container->get('db.query_builder');
             $has_query_builder = ($query_builder !== null);
         } catch (\Exception $e) {
             // Query builder not available
@@ -204,7 +232,7 @@ class MenuManager {
         
         // Integrate with existing booking management using QueryBuilder
         try {
-            $query_builder = $this->container->get('query_builder');
+            $query_builder = $this->container->get('db.query_builder');
             if ($query_builder && method_exists($query_builder, 'get_bookings')) {
                 $bookings = $query_builder->get_bookings();
                 $this->render_bookings_list($bookings);
