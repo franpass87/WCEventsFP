@@ -396,6 +396,15 @@ class WCEventsFP {
                 }
             }
 
+            // Initialize Phase 6: Analytics & Automation
+            if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Analytics/AnalyticsServiceProvider.php')) {
+                require_once WCEFP_PLUGIN_DIR . 'includes/Analytics/AnalyticsServiceProvider.php';
+                
+                if (class_exists('WCEFP\\Analytics\\AnalyticsServiceProvider')) {
+                    $GLOBALS['wcefp_analytics'] = new WCEFP\Analytics\AnalyticsServiceProvider();
+                }
+            }
+
         } catch (Exception $e) {
             error_log('WCEventsFP: Feature loading failed: ' . $e->getMessage());
         }
