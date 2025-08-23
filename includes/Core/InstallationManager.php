@@ -124,7 +124,7 @@ class InstallationManager {
      */
     public function start_progressive_installation() {
         try {
-            Logger::info('Starting progressive installation');
+            Logger::info('Starting installation');
             
             // Update status
             $this->installation_status = 'in_progress';
@@ -132,17 +132,23 @@ class InstallationManager {
             
             // Install core features first
             $this->install_core_features();
-            
-            // Schedule next phase if needed
+
             if ($this->installation_mode === self::MODE_PROGRESSIVE) {
+                // Schedule next phase for progressive mode
                 $this->schedule_next_installation_phase();
+            } else {
+                // Install all selected features immediately
+                $this->install_next_feature_batch();
+                if (!$this->has_more_features_to_install()) {
+                    $this->complete_installation();
+                }
             }
-            
-            Logger::info('Progressive installation phase completed');
+
+            Logger::info('Installation phase completed');
             return true;
             
         } catch (\Exception $e) {
-            Logger::error('Progressive installation failed: ' . $e->getMessage());
+            Logger::error('Installation failed: ' . $e->getMessage());
             $this->installation_status = 'failed';
             update_option('wcefp_installation_status', $this->installation_status);
             return false;
@@ -405,14 +411,19 @@ class InstallationManager {
      * @return int
      */
     private function get_installation_batch_size() {
+        // In standard mode, install all features at once
+        if ($this->installation_mode !== self::MODE_PROGRESSIVE) {
+            return count($this->enabled_features);
+        }
+
         $memory_limit = ini_get('memory_limit');
-        
+
         if ($memory_limit === '-1') {
             return 5; // Unlimited memory
         }
-        
+
         $memory_bytes = $this->convert_memory_to_bytes($memory_limit);
-        
+
         if ($memory_bytes >= 536870912) { // 512MB+
             return 4;
         } elseif ($memory_bytes >= 268435456) { // 256MB+
@@ -445,7 +456,7 @@ class InstallationManager {
         // Clean up scheduled events
         wp_clear_scheduled_hook('wcefp_continue_installation');
         
-        Logger::info('Progressive installation completed successfully');
+        Logger::info('Installation completed successfully');
         
         // Trigger completion hook
         do_action('wcefp_installation_completed', $this);
@@ -458,7 +469,7 @@ class InstallationManager {
     private function load_installation_config() {
         $this->enabled_features = get_option('wcefp_selected_features', ['core']);
         $this->performance_settings = get_option('wcefp_performance_settings', [
-            'loading_mode' => self::MODE_PROGRESSIVE,
+            'loading_mode' => self::MODE_STANDARD,
             'enable_caching' => true,
             'enable_logging' => true
         ]);
@@ -476,36 +487,8 @@ class InstallationManager {
             return;
         }
         
-        // Use saved performance settings
-        $this->installation_mode = $this->performance_settings['loading_mode'] ?? self::MODE_PROGRESSIVE;
-        
-        // Override based on environment if needed
-        if ($this->should_force_minimal_mode()) {
-            $this->installation_mode = self::MODE_MINIMAL;
-        }
-    }
-    
-    /**
-     * Check if should force minimal mode
-     * @return bool
-     */
-    private function should_force_minimal_mode() {
-        // Check memory constraints
-        $memory_limit = ini_get('memory_limit');
-        if ($memory_limit !== '-1') {
-            $memory_bytes = $this->convert_memory_to_bytes($memory_limit);
-            if ($memory_bytes < 134217728) { // Less than 128MB
-                return true;
-            }
-        }
-        
-        // Check execution time constraints
-        $max_execution_time = ini_get('max_execution_time');
-        if ($max_execution_time > 0 && $max_execution_time < 30) {
-            return true;
-        }
-        
-        return false;
+        // Use saved performance settings without resource-based overrides
+        $this->installation_mode = $this->performance_settings['loading_mode'] ?? self::MODE_STANDARD;
     }
     
     /**
