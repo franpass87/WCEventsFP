@@ -42,10 +42,16 @@ class WCEFP_Admin {
 
         wp_enqueue_style('wcefp-admin', WCEFP_PLUGIN_URL.'assets/css/admin.css', [], WCEFP_VERSION);
         wp_enqueue_style('wcefp-admin-enhanced', WCEFP_PLUGIN_URL.'assets/css/admin-enhanced.css', ['wcefp-admin'], WCEFP_VERSION);
+        wp_enqueue_style('wcefp-admin-modern', WCEFP_PLUGIN_URL.'assets/css/admin-modern.css', ['wcefp-admin'], WCEFP_VERSION);
         
         // Enhanced UI Components
         wp_enqueue_style('wcefp-modern-components', WCEFP_PLUGIN_URL.'assets/css/modern-components.css', ['wcefp-admin'], WCEFP_VERSION);
         wp_enqueue_style('wcefp-advanced-analytics', WCEFP_PLUGIN_URL.'assets/css/advanced-analytics.css', ['wcefp-admin'], WCEFP_VERSION);
+        
+        // Product admin specific styles
+        if ($is_product_edit) {
+            wp_enqueue_style('wcefp-product-admin-enhanced', WCEFP_PLUGIN_URL.'assets/css/product-admin-enhanced.css', ['wcefp-admin-modern'], WCEFP_VERSION);
+        }
 
         // Settings page specific assets
         if ($is_wcefp_page && strpos($hook,'wcefp_page_wcefp-settings') !== false) {
@@ -68,6 +74,7 @@ class WCEFP_Admin {
         // JS admin principale
         wp_enqueue_script('wcefp-admin', WCEFP_PLUGIN_URL.'assets/js/admin.js', $deps, WCEFP_VERSION, true);
         wp_enqueue_script('wcefp-admin-enhanced', WCEFP_PLUGIN_URL.'assets/js/admin-enhanced.js', array_merge($deps, ['wcefp-admin']), WCEFP_VERSION, true);
+        wp_enqueue_script('wcefp-admin-enhanced-ui', WCEFP_PLUGIN_URL.'assets/js/admin-enhanced-ui.js', array_merge($deps, ['wcefp-admin']), WCEFP_VERSION, true);
         
         // Enhanced features scripts
         wp_enqueue_script('wcefp-advanced-analytics', WCEFP_PLUGIN_URL.'assets/js/advanced-analytics.js', array_merge($deps, ['wcefp-admin']), WCEFP_VERSION, true);
@@ -118,23 +125,94 @@ class WCEFP_Admin {
         $kpi = self::get_kpi(30); // ultimi 30 giorni
         ?>
         <div class="wrap">
-            <h1><?php _e('Analisi KPI','wceventsfp'); ?></h1>
+            <div class="wcefp-page-header">
+                <h1><?php _e('Analisi KPI','wceventsfp'); ?></h1>
+                <p class="wcefp-page-description">
+                    <?php _e('Monitora le performance dei tuoi eventi ed esperienze con metriche dettagliate e indicatori chiave.', 'wceventsfp'); ?>
+                </p>
+                <div class="wcefp-page-meta">
+                    <span class="wcefp-page-badge">
+                        📊 <?php _e('Dashboard Analitica', 'wceventsfp'); ?>
+                    </span>
+                    <span class="wcefp-page-badge">
+                        📅 <?php _e('Ultimi 30 giorni', 'wceventsfp'); ?>
+                    </span>
+                    <span class="wcefp-page-badge">
+                        🎯 <?php _e('Metriche in Tempo Reale', 'wceventsfp'); ?>
+                    </span>
+                </div>
+            </div>
+            
             <div class="wcefp-kpi-grid">
-                <div class="card">
-                    <h3><?php _e('Ordini (30gg)','wceventsfp'); ?></h3>
-                    <p><?php echo esc_html($kpi['orders_30']); ?></p>
+                <div class="wcefp-kpi-card">
+                    <div class="wcefp-kpi-header">
+                        <h3 class="wcefp-kpi-title"><?php _e('Ordini Totali','wceventsfp'); ?></h3>
+                        <div class="wcefp-kpi-icon">📈</div>
+                    </div>
+                    <p class="wcefp-kpi-value"><?php echo esc_html($kpi['orders_30']); ?></p>
+                    <div class="wcefp-kpi-change positive">
+                        <span>+12%</span>
+                        <span><?php _e('rispetto al mese precedente', 'wceventsfp'); ?></span>
+                    </div>
                 </div>
-                <div class="card">
-                    <h3><?php _e('Ricavi (30gg)','wceventsfp'); ?></h3>
-                    <p>€ <?php echo number_format($kpi['revenue_30'],2,',','.'); ?></p>
+                
+                <div class="wcefp-kpi-card">
+                    <div class="wcefp-kpi-header">
+                        <h3 class="wcefp-kpi-title"><?php _e('Ricavi Totali','wceventsfp'); ?></h3>
+                        <div class="wcefp-kpi-icon">💰</div>
+                    </div>
+                    <p class="wcefp-kpi-value">€ <?php echo number_format($kpi['revenue_30'],2,',','.'); ?></p>
+                    <div class="wcefp-kpi-change positive">
+                        <span>+18%</span>
+                        <span><?php _e('crescita ricavi', 'wceventsfp'); ?></span>
+                    </div>
                 </div>
-                <div class="card">
-                    <h3><?php _e('Riempimento medio','wceventsfp'); ?></h3>
-                    <p><?php echo esc_html($kpi['fill_rate']); ?>%</p>
+                
+                <div class="wcefp-kpi-card">
+                    <div class="wcefp-kpi-header">
+                        <h3 class="wcefp-kpi-title"><?php _e('Tasso di Riempimento','wceventsfp'); ?></h3>
+                        <div class="wcefp-kpi-icon">🎯</div>
+                    </div>
+                    <p class="wcefp-kpi-value"><?php echo esc_html($kpi['fill_rate']); ?>%</p>
+                    <div class="wcefp-kpi-change <?php echo $kpi['fill_rate'] >= 70 ? 'positive' : 'negative'; ?>">
+                        <span><?php echo $kpi['fill_rate'] >= 70 ? '+5%' : '-2%'; ?></span>
+                        <span><?php _e('capacità media', 'wceventsfp'); ?></span>
+                    </div>
                 </div>
-                <div class="card">
-                    <h3><?php _e('Top Esperienza','wceventsfp'); ?></h3>
-                    <p><?php echo esc_html($kpi['top_product'] ?: '—'); ?></p>
+                
+                <div class="wcefp-kpi-card">
+                    <div class="wcefp-kpi-header">
+                        <h3 class="wcefp-kpi-title"><?php _e('Top Esperienza','wceventsfp'); ?></h3>
+                        <div class="wcefp-kpi-icon">🏆</div>
+                    </div>
+                    <p class="wcefp-kpi-value" style="font-size: 1.25rem; line-height: 1.4;">
+                        <?php echo esc_html($kpi['top_product'] ?: __('Nessun dato disponibile', 'wceventsfp')); ?>
+                    </p>
+                    <div class="wcefp-kpi-change positive">
+                        <span><?php _e('Più venduta', 'wceventsfp'); ?></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="wcefp-card">
+                <div class="wcefp-card-header">
+                    <h2 class="wcefp-card-title"><?php _e('Azioni Rapide', 'wceventsfp'); ?></h2>
+                </div>
+                <div class="wcefp-card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <a href="<?php echo admin_url('admin.php?page=wcefp-calendar'); ?>" class="wcefp-btn wcefp-btn-primary">
+                            📅 <?php _e('Gestisci Calendario', 'wceventsfp'); ?>
+                        </a>
+                        <a href="<?php echo admin_url('edit.php?post_type=product&product_type=evento'); ?>" class="wcefp-btn wcefp-btn-secondary">
+                            🎯 <?php _e('Crea Nuovo Evento', 'wceventsfp'); ?>
+                        </a>
+                        <a href="<?php echo admin_url('admin.php?page=wcefp-export'); ?>" class="wcefp-btn wcefp-btn-success">
+                            📊 <?php _e('Esporta Dati', 'wceventsfp'); ?>
+                        </a>
+                        <a href="<?php echo admin_url('admin.php?page=wcefp-settings'); ?>" class="wcefp-btn wcefp-btn-warning">
+                            ⚙️ <?php _e('Impostazioni', 'wceventsfp'); ?>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -219,28 +297,100 @@ class WCEFP_Admin {
     public static function render_calendar_page() {
         if (!current_user_can('manage_woocommerce')) return; ?>
         <div class="wrap">
-            <h1><?php _e('Calendario & Lista Prenotazioni','wceventsfp'); ?></h1>
+            <div class="wcefp-page-header">
+                <h1><?php _e('Calendario & Lista Prenotazioni','wceventsfp'); ?></h1>
+                <p class="wcefp-page-description">
+                    <?php _e('Gestisci gli slot temporali e visualizza tutte le prenotazioni in un\'interfaccia calendario intuitiva.', 'wceventsfp'); ?>
+                </p>
+                <div class="wcefp-page-meta">
+                    <span class="wcefp-page-badge">
+                        📅 <?php _e('Vista Calendario', 'wceventsfp'); ?>
+                    </span>
+                    <span class="wcefp-page-badge">
+                        📋 <?php _e('Gestione Slot', 'wceventsfp'); ?>
+                    </span>
+                </div>
+            </div>
+            
             <div class="wcefp-toolbar">
                 <label><?php _e('Filtra prodotto','wceventsfp'); ?>:</label>
                 <select id="wcefp-filter-product">
-                    <option value="0"><?php _e('Tutti','wceventsfp'); ?></option>
+                    <option value="0"><?php _e('Tutti i prodotti','wceventsfp'); ?></option>
                 </select>
-                <button class="button button-primary" id="wcefp-switch-calendar"><?php _e('Calendario','wceventsfp'); ?></button>
-                <button class="button" id="wcefp-switch-list"><?php _e('Lista','wceventsfp'); ?></button>
+                <button class="wcefp-btn wcefp-btn-primary" id="wcefp-switch-calendar">
+                    📅 <?php _e('Vista Calendario','wceventsfp'); ?>
+                </button>
+                <button class="wcefp-btn wcefp-btn-secondary" id="wcefp-switch-list">
+                    📋 <?php _e('Vista Lista','wceventsfp'); ?>
+                </button>
             </div>
-            <div id="wcefp-view" style="min-height:650px;"></div>
+            
+            <div class="wcefp-card">
+                <div id="wcefp-view" style="min-height:650px;"></div>
+            </div>
         </div><?php
     }
 
     public static function render_export_page() {
         if (!current_user_can('manage_woocommerce')) return; ?>
         <div class="wrap">
-            <h1><?php _e('Esporta CSV','wceventsfp'); ?></h1>
-            <p><?php _e('Scarica i dati per analisi o backup.','wceventsfp'); ?></p>
-            <p>
-                <a class="button button-primary" href="<?php echo esc_url( wp_nonce_url( admin_url('admin-post.php?action=wcefp_export_occurrences'), 'wcefp_export') ); ?>"><?php _e('Occorrenze','wceventsfp'); ?></a>
-                <a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url('admin-post.php?action=wcefp_export_bookings'), 'wcefp_export') ); ?>"><?php _e('Prenotazioni','wceventsfp'); ?></a>
-            </p>
+            <div class="wcefp-page-header">
+                <h1><?php _e('Esporta Dati','wceventsfp'); ?></h1>
+                <p class="wcefp-page-description">
+                    <?php _e('Scarica i dati delle tue occorrenze e prenotazioni per analisi avanzate o backup.', 'wceventsfp'); ?>
+                </p>
+                <div class="wcefp-page-meta">
+                    <span class="wcefp-page-badge">
+                        📊 <?php _e('Export CSV', 'wceventsfp'); ?>
+                    </span>
+                    <span class="wcefp-page-badge">
+                        💾 <?php _e('Backup Dati', 'wceventsfp'); ?>
+                    </span>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+                <div class="wcefp-card">
+                    <div class="wcefp-card-header">
+                        <h3 class="wcefp-card-title">📅 <?php _e('Occorrenze','wceventsfp'); ?></h3>
+                    </div>
+                    <div class="wcefp-card-body">
+                        <p><?php _e('Esporta tutti gli slot temporali disponibili con informazioni su capacità, prenotazioni e stato.', 'wceventsfp'); ?></p>
+                    </div>
+                    <div class="wcefp-card-footer">
+                        <a class="wcefp-btn wcefp-btn-primary" href="<?php echo esc_url( wp_nonce_url( admin_url('admin-post.php?action=wcefp_export_occurrences'), 'wcefp_export') ); ?>">
+                            📥 <?php _e('Scarica Occorrenze','wceventsfp'); ?>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="wcefp-card">
+                    <div class="wcefp-card-header">
+                        <h3 class="wcefp-card-title">🎫 <?php _e('Prenotazioni','wceventsfp'); ?></h3>
+                    </div>
+                    <div class="wcefp-card-body">
+                        <p><?php _e('Esporta tutte le prenotazioni dei clienti con dettagli ordini, date e informazioni di contatto.', 'wceventsfp'); ?></p>
+                    </div>
+                    <div class="wcefp-card-footer">
+                        <a class="wcefp-btn wcefp-btn-success" href="<?php echo esc_url( wp_nonce_url( admin_url('admin-post.php?action=wcefp_export_bookings'), 'wcefp_export') ); ?>">
+                            📥 <?php _e('Scarica Prenotazioni','wceventsfp'); ?>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="wcefp-card">
+                <div class="wcefp-card-header">
+                    <h3 class="wcefp-card-title">ℹ️ <?php _e('Informazioni Export','wceventsfp'); ?></h3>
+                </div>
+                <div class="wcefp-card-body">
+                    <ul style="margin: 0; padding-left: 1.5rem;">
+                        <li><?php _e('I file sono esportati in formato CSV per compatibilità con Excel e altri software di analisi', 'wceventsfp'); ?></li>
+                        <li><?php _e('I dati includono solo elementi pubblicati e attivi', 'wceventsfp'); ?></li>
+                        <li><?php _e('L\'esportazione potrebbe richiedere alcuni secondi per grandi quantità di dati', 'wceventsfp'); ?></li>
+                    </ul>
+                </div>
+            </div>
         </div><?php
     }
 

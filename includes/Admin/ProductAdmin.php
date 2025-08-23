@@ -98,9 +98,9 @@ class ProductAdmin {
      */
     public function add_product_data_tab($tabs) {
         $tabs['wcefp_data'] = [
-            'label' => __('Eventi & Esperienze', 'wceventsfp'),
+            'label' => '🎯 ' . __('Eventi & Esperienze', 'wceventsfp'),
             'target' => 'wcefp_product_data',
-            'class' => ['show_if_evento', 'show_if_esperienza'],
+            'class' => ['show_if_evento', 'show_if_esperienza', 'wcefp_tab'],
         ];
         return $tabs;
     }
@@ -114,88 +114,195 @@ class ProductAdmin {
         global $post;
         
         echo '<div id="wcefp_product_data" class="panel woocommerce_options_panel">';
-        echo '<div class="options_group">';
         
-        // Price fields
+        // Pricing Section
+        echo '<div class="options_group">';
+        echo '<h4>💰 ' . __('Configurazione Prezzi', 'wceventsfp') . '</h4>';
+        echo '<div class="wcefp-field-row">';
+        
         woocommerce_wp_text_input([
             'id' => '_wcefp_price_adult',
-            'label' => __('Prezzo Adulto (€)', 'wceventsfp'),
+            'label' => '👤 ' . __('Prezzo Adulto (€)', 'wceventsfp'),
             'data_type' => 'price',
             'desc_tip' => true,
-            'description' => __('Prezzo per adulto', 'wceventsfp')
+            'description' => __('Prezzo per partecipante adulto', 'wceventsfp'),
+            'wrapper_class' => 'form-field'
         ]);
         
         woocommerce_wp_text_input([
             'id' => '_wcefp_price_child',
-            'label' => __('Prezzo Bambino (€)', 'wceventsfp'),
+            'label' => '🧒 ' . __('Prezzo Bambino (€)', 'wceventsfp'),
             'data_type' => 'price',
             'desc_tip' => true,
-            'description' => __('Prezzo per bambino', 'wceventsfp')
+            'description' => __('Prezzo ridotto per bambini', 'wceventsfp'),
+            'wrapper_class' => 'form-field'
         ]);
         
-        // Capacity
+        echo '</div>'; // End field row
+        echo '</div>'; // End options_group
+        
+        // Capacity & Timing Section
+        echo '<div class="options_group">';
+        echo '<h4>⚙️ ' . __('Configurazione Slot', 'wceventsfp') . '</h4>';
+        echo '<div class="wcefp-field-row">';
+        
         woocommerce_wp_text_input([
             'id' => '_wcefp_capacity',
-            'label' => __('Capienza per slot', 'wceventsfp'),
+            'label' => '👥 ' . __('Capienza per slot', 'wceventsfp'),
             'type' => 'number',
-            'custom_attributes' => ['step' => '1', 'min' => '1'],
+            'custom_attributes' => ['step' => '1', 'min' => '1', 'max' => '200'],
             'desc_tip' => true,
-            'description' => __('Numero massimo di partecipanti per slot', 'wceventsfp')
+            'description' => __('Numero massimo di partecipanti per ogni slot temporale', 'wceventsfp'),
+            'wrapper_class' => 'form-field'
         ]);
         
-        // Duration
         woocommerce_wp_text_input([
             'id' => '_wcefp_duration',
-            'label' => __('Durata slot (minuti)', 'wceventsfp'),
+            'label' => '⏱️ ' . __('Durata slot (minuti)', 'wceventsfp'),
             'type' => 'number',
-            'custom_attributes' => ['step' => '15', 'min' => '15'],
+            'custom_attributes' => ['step' => '15', 'min' => '15', 'max' => '1440'],
             'desc_tip' => true,
-            'description' => __('Durata dello slot in minuti', 'wceventsfp')
+            'description' => __('Durata dello slot in minuti (multipli di 15)', 'wceventsfp'),
+            'wrapper_class' => 'form-field'
         ]);
         
-        echo '</div>';
+        echo '</div>'; // End field row
+        echo '</div>'; // End options_group
         
+        // Experience Details Section
         echo '<div class="options_group">';
-        echo '<h4>' . __('Info esperienza', 'wceventsfp') . '</h4>';
+        echo '<h4>🌟 ' . __('Dettagli Esperienza', 'wceventsfp') . '</h4>';
         
         woocommerce_wp_text_input([
             'id' => '_wcefp_languages',
-            'label' => __('Lingue (es. IT, EN)', 'wceventsfp'),
+            'label' => '🌐 ' . __('Lingue disponibili', 'wceventsfp'),
             'desc_tip' => true,
-            'description' => __('Lingue disponibili separate da virgola', 'wceventsfp')
+            'description' => __('Lingue supportate separate da virgola (es: IT, EN, FR)', 'wceventsfp'),
+            'placeholder' => 'IT, EN, FR',
+            'wrapper_class' => 'form-field wcefp-field-full'
         ]);
         
         woocommerce_wp_text_input([
             'id' => '_wcefp_meeting_point',
-            'label' => __('Meeting point', 'wceventsfp'),
+            'label' => '📍 ' . __('Punto di ritrovo', 'wceventsfp'),
             'desc_tip' => true,
-            'description' => __('Punto di ritrovo per l\'esperienza', 'wceventsfp')
+            'description' => __('Indirizzo o descrizione del punto di ritrovo per l\'esperienza', 'wceventsfp'),
+            'placeholder' => 'Via Roma 123, Milano',
+            'wrapper_class' => 'form-field wcefp-field-full'
         ]);
+        
+        echo '</div>'; // End options_group
+        
+        // What's Included/Excluded Section
+        echo '<div class="options_group">';
+        echo '<h4>📋 ' . __('Cosa è Incluso/Escluso', 'wceventsfp') . '</h4>';
+        echo '<div class="wcefp-field-row">';
         
         woocommerce_wp_textarea_input([
             'id' => '_wcefp_included',
-            'label' => __('Incluso', 'wceventsfp'),
+            'label' => '✅ ' . __('Incluso nel prezzo', 'wceventsfp'),
             'desc_tip' => true,
-            'description' => __('Cosa è incluso nell\'esperienza', 'wceventsfp')
+            'description' => __('Elenca tutto ciò che è incluso nell\'esperienza', 'wceventsfp'),
+            'placeholder' => 'Degustazione vini, assaggi di formaggi locali, guida esperta...',
+            'rows' => 4,
+            'wrapper_class' => 'form-field'
         ]);
         
         woocommerce_wp_textarea_input([
             'id' => '_wcefp_excluded',
-            'label' => __('Escluso', 'wceventsfp'),
+            'label' => '❌ ' . __('Non incluso', 'wceventsfp'),
             'desc_tip' => true,
-            'description' => __('Cosa non è incluso nell\'esperienza', 'wceventsfp')
+            'description' => __('Elenca ciò che NON è incluso nel prezzo', 'wceventsfp'),
+            'placeholder' => 'Trasporto, bevande aggiuntive, pranzo completo...',
+            'rows' => 4,
+            'wrapper_class' => 'form-field'
         ]);
+        
+        echo '</div>'; // End field row
+        echo '</div>'; // End options_group
+        
+        // Cancellation Policy Section
+        echo '<div class="options_group">';
+        echo '<h4>📄 ' . __('Politiche e Condizioni', 'wceventsfp') . '</h4>';
         
         woocommerce_wp_textarea_input([
             'id' => '_wcefp_cancellation',
-            'label' => __('Politica di cancellazione', 'wceventsfp'),
+            'label' => '📋 ' . __('Politica di cancellazione', 'wceventsfp'),
             'desc_tip' => true,
-            'description' => __('Politica di cancellazione per l\'esperienza', 'wceventsfp')
+            'description' => __('Condizioni per cancellazione e rimborso dell\'esperienza', 'wceventsfp'),
+            'placeholder' => 'Cancellazione gratuita fino a 24h prima. Rimborso 50% fino a 12h prima...',
+            'rows' => 5,
+            'wrapper_class' => 'form-field wcefp-field-full'
         ]);
         
-        echo '</div>';
-        echo '</div>';
-    }
+        echo '</div>'; // End options_group
+        echo '</div>'; // End wcefp_product_data
+        
+        // Add inline script for enhanced field behavior
+        ?>
+        <script>
+        jQuery(document).ready(function($) {
+            // Add enhanced validation and visual feedback
+            $('#wcefp_product_data input, #wcefp_product_data textarea').on('blur', function() {
+                var $field = $(this).closest('.form-field');
+                var value = $(this).val();
+                
+                // Remove existing validation classes
+                $field.removeClass('has-error has-success');
+                
+                // Add validation feedback based on field requirements
+                if ($(this).attr('required') || $(this).closest('[data-required]').length) {
+                    if (value.trim() === '') {
+                        $field.addClass('has-error');
+                    } else {
+                        $field.addClass('has-success');
+                    }
+                }
+                
+                // Specific validations
+                if ($(this).attr('data-type') === 'price' && value) {
+                    if (isNaN(parseFloat(value)) || parseFloat(value) <= 0) {
+                        $field.addClass('has-error');
+                    } else {
+                        $field.addClass('has-success');
+                    }
+                }
+                
+                if ($(this).attr('type') === 'number' && value) {
+                    var min = parseInt($(this).attr('min'));
+                    var max = parseInt($(this).attr('max'));
+                    var val = parseInt(value);
+                    
+                    if (isNaN(val) || (min && val < min) || (max && val > max)) {
+                        $field.addClass('has-error');
+                    } else {
+                        $field.addClass('has-success');
+                    }
+                }
+            });
+            
+            // Enhance language input with tags-like behavior
+            $('#_wcefp_languages').on('keyup', function() {
+                var value = $(this).val();
+                if (value) {
+                    // Auto-uppercase and format
+                    var formatted = value.toUpperCase().replace(/\s*,\s*/g, ', ');
+                    if (formatted !== value) {
+                        $(this).val(formatted);
+                    }
+                }
+            });
+            
+            // Real-time price formatting
+            $('input[data-type="price"]').on('keyup', function() {
+                var value = $(this).val();
+                if (value && !isNaN(parseFloat(value))) {
+                    $(this).closest('.form-field').addClass('has-success').removeClass('has-error');
+                }
+            });
+        });
+        </script>
+        <?php
     
     /**
      * Save product data
