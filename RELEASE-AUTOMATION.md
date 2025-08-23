@@ -117,9 +117,11 @@ If plugin files are moved, update the paths in:
 
 ### Personal Access Token Configuration
 
-The release-please workflow requires a Personal Access Token (PAT) to create pull requests due to repository security settings.
+The release-please workflow can use either a custom Personal Access Token (PAT) or the default GitHub token.
 
-**Setup Steps:**
+**⚠️ Note:** The workflow now includes automatic fallback to `GITHUB_TOKEN` if `RELEASE_PLEASE_TOKEN` is not configured, so the setup steps below are **optional** but recommended for repositories with special permission requirements.
+
+**Setup Steps (Optional):**
 
 1. **Create a Personal Access Token:**
    - Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
@@ -136,22 +138,25 @@ The release-please workflow requires a Personal Access Token (PAT) to create pul
    - Value: Your PAT from step 1
    - Click "Add secret"
 
-3. **Verify Configuration:**
-   - The workflow will now use this token instead of the default GITHUB_TOKEN
-   - This allows creation of release PRs even with repository restrictions
+3. **Token Usage:**
+   - If `RELEASE_PLEASE_TOKEN` is configured: Uses the custom PAT
+   - If `RELEASE_PLEASE_TOKEN` is not configured: Automatically falls back to `GITHUB_TOKEN`
+   - The fallback mechanism ensures the workflow works without additional setup
 
 ## Troubleshooting
 
 ### Release PR Not Created
 - Check commit messages follow conventional format
-- Verify `RELEASE_PLEASE_TOKEN` secret is configured (see Setup Requirements above)
 - Verify workflow has proper permissions (contents: write, pull-requests: write)
 - Check GitHub Actions logs for authentication errors
+- The workflow automatically uses `GITHUB_TOKEN` if `RELEASE_PLEASE_TOKEN` is not configured
 
 ### Authentication Errors
-- Ensure `RELEASE_PLEASE_TOKEN` secret exists and is not expired
+- ✅ **New**: The workflow now automatically falls back to `GITHUB_TOKEN` if `RELEASE_PLEASE_TOKEN` is unavailable
+- If using a custom PAT, ensure `RELEASE_PLEASE_TOKEN` secret exists and is not expired
 - Verify PAT has `repo` and `workflow` scopes
 - Check if PAT owner has write access to the repository
+- For most repositories, the default `GITHUB_TOKEN` should work without additional setup
 
 ### Version Not Updated in Files  
 - Verify `// x-release-please-version` or `<!-- x-release-please-version -->` markers exist
