@@ -32,13 +32,17 @@ class VoucherManager {
     
     /**
      * Email manager instance
+     *
+     * @var EmailManager
      */
-    private $email_manager;
+    private EmailManager $email_manager;
     
     /**
      * Initialize voucher management system
+     * 
+     * @param EmailManager|null $email_manager Optional email manager instance
      */
-    public function __construct($email_manager = null) {
+    public function __construct(?EmailManager $email_manager = null) {
         $this->email_manager = $email_manager ?: new EmailManager();
         
         $this->init_hooks();
@@ -48,7 +52,7 @@ class VoucherManager {
     /**
      * Initialize WordPress hooks
      */
-    private function init_hooks() {
+    private function init_hooks(): void {
         // Enhanced voucher creation with email integration
         add_action('wcefp_voucher_generated', [$this, 'handle_voucher_created'], 10, 2);
         
@@ -67,7 +71,7 @@ class VoucherManager {
     /**
      * Initialize admin-specific features
      */
-    private function init_admin_features() {
+    private function init_admin_features(): void {
         if (!is_admin()) {
             return;
         }
@@ -144,7 +148,7 @@ class VoucherManager {
      * 
      * @param string $hook Current admin page hook
      */
-    public function enqueue_admin_assets($hook) {
+    public function enqueue_admin_assets(string $hook): void {
         // Only load on voucher-related admin pages
         if (strpos($hook, 'voucher') === false && strpos($hook, 'wcefp') === false) {
             return;
@@ -235,7 +239,7 @@ class VoucherManager {
     /**
      * Handle AJAX request for voucher analytics
      */
-    public function handle_ajax_get_analytics() {
+    public function handle_ajax_get_analytics(): void {
         // Security check  
         $nonce = isset($_GET['nonce']) ? sanitize_text_field(wp_unslash($_GET['nonce'])) : '';
         if (!wp_verify_nonce($nonce, 'wcefp_voucher_action')) {

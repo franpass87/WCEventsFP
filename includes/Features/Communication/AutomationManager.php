@@ -23,20 +23,32 @@ class AutomationManager {
     
     /**
      * Email manager instance
+     *
+     * @var EmailManager
      */
-    private $email_manager;
+    private EmailManager $email_manager;
     
     /**
      * Voucher manager instance
+     *
+     * @var VoucherManager
      */
-    private $voucher_manager;
+    private VoucherManager $voucher_manager;
     
     /**
      * Automation rules
+     *
+     * @var array<string, array<string, mixed>>
      */
-    private $automation_rules = [];
+    private array $automation_rules = [];
     
-    public function __construct($email_manager, $voucher_manager) {
+    /**
+     * Constructor
+     *
+     * @param EmailManager $email_manager
+     * @param VoucherManager $voucher_manager
+     */
+    public function __construct(EmailManager $email_manager, VoucherManager $voucher_manager) {
         $this->email_manager = $email_manager;
         $this->voucher_manager = $voucher_manager;
     }
@@ -44,7 +56,7 @@ class AutomationManager {
     /**
      * Initialize automation system
      */
-    public function init() {
+    public function init(): void {
         $this->setup_automation_rules();
         $this->init_hooks();
         $this->schedule_automated_tasks();
@@ -628,7 +640,7 @@ class AutomationManager {
     /**
      * Handle AJAX automation settings update
      */
-    public function handle_automation_settings_update() {
+    public function handle_automation_settings_update(): void {
         $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
         if (!wp_verify_nonce($nonce, 'wcefp_automation_settings')) {
             wp_die(__('Sicurezza non valida.', 'wceventsfp'));
@@ -663,7 +675,7 @@ class AutomationManager {
             }
         }
         
-        update_option('wcefp_automation_settings', $saved_settings);
+        update_option('wcefp_automation_settings', $saved_settings, false);
         
         wp_send_json_success([
             'message' => __('Impostazioni automazione aggiornate.', 'wceventsfp')
@@ -698,7 +710,7 @@ class AutomationManager {
             wp_die(__('Permessi insufficienti.', 'wceventsfp'));
         }
         
-        update_option('wcefp_phase2_notice_dismissed', true);
+        update_option('wcefp_phase2_notice_dismissed', true, false);
         wp_send_json_success();
     }
     

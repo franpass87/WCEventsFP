@@ -287,8 +287,8 @@ class CalendarIntegrationManager {
         $token = wp_generate_password(32, false);
         $expiry = time() + (30 * DAY_IN_SECONDS); // 30 days
         
-        update_option('wcefp_admin_calendar_token', $token);
-        update_option('wcefp_admin_calendar_token_expiry', $expiry);
+        update_option('wcefp_admin_calendar_token', $token, false);
+        update_option('wcefp_admin_calendar_token_expiry', $expiry, false);
         
         // Generate feed URL
         $feed_url = home_url("/wcefp-admin-calendar/{$token}/");
