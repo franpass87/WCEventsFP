@@ -123,6 +123,7 @@ class WCEFP_Vouchers_Table extends WP_List_Table {
     }
 
     public function process_bulk_action() {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified below
         if (empty($_POST['voucher_ids']) || !is_array($_POST['voucher_ids'])) {
             return;
         }
@@ -131,12 +132,26 @@ class WCEFP_Vouchers_Table extends WP_List_Table {
 
         global $wpdb;
         $tbl = $wpdb->prefix . 'wcefp_vouchers';
-        $ids = array_map('intval', $_POST['voucher_ids']);
-        $ids_sql = implode(',', $ids);
+        
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via array_map with intval
+        $ids = array_map('intval', wp_unslash($_POST['voucher_ids']));
+        
+        if (empty($ids)) {
+            return;
+        }
+        
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        
         if ($this->current_action() === 'mark_used') {
-            $wpdb->query("UPDATE {$tbl} SET status='used', redeemed_at=NOW() WHERE id IN ({$ids_sql})");
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$tbl} SET status='used', redeemed_at=NOW() WHERE id IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is validated, placeholders are safe
+                ...$ids
+            ));
         } elseif ($this->current_action() === 'mark_unused') {
-            $wpdb->query("UPDATE {$tbl} SET status='unused', redeemed_at=NULL WHERE id IN ({$ids_sql})");
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$tbl} SET status='unused', redeemed_at=NULL WHERE id IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is validated, placeholders are safe
+                ...$ids
+            ));
         }
     }
 

@@ -20,9 +20,14 @@ class WCEFP_Vouchers_Admin {
 
     public static function dispatch() {
         if (!current_user_can('manage_woocommerce')) return;
-        $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : '';
+        
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only navigation, no data mutation
+        $action = isset($_GET['action']) ? sanitize_text_field(wp_unslash($_GET['action'])) : '';
+        
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only navigation, no data mutation
         if ($action === 'view' && !empty($_GET['id'])) {
-            self::render_detail((int)$_GET['id']);
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only navigation, no data mutation
+            self::render_detail(absint($_GET['id']));
         } else {
             self::render_list();
         }
