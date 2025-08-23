@@ -29,6 +29,103 @@ Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità
 
 ---
 
+## 🎨 Feature Pack Roadmap - UI/UX & Advanced Features (v2.2.0-dev)
+
+**Development Branch**: `feature/uiux-feature-pack`  
+**Target Release**: Q1 2024  
+**Focus**: Modern UI/UX, Enterprise Features, Developer Experience
+
+### 📋 Implementation Phases
+
+#### **Phase 1: UI/UX Foundation** 
+- [ ] **Admin Interface Modernization**
+  - Move inline CSS/JS to dedicated asset files for better maintainability
+  - Standardize settings interface using WordPress Settings API
+  - Implement WP_List_Table for consistent data presentation
+  - Enhanced accessibility (ARIA labels, keyboard navigation, screen reader support)
+  - Replace browser alerts with WordPress-native modals and notices
+  
+- [ ] **Frontend Experience Polish**
+  - Modular CSS architecture with `.wcefp-widget` wrapper
+  - Responsive design optimization for mobile booking flow
+  - Conditional asset enqueuing (load only when shortcode/block is used)
+  - Theme font inheritance option for seamless integration
+  - Consistent loading/empty/error state management
+
+#### **Phase 2: Communication & Automation**
+- [ ] **Email Notification System**
+  - Configurable email templates with subject/body customization
+  - Automated reminder system via WP-Cron (24h, 1 week, custom timing)
+  - Delivery logging with success/failure tracking and retry logic
+  
+- [ ] **Gift Voucher System**  
+  - Automatic PDF generation for gift orders with customizable templates
+  - Email delivery to gift recipients with PDF attachment
+  - Voucher redemption tracking and admin management interface
+
+#### **Phase 3: Data & Integration**
+- [ ] **Advanced Export Capabilities**
+  - CSV export for bookings with filtering (date range, status, event)
+  - ICS calendar export for individual events and global feed
+  - Capability-based download permissions and audit logging
+  
+- [ ] **Modern Content Management**
+  - Gutenberg block for booking forms with live preview
+  - Server-side rendering for performance and SEO
+  - Block editor UI with event/product selector and configuration options
+
+#### **Phase 4: API & Developer Experience**
+- [ ] **REST API Enhancement**  
+  - Secure `wcefp/v1` namespace with comprehensive endpoints
+  - Events, occurrences, and bookings CRUD operations
+  - Rate limiting, input validation, and comprehensive error handling
+  - OpenAPI documentation with request/response schemas
+  
+- [ ] **Role-Based Access Control**
+  - Custom `event_manager` role with granular capabilities  
+  - Capability mapping for existing roles (Shop Manager integration)
+  - Menu visibility and action authorization based on user permissions
+
+#### **Phase 5: Advanced Booking Features**
+- [ ] **Digital Check-in System**
+  - QR code generation for each booking with unique tokens
+  - Mobile-optimized check-in interface for event staff
+  - Real-time check-in status tracking and duplicate prevention
+  
+- [ ] **Calendar Integration**
+  - Public ICS feeds for events with caching and performance optimization
+  - Google Calendar "Add Event" integration buttons  
+  - Authenticated feeds for admin calendar synchronization
+
+#### **Phase 6: Analytics & Automation**  
+- [ ] **Interactive Analytics Dashboard**
+  - Chart.js powered visualizations for booking trends and KPIs
+  - Occupancy rates, revenue analytics, and top-performing events
+  - Cached data aggregation with WordPress transients for performance
+  
+- [ ] **Intelligent Occurrence Management**
+  - Auto-generation of future occurrences with rolling window (60+ days)
+  - WP-Cron daily automation with duplicate prevention
+  - Execution logging and error handling for reliability
+
+### 🔧 Technical Implementation Guidelines
+
+- **Security First**: All features include proper nonce verification, capability checks, and output escaping
+- **Performance Optimized**: Conditional loading, efficient caching, minimal database impact  
+- **Backward Compatible**: No breaking changes to existing APIs, hooks, or URL structures
+- **WordPress Standards**: Full compliance with WPCS, accessibility guidelines, and coding standards
+- **Internationalization**: All user-facing strings translatable with proper text domains
+
+### 🧪 Quality Assurance Process
+
+- **Automated Testing**: PHPUnit for backend, Jest for frontend components
+- **Code Quality**: PHPCS Level 8.0+, PHPStan analysis, ESLint compliance
+- **User Testing**: Accessibility validation with screen readers and keyboard navigation  
+- **Performance**: Core Web Vitals optimization and database query analysis
+- **Documentation**: Complete API documentation, usage examples, and migration guides
+
+---
+
 ## 🚀 Previous Features v2.1.3 - Advanced Bug Fixes & Code Optimization
 
 ### 🐛 Bug Fixes Risolti
