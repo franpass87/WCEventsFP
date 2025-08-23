@@ -147,7 +147,7 @@ class WCEFP_Frontend {
             if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
             
             // Safety check for required functions and variables
-            if (!function_exists('get_post_meta') || !function_exists('get_woocommerce_currency')) {
+            if (!function_exists('get_post_meta') || !function_exists('get_woocommerce_currency_symbol')) {
                 return;
             }
             
@@ -170,7 +170,7 @@ class WCEFP_Frontend {
         // JSON-LD Event
         if ($next_start) {
             $price_adult = floatval(get_post_meta($pid, '_wcefp_price_adult', true));
-            $currency = get_woocommerce_currency();
+            $currency = get_option('woocommerce_currency');
             $json = [
                 "@context" => "https://schema.org",
                 "@type" => "Event",

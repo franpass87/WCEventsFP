@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WCEventsFP
  * Description: Plugin di prenotazione eventi & esperienze avanzato per WooCommerce. Sistema enterprise per competere con RegionDo/Bokun: gestione risorse (guide, attrezzature, veicoli), distribuzione multi-canale (Booking.com, Expedia, GetYourGuide), sistema commissioni/reseller, Google Reviews, tracking avanzato GA4/Meta, automazioni Brevo, AI recommendations, analytics real-time.
- * Version:     2.1.2 // x-release-please-version
+ * Version:     2.1.3 // x-release-please-version
  * Author:      Francesco Passeri
  * Text Domain: wceventsfp
  * Domain Path: /languages
@@ -375,11 +375,7 @@ class WCEventsFP {
                 require_once WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-enhanced-features.php';
             }
 
-            // Initialize all legacy classes if they exist
-            if (class_exists('WCEFP_Logger')) {
-                $GLOBALS['wcefp_logger'] = new WCEFP_Logger();
-            }
-            
+            // Initialize essential legacy classes if they exist            
             if (class_exists('WCEFP_Cache')) {
                 $GLOBALS['wcefp_cache'] = new WCEFP_Cache();
             }
