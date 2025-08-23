@@ -43,13 +43,8 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
             return new ProductAdmin($container);
         });
         
-        $this->container->singleton('admin.settings', function($container) {
-            return new SettingsManager($container);
-        });
-        
-        $this->container->singleton('admin.dashboard', function($container) {
-            return new DashboardWidgets($container);
-        });
+        // Only register functional classes - remove empty stubs
+        // TODO: Implement SettingsManager and DashboardWidgets when needed
     }
     
     /**
@@ -62,14 +57,9 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
-        // Initialize all admin services
-        // Always initialize menu manager - multiple admin menus can coexist
+        // Initialize only functional admin services
         $this->container->get('admin.menu');
-        
-        // Always initialize product admin and settings
         $this->container->get('admin.product');
-        $this->container->get('admin.settings');
-        $this->container->get('admin.dashboard');
     }
 
 }

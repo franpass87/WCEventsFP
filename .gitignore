@@ -60,6 +60,9 @@ config-local.php
 *.sql
 *.bak
 
+# Backup files and directories
+tools/backups/
+
 # File personali o di test
 test.php
 dev-notes.md
