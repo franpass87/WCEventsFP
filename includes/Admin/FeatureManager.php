@@ -9,7 +9,6 @@
 
 namespace WCEFP\Admin;
 
-use WCEFP\Core\InstallationManager;
 use WCEFP\Utils\Logger;
 
 if (!defined('ABSPATH')) {
@@ -28,8 +27,6 @@ class FeatureManager {
         add_action('admin_menu', [$this, 'add_admin_menu'], 20); // Lower priority to load after main menu
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
         add_action('wp_ajax_wcefp_toggle_feature', [$this, 'ajax_toggle_feature']);
-        add_action('wp_ajax_wcefp_run_wizard', [$this, 'ajax_run_wizard']);
-        add_action('wp_ajax_wcefp_reset_installation', [$this, 'ajax_reset_installation']);
     }
     
     /**
@@ -63,15 +60,6 @@ class FeatureManager {
             'manage_options',
             'wcefp-performance',
             [$this, 'render_performance_monitor']
-        );
-
-        add_submenu_page(
-            'wcefp',
-            __('Installation Status', 'wceventsfp'),
-            __('Installation', 'wceventsfp'),
-            'manage_options',
-            'wcefp-installation',
-            [$this, 'render_installation_status']
         );
     }
     
@@ -119,10 +107,8 @@ class FeatureManager {
      * @return void
      */
     public function render_dashboard() {
-        $installation_manager = new InstallationManager();
         $performance_score = $this->calculate_performance_score();
-        $enabled_features = $installation_manager->get_enabled_features();
-        $installation_status = $installation_manager->get_installation_status();
+        $enabled_features = $this->get_all_available_features(); // Get all features since no progressive loading
         
         ?>
         <div class="wrap">
@@ -131,11 +117,9 @@ class FeatureManager {
             <!-- Status Overview -->
             <div class="wcefp-dashboard-grid">
                 <div class="wcefp-status-card">
-                    <h3><?php _e('Installation Status', 'wceventsfp'); ?></h3>
-                    <div class="status-indicator status-<?php echo esc_attr($installation_status); ?>">
-                        <?php echo $this->get_status_display($installation_status); ?>
-                    </div>
-                </div>
+                    <h3><?php _e('Plugin Status', 'wceventsfp'); ?></h3>
+                    <div class="status-indicator status-active">
+                        <?php _e('✅ Fully Active', 'wceventsfp'); ?>
                 
                 <div class="wcefp-status-card">
                     <h3><?php _e('Performance Score', 'wceventsfp'); ?></h3>
@@ -149,7 +133,7 @@ class FeatureManager {
                 </div>
                 
                 <div class="wcefp-status-card">
-                    <h3><?php _e('Active Features', 'wceventsfp'); ?></h3>
+                    <h3><?php _e('Available Features', 'wceventsfp'); ?></h3>
                     <div class="features-count">
                         <span class="count"><?php echo count($enabled_features); ?></span>
                         <span class="label"><?php _e('Features', 'wceventsfp'); ?></span>
@@ -167,11 +151,6 @@ class FeatureManager {
                     <a href="<?php echo admin_url('admin.php?page=wcefp-performance'); ?>" class="button">
                         <?php _e('Performance Monitor', 'wceventsfp'); ?>
                     </a>
-                    <?php if ($installation_manager->needs_setup_wizard() || $installation_status !== 'completed'): ?>
-                    <a href="<?php echo $installation_manager->get_setup_wizard_url(); ?>" class="button button-secondary">
-                        <?php _e('Run Setup Wizard', 'wceventsfp'); ?>
-                    </a>
-                    <?php endif; ?>
                 </div>
             </div>
             
@@ -280,9 +259,8 @@ class FeatureManager {
      * @return void
      */
     public function render_feature_manager() {
-        $installation_manager = new InstallationManager();
         $all_features = $this->get_all_features();
-        $enabled_features = $installation_manager->get_enabled_features();
+        $enabled_features = $this->get_all_available_features(); // All features available since no installation system
         
         ?>
         <div class="wrap">
@@ -510,82 +488,6 @@ class FeatureManager {
         <?php
     }
     
-    /**
-     * Render installation status
-     * 
-     * @return void
-     */
-    public function render_installation_status() {
-        $installation_manager = new InstallationManager();
-        
-        ?>
-        <div class="wrap">
-            <h1><?php _e('Installation Status', 'wceventsfp'); ?></h1>
-            
-            <div class="wcefp-installation-info">
-                <table class="form-table">
-                    <tr>
-                        <th><?php _e('Current Status', 'wceventsfp'); ?></th>
-                        <td><?php echo $this->get_status_display($installation_manager->get_installation_status()); ?></td>
-                    </tr>
-                    <tr>
-                        <th><?php _e('Installation Mode', 'wceventsfp'); ?></th>
-                        <td><?php echo esc_html($installation_manager->get_installation_mode()); ?></td>
-                    </tr>
-                    <tr>
-                        <th><?php _e('Enabled Features', 'wceventsfp'); ?></th>
-                        <td><?php echo implode(', ', $installation_manager->get_enabled_features()); ?></td>
-                    </tr>
-                    <tr>
-                        <th><?php _e('Plugin Version', 'wceventsfp'); ?></th>
-                        <td><?php echo esc_html(get_option('wcefp_version', 'Unknown')); ?></td>
-                    </tr>
-                </table>
-            </div>
-            
-            <div class="wcefp-installation-actions">
-                <h2><?php _e('Installation Actions', 'wceventsfp'); ?></h2>
-                
-                <div class="action-buttons">
-                    <a href="<?php echo $installation_manager->get_setup_wizard_url(); ?>" class="button button-secondary">
-                        <?php _e('Run Setup Wizard Again', 'wceventsfp'); ?>
-                    </a>
-                    
-                    <button type="button" class="button button-secondary" id="reset-installation">
-                        <?php _e('Reset Installation', 'wceventsfp'); ?>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <script>
-            jQuery(document).ready(function($) {
-                $('#reset-installation').click(function() {
-                    if (confirm(wcefp_feature_manager.strings.confirm_reset)) {
-                        $.ajax({
-                            url: wcefp_feature_manager.ajax_url,
-                            type: 'POST',
-                            data: {
-                                action: 'wcefp_reset_installation',
-                                nonce: wcefp_feature_manager.nonce
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    location.reload();
-                                } else {
-                                    alert(response.data || wcefp_feature_manager.strings.error);
-                                }
-                            },
-                            error: function() {
-                                alert(wcefp_feature_manager.strings.error);
-                            }
-                        });
-                    }
-                });
-            });
-        </script>
-        <?php
-    }
     
     /**
      * AJAX handler for toggling features
@@ -607,8 +509,8 @@ class FeatureManager {
         }
         
         try {
-            $installation_manager = new InstallationManager();
-            $current_features = $installation_manager->get_enabled_features();
+            // Since all features are available, just store the feature preference
+            $current_features = get_option('wcefp_enabled_features', []);
             
             if ($enabled && !in_array($feature, $current_features)) {
                 $current_features[] = $feature;
@@ -616,7 +518,7 @@ class FeatureManager {
                 $current_features = array_diff($current_features, [$feature]);
             }
             
-            update_option('wcefp_selected_features', array_values($current_features));
+            update_option('wcefp_enabled_features', array_values($current_features));
             
             Logger::info("Feature {$feature} " . ($enabled ? 'enabled' : 'disabled') . " by user " . get_current_user_id());
             
@@ -628,49 +530,6 @@ class FeatureManager {
         }
     }
     
-    /**
-     * AJAX handler for running wizard
-     * 
-     * @return void
-     */
-    public function ajax_run_wizard() {
-        check_ajax_referer('wcefp_feature_manager', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'wceventsfp'));
-        }
-        
-        $installation_manager = new InstallationManager();
-        $installation_manager->force_wizard_mode();
-        
-        wp_send_json_success(['redirect' => $installation_manager->get_setup_wizard_url()]);
-    }
-    
-    /**
-     * AJAX handler for resetting installation
-     * 
-     * @return void
-     */
-    public function ajax_reset_installation() {
-        check_ajax_referer('wcefp_feature_manager', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'wceventsfp'));
-        }
-        
-        try {
-            $installation_manager = new InstallationManager();
-            $installation_manager->reset_installation();
-            
-            Logger::info("Installation reset by user " . get_current_user_id());
-            
-            wp_send_json_success();
-            
-        } catch (Exception $e) {
-            Logger::error("Failed to reset installation: " . $e->getMessage());
-            wp_send_json_error(__('Failed to reset installation', 'wceventsfp'));
-        }
-    }
     
     /**
      * Get all available features
@@ -750,6 +609,16 @@ class FeatureManager {
                 'required' => false
             ]
         ];
+    }
+    
+    /**
+     * Get all available features (simplified for non-progressive loading)
+     * 
+     * @return array
+     */
+    private function get_all_available_features() {
+        // Return all feature keys since no progressive loading
+        return array_keys($this->get_all_features());
     }
     
     /**
@@ -836,24 +705,6 @@ class FeatureManager {
         return $val;
     }
     
-    /**
-     * Get status display text
-     * 
-     * @param string $status
-     * @return string
-     */
-    private function get_status_display($status) {
-        $statuses = [
-            'completed' => '✅ ' . __('Fully Installed', 'wceventsfp'),
-            'in_progress' => '🔄 ' . __('Installation in Progress', 'wceventsfp'),
-            'wizard_required' => '🧙 ' . __('Setup Wizard Required', 'wceventsfp'),
-            'not_started' => '❓ ' . __('Not Started', 'wceventsfp'),
-            'failed' => '❌ ' . __('Installation Failed', 'wceventsfp'),
-            'minimal_complete' => '⚠️ ' . __('Minimal Mode Active', 'wceventsfp')
-        ];
-        
-        return $statuses[$status] ?? $status;
-    }
     
     /**
      * Get performance data

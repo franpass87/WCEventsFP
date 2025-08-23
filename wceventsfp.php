@@ -137,13 +137,13 @@ class WCEventsFP {
                 return;
             }
             
-            // Initialize bootstrap plugin with progressive loading
+            // Initialize bootstrap plugin directly - no progressive loading
             if (class_exists('WCEFP\\Bootstrap\\Plugin')) {
                 $this->plugin = new WCEFP\Bootstrap\Plugin(WCEFP_PLUGIN_FILE);
                 $this->plugin->init();
                 
-                // Initialize progressive loading
-                $this->setup_progressive_loading();
+                // Load all features immediately
+                $this->load_all_features();
                 
             } else {
                 throw new Exception('Bootstrap Plugin class not found');
@@ -194,9 +194,12 @@ class WCEventsFP {
                 wp_die('WCEventsFP cannot be activated due to missing dependencies.');
             }
             
-            // Run activation tasks
+            // Run activation tasks directly
             $this->create_database_tables();
             $this->set_default_options();
+            
+            // Clean up any old installation system options
+            $this->cleanup_installation_options();
             
             // Clear any cached data
             wp_cache_flush();
@@ -215,6 +218,7 @@ class WCEventsFP {
         try {
             // Clean up scheduled events
             wp_clear_scheduled_hook('wcefp_daily_cleanup');
+            wp_clear_scheduled_hook('wcefp_continue_installation');
             
             // Clear cache
             wp_cache_flush();
@@ -265,7 +269,8 @@ class WCEventsFP {
             'wcefp_version' => WCEFP_VERSION,
             'wcefp_installed' => time(),
             'wcefp_enable_logging' => 'yes',
-            'wcefp_log_level' => 'info'
+            'wcefp_log_level' => 'info',
+            'wcefp_full_activation' => 'yes' // Mark as fully activated without installation steps
         ];
         
         foreach ($defaults as $option => $value) {
@@ -273,6 +278,33 @@ class WCEventsFP {
                 add_option($option, $value);
             }
         }
+    }
+    
+    /**
+     * Clean up old installation system options
+     * 
+     * @return void
+     */
+    private function cleanup_installation_options() {
+        // Remove old installation system options
+        $old_options = [
+            'wcefp_installation_status',
+            'wcefp_installation_mode', 
+            'wcefp_enabled_features',
+            'wcefp_performance_settings',
+            'wcefp_selected_features',
+            'wcefp_installed_features',
+            'wcefp_core_installed',
+            'wcefp_redirect_to_wizard',
+            'wcefp_setup_wizard_complete'
+        ];
+        
+        foreach ($old_options as $option) {
+            delete_option($option);
+        }
+        
+        // Clear any scheduled installation events
+        wp_clear_scheduled_hook('wcefp_continue_installation');
     }
     
     /**
@@ -325,26 +357,36 @@ class WCEventsFP {
     }
     
     /**
-     * Set up progressive loading of features
+     * Load all plugin features immediately
      * 
      * @return void
      */
-    private function setup_progressive_loading() {
-        // Load all core features immediately without resource-based scaling
+    private function load_all_features() {
         try {
-            // Load logging functionality
+            // Load all legacy functionality immediately
             if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-logger.php')) {
                 require_once WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-logger.php';
             }
 
-            // Load caching functionality
             if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-cache.php')) {
                 require_once WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-cache.php';
             }
 
-            // Load enhanced features
             if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-enhanced-features.php')) {
                 require_once WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-enhanced-features.php';
+            }
+
+            // Initialize all legacy classes if they exist
+            if (class_exists('WCEFP_Logger')) {
+                $GLOBALS['wcefp_logger'] = new WCEFP_Logger();
+            }
+            
+            if (class_exists('WCEFP_Cache')) {
+                $GLOBALS['wcefp_cache'] = new WCEFP_Cache();
+            }
+            
+            if (class_exists('WCEFP_Enhanced_Features')) {
+                $GLOBALS['wcefp_enhanced_features'] = new WCEFP_Enhanced_Features();
             }
 
         } catch (Exception $e) {
