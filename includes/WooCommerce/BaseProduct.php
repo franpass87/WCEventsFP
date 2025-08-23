@@ -209,11 +209,4 @@ abstract class BaseProduct extends \WC_Product {
     public function get_virtual($context = 'view') {
         return true;
     }
-    
-    /**
-     * Get product type - must be implemented by child classes
-     * 
-     * @return string Product type
-     */
-    abstract public function get_type();
 }
