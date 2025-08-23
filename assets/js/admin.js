@@ -1,6 +1,11 @@
 (function($){
   $(function(){
 
+    // --------- Product Admin Form Validation & Enhancements ---------
+    if ($('#wcefp_product_data').length) {
+      initProductAdminEnhancements();
+    }
+
     // --------- Toolbar Calendario/Lista ----------
     const $filter = $('#wcefp-filter-product');
     if (window.WCEFPAdmin && Array.isArray(WCEFPAdmin.products)) {
@@ -142,6 +147,101 @@
           });
         });
       });
+    }
+
+    // --------- Product Admin Form Enhancements (moved from inline) ---------
+    function initProductAdminEnhancements() {
+        // Add enhanced validation and visual feedback
+        $('#wcefp_product_data input, #wcefp_product_data textarea').on('blur', function() {
+            var $field = $(this).closest('.form-field');
+            var value = $(this).val();
+            
+            // Remove existing validation classes
+            $field.removeClass('has-error has-success');
+            
+            // Add validation feedback based on field requirements
+            if ($(this).attr('required') || $(this).closest('[data-required]').length) {
+                if (value.trim() === '') {
+                    $field.addClass('has-error');
+                } else {
+                    $field.addClass('has-success');
+                }
+            }
+            
+            // Specific validations
+            if ($(this).attr('data-type') === 'price' && value) {
+                if (isNaN(parseFloat(value)) || parseFloat(value) <= 0) {
+                    $field.addClass('has-error');
+                } else {
+                    $field.addClass('has-success');
+                }
+            }
+            
+            if ($(this).attr('type') === 'number' && value) {
+                var min = parseInt($(this).attr('min'));
+                var max = parseInt($(this).attr('max'));
+                var val = parseInt(value);
+                
+                if (isNaN(val) || (min && val < min) || (max && val > max)) {
+                    $field.addClass('has-error');
+                } else {
+                    $field.addClass('has-success');
+                }
+            }
+        });
+        
+        // Enhance language input with tags-like behavior
+        $('#_wcefp_languages').on('keyup', function() {
+            var value = $(this).val();
+            if (value) {
+                // Auto-uppercase and format
+                var formatted = value.toUpperCase().replace(/\s*,\s*/g, ', ');
+                if (formatted !== value) {
+                    $(this).val(formatted);
+                }
+            }
+        });
+        
+        // Real-time price formatting
+        $('input[data-type="price"]').on('keyup', function() {
+            var value = $(this).val();
+            if (value && !isNaN(parseFloat(value))) {
+                $(this).closest('.form-field').addClass('has-success').removeClass('has-error');
+            }
+        });
+        
+        // Time slots validation and formatting
+        $('#_wcefp_time_slots').on('blur', function() {
+            var value = $(this).val().trim();
+            var $field = $(this).closest('.wcefp-time-slots-section');
+            
+            if (value) {
+                // Validate time format (HH:MM)
+                var timePattern = /^(\d{1,2}:\d{2})(\s*,\s*\d{1,2}:\d{2})*$/;
+                if (timePattern.test(value)) {
+                    // Additional validation: check each time is valid
+                    var times = value.split(',').map(function(t) { return t.trim(); });
+                    var allValid = times.every(function(time) {
+                        var parts = time.split(':');
+                        var hours = parseInt(parts[0]);
+                        var minutes = parseInt(parts[1]);
+                        return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+                    });
+                    
+                    if (allValid) {
+                        $field.removeClass('has-error').addClass('has-success');
+                        // Format nicely
+                        $(this).val(times.join(', '));
+                    } else {
+                        $field.removeClass('has-success').addClass('has-error');
+                    }
+                } else {
+                    $field.removeClass('has-success').addClass('has-error');
+                }
+            } else {
+                $field.removeClass('has-error has-success');
+            }
+        });
     }
 
   });
