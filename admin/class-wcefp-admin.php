@@ -29,7 +29,7 @@ class WCEFP_Admin {
 
         add_submenu_page('wcefp', __('Analisi KPI','wceventsfp'), __('Analisi KPI','wceventsfp'), $cap,'wcefp',[__CLASS__,'render_kpi_page']);
         add_submenu_page('wcefp', __('Calendario & Lista','wceventsfp'), __('Calendario & Lista','wceventsfp'), $cap,'wcefp-calendar',[__CLASS__,'render_calendar_page']);
-        add_submenu_page('wcefp', __('Chiusure straordinarie','wceventsfp'), __('Chiusure straordinarie','wceeventsfp'), $cap,'wcefp-closures',['WCEFP_Closures','render_admin_page']);
+        add_submenu_page('wcefp', __('Chiusure straordinarie','wceventsfp'), __('Chiusure straordinarie','wceventsfp'), $cap,'wcefp-closures',['WCEFP_Closures','render_admin_page']);
         add_submenu_page('wcefp', __('Esporta','wceventsfp'), __('Esporta','wceventsfp'), $cap,'wcefp-export',[__CLASS__,'render_export_page']);
         add_submenu_page('wcefp', __('Impostazioni','wceventsfp'), __('Impostazioni','wceventsfp'), $cap,'wcefp-settings',[__CLASS__,'render_new_settings_page']);
     }

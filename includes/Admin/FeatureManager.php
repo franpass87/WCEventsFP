@@ -25,7 +25,7 @@ class FeatureManager {
      * Constructor
      */
     public function __construct() {
-        add_action('admin_menu', [$this, 'add_admin_menu']);
+        add_action('admin_menu', [$this, 'add_admin_menu'], 20); // Lower priority to load after main menu
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
         add_action('wp_ajax_wcefp_toggle_feature', [$this, 'ajax_toggle_feature']);
         add_action('wp_ajax_wcefp_run_wizard', [$this, 'ajax_run_wizard']);
