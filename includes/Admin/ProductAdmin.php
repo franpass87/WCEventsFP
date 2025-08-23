@@ -81,10 +81,10 @@ class ProductAdmin {
      * @return string Product class name
      */
     public function product_class($classname, $product_type) {
-        if ($product_type === 'wcefp_event') {
+        if ($product_type === 'evento' || $product_type === 'wcefp_event') {
             return 'WC_Product_WCEFP_Event';
         }
-        if ($product_type === 'wcefp_experience') {
+        if ($product_type === 'esperienza' || $product_type === 'wcefp_experience') {
             return 'WC_Product_WCEFP_Experience';
         }
         return $classname;
@@ -167,6 +167,50 @@ class ProductAdmin {
         ]);
         
         echo '</div>'; // End field row
+        echo '</div>'; // End options_group
+        
+        // Weekly Schedule & Time Slots Section
+        echo '<div class="options_group">';
+        echo '<h4>📅 ' . __('Ricorrenze settimanali & Slot', 'wceventsfp') . '</h4>';
+        
+        // Weekdays selection
+        $weekdays = get_post_meta($post->ID, '_wcefp_weekdays', true);
+        if (!is_array($weekdays)) {
+            $weekdays = [];
+        }
+        
+        $day_labels = [
+            1 => __('Lunedì', 'wceventsfp'),
+            2 => __('Martedì', 'wceventsfp'), 
+            3 => __('Mercoledì', 'wceventsfp'),
+            4 => __('Giovedì', 'wceventsfp'),
+            5 => __('Venerdì', 'wceventsfp'),
+            6 => __('Sabato', 'wceventsfp'),
+            0 => __('Domenica', 'wceventsfp')
+        ];
+        
+        echo '<div class="wcefp-weekdays-selection">';
+        echo '<label class="wcefp-field-label"><strong>🗓️ ' . __('Giorni della settimana disponibili:', 'wceventsfp') . '</strong></label>';
+        echo '<div class="wcefp-checkbox-grid">';
+        foreach ($day_labels as $day_num => $day_name) {
+            $checked = in_array($day_num, $weekdays) ? 'checked="checked"' : '';
+            echo '<label class="wcefp-checkbox-item">';
+            echo '<input type="checkbox" name="_wcefp_weekdays[]" value="' . $day_num . '" ' . $checked . ' />';
+            echo '<span>' . $day_name . '</span>';
+            echo '</label>';
+        }
+        echo '</div>';
+        echo '<p class="description">' . __('Seleziona i giorni in cui l\'esperienza è disponibile', 'wceventsfp') . '</p>';
+        echo '</div>';
+        
+        // Time slots input
+        $time_slots = get_post_meta($post->ID, '_wcefp_time_slots', true);
+        echo '<div class="wcefp-time-slots-section">';
+        echo '<label class="wcefp-field-label" for="_wcefp_time_slots"><strong>⏰ ' . __('Slot orari:', 'wceventsfp') . '</strong></label>';
+        echo '<input type="text" id="_wcefp_time_slots" name="_wcefp_time_slots" value="' . esc_attr($time_slots) . '" class="regular-text" placeholder="09:00, 14:00, 16:30" />';
+        echo '<p class="description">' . __('Orari degli slot separati da virgola (formato HH:MM, es: 09:00, 14:00, 16:30)', 'wceventsfp') . '</p>';
+        echo '</div>';
+        
         echo '</div>'; // End options_group
         
         // Experience Details Section
