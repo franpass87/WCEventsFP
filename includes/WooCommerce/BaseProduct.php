@@ -24,9 +24,9 @@ abstract class BaseProduct extends \WC_Product {
     /**
      * Get experience/event specific data
      * 
-     * @return array Experience data including bookings, availability, etc.
+     * @return array<string, mixed> Experience data including bookings, availability, etc.
      */
-    public function get_experience_data() {
+    public function get_experience_data(): array {
         $product_id = $this->get_id();
         
         // Get product meta data
@@ -54,10 +54,10 @@ abstract class BaseProduct extends \WC_Product {
     /**
      * Validate booking data for this product
      * 
-     * @param array $booking_data Booking data to validate
+     * @param array<string, mixed> $booking_data Booking data to validate
      * @return bool|\WP_Error True if valid, WP_Error if invalid
      */
-    public function validate_booking_data($booking_data) {
+    public function validate_booking_data(array $booking_data) {
         $errors = new \WP_Error();
         
         // Validate required fields

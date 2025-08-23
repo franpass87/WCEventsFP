@@ -33,13 +33,17 @@ class EmailManager {
     
     /**
      * Default email templates directory
+     * 
+     * @var string
      */
-    private $templates_dir;
+    private string $templates_dir;
     
     /**
      * Email sending statistics
+     * 
+     * @var array<string, mixed>
      */
-    private $stats = [];
+    private array $stats = [];
     
     public function __construct() {
         $this->templates_dir = WCEFP_PLUGIN_DIR . 'assets/email-templates/';
@@ -71,11 +75,11 @@ class EmailManager {
      * Send enhanced voucher notification email
      * Integrates with existing WCEFP_Gift functionality
      * 
-     * @param array $voucher_data Voucher information
-     * @param array $recipient Recipient details
+     * @param array<string, mixed> $voucher_data Voucher information
+     * @param array<string, mixed> $recipient Recipient details
      * @return bool Success status
      */
-    public function send_voucher_notification($voucher_data, $recipient) {
+    public function send_voucher_notification(array $voucher_data, array $recipient): bool {
         if (empty($recipient['email']) || !is_email($recipient['email'])) {
             $this->log_error('Invalid recipient email for voucher notification', [
                 'recipient' => $recipient,
@@ -113,10 +117,10 @@ class EmailManager {
      * Send booking confirmation email
      * 
      * @param int $booking_id Booking ID
-     * @param array $booking_data Booking details
+     * @param array<string, mixed> $booking_data Booking details
      * @return bool Success status
      */
-    public function send_booking_confirmation($booking_id, $booking_data) {
+    public function send_booking_confirmation(int $booking_id, array $booking_data): bool {
         if (empty($booking_data['customer_email']) || !is_email($booking_data['customer_email'])) {
             $this->log_error('Invalid customer email for booking confirmation', [
                 'booking_id' => $booking_id,
