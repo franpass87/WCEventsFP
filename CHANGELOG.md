@@ -1,4 +1,31 @@
-# 📜 Changelog – WCEventsFP
+# Changelog
+
+## [2.2.0](https://github.com/franpass87/WCEventsFP/compare/v2.1.1...v2.2.0) (2025-08-23)
+
+
+### Features
+
+* comprehensive code health audit and refactoring foundation with modern build system ([92671e8](https://github.com/franpass87/WCEventsFP/commit/92671e833c43d31bb85828c303f08e4fc1a5be65))
+* implement phase 1 code health improvements and modern build system ([12df171](https://github.com/franpass87/WCEventsFP/commit/12df171e816cbae198318ec6a7725a6ca605d0a2))
+* Implement tabbed settings page with WordPress Settings API and enhanced UX ([c5063c5](https://github.com/franpass87/WCEventsFP/commit/c5063c50565abc483d2b1bbd2a29f6a267083597))
+* log GA4 select extras ([59361e7](https://github.com/franpass87/WCEventsFP/commit/59361e791edf66ba650b8201aa9c105512233ed6))
+* log GA4 select extras ([d78aece](https://github.com/franpass87/WCEventsFP/commit/d78aecee722cdccf18f8eb569c4cf9d592c69dd8))
+* visual extras with pricing rules and stock ([762f421](https://github.com/franpass87/WCEventsFP/commit/762f421876e1bfc382e38374d4d3b4d431f00feb))
+* visual extras with pricing rules and stock ([8b7cb52](https://github.com/franpass87/WCEventsFP/commit/8b7cb520a4494159c8d2dd4c98dc6c6c60dfecfb))
+
+
+### Bug Fixes
+
+* add fallback mechanism for release-please token authentication ([1e77977](https://github.com/franpass87/WCEventsFP/commit/1e7797703e6a0bf268742c5cd85e37d02d6199df))
+* add fallback mechanism for release-please token authentication ([bc8f991](https://github.com/franpass87/WCEventsFP/commit/bc8f991478cf78e1c6631fba59af7aee350f51c4))
+* add Personal Access Token configuration to release-please workflow ([c34b145](https://github.com/franpass87/WCEventsFP/commit/c34b1451eaea62fe036bc87239e49458b2ebc0c6))
+* ensure Monday checkbox visible in product panel ([010d5b9](https://github.com/franpass87/WCEventsFP/commit/010d5b999262ce518a2c45d2b88c8d9e72ab0b3a))
+* ensure Monday checkbox visible in product panel ([57261f5](https://github.com/franpass87/WCEventsFP/commit/57261f584d45cd254cd3ba31ce5fbbb9d86d5ed0))
+* resolve release-please GitHub Actions permissions issue by adding PAT configuration ([e3b3a0d](https://github.com/franpass87/WCEventsFP/commit/e3b3a0d496686fab61d0656dc4be3f1f56297d62))
+* resolve release-please GitHub Actions permissions issue by clarifying PAT requirements ([0956635](https://github.com/franpass87/WCEventsFP/commit/09566356a5dec03d15cedc326bc1054bef647377))
+* resolve release-please GitHub Actions permissions issue by clarifying PAT requirements ([a0f24d5](https://github.com/franpass87/WCEventsFP/commit/a0f24d5e619043641ce801f88cd4ca90e39717bb))
+
+## 📜 Changelog – WCEventsFP
 
 [2.1.1] – 2025-01-23
 

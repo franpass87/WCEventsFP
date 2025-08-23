@@ -1,4 +1,4 @@
-# WCEventsFP (v2.1.1) - Enterprise Booking Platform<!-- x-release-please-version -->
+# WCEventsFP (v2.2.0) - Enterprise Booking Platform<!-- x-release-please-version -->
 
 > **📦 COME SCARICARE IL PLUGIN** - [Guida Completa per Utenti](DOWNLOAD-INSTALL-GUIDE.md)  
 > **⚠️ NON usare "Code → Download ZIP"** - Scarica dalle [GitHub Releases](https://github.com/franpass87/WCEventsFP/releases)
