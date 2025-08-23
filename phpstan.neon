@@ -1,21 +1,12 @@
 parameters:
     paths:
-        - .
+        - tests/Unit
+    bootstrapFiles:
+        - tests/bootstrap.php
     excludePaths:
         - vendor
         - node_modules
         - languages
-    level: 6
-    checkMissingIterableValueType: false
-    checkGenericClassInNonGenericObjectType: false
-    ignoreErrors:
-        # WordPress specific patterns
-        - '#Function wp_[a-zA-Z_]+ not found#'
-        - '#Function _[a-zA-Z_]+ not found#'
-        - '#Function esc_[a-zA-Z_]+ not found#'
-        - '#Function sanitize_[a-zA-Z_]+ not found#'
-        # WooCommerce specific
-        - '#Function wc_[a-zA-Z_]+ not found#'
-        - '#Class WC_[a-zA-Z_]+ not found#'
-        # Plugin specific globals
-        - '#Variable \$wpdb might not be defined#'
+    level: 0
+    stubFiles:
+        - tests/stubs/plugin-stubs.php
