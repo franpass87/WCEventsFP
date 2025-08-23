@@ -37,11 +37,7 @@ After code consolidation and redundancy removal, these are the **recommended dia
    - Recommends optimal plugin settings
    - **For performance optimization**
 
-7. **`wcefp-setup-wizard.php`** - Interactive setup wizard
-   - Guided plugin configuration
-   - **For initial plugin setup**
-
-8. **`wcefp-wsod-preventer.php`** - WSOD prevention system
+7. **`wcefp-wsod-preventer.php`** - WSOD prevention system
    - Core protection system loaded by main plugin
    - **Automatically included, no manual execution needed**
 

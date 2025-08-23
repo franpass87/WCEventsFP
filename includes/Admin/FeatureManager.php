@@ -9,7 +9,6 @@
 
 namespace WCEFP\Admin;
 
-use WCEFP\Core\InstallationManager;
 use WCEFP\Utils\Logger;
 
 if (!defined('ABSPATH')) {
@@ -27,9 +26,6 @@ class FeatureManager {
     public function __construct() {
         add_action('admin_menu', [$this, 'add_admin_menu'], 20); // Lower priority to load after main menu
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
-        add_action('wp_ajax_wcefp_toggle_feature', [$this, 'ajax_toggle_feature']);
-        add_action('wp_ajax_wcefp_run_wizard', [$this, 'ajax_run_wizard']);
-        add_action('wp_ajax_wcefp_reset_installation', [$this, 'ajax_reset_installation']);
     }
     
     /**
@@ -49,29 +45,11 @@ class FeatureManager {
 
         add_submenu_page(
             'wcefp',
-            __('Feature Manager', 'wceventsfp'),
-            __('Features', 'wceventsfp'),
-            'manage_options',
-            'wcefp-features',
-            [$this, 'render_feature_manager']
-        );
-
-        add_submenu_page(
-            'wcefp',
             __('Performance Monitor', 'wceventsfp'),
             __('Performance', 'wceventsfp'),
             'manage_options',
             'wcefp-performance',
             [$this, 'render_performance_monitor']
-        );
-
-        add_submenu_page(
-            'wcefp',
-            __('Installation Status', 'wceventsfp'),
-            __('Installation', 'wceventsfp'),
-            'manage_options',
-            'wcefp-installation',
-            [$this, 'render_installation_status']
         );
     }
     
@@ -86,31 +64,13 @@ class FeatureManager {
             return;
         }
         
+        // Only load basic dashboard styles
         wp_enqueue_style(
-            'wcefp-feature-manager',
-            WCEFP_PLUGIN_URL . 'assets/css/feature-manager.css',
+            'wcefp-dashboard',
+            WCEFP_PLUGIN_URL . 'assets/css/admin.css',
             [],
             WCEFP_VERSION
         );
-        
-        wp_enqueue_script(
-            'wcefp-feature-manager',
-            WCEFP_PLUGIN_URL . 'assets/js/feature-manager.js',
-            ['jquery'],
-            WCEFP_VERSION,
-            true
-        );
-        
-        wp_localize_script('wcefp-feature-manager', 'wcefp_feature_manager', [
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('wcefp_feature_manager'),
-            'strings' => [
-                'confirm_disable' => __('Are you sure you want to disable this feature?', 'wceventsfp'),
-                'confirm_reset' => __('Are you sure you want to reset the installation? This will disable all features and require running the setup wizard again.', 'wceventsfp'),
-                'loading' => __('Loading...', 'wceventsfp'),
-                'error' => __('An error occurred. Please try again.', 'wceventsfp')
-            ]
-        ]);
     }
     
     /**
@@ -119,10 +79,8 @@ class FeatureManager {
      * @return void
      */
     public function render_dashboard() {
-        $installation_manager = new InstallationManager();
         $performance_score = $this->calculate_performance_score();
-        $enabled_features = $installation_manager->get_enabled_features();
-        $installation_status = $installation_manager->get_installation_status();
+        $all_features = $this->get_all_features(); // All features always active
         
         ?>
         <div class="wrap">
@@ -131,9 +89,9 @@ class FeatureManager {
             <!-- Status Overview -->
             <div class="wcefp-dashboard-grid">
                 <div class="wcefp-status-card">
-                    <h3><?php _e('Installation Status', 'wceventsfp'); ?></h3>
-                    <div class="status-indicator status-<?php echo esc_attr($installation_status); ?>">
-                        <?php echo $this->get_status_display($installation_status); ?>
+                    <h3><?php _e('Plugin Status', 'wceventsfp'); ?></h3>
+                    <div class="status-indicator status-active">
+                        <?php _e('✅ Fully Active', 'wceventsfp'); ?>
                     </div>
                 </div>
                 
@@ -151,9 +109,25 @@ class FeatureManager {
                 <div class="wcefp-status-card">
                     <h3><?php _e('Active Features', 'wceventsfp'); ?></h3>
                     <div class="features-count">
-                        <span class="count"><?php echo count($enabled_features); ?></span>
-                        <span class="label"><?php _e('Features', 'wceventsfp'); ?></span>
+                        <span class="count"><?php echo count($all_features); ?></span>
+                        <span class="label"><?php _e('All Features Active', 'wceventsfp'); ?></span>
                     </div>
+                </div>
+            </div>
+            
+            <!-- Features List -->
+            <div class="wcefp-features-overview">
+                <h2><?php _e('Active Features', 'wceventsfp'); ?></h2>
+                <div class="features-grid">
+                    <?php foreach ($all_features as $feature_key => $feature): ?>
+                    <div class="feature-item">
+                        <div class="feature-icon">✅</div>
+                        <div class="feature-info">
+                            <h4><?php echo esc_html($feature['name']); ?></h4>
+                            <p><?php echo esc_html($feature['description']); ?></p>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
             
@@ -161,17 +135,12 @@ class FeatureManager {
             <div class="wcefp-quick-actions">
                 <h2><?php _e('Quick Actions', 'wceventsfp'); ?></h2>
                 <div class="action-buttons">
-                    <a href="<?php echo admin_url('admin.php?page=wcefp-features'); ?>" class="button button-primary">
-                        <?php _e('Manage Features', 'wceventsfp'); ?>
-                    </a>
-                    <a href="<?php echo admin_url('admin.php?page=wcefp-performance'); ?>" class="button">
+                    <a href="<?php echo admin_url('admin.php?page=wcefp-performance'); ?>" class="button button-primary">
                         <?php _e('Performance Monitor', 'wceventsfp'); ?>
                     </a>
-                    <?php if ($installation_manager->needs_setup_wizard() || $installation_status !== 'completed'): ?>
-                    <a href="<?php echo $installation_manager->get_setup_wizard_url(); ?>" class="button button-secondary">
-                        <?php _e('Run Setup Wizard', 'wceventsfp'); ?>
+                    <a href="<?php echo admin_url('admin.php?page=woocommerce'); ?>" class="button">
+                        <?php _e('WooCommerce Settings', 'wceventsfp'); ?>
                     </a>
-                    <?php endif; ?>
                 </div>
             </div>
             
@@ -208,10 +177,10 @@ class FeatureManager {
                 border-radius: 4px;
                 text-align: center;
             }
-            .status-completed { background: #d4edda; color: #155724; }
-            .status-in_progress { background: #fff3cd; color: #856404; }
-            .status-wizard_required { background: #cce7ff; color: #004085; }
-            .status-failed { background: #f8d7da; color: #721c24; }
+            .status-active { 
+                background: #d4edda; 
+                color: #155724; 
+            }
             .performance-score {
                 text-align: center;
             }
@@ -249,6 +218,42 @@ class FeatureManager {
                 color: #666;
                 margin-top: 5px;
             }
+            .wcefp-features-overview {
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 20px;
+                margin: 20px 0;
+            }
+            .features-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 15px;
+                margin-top: 15px;
+            }
+            .feature-item {
+                display: flex;
+                align-items: flex-start;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 6px;
+                border-left: 4px solid #28a745;
+            }
+            .feature-icon {
+                margin-right: 12px;
+                font-size: 20px;
+            }
+            .feature-info h4 {
+                margin: 0 0 5px 0;
+                color: #333;
+                font-size: 14px;
+            }
+            .feature-info p {
+                margin: 0;
+                color: #666;
+                font-size: 13px;
+                line-height: 1.4;
+            }
             .wcefp-quick-actions {
                 background: white;
                 border: 1px solid #ddd;
@@ -275,222 +280,6 @@ class FeatureManager {
     }
     
     /**
-     * Render feature manager
-     * 
-     * @return void
-     */
-    public function render_feature_manager() {
-        $installation_manager = new InstallationManager();
-        $all_features = $this->get_all_features();
-        $enabled_features = $installation_manager->get_enabled_features();
-        
-        ?>
-        <div class="wrap">
-            <h1><?php _e('Feature Manager', 'wceventsfp'); ?></h1>
-            <p><?php _e('Enable or disable plugin features. Changes take effect immediately.', 'wceventsfp'); ?></p>
-            
-            <div class="wcefp-feature-grid">
-                <?php foreach ($all_features as $feature_key => $feature): ?>
-                <div class="wcefp-feature-card <?php echo in_array($feature_key, $enabled_features) ? 'enabled' : 'disabled'; ?>" 
-                     data-feature="<?php echo esc_attr($feature_key); ?>">
-                    <div class="feature-header">
-                        <h3><?php echo esc_html($feature['name']); ?></h3>
-                        <div class="feature-toggle">
-                            <label class="switch">
-                                <input type="checkbox" 
-                                       <?php checked(in_array($feature_key, $enabled_features)); ?>
-                                       <?php disabled($feature['required']); ?>
-                                       data-feature="<?php echo esc_attr($feature_key); ?>">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="feature-content">
-                        <p class="feature-description"><?php echo esc_html($feature['description']); ?></p>
-                        
-                        <div class="feature-meta">
-                            <span class="impact impact-<?php echo esc_attr(strtolower($feature['impact'])); ?>">
-                                <?php printf(__('Impact: %s', 'wceventsfp'), $feature['impact']); ?>
-                            </span>
-                            
-                            <?php if (!empty($feature['dependencies'])): ?>
-                            <span class="dependencies">
-                                <?php printf(__('Requires: %s', 'wceventsfp'), implode(', ', $feature['dependencies'])); ?>
-                            </span>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <?php if ($feature['required']): ?>
-                        <div class="required-notice">
-                            <?php _e('This feature is required and cannot be disabled.', 'wceventsfp'); ?>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        
-        <style>
-            .wcefp-feature-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-                gap: 20px;
-                margin: 20px 0;
-            }
-            .wcefp-feature-card {
-                background: white;
-                border: 2px solid #ddd;
-                border-radius: 8px;
-                padding: 20px;
-                transition: all 0.3s ease;
-            }
-            .wcefp-feature-card.enabled {
-                border-color: #0073aa;
-                background: #f8f9fa;
-            }
-            .wcefp-feature-card.disabled {
-                opacity: 0.7;
-            }
-            .feature-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 15px;
-            }
-            .feature-header h3 {
-                margin: 0;
-                color: #333;
-            }
-            .feature-description {
-                margin: 10px 0;
-                color: #666;
-                line-height: 1.5;
-            }
-            .feature-meta {
-                margin: 15px 0;
-            }
-            .feature-meta span {
-                display: inline-block;
-                margin-right: 15px;
-                font-size: 12px;
-            }
-            .impact {
-                padding: 3px 8px;
-                border-radius: 12px;
-                font-weight: bold;
-            }
-            .impact-low { background: #d4edda; color: #155724; }
-            .impact-medium { background: #fff3cd; color: #856404; }
-            .impact-high { background: #f8d7da; color: #721c24; }
-            .dependencies {
-                color: #666;
-                font-style: italic;
-            }
-            .required-notice {
-                background: #e3f2fd;
-                border: 1px solid #2196f3;
-                border-radius: 4px;
-                padding: 8px;
-                font-size: 12px;
-                color: #1976d2;
-            }
-            
-            /* Toggle Switch Styles */
-            .switch {
-                position: relative;
-                display: inline-block;
-                width: 60px;
-                height: 34px;
-            }
-            .switch input {
-                opacity: 0;
-                width: 0;
-                height: 0;
-            }
-            .slider {
-                position: absolute;
-                cursor: pointer;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: #ccc;
-                transition: .4s;
-                border-radius: 34px;
-            }
-            .slider:before {
-                position: absolute;
-                content: "";
-                height: 26px;
-                width: 26px;
-                left: 4px;
-                bottom: 4px;
-                background-color: white;
-                transition: .4s;
-                border-radius: 50%;
-            }
-            input:checked + .slider {
-                background-color: #0073aa;
-            }
-            input:focus + .slider {
-                box-shadow: 0 0 1px #0073aa;
-            }
-            input:checked + .slider:before {
-                transform: translateX(26px);
-            }
-            input:disabled + .slider {
-                background-color: #e0e0e0;
-                cursor: not-allowed;
-            }
-        </style>
-        
-        <script>
-            jQuery(document).ready(function($) {
-                $('.wcefp-feature-card input[type="checkbox"]').change(function() {
-                    const feature = $(this).data('feature');
-                    const enabled = $(this).is(':checked');
-                    const card = $(this).closest('.wcefp-feature-card');
-                    
-                    // Update UI immediately
-                    card.toggleClass('enabled', enabled);
-                    card.toggleClass('disabled', !enabled);
-                    
-                    // Send AJAX request
-                    $.ajax({
-                        url: wcefp_feature_manager.ajax_url,
-                        type: 'POST',
-                        data: {
-                            action: 'wcefp_toggle_feature',
-                            feature: feature,
-                            enabled: enabled ? 1 : 0,
-                            nonce: wcefp_feature_manager.nonce
-                        },
-                        success: function(response) {
-                            if (!response.success) {
-                                alert(response.data || wcefp_feature_manager.strings.error);
-                                // Revert UI changes
-                                $(this).prop('checked', !enabled);
-                                card.toggleClass('enabled', !enabled);
-                                card.toggleClass('disabled', enabled);
-                            }
-                        },
-                        error: function() {
-                            alert(wcefp_feature_manager.strings.error);
-                            // Revert UI changes
-                            $(this).prop('checked', !enabled);
-                            card.toggleClass('enabled', !enabled);
-                            card.toggleClass('disabled', enabled);
-                        }
-                    });
-                });
-            });
-        </script>
-        <?php
-    }
-    
-    /**
      * Render performance monitor
      * 
      * @return void
@@ -508,168 +297,6 @@ class FeatureManager {
             <?php $this->render_server_recommendations(); ?>
         </div>
         <?php
-    }
-    
-    /**
-     * Render installation status
-     * 
-     * @return void
-     */
-    public function render_installation_status() {
-        $installation_manager = new InstallationManager();
-        
-        ?>
-        <div class="wrap">
-            <h1><?php _e('Installation Status', 'wceventsfp'); ?></h1>
-            
-            <div class="wcefp-installation-info">
-                <table class="form-table">
-                    <tr>
-                        <th><?php _e('Current Status', 'wceventsfp'); ?></th>
-                        <td><?php echo $this->get_status_display($installation_manager->get_installation_status()); ?></td>
-                    </tr>
-                    <tr>
-                        <th><?php _e('Installation Mode', 'wceventsfp'); ?></th>
-                        <td><?php echo esc_html($installation_manager->get_installation_mode()); ?></td>
-                    </tr>
-                    <tr>
-                        <th><?php _e('Enabled Features', 'wceventsfp'); ?></th>
-                        <td><?php echo implode(', ', $installation_manager->get_enabled_features()); ?></td>
-                    </tr>
-                    <tr>
-                        <th><?php _e('Plugin Version', 'wceventsfp'); ?></th>
-                        <td><?php echo esc_html(get_option('wcefp_version', 'Unknown')); ?></td>
-                    </tr>
-                </table>
-            </div>
-            
-            <div class="wcefp-installation-actions">
-                <h2><?php _e('Installation Actions', 'wceventsfp'); ?></h2>
-                
-                <div class="action-buttons">
-                    <a href="<?php echo $installation_manager->get_setup_wizard_url(); ?>" class="button button-secondary">
-                        <?php _e('Run Setup Wizard Again', 'wceventsfp'); ?>
-                    </a>
-                    
-                    <button type="button" class="button button-secondary" id="reset-installation">
-                        <?php _e('Reset Installation', 'wceventsfp'); ?>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <script>
-            jQuery(document).ready(function($) {
-                $('#reset-installation').click(function() {
-                    if (confirm(wcefp_feature_manager.strings.confirm_reset)) {
-                        $.ajax({
-                            url: wcefp_feature_manager.ajax_url,
-                            type: 'POST',
-                            data: {
-                                action: 'wcefp_reset_installation',
-                                nonce: wcefp_feature_manager.nonce
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    location.reload();
-                                } else {
-                                    alert(response.data || wcefp_feature_manager.strings.error);
-                                }
-                            },
-                            error: function() {
-                                alert(wcefp_feature_manager.strings.error);
-                            }
-                        });
-                    }
-                });
-            });
-        </script>
-        <?php
-    }
-    
-    /**
-     * AJAX handler for toggling features
-     * 
-     * @return void
-     */
-    public function ajax_toggle_feature() {
-        check_ajax_referer('wcefp_feature_manager', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'wceventsfp'));
-        }
-        
-        $feature = sanitize_key($_POST['feature'] ?? '');
-        $enabled = (bool) ($_POST['enabled'] ?? false);
-        
-        if (empty($feature)) {
-            wp_send_json_error(__('Invalid feature', 'wceventsfp'));
-        }
-        
-        try {
-            $installation_manager = new InstallationManager();
-            $current_features = $installation_manager->get_enabled_features();
-            
-            if ($enabled && !in_array($feature, $current_features)) {
-                $current_features[] = $feature;
-            } elseif (!$enabled && in_array($feature, $current_features)) {
-                $current_features = array_diff($current_features, [$feature]);
-            }
-            
-            update_option('wcefp_selected_features', array_values($current_features));
-            
-            Logger::info("Feature {$feature} " . ($enabled ? 'enabled' : 'disabled') . " by user " . get_current_user_id());
-            
-            wp_send_json_success();
-            
-        } catch (Exception $e) {
-            Logger::error("Failed to toggle feature {$feature}: " . $e->getMessage());
-            wp_send_json_error(__('Failed to update feature', 'wceventsfp'));
-        }
-    }
-    
-    /**
-     * AJAX handler for running wizard
-     * 
-     * @return void
-     */
-    public function ajax_run_wizard() {
-        check_ajax_referer('wcefp_feature_manager', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'wceventsfp'));
-        }
-        
-        $installation_manager = new InstallationManager();
-        $installation_manager->force_wizard_mode();
-        
-        wp_send_json_success(['redirect' => $installation_manager->get_setup_wizard_url()]);
-    }
-    
-    /**
-     * AJAX handler for resetting installation
-     * 
-     * @return void
-     */
-    public function ajax_reset_installation() {
-        check_ajax_referer('wcefp_feature_manager', 'nonce');
-        
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('Permission denied', 'wceventsfp'));
-        }
-        
-        try {
-            $installation_manager = new InstallationManager();
-            $installation_manager->reset_installation();
-            
-            Logger::info("Installation reset by user " . get_current_user_id());
-            
-            wp_send_json_success();
-            
-        } catch (Exception $e) {
-            Logger::error("Failed to reset installation: " . $e->getMessage());
-            wp_send_json_error(__('Failed to reset installation', 'wceventsfp'));
-        }
     }
     
     /**
@@ -836,24 +463,6 @@ class FeatureManager {
         return $val;
     }
     
-    /**
-     * Get status display text
-     * 
-     * @param string $status
-     * @return string
-     */
-    private function get_status_display($status) {
-        $statuses = [
-            'completed' => '✅ ' . __('Fully Installed', 'wceventsfp'),
-            'in_progress' => '🔄 ' . __('Installation in Progress', 'wceventsfp'),
-            'wizard_required' => '🧙 ' . __('Setup Wizard Required', 'wceventsfp'),
-            'not_started' => '❓ ' . __('Not Started', 'wceventsfp'),
-            'failed' => '❌ ' . __('Installation Failed', 'wceventsfp'),
-            'minimal_complete' => '⚠️ ' . __('Minimal Mode Active', 'wceventsfp')
-        ];
-        
-        return $statuses[$status] ?? $status;
-    }
     
     /**
      * Get performance data

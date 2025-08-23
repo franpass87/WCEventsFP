@@ -1,8 +1,23 @@
-# WCEventsFP Installation Wizard & Progressive Loading System
+# WCEventsFP Installation Documentation
 
-## Overview
+## ⚠️ NOTICE: Installation System Removed
 
-This document describes the new **Installation Wizard and Progressive Loading System** implemented to solve the WSOD (White Screen of Death) issues that could occur during plugin activation.
+**As of version 2.1.1+**, the step-by-step installation wizard and progressive loading system have been **completely removed** per user request.
+
+### Current Behavior:
+- ✅ **Immediate Activation**: Plugin loads all features directly upon activation
+- ✅ **No Setup Steps**: No wizard or progressive installation required  
+- ✅ **Full Functionality**: All plugin features are available immediately
+- ✅ **Simplified**: No installation status tracking or configuration steps
+
+### Migration:
+If you previously used the setup wizard, your existing settings will continue to work. The plugin will automatically clean up old installation-related options during activation.
+
+---
+
+## Legacy Documentation (No Longer Applicable)
+
+The following documentation describes the **former** installation system that has been removed:
 
 ## The Problem
 

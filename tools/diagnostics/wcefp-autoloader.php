@@ -196,7 +196,6 @@ class WCEFP_Autoloader {
             // Core classes
             'WCEFP\\Core\\Container' => 'Core/Container.php',
             'WCEFP\\Core\\ServiceProvider' => 'Core/ServiceProvider.php',
-            'WCEFP\\Core\\InstallationManager' => 'Core/InstallationManager.php',
             'WCEFP\\Core\\ActivationHandler' => 'Core/ActivationHandler.php',
             
             // Bootstrap classes
