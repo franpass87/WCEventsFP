@@ -201,6 +201,9 @@ class WCEventsFP {
             // Clean up any old installation system options
             $this->cleanup_installation_options();
             
+            // Flush rewrite rules for calendar feeds (Phase 3: Data & Integration)
+            flush_rewrite_rules();
+            
             // Clear any cached data
             wp_cache_flush();
             

@@ -67,16 +67,16 @@ Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità
   - [x] Comprehensive lifecycle management with status tracking and expiry warnings
   - [x] Email delivery automation with voucher notifications and reminders
 
-#### **Phase 3: Data & Integration**
-- [ ] **Advanced Export Capabilities**
-  - CSV export for bookings with filtering (date range, status, event)
-  - ICS calendar export for individual events and global feed
-  - Capability-based download permissions and audit logging
+#### **Phase 3: Data & Integration** ✅ COMPLETED
+- [x] **Advanced Export Capabilities**
+  - [x] CSV export for bookings with filtering (date range, status, event)
+  - [x] ICS calendar export for individual events and global feed
+  - [x] Capability-based download permissions and audit logging
   
-- [ ] **Modern Content Management**
-  - Gutenberg block for booking forms with live preview
-  - Server-side rendering for performance and SEO
-  - Block editor UI with event/product selector and configuration options
+- [x] **Modern Content Management**
+  - [x] Gutenberg block for booking forms with live preview
+  - [x] Server-side rendering for performance and SEO
+  - [x] Block editor UI with event/product selector and configuration options
 
 #### **Phase 4: API & Developer Experience**
 - [ ] **REST API Enhancement**  
