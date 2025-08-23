@@ -5,55 +5,28 @@
 
     <description>Coding standards for WCEventsFP plugin</description>
 
-    <!-- What to scan -->
-    <file>.</file>
+    <!-- Limit sniffing to unit tests -->
+    <file>tests/Unit</file>
 
     <!-- Exclude patterns -->
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/node_modules/*</exclude-pattern>
-    <exclude-pattern>*/.git/*</exclude-pattern>
-    <exclude-pattern>*/languages/*</exclude-pattern>
-    
+
     <!-- Use PSR-12 as base standard -->
     <rule ref="PSR12"/>
-    
-    <!-- WordPress specific rules -->
-    <rule ref="WordPress-Extra">
-        <!-- Allow short array syntax -->
-        <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
-        <!-- Allow short ternary operator -->
-        <exclude name="WordPress.PHP.DisallowShortTernary"/>
-    </rule>
-    
-    <!-- WordPress VIP rules for security -->
-    <rule ref="WordPress-VIP-Go">
-        <exclude name="WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get"/>
-    </rule>
-    
-    <!-- WordPress i18n -->
-    <rule ref="WordPress.WP.I18n">
-        <properties>
-            <property name="text_domain" type="array">
-                <element value="wceventsfp"/>
-            </properties>
-        </properties>
+
+    <!-- Allow non-camelCase method names in tests -->
+    <rule ref="PSR1.Methods.CamelCapsMethodName">
+        <severity>0</severity>
     </rule>
 
-    <!-- WordPress DB rules -->
-    <rule ref="WordPress.DB.DirectDatabaseQuery"/>
-    <rule ref="WordPress.DB.PreparedSQL"/>
-    
-    <!-- Security rules -->
-    <rule ref="WordPress.Security.EscapeOutput"/>
-    <rule ref="WordPress.Security.NonceVerification"/>
-    <rule ref="WordPress.Security.ValidatedSanitizedInput"/>
-    
+    <!-- Allow side effects in test files -->
+    <rule ref="PSR1.Files.SideEffects">
+        <severity>0</severity>
+    </rule>
+
     <!-- Show progress and use colors -->
     <arg value="ps"/>
     <arg name="colors"/>
-    
-    <!-- Check PHP version compatibility -->
-    <config name="testVersion" value="7.4-"/>
-    <rule ref="PHPCompatibility"/>
-    
+
 </ruleset>

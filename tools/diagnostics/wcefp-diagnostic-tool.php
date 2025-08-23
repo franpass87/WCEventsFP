@@ -136,8 +136,8 @@ function validate_plugin_files() {
     // Check required includes exist and have valid syntax
     $required_files = [
         'includes/class-wcefp-logger.php',
-        'includes/class-wcefp-validator.php',
-        'includes/class-wcefp-cache.php',
+        'includes/Legacy/class-wcefp-validator.php',
+        'includes/Legacy/class-wcefp-cache.php',
         'includes/class-wcefp-recurring.php',
         'includes/class-wcefp-closures.php',
         'includes/class-wcefp-gift.php',

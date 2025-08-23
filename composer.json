@@ -45,7 +45,7 @@
     "scripts": {
         "lint": "phpcs --standard=phpcs.xml",
         "lint:fix": "phpcbf --standard=phpcs.xml",
-        "analyze": "phpstan analyse --configuration=phpstan.neon",
+        "analyze": "php -d memory_limit=512M vendor/bin/phpstan analyse --configuration=phpstan.neon --autoload-file=tests/stubs/plugin-stubs.php",
         "test": "phpunit --configuration=phpunit.xml",
         "test:coverage": "phpunit --configuration=phpunit.xml --coverage-html coverage",
         "quality": [

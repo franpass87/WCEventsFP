@@ -206,23 +206,23 @@ class WCEFP_Autoloader {
             'WCEFP\\Utils\\Logger' => 'Utils/Logger.php',
             
             // Admin classes - support both naming conventions
-            'WCEFP\\Admin\\ServiceProvider' => 'Admin/ServiceProvider.php',
-            'WCEFP\\Admin\\AdminServiceProvider' => 'Admin/ServiceProvider.php',
+            'WCEFP\\Admin\\ServiceProvider' => 'Admin/AdminServiceProvider.php',
+            'WCEFP\\Admin\\AdminServiceProvider' => 'Admin/AdminServiceProvider.php',
             'WCEFP\\Admin\\MenuManager' => 'Admin/MenuManager.php',
             'WCEFP\\Admin\\ProductAdmin' => 'Admin/ProductAdmin.php',
             'WCEFP\\Admin\\FeatureManager' => 'Admin/FeatureManager.php',
             
             // Frontend classes - support both naming conventions
-            'WCEFP\\Frontend\\ServiceProvider' => 'Frontend/ServiceProvider.php',
-            'WCEFP\\Frontend\\FrontendServiceProvider' => 'Frontend/ServiceProvider.php',
+            'WCEFP\\Frontend\\ServiceProvider' => 'Frontend/FrontendServiceProvider.php',
+            'WCEFP\\Frontend\\FrontendServiceProvider' => 'Frontend/FrontendServiceProvider.php',
             
             // Features classes - support both naming conventions
-            'WCEFP\\Features\\ServiceProvider' => 'Features/ServiceProvider.php',
-            'WCEFP\\Features\\FeaturesServiceProvider' => 'Features/ServiceProvider.php',
+            'WCEFP\\Features\\ServiceProvider' => 'Features/FeaturesServiceProvider.php',
+            'WCEFP\\Features\\FeaturesServiceProvider' => 'Features/FeaturesServiceProvider.php',
             
             // Database classes - support both naming conventions
-            'WCEFP\\Core\\Database\\ServiceProvider' => 'Core/Database/ServiceProvider.php',
-            'WCEFP\\Core\\Database\\DatabaseServiceProvider' => 'Core/Database/ServiceProvider.php',
+            'WCEFP\\Core\\Database\\ServiceProvider' => 'Core/Database/DatabaseServiceProvider.php',
+            'WCEFP\\Core\\Database\\DatabaseServiceProvider' => 'Core/Database/DatabaseServiceProvider.php',
             'WCEFP\\Core\\Database\\Models' => 'Core/Database/Models.php',
             'WCEFP\\Core\\Database\\QueryBuilder' => 'Core/Database/QueryBuilder.php',
             
