@@ -201,6 +201,9 @@ class WCEventsFP {
             // Clean up any old installation system options
             $this->cleanup_installation_options();
             
+            // Flush rewrite rules for calendar feeds (Phase 3: Data & Integration)
+            flush_rewrite_rules();
+            
             // Clear any cached data
             wp_cache_flush();
             
@@ -382,6 +385,24 @@ class WCEventsFP {
             
             if (class_exists('WCEFP_Enhanced_Features')) {
                 $GLOBALS['wcefp_enhanced_features'] = new WCEFP_Enhanced_Features();
+            }
+
+            // Initialize Phase 5: Advanced Booking Features
+            if (file_exists(WCEFP_PLUGIN_DIR . 'includes/BookingFeatures/BookingFeaturesServiceProvider.php')) {
+                require_once WCEFP_PLUGIN_DIR . 'includes/BookingFeatures/BookingFeaturesServiceProvider.php';
+                
+                if (class_exists('WCEFP\\BookingFeatures\\BookingFeaturesServiceProvider')) {
+                    $GLOBALS['wcefp_booking_features'] = new WCEFP\BookingFeatures\BookingFeaturesServiceProvider();
+                }
+            }
+
+            // Initialize Phase 6: Analytics & Automation
+            if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Analytics/AnalyticsServiceProvider.php')) {
+                require_once WCEFP_PLUGIN_DIR . 'includes/Analytics/AnalyticsServiceProvider.php';
+                
+                if (class_exists('WCEFP\\Analytics\\AnalyticsServiceProvider')) {
+                    $GLOBALS['wcefp_analytics'] = new WCEFP\Analytics\AnalyticsServiceProvider();
+                }
             }
 
         } catch (Exception $e) {

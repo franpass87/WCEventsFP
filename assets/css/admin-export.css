@@ -1,0 +1,238 @@
+/**
+ * Export Admin Styles
+ *
+ * Styles for the data export admin interface.
+ * Part of Phase 3: Data & Integration
+ */
+
+.wcefp-export-container {
+	max-width: 1200px;
+	margin: 0 auto;
+}
+
+.wcefp-export-section {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	margin-bottom: 20px;
+	padding: 20px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.wcefp-export-section h2 {
+	margin-top: 0;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #e1e1e1;
+	color: #23282d;
+}
+
+.wcefp-export-form .form-table {
+	margin-bottom: 20px;
+}
+
+.wcefp-export-form .form-table th {
+	width: 200px;
+	padding: 15px 10px 15px 0;
+}
+
+.wcefp-export-form .form-table td {
+	padding: 15px 10px;
+}
+
+.wcefp-export-form .regular-text {
+	width: 300px;
+}
+
+.wcefp-export-form .submit {
+	margin-top: 0;
+	padding-top: 10px;
+	border-top: 1px solid #e1e1e1;
+}
+
+.wcefp-export-form button .dashicons {
+	margin-right: 5px;
+	vertical-align: middle;
+}
+
+.wcefp-export-form button .dashicons.spin {
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* Calendar Feeds Section */
+.wcefp-calendar-feeds {
+	padding-top: 10px;
+}
+
+.wcefp-feed-item {
+	background: #f9f9f9;
+	border: 1px solid #e1e1e1;
+	border-radius: 4px;
+	padding: 15px;
+	margin-bottom: 15px;
+}
+
+.wcefp-feed-item h4 {
+	margin-top: 0;
+	color: #23282d;
+}
+
+.wcefp-feed-url {
+	display: flex;
+	gap: 10px;
+	margin-top: 10px;
+}
+
+.wcefp-feed-url input {
+	flex: 1;
+	font-family: Monaco, "Lucida Console", monospace;
+	font-size: 12px;
+}
+
+.wcefp-feed-instructions {
+	background: #e7f3ff;
+	border-left: 4px solid #0073aa;
+	padding: 15px;
+	margin-top: 15px;
+}
+
+.wcefp-feed-instructions h4 {
+	margin-top: 0;
+	color: #0073aa;
+}
+
+.wcefp-feed-instructions ul {
+	margin-bottom: 0;
+}
+
+.wcefp-feed-instructions li {
+	margin-bottom: 8px;
+}
+
+/* Export Statistics */
+.wcefp-export-stats {
+	padding-top: 10px;
+}
+
+.wcefp-stats-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 20px;
+	margin-top: 15px;
+}
+
+.wcefp-stat-item {
+	background: #f8f9fa;
+	border: 2px solid #e1e1e1;
+	border-radius: 8px;
+	padding: 20px;
+	text-align: center;
+	transition: all 0.3s ease;
+}
+
+.wcefp-stat-item:hover {
+	border-color: #0073aa;
+	box-shadow: 0 2px 8px rgba(0, 115, 170, 0.1);
+}
+
+.wcefp-stat-number {
+	font-size: 2.5em;
+	font-weight: bold;
+	color: #0073aa;
+	line-height: 1;
+	margin-bottom: 8px;
+}
+
+.wcefp-stat-label {
+	font-size: 0.9em;
+	color: #666;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+/* Loading States */
+.wcefp-export-form button:disabled {
+	opacity: 0.7;
+	cursor: not-allowed;
+}
+
+.wcefp-export-form .dashicons.spin {
+	color: #0073aa;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+
+	.wcefp-export-section {
+		margin-left: -10px;
+		margin-right: -10px;
+		border-left: none;
+		border-right: none;
+		border-radius: 0;
+	}
+
+	.wcefp-export-form .form-table th,
+	.wcefp-export-form .form-table td {
+		display: block;
+		width: 100%;
+		padding: 10px 0;
+	}
+
+	.wcefp-export-form .form-table th {
+		border-bottom: none;
+		padding-bottom: 5px;
+	}
+
+	.wcefp-export-form .regular-text {
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.wcefp-feed-url {
+		flex-direction: column;
+	}
+
+	.wcefp-stats-grid {
+		grid-template-columns: 1fr;
+		gap: 15px;
+	}
+}
+
+/* Accessibility Improvements */
+.wcefp-export-form button:focus,
+.wcefp-feed-url button:focus {
+	box-shadow: 0 0 0 2px #0073aa;
+	outline: none;
+}
+
+.wcefp-export-form input:focus,
+.wcefp-export-form select:focus {
+	border-color: #0073aa;
+	box-shadow: 0 0 0 1px #0073aa;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+
+	.wcefp-export-section {
+		border-color: #000;
+	}
+
+	.wcefp-stat-item {
+		border-color: #000;
+	}
+
+	.wcefp-stat-number {
+		color: #000;
+	}
+}

@@ -4,183 +4,199 @@
  */
 
 class WCEFPRecommendations {
-    constructor() {
-        this.apiEndpoint = window.wcefp_ajax?.url || '/wp-admin/admin-ajax.php';
-        this.nonce = window.wcefp_ajax?.nonce || '';
-        this.userPreferences = this.loadUserPreferences();
-        this.sessionData = this.initSessionData();
-        this.init();
-    }
+	constructor() {
+		this.apiEndpoint = window.wcefp_ajax?.url || '/wp-admin/admin-ajax.php';
+		this.nonce = window.wcefp_ajax?.nonce || '';
+		this.userPreferences = this.loadUserPreferences();
+		this.sessionData = this.initSessionData();
+		this.init();
+	}
 
-    init() {
-        this.trackUserBehavior();
-        this.loadRecommendations();
-        this.bindEvents();
-        this.setupRealTimeUpdates();
-    }
+	init() {
+		this.trackUserBehavior();
+		this.loadRecommendations();
+		this.bindEvents();
+		this.setupRealTimeUpdates();
+	}
 
-    // Track user interactions and preferences
-    trackUserBehavior() {
-        // Track page views
-        this.trackEvent('page_view', {
-            page: window.location.pathname,
-            timestamp: Date.now()
-        });
+	// Track user interactions and preferences
+	trackUserBehavior() {
+		// Track page views
+		this.trackEvent( 'page_view', {
+			page: window.location.pathname,
+			timestamp: Date.now(),
+		} );
 
-        // Track scroll depth
-        this.trackScrollDepth();
+		// Track scroll depth
+		this.trackScrollDepth();
 
-        // Track clicks on events/experiences
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.wcefp-event-card')) {
-                const card = e.target.closest('.wcefp-event-card');
-                const eventId = card.dataset.eventId || card.dataset.productId;
-                const eventType = card.dataset.eventType || 'event';
-                const price = card.dataset.price || null;
-                
-                this.trackEvent('event_interest', {
-                    event_id: eventId,
-                    event_type: eventType,
-                    price: price,
-                    interaction_type: 'click',
-                    timestamp: Date.now()
-                });
-            }
+		// Track clicks on events/experiences
+		document.addEventListener( 'click', ( e ) => {
+			if ( e.target.closest( '.wcefp-event-card' ) ) {
+				const card = e.target.closest( '.wcefp-event-card' );
+				const eventId = card.dataset.eventId || card.dataset.productId;
+				const eventType = card.dataset.eventType || 'event';
+				const price = card.dataset.price || null;
 
-            // Track filter usage
-            if (e.target.closest('.wcefp-filters')) {
-                const filterType = e.target.name || e.target.className;
-                const filterValue = e.target.value || e.target.textContent;
-                
-                this.trackEvent('filter_usage', {
-                    filter_type: filterType,
-                    filter_value: filterValue,
-                    timestamp: Date.now()
-                });
-            }
+				this.trackEvent( 'event_interest', {
+					event_id: eventId,
+					event_type: eventType,
+					price,
+					interaction_type: 'click',
+					timestamp: Date.now(),
+				} );
+			}
 
-            // Track booking attempts
-            if (e.target.closest('.wcefp-booking-widget')) {
-                const productId = e.target.closest('.wcefp-booking-widget').dataset.productId;
-                this.trackEvent('booking_interest', {
-                    product_id: productId,
-                    step: 'initiated',
-                    timestamp: Date.now()
-                });
-            }
-        });
+			// Track filter usage
+			if ( e.target.closest( '.wcefp-filters' ) ) {
+				const filterType = e.target.name || e.target.className;
+				const filterValue = e.target.value || e.target.textContent;
 
-        // Track time spent on page
-        this.trackTimeOnPage();
-    }
+				this.trackEvent( 'filter_usage', {
+					filter_type: filterType,
+					filter_value: filterValue,
+					timestamp: Date.now(),
+				} );
+			}
 
-    trackScrollDepth() {
-        let maxScroll = 0;
-        const trackScroll = () => {
-            const scrollPercent = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
-            if (scrollPercent > maxScroll) {
-                maxScroll = scrollPercent;
-                if (scrollPercent >= 25 || scrollPercent >= 50 || scrollPercent >= 75 || scrollPercent >= 90) {
-                    this.trackEvent('scroll_depth', {
-                        depth: scrollPercent,
-                        timestamp: Date.now()
-                    });
-                }
-            }
-        };
+			// Track booking attempts
+			if ( e.target.closest( '.wcefp-booking-widget' ) ) {
+				const productId = e.target.closest( '.wcefp-booking-widget' )
+					.dataset.productId;
+				this.trackEvent( 'booking_interest', {
+					product_id: productId,
+					step: 'initiated',
+					timestamp: Date.now(),
+				} );
+			}
+		} );
 
-        window.addEventListener('scroll', this.debounce(trackScroll, 100));
-        window.addEventListener('beforeunload', () => {
-            this.trackEvent('final_scroll_depth', {
-                depth: maxScroll,
-                timestamp: Date.now()
-            });
-        });
-    }
+		// Track time spent on page
+		this.trackTimeOnPage();
+	}
 
-    trackTimeOnPage() {
-        const startTime = Date.now();
-        window.addEventListener('beforeunload', () => {
-            const timeSpent = Date.now() - startTime;
-            this.trackEvent('time_on_page', {
-                duration: timeSpent,
-                page: window.location.pathname,
-                timestamp: Date.now()
-            });
-        });
-    }
+	trackScrollDepth() {
+		let maxScroll = 0;
+		const trackScroll = () => {
+			const scrollPercent = Math.round(
+				( window.scrollY /
+					( document.body.scrollHeight - window.innerHeight ) ) *
+					100
+			);
+			if ( scrollPercent > maxScroll ) {
+				maxScroll = scrollPercent;
+				if (
+					scrollPercent >= 25 ||
+					scrollPercent >= 50 ||
+					scrollPercent >= 75 ||
+					scrollPercent >= 90
+				) {
+					this.trackEvent( 'scroll_depth', {
+						depth: scrollPercent,
+						timestamp: Date.now(),
+					} );
+				}
+			}
+		};
 
-    trackEvent(eventType, data) {
-        // Store in session for immediate use
-        if (!this.sessionData.events) this.sessionData.events = [];
-        this.sessionData.events.push({
-            type: eventType,
-            data: data,
-            timestamp: Date.now()
-        });
+		window.addEventListener( 'scroll', this.debounce( trackScroll, 100 ) );
+		window.addEventListener( 'beforeunload', () => {
+			this.trackEvent( 'final_scroll_depth', {
+				depth: maxScroll,
+				timestamp: Date.now(),
+			} );
+		} );
+	}
 
-        // Send to server for long-term storage and analysis
-        this.sendToServer('track_behavior', {
-            event_type: eventType,
-            event_data: JSON.stringify(data),
-            session_id: this.sessionData.sessionId
-        });
+	trackTimeOnPage() {
+		const startTime = Date.now();
+		window.addEventListener( 'beforeunload', () => {
+			const timeSpent = Date.now() - startTime;
+			this.trackEvent( 'time_on_page', {
+				duration: timeSpent,
+				page: window.location.pathname,
+				timestamp: Date.now(),
+			} );
+		} );
+	}
 
-        // Update recommendations if significant event
-        if (['event_interest', 'booking_interest', 'filter_usage'].includes(eventType)) {
-            this.debounceUpdateRecommendations();
-        }
-    }
+	trackEvent( eventType, data ) {
+		// Store in session for immediate use
+		if ( ! this.sessionData.events ) this.sessionData.events = [];
+		this.sessionData.events.push( {
+			type: eventType,
+			data,
+			timestamp: Date.now(),
+		} );
 
-    // Load and display recommendations
-    async loadRecommendations() {
-        try {
-            const recommendations = await this.fetchRecommendations();
-            if (recommendations && recommendations.length > 0) {
-                this.displayRecommendations(recommendations);
-            }
-        } catch (error) {
-            console.error('Failed to load recommendations:', error);
-        }
-    }
+		// Send to server for long-term storage and analysis
+		this.sendToServer( 'track_behavior', {
+			event_type: eventType,
+			event_data: JSON.stringify( data ),
+			session_id: this.sessionData.sessionId,
+		} );
 
-    async fetchRecommendations() {
-        const response = await fetch(this.apiEndpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-                action: 'wcefp_get_recommendations',
-                nonce: this.nonce,
-                user_data: JSON.stringify(this.userPreferences),
-                session_data: JSON.stringify(this.sessionData),
-                current_page: window.location.pathname
-            })
-        });
+		// Update recommendations if significant event
+		if (
+			[ 'event_interest', 'booking_interest', 'filter_usage' ].includes(
+				eventType
+			)
+		) {
+			this.debounceUpdateRecommendations();
+		}
+	}
 
-        const data = await response.json();
-        return data.success ? data.data : [];
-    }
+	// Load and display recommendations
+	async loadRecommendations() {
+		try {
+			const recommendations = await this.fetchRecommendations();
+			if ( recommendations && recommendations.length > 0 ) {
+				this.displayRecommendations( recommendations );
+			}
+		} catch ( error ) {
+			console.error( 'Failed to load recommendations:', error );
+		}
+	}
 
-    displayRecommendations(recommendations) {
-        const containers = document.querySelectorAll('.wcefp-recommendations-container');
-        
-        if (containers.length === 0) {
-            // Create recommendation container if it doesn't exist
-            this.createRecommendationContainer(recommendations);
-        } else {
-            // Update existing containers
-            containers.forEach(container => {
-                this.renderRecommendations(container, recommendations);
-            });
-        }
-    }
+	async fetchRecommendations() {
+		const response = await fetch( this.apiEndpoint, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: new URLSearchParams( {
+				action: 'wcefp_get_recommendations',
+				nonce: this.nonce,
+				user_data: JSON.stringify( this.userPreferences ),
+				session_data: JSON.stringify( this.sessionData ),
+				current_page: window.location.pathname,
+			} ),
+		} );
 
-    createRecommendationContainer(recommendations) {
-        const container = document.createElement('div');
-        container.className = 'wcefp-recommendations-container';
-        container.innerHTML = `
+		const data = await response.json();
+		return data.success ? data.data : [];
+	}
+
+	displayRecommendations( recommendations ) {
+		const containers = document.querySelectorAll(
+			'.wcefp-recommendations-container'
+		);
+
+		if ( containers.length === 0 ) {
+			// Create recommendation container if it doesn't exist
+			this.createRecommendationContainer( recommendations );
+		} else {
+			// Update existing containers
+			containers.forEach( ( container ) => {
+				this.renderRecommendations( container, recommendations );
+			} );
+		}
+	}
+
+	createRecommendationContainer( recommendations ) {
+		const container = document.createElement( 'div' );
+		container.className = 'wcefp-recommendations-container';
+		container.innerHTML = `
             <div class="wcefp-recommendations-header">
                 <h3>
                     <span class="wcefp-recommendations-icon">🎯</span>
@@ -193,254 +209,305 @@ class WCEFPRecommendations {
             <div class="wcefp-recommendations-content"></div>
         `;
 
-        // Insert after main content or at the end of body
-        const mainContent = document.querySelector('.wcefp-event-grid, .wcefp-main-content, main');
-        if (mainContent) {
-            mainContent.parentNode.insertBefore(container, mainContent.nextSibling);
-        } else {
-            document.body.appendChild(container);
-        }
+		// Insert after main content or at the end of body
+		const mainContent = document.querySelector(
+			'.wcefp-event-grid, .wcefp-main-content, main'
+		);
+		if ( mainContent ) {
+			mainContent.parentNode.insertBefore(
+				container,
+				mainContent.nextSibling
+			);
+		} else {
+			document.body.appendChild( container );
+		}
 
-        this.renderRecommendations(container.querySelector('.wcefp-recommendations-content'), recommendations);
-    }
+		this.renderRecommendations(
+			container.querySelector( '.wcefp-recommendations-content' ),
+			recommendations
+		);
+	}
 
-    renderRecommendations(container, recommendations) {
-        const html = recommendations.map(rec => this.createRecommendationCard(rec)).join('');
-        container.innerHTML = `
+	renderRecommendations( container, recommendations ) {
+		const html = recommendations
+			.map( ( rec ) => this.createRecommendationCard( rec ) )
+			.join( '' );
+		container.innerHTML = `
             <div class="wcefp-recommendations-grid">
-                ${html}
+                ${ html }
             </div>
         `;
 
-        // Add interaction tracking to recommendation cards
-        container.querySelectorAll('.wcefp-recommendation-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const recId = card.dataset.recommendationId;
-                const recType = card.dataset.recommendationType;
-                this.trackEvent('recommendation_click', {
-                    recommendation_id: recId,
-                    recommendation_type: recType,
-                    position: Array.from(container.children).indexOf(card),
-                    timestamp: Date.now()
-                });
-            });
-        });
-    }
+		// Add interaction tracking to recommendation cards
+		container
+			.querySelectorAll( '.wcefp-recommendation-card' )
+			.forEach( ( card ) => {
+				card.addEventListener( 'click', () => {
+					const recId = card.dataset.recommendationId;
+					const recType = card.dataset.recommendationType;
+					this.trackEvent( 'recommendation_click', {
+						recommendation_id: recId,
+						recommendation_type: recType,
+						position: Array.from( container.children ).indexOf(
+							card
+						),
+						timestamp: Date.now(),
+					} );
+				} );
+			} );
+	}
 
-    createRecommendationCard(recommendation) {
-        const {
-            id,
-            title,
-            description,
-            price,
-            image,
-            rating,
-            type,
-            confidence,
-            reason
-        } = recommendation;
+	createRecommendationCard( recommendation ) {
+		const {
+			id,
+			title,
+			description,
+			price,
+			image,
+			rating,
+			type,
+			confidence,
+			reason,
+		} = recommendation;
 
-        return `
+		return `
             <div class="wcefp-recommendation-card" 
-                 data-recommendation-id="${id}"
-                 data-recommendation-type="${type}"
-                 data-confidence="${confidence}">
+                 data-recommendation-id="${ id }"
+                 data-recommendation-type="${ type }"
+                 data-confidence="${ confidence }">
                 <div class="wcefp-recommendation-image">
-                    ${image ? `<img src="${image}" alt="${title}" loading="lazy">` : ''}
-                    <div class="wcefp-recommendation-badge">${this.getRecommendationBadge(type, confidence)}</div>
+                    ${
+						image
+							? `<img src="${ image }" alt="${ title }" loading="lazy">`
+							: ''
+					}
+                    <div class="wcefp-recommendation-badge">${ this.getRecommendationBadge(
+						type,
+						confidence
+					) }</div>
                 </div>
                 <div class="wcefp-recommendation-content">
-                    <h4 class="wcefp-recommendation-title">${title}</h4>
-                    <p class="wcefp-recommendation-description">${description}</p>
-                    ${rating ? `
+                    <h4 class="wcefp-recommendation-title">${ title }</h4>
+                    <p class="wcefp-recommendation-description">${ description }</p>
+                    ${
+						rating
+							? `
                         <div class="wcefp-recommendation-rating">
-                            ${'⭐'.repeat(Math.floor(rating))} ${rating}/5
+                            ${ '⭐'.repeat(
+								Math.floor( rating )
+							) } ${ rating }/5
                         </div>
-                    ` : ''}
+                    `
+							: ''
+					}
                     <div class="wcefp-recommendation-footer">
-                        ${price ? `<span class="wcefp-recommendation-price">€${price}</span>` : ''}
-                        <span class="wcefp-recommendation-reason">${reason}</span>
+                        ${
+							price
+								? `<span class="wcefp-recommendation-price">€${ price }</span>`
+								: ''
+						}
+                        <span class="wcefp-recommendation-reason">${ reason }</span>
                     </div>
-                    <button class="wcefp-recommendation-cta" onclick="window.location.href='/product/${id}'">
+                    <button class="wcefp-recommendation-cta" onclick="window.location.href='/product/${ id }'">
                         Scopri di più
                     </button>
                 </div>
             </div>
         `;
-    }
+	}
 
-    getRecommendationBadge(type, confidence) {
-        const badges = {
-            'similar': '🔄 Simile',
-            'popular': '🔥 Popolare',
-            'trending': '📈 Trend',
-            'personalized': '🎯 Per te',
-            'location': '📍 Zona',
-            'price': '💰 Prezzo',
-            'seasonal': '🗓️ Stagionale'
-        };
+	getRecommendationBadge( type, confidence ) {
+		const badges = {
+			similar: '🔄 Simile',
+			popular: '🔥 Popolare',
+			trending: '📈 Trend',
+			personalized: '🎯 Per te',
+			location: '📍 Zona',
+			price: '💰 Prezzo',
+			seasonal: '🗓️ Stagionale',
+		};
 
-        return badges[type] || '💡 Suggerito';
-    }
+		return badges[ type ] || '💡 Suggerito';
+	}
 
-    // Advanced recommendation algorithms
-    calculateSimilarityScore(item1, item2) {
-        let score = 0;
-        
-        // Category similarity
-        if (item1.category === item2.category) score += 0.3;
-        
-        // Price similarity (within 30%)
-        if (Math.abs(item1.price - item2.price) / item1.price < 0.3) score += 0.2;
-        
-        // Location similarity
-        if (item1.location === item2.location) score += 0.2;
-        
-        // Duration similarity
-        if (Math.abs(item1.duration - item2.duration) < 60) score += 0.1;
-        
-        // Rating similarity
-        if (Math.abs(item1.rating - item2.rating) < 0.5) score += 0.1;
-        
-        // Tag overlap
-        const commonTags = item1.tags?.filter(tag => item2.tags?.includes(tag)) || [];
-        score += (commonTags.length / Math.max(item1.tags?.length || 1, item2.tags?.length || 1)) * 0.1;
-        
-        return Math.min(score, 1);
-    }
+	// Advanced recommendation algorithms
+	calculateSimilarityScore( item1, item2 ) {
+		let score = 0;
 
-    generateCollaborativeRecommendations(userBehavior, allUsers) {
-        // Find users with similar behavior patterns
-        const similarUsers = allUsers
-            .map(user => ({
-                user,
-                similarity: this.calculateUserSimilarity(userBehavior, user.behavior)
-            }))
-            .filter(item => item.similarity > 0.5)
-            .sort((a, b) => b.similarity - a.similarity)
-            .slice(0, 10);
+		// Category similarity
+		if ( item1.category === item2.category ) score += 0.3;
 
-        // Get recommendations from similar users
-        const recommendations = [];
-        similarUsers.forEach(({user, similarity}) => {
-            user.purchases?.forEach(purchase => {
-                if (!userBehavior.viewed?.includes(purchase.id)) {
-                    recommendations.push({
-                        ...purchase,
-                        confidence: similarity,
-                        reason: 'Utenti simili hanno scelto questo',
-                        type: 'collaborative'
-                    });
-                }
-            });
-        });
+		// Price similarity (within 30%)
+		if ( Math.abs( item1.price - item2.price ) / item1.price < 0.3 )
+			score += 0.2;
 
-        return recommendations
-            .sort((a, b) => b.confidence - a.confidence)
-            .slice(0, 5);
-    }
+		// Location similarity
+		if ( item1.location === item2.location ) score += 0.2;
 
-    calculateUserSimilarity(user1Behavior, user2Behavior) {
-        // Jaccard similarity for viewed items
-        const viewed1 = new Set(user1Behavior.viewed || []);
-        const viewed2 = new Set(user2Behavior.viewed || []);
-        const intersection = new Set([...viewed1].filter(x => viewed2.has(x)));
-        const union = new Set([...viewed1, ...viewed2]);
-        
-        return intersection.size / union.size;
-    }
+		// Duration similarity
+		if ( Math.abs( item1.duration - item2.duration ) < 60 ) score += 0.1;
 
-    // Real-time updates
-    setupRealTimeUpdates() {
-        // Check for new recommendations every 5 minutes
-        setInterval(() => {
-            this.loadRecommendations();
-        }, 300000);
+		// Rating similarity
+		if ( Math.abs( item1.rating - item2.rating ) < 0.5 ) score += 0.1;
 
-        // Update recommendations when user preferences change
-        window.addEventListener('wcefp-preferences-changed', () => {
-            this.userPreferences = this.loadUserPreferences();
-            this.loadRecommendations();
-        });
-    }
+		// Tag overlap
+		const commonTags =
+			item1.tags?.filter( ( tag ) => item2.tags?.includes( tag ) ) || [];
+		score +=
+			( commonTags.length /
+				Math.max( item1.tags?.length || 1, item2.tags?.length || 1 ) ) *
+			0.1;
 
-    // Utility methods
-    loadUserPreferences() {
-        const stored = localStorage.getItem('wcefp-user-preferences');
-        const defaults = {
-            categories: [],
-            priceRange: { min: 0, max: 1000 },
-            locations: [],
-            languages: ['it'],
-            duration: { min: 0, max: 480 },
-            groupSize: { min: 1, max: 10 },
-            accessibility: false,
-            petFriendly: false
-        };
-        
-        return stored ? { ...defaults, ...JSON.parse(stored) } : defaults;
-    }
+		return Math.min( score, 1 );
+	}
 
-    initSessionData() {
-        return {
-            sessionId: this.generateSessionId(),
-            startTime: Date.now(),
-            events: [],
-            currentPage: window.location.pathname
-        };
-    }
+	generateCollaborativeRecommendations( userBehavior, allUsers ) {
+		// Find users with similar behavior patterns
+		const similarUsers = allUsers
+			.map( ( user ) => ( {
+				user,
+				similarity: this.calculateUserSimilarity(
+					userBehavior,
+					user.behavior
+				),
+			} ) )
+			.filter( ( item ) => item.similarity > 0.5 )
+			.sort( ( a, b ) => b.similarity - a.similarity )
+			.slice( 0, 10 );
 
-    generateSessionId() {
-        return 'wcefp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    }
+		// Get recommendations from similar users
+		const recommendations = [];
+		similarUsers.forEach( ( { user, similarity } ) => {
+			user.purchases?.forEach( ( purchase ) => {
+				if ( ! userBehavior.viewed?.includes( purchase.id ) ) {
+					recommendations.push( {
+						...purchase,
+						confidence: similarity,
+						reason: 'Utenti simili hanno scelto questo',
+						type: 'collaborative',
+					} );
+				}
+			} );
+		} );
 
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+		return recommendations
+			.sort( ( a, b ) => b.confidence - a.confidence )
+			.slice( 0, 5 );
+	}
 
-    debounceUpdateRecommendations = this.debounce(() => {
-        this.loadRecommendations();
-    }, 2000);
+	calculateUserSimilarity( user1Behavior, user2Behavior ) {
+		// Jaccard similarity for viewed items
+		const viewed1 = new Set( user1Behavior.viewed || [] );
+		const viewed2 = new Set( user2Behavior.viewed || [] );
+		const intersection = new Set(
+			[ ...viewed1 ].filter( ( x ) => viewed2.has( x ) )
+		);
+		const union = new Set( [ ...viewed1, ...viewed2 ] );
 
-    async sendToServer(action, data) {
-        try {
-            await fetch(this.apiEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    action: `wcefp_${action}`,
-                    nonce: this.nonce,
-                    ...data
-                })
-            });
-        } catch (error) {
-            console.error('Failed to send data to server:', error);
-        }
-    }
+		return intersection.size / union.size;
+	}
 
-    // Public API
-    updatePreferences(preferences) {
-        this.userPreferences = { ...this.userPreferences, ...preferences };
-        localStorage.setItem('wcefp-user-preferences', JSON.stringify(this.userPreferences));
-        
-        window.dispatchEvent(new CustomEvent('wcefp-preferences-changed', {
-            detail: { preferences: this.userPreferences }
-        }));
-    }
+	// Real-time updates
+	setupRealTimeUpdates() {
+		// Check for new recommendations every 5 minutes
+		setInterval( () => {
+			this.loadRecommendations();
+		}, 300000 );
 
-    forceRefresh() {
-        this.loadRecommendations();
-    }
+		// Update recommendations when user preferences change
+		window.addEventListener( 'wcefp-preferences-changed', () => {
+			this.userPreferences = this.loadUserPreferences();
+			this.loadRecommendations();
+		} );
+	}
+
+	// Utility methods
+	loadUserPreferences() {
+		const stored = localStorage.getItem( 'wcefp-user-preferences' );
+		const defaults = {
+			categories: [],
+			priceRange: { min: 0, max: 1000 },
+			locations: [],
+			languages: [ 'it' ],
+			duration: { min: 0, max: 480 },
+			groupSize: { min: 1, max: 10 },
+			accessibility: false,
+			petFriendly: false,
+		};
+
+		return stored ? { ...defaults, ...JSON.parse( stored ) } : defaults;
+	}
+
+	initSessionData() {
+		return {
+			sessionId: this.generateSessionId(),
+			startTime: Date.now(),
+			events: [],
+			currentPage: window.location.pathname,
+		};
+	}
+
+	generateSessionId() {
+		return (
+			'wcefp_' +
+			Date.now() +
+			'_' +
+			Math.random().toString( 36 ).substr( 2, 9 )
+		);
+	}
+
+	debounce( func, wait ) {
+		let timeout;
+		return function executedFunction( ...args ) {
+			const later = () => {
+				clearTimeout( timeout );
+				func( ...args );
+			};
+			clearTimeout( timeout );
+			timeout = setTimeout( later, wait );
+		};
+	}
+
+	debounceUpdateRecommendations = this.debounce( () => {
+		this.loadRecommendations();
+	}, 2000 );
+
+	async sendToServer( action, data ) {
+		try {
+			await fetch( this.apiEndpoint, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+				body: new URLSearchParams( {
+					action: `wcefp_${ action }`,
+					nonce: this.nonce,
+					...data,
+				} ),
+			} );
+		} catch ( error ) {
+			console.error( 'Failed to send data to server:', error );
+		}
+	}
+
+	// Public API
+	updatePreferences( preferences ) {
+		this.userPreferences = { ...this.userPreferences, ...preferences };
+		localStorage.setItem(
+			'wcefp-user-preferences',
+			JSON.stringify( this.userPreferences )
+		);
+
+		window.dispatchEvent(
+			new CustomEvent( 'wcefp-preferences-changed', {
+				detail: { preferences: this.userPreferences },
+			} )
+		);
+	}
+
+	forceRefresh() {
+		this.loadRecommendations();
+	}
 }
 
 // CSS for recommendations
@@ -584,20 +651,20 @@ const recommendationStyles = `
 `;
 
 // Inject styles
-const styleEl = document.createElement('style');
+const styleEl = document.createElement( 'style' );
 styleEl.textContent = recommendationStyles;
-document.head.appendChild(styleEl);
+document.head.appendChild( styleEl );
 
 // Initialize when ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.wcefpRecommendations = new WCEFPRecommendations();
-    });
+if ( document.readyState === 'loading' ) {
+	document.addEventListener( 'DOMContentLoaded', () => {
+		window.wcefpRecommendations = new WCEFPRecommendations();
+	} );
 } else {
-    window.wcefpRecommendations = new WCEFPRecommendations();
+	window.wcefpRecommendations = new WCEFPRecommendations();
 }
 
 // Export for module systems
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = WCEFPRecommendations;
+if ( typeof module !== 'undefined' && module.exports ) {
+	module.exports = WCEFPRecommendations;
 }

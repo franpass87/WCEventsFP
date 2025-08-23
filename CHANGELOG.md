@@ -7,6 +7,36 @@ e questo progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 
 ---
 
+## [Unreleased - v2.2.0] – UI/UX Feature Pack Development
+
+### 🎨 In Development - Feature Pack Roadmap
+
+#### Added
+- **Feature Pack Development Branch**: Created `feature/uiux-feature-pack` for comprehensive UI/UX improvements
+- **README Roadmap Section**: Detailed implementation plan with phases and technical guidelines
+- **Development Framework**: Established structure for modern admin interface, frontend polish, and advanced features
+
+#### Planned Features (In Progress)
+- **Admin Interface Modernization**: Moving inline styles to assets, WP_List_Table integration, accessibility improvements
+- **Email Notification System**: Configurable templates, WP-Cron reminders, delivery logging
+- **Gift Voucher Automation**: PDF generation, email delivery, redemption tracking  
+- **Advanced Export**: CSV/ICS export with filtering and capability-based access
+- **Gutenberg Integration**: Server-side rendered booking form block with live preview
+- **REST API Enhancement**: Secure wcefp/v1 namespace with comprehensive CRUD operations
+- **Event Manager Role**: Custom role with granular capabilities and access control
+- **Digital Check-in**: QR code generation, mobile interface, status tracking
+- **Calendar Integration**: ICS feeds, Google Calendar sync, authenticated admin feeds
+- **Analytics Dashboard**: Chart.js visualizations, KPI tracking, cached aggregation
+- **Auto-occurrence Generation**: Rolling window maintenance via WP-Cron automation
+
+#### Development Standards
+- **Security**: Nonce verification, capability checks, output escaping on all features
+- **Performance**: Conditional loading, efficient caching, minimal database impact
+- **Compatibility**: No breaking changes to existing APIs/hooks/URLs
+- **Quality**: PHPCS/PHPStan compliance, comprehensive testing, full documentation
+
+---
+
 ## [2.1.4] – 2025-08-23
 
 ### 🔧 Comprehensive Code Consolidation & Admin Menu Rationalization

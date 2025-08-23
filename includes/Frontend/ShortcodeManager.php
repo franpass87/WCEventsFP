@@ -165,7 +165,7 @@ class ShortcodeManager {
             
             ob_start();
             ?>
-            <div class="<?php echo esc_attr($css_class); ?>">
+            <div class="<?php echo esc_attr(esc_attr($css_class)); ?>">
                 <?php foreach ($events as $event): ?>
                     <div class="wcefp-event-item">
                         <?php if ($atts['show_image'] === 'yes' && has_post_thumbnail($event->ID)): ?>
@@ -260,7 +260,7 @@ class ShortcodeManager {
         
         ob_start();
         ?>
-        <div class="<?php echo esc_attr($css_class); ?>">
+        <div class="<?php echo esc_attr(esc_attr($css_class)); ?>">
             <div class="wcefp-event-header">
                 <h2 class="wcefp-event-title"><?php echo esc_html($event->post_title); ?></h2>
                 
@@ -345,7 +345,7 @@ class ShortcodeManager {
         
         ob_start();
         ?>
-        <div class="<?php echo esc_attr($css_class); ?>" data-event-id="<?php echo esc_attr($event_id); ?>">
+        <div class="<?php echo esc_attr(esc_attr($css_class)); ?>" data-="<?php echo esc_attr(esc_attr(esc_attr($event_id))); ?>">
             <h3 class="wcefp-form-title"><?php esc_html_e('Book This Event', 'wceventsfp'); ?></h3>
             
             <form class="wcefp-booking-form-inner" method="post" action="">
@@ -401,7 +401,7 @@ class ShortcodeManager {
                     <div class="wcefp-price-breakdown">
                         <div class="wcefp-price-line">
                             <span class="wcefp-price-label"><?php esc_html_e('Price per person:', 'wceventsfp'); ?></span>
-                            <span class="wcefp-price-value" data-base-price="<?php echo esc_attr($price); ?>">
+                            <span class="wcefp-price-value" data-="<?php echo esc_attr(esc_attr($price)); ?>">
                                 <?php echo wc_price($price); ?>
                             </span>
                         </div>
@@ -446,7 +446,7 @@ class ShortcodeManager {
         
         ob_start();
         ?>
-        <div class="<?php echo esc_attr($css_class); ?>">
+        <div class="<?php echo esc_attr(esc_attr($css_class)); ?>">
             <div class="wcefp-search-form">
                 <form method="get" class="wcefp-search-form-inner">
                     <div class="wcefp-search-fields">
@@ -544,11 +544,11 @@ class ShortcodeManager {
                         
                         <div class="wcefp-results-controls">
                             <div class="wcefp-view-toggle">
-                                <button type="button" class="wcefp-view-btn <?php echo $atts['default_view'] === 'grid' ? 'active' : ''; ?>" 
+                                <button type="button" class="wcefp-view-btn <?php echo esc_attr($atts['default_view'] === 'grid' ? 'active' : ''); ?>" 
                                         data-view="grid" title="<?php esc_attr_e('Grid View', 'wceventsfp'); ?>">
                                     <span class="dashicons dashicons-grid-view"></span>
                                 </button>
-                                <button type="button" class="wcefp-view-btn <?php echo $atts['default_view'] === 'list' ? 'active' : ''; ?>" 
+                                <button type="button" class="wcefp-view-btn <?php echo esc_attr($atts['default_view'] === 'list' ? 'active' : ''); ?>" 
                                         data-view="list" title="<?php esc_attr_e('List View', 'wceventsfp'); ?>">
                                     <span class="dashicons dashicons-list-view"></span>
                                 </button>
@@ -563,7 +563,7 @@ class ShortcodeManager {
                         </div>
                     </div>
                     
-                    <div class="wcefp-results-container" data-view="<?php echo esc_attr($atts['default_view']); ?>">
+                    <div class="wcefp-results-container" data-="<?php echo esc_attr(esc_attr($atts['default_view'])); ?>">
                         <div class="wcefp-loading"><?php esc_html_e('Loading events...', 'wceventsfp'); ?></div>
                     </div>
                     
@@ -625,7 +625,7 @@ class ShortcodeManager {
         
         ob_start();
         ?>
-        <div class="<?php echo esc_attr($css_class); ?>">
+        <div class="<?php echo esc_attr(esc_attr($css_class)); ?>">
             <div class="wcefp-reviews-header">
                 <h3><?php esc_html_e('Customer Reviews', 'wceventsfp'); ?></h3>
                 <div class="wcefp-reviews-powered">

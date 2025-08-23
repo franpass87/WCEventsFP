@@ -312,14 +312,14 @@ class WCEFP_Enhanced_Features {
         
         ob_start();
         ?>
-        <div class="wcefp-google-reviews wcefp-google-reviews-<?php echo esc_attr($a['style']); ?>">
+        <div class="wcefp-google-reviews wcefp-google-reviews-<?php echo esc_attr(esc_attr($a['style'])); ?>">
             <?php if ($a['show_overall_rating']): ?>
                 <div class="wcefp-overall-rating">
                     <div class="wcefp-rating-score">
                         <span class="wcefp-rating-number"><?php echo number_format($overall_rating, 1); ?></span>
                         <div class="wcefp-rating-stars">
                             <?php for ($i = 1; $i <= 5; $i++): ?>
-                                <span class="wcefp-star <?php echo $i <= round($overall_rating) ? 'wcefp-star-filled' : 'wcefp-star-empty'; ?>">★</span>
+                                <span class="wcefp-star <?php echo esc_attr($i <= round($overall_rating) ? 'wcefp-star-filled' : 'wcefp-star-empty'); ?>">★</span>
                             <?php endfor; ?>
                         </div>
                     </div>
@@ -349,7 +349,7 @@ class WCEFP_Enhanced_Features {
                                     <span class="wcefp-author-name"><?php echo esc_html($review['author_name']); ?></span>
                                     <div class="wcefp-review-rating">
                                         <?php for ($i = 1; $i <= 5; $i++): ?>
-                                            <span class="wcefp-star <?php echo $i <= $review['rating'] ? 'wcefp-star-filled' : 'wcefp-star-empty'; ?>">★</span>
+                                            <span class="wcefp-star <?php echo esc_attr($i <= $review['rating'] ? 'wcefp-star-filled' : 'wcefp-star-empty'); ?>">★</span>
                                         <?php endfor; ?>
                                     </div>
                                 </div>

@@ -154,6 +154,15 @@ class MenuManager {
             return;
         }
         
+        // Enqueue modal system first
+        wp_enqueue_script(
+            'wcefp-modals',
+            WCEFP_PLUGIN_URL . 'assets/js/wcefp-modals.js',
+            ['jquery'],
+            WCEFP_VERSION,
+            true
+        );
+        
         wp_enqueue_script('jquery-ui-datepicker');
         wp_enqueue_style('wp-jquery-ui-dialog');
     }
@@ -230,18 +239,31 @@ class MenuManager {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Prenotazioni', 'wceventsfp') . '</h1>';
         
-        // Integrate with existing booking management using QueryBuilder
         try {
-            $query_builder = $this->container->get('db.query_builder');
-            if ($query_builder && method_exists($query_builder, 'get_bookings')) {
-                $bookings = $query_builder->get_bookings();
-                $this->render_bookings_list($bookings);
+            // Use the new WP_List_Table implementation for better UI/UX
+            if (class_exists('WCEFP\Admin\Tables\BookingsListTable')) {
+                $bookings_table = new \WCEFP\Admin\Tables\BookingsListTable();
+                $bookings_table->prepare_items();
+                
+                echo '<form method="get" id="wcefp-bookings-filter">';
+                echo '<input type="hidden" name="page" value="wcefp-bookings" />';
+                $bookings_table->search_box(__('Search', 'wceventsfp'), 'bookings');
+                $bookings_table->display();
+                echo '</form>';
+                
             } else {
-                echo '<div class="wcefp-bookings-placeholder">';
-                echo '<h2>' . esc_html__('Booking Management', 'wceventsfp') . '</h2>';
-                echo '<p>' . esc_html__('The booking management system displays and manages customer reservations.', 'wceventsfp') . '</p>';
-                echo '<p class="description">' . esc_html__('Query builder service not available. Please check plugin configuration.', 'wceventsfp') . '</p>';
-                echo '</div>';
+                // Fallback to existing implementation
+                $query_builder = $this->container->get('db.query_builder');
+                if ($query_builder && method_exists($query_builder, 'get_bookings')) {
+                    $bookings = $query_builder->get_bookings();
+                    $this->render_bookings_list($bookings);
+                } else {
+                    echo '<div class="wcefp-bookings-placeholder">';
+                    echo '<h2>' . esc_html__('Booking Management', 'wceventsfp') . '</h2>';
+                    echo '<p>' . esc_html__('The booking management system displays and manages customer reservations.', 'wceventsfp') . '</p>';
+                    echo '<p class="description">' . esc_html__('Query builder service not available. Please check plugin configuration.', 'wceventsfp') . '</p>';
+                    echo '</div>';
+                }
             }
         } catch (\Exception $e) {
             echo '<div class="notice notice-error">';

@@ -1,12 +1,32 @@
 parameters:
     paths:
-        - tests/Unit
+        - wceventsfp.php
+        - includes/
+        - admin/
+        - uninstall.php
     bootstrapFiles:
         - tests/bootstrap.php
     excludePaths:
         - vendor
         - node_modules
         - languages
-    level: 0
+        - assets
+        - templates
+        - tests
+    level: 1
     stubFiles:
         - tests/stubs/plugin-stubs.php
+        - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
+        - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+    ignoreErrors:
+        # Ignore WordPress specific patterns
+        - '#Function wp_[a-zA-Z_]+ not found#'
+        - '#Function add_[a-zA-Z_]+ not found#'
+        - '#Function get_[a-zA-Z_]+ not found#'
+        - '#Function is_[a-zA-Z_]+ not found#'
+        - '#Function do_[a-zA-Z_]+ not found#'
+        - '#Constant WP_[A-Z_]+ not found#'
+        - '#Class WP_[A-Za-z_]+ not found#'
+        - '#Class WC_[A-Za-z_]+ not found#'
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false

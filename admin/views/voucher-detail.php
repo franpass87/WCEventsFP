@@ -12,11 +12,11 @@
         </tr>
         <tr>
             <th><?php _e('Valore','wceventsfp'); ?></th>
-            <td>€ <?php echo number_format((float)$voucher['value'],2,',','.'); ?></td>
+            <td>€ <?php echo esc_html(number_format((float)$voucher['value'],2,',','.')); ?></td>
         </tr>
         <tr>
             <th><?php _e('Stato','wceventsfp'); ?></th>
-            <td><?php echo ($voucher['status']=='used')?__('Usato','wceventsfp'):__('Non usato','wceventsfp'); ?></td>
+            <td><?php echo esc_html(($voucher['status']=='used')?__('Usato','wceventsfp'):__('Non usato','wceventsfp')); ?></td>
         </tr>
         <tr>
             <th><?php _e('Ordine','wceventsfp'); ?></th>
