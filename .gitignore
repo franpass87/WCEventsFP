@@ -71,3 +71,5 @@ test_wcefp_admin.php
 
 # Build / Distribuzione
 /dist/
+node_modules/
+docs/
