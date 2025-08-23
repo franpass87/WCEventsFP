@@ -1,0 +1,693 @@
+/**
+ * Mobile Check-in Interface Styles
+ * 
+ * Responsive CSS for the mobile check-in interface
+ * Part of Phase 5: Advanced Booking Features
+ *
+ * @package WCEFP
+ * @subpackage Assets
+ * @since 2.2.0
+ */
+
+/* ==========================================================================
+   Mobile Check-in Container
+   ========================================================================== */
+
+.wcefp-mobile-checkin {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.wcefp-checkin-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f1;
+}
+
+.wcefp-checkin-header h2 {
+    color: #1e1e1e;
+    margin: 0 0 10px 0;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.wcefp-checkin-subtitle {
+    color: #666;
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* ==========================================================================
+   Tab System
+   ========================================================================== */
+
+.wcefp-checkin-tabs {
+    display: flex;
+    margin-bottom: 30px;
+    background: #f6f7f7;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.wcefp-tab-button {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.wcefp-tab-button:hover {
+    color: #0073aa;
+    background: rgba(0, 115, 170, 0.1);
+}
+
+.wcefp-tab-button.active {
+    background: #0073aa;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 115, 170, 0.3);
+}
+
+.wcefp-tab-button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.wcefp-tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.wcefp-tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   QR Scanner Interface
+   ========================================================================== */
+
+.wcefp-qr-scanner-container {
+    text-align: center;
+}
+
+.wcefp-scanner-viewfinder {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 20px;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 4/3;
+}
+
+#wcefp-scanner-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.wcefp-scanner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    pointer-events: none;
+}
+
+.wcefp-scanner-frame {
+    position: relative;
+    width: 60%;
+    height: 60%;
+    border: 2px solid #00ff00;
+    border-radius: 8px;
+    animation: pulse 2s infinite;
+}
+
+.wcefp-scanner-corner {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #00ff00;
+}
+
+.wcefp-scanner-corner.top-left {
+    top: -3px;
+    left: -3px;
+    border-right: none;
+    border-bottom: none;
+}
+
+.wcefp-scanner-corner.top-right {
+    top: -3px;
+    right: -3px;
+    border-left: none;
+    border-bottom: none;
+}
+
+.wcefp-scanner-corner.bottom-left {
+    bottom: -3px;
+    left: -3px;
+    border-right: none;
+    border-top: none;
+}
+
+.wcefp-scanner-corner.bottom-right {
+    bottom: -3px;
+    right: -3px;
+    border-left: none;
+    border-top: none;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.wcefp-scanner-instruction {
+    color: #ffffff;
+    margin-top: 20px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.wcefp-scanner-controls {
+    margin-bottom: 20px;
+}
+
+.wcefp-scanner-status {
+    min-height: 30px;
+}
+
+.wcefp-scanner-message {
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.wcefp-scanner-message.info {
+    background: #e7f3ff;
+    color: #0073aa;
+    border: 1px solid #b3d9ff;
+}
+
+.wcefp-scanner-message.error {
+    background: #ffeaea;
+    color: #d63638;
+    border: 1px solid #ff9999;
+}
+
+.wcefp-scanner-message.warning {
+    background: #fff8e5;
+    color: #b26200;
+    border: 1px solid #ffcc99;
+}
+
+/* ==========================================================================
+   Form Styles
+   ========================================================================== */
+
+.wcefp-checkin-form {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.wcefp-form-group {
+    margin-bottom: 20px;
+}
+
+.wcefp-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #1e1e1e;
+    font-size: 14px;
+}
+
+.wcefp-form-group .required {
+    color: #d63638;
+    margin-left: 3px;
+}
+
+.wcefp-form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.wcefp-form-control:focus {
+    outline: none;
+    border-color: #0073aa;
+    box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
+}
+
+.wcefp-form-control:invalid {
+    border-color: #d63638;
+}
+
+.wcefp-form-help {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.wcefp-form-actions {
+    margin-top: 30px;
+    text-align: center;
+}
+
+/* ==========================================================================
+   Button Styles
+   ========================================================================== */
+
+.wcefp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.wcefp-btn-primary {
+    background: #0073aa;
+    color: #ffffff;
+}
+
+.wcefp-btn-primary:hover {
+    background: #005a87;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 115, 170, 0.4);
+}
+
+.wcefp-btn-secondary {
+    background: #f6f7f7;
+    color: #666;
+    border: 2px solid #ddd;
+}
+
+.wcefp-btn-secondary:hover {
+    background: #e7e8e9;
+    color: #333;
+}
+
+.wcefp-btn-large {
+    padding: 16px 32px;
+    font-size: 16px;
+    min-width: 180px;
+}
+
+.wcefp-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================================================
+   Status Displays
+   ========================================================================== */
+
+.wcefp-checkin-status {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f0f9ff;
+    border: 2px solid #b3d9ff;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.wcefp-status-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.wcefp-status-icon .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #00a32a;
+}
+
+.wcefp-status-message h3 {
+    margin: 0;
+    color: #1e1e1e;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.wcefp-status-message p {
+    margin: 5px 0 0 0;
+    color: #666;
+    font-size: 16px;
+}
+
+.wcefp-error-message {
+    background: #ffeaea;
+    border: 2px solid #ff9999;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.wcefp-error-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.wcefp-error-content .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #d63638;
+    flex-shrink: 0;
+}
+
+.wcefp-error-text h4 {
+    margin: 0 0 5px 0;
+    color: #d63638;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.wcefp-error-text p {
+    margin: 0;
+    color: #a23235;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* ==========================================================================
+   Loading Overlay
+   ========================================================================== */
+
+.wcefp-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.wcefp-loading-spinner {
+    text-align: center;
+    color: #ffffff;
+}
+
+.wcefp-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.wcefp-loading-spinner p {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Modal Styles
+   ========================================================================== */
+
+.wcefp-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9998;
+}
+
+.wcefp-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.wcefp-modal-content {
+    position: relative;
+    background: #ffffff;
+    margin: 50px auto;
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+    animation: modalIn 0.3s ease-out;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.wcefp-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #ddd;
+}
+
+.wcefp-modal-header h3 {
+    margin: 0;
+    color: #1e1e1e;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.wcefp-modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    color: #666;
+    transition: all 0.3s ease;
+}
+
+.wcefp-modal-close:hover {
+    background: #f0f0f1;
+    color: #d63638;
+}
+
+.wcefp-modal-body {
+    padding: 24px;
+}
+
+.wcefp-modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 20px 24px;
+    border-top: 1px solid #ddd;
+    background: #f9f9f9;
+    border-radius: 0 0 12px 12px;
+}
+
+.wcefp-booking-details {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.wcefp-booking-details h4 {
+    margin: 0 0 12px 0;
+    color: #1e1e1e;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wcefp-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 4px 0;
+}
+
+.wcefp-detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.wcefp-detail-row label {
+    font-weight: 600;
+    color: #666;
+    font-size: 14px;
+}
+
+.wcefp-detail-row span {
+    color: #1e1e1e;
+    font-size: 14px;
+    text-align: right;
+}
+
+/* ==========================================================================
+   Theme Variations
+   ========================================================================== */
+
+.wcefp-checkin-theme-dark {
+    background: #1e1e1e;
+    color: #ffffff;
+}
+
+.wcefp-checkin-theme-dark .wcefp-checkin-header {
+    border-bottom-color: #333;
+}
+
+.wcefp-checkin-theme-dark .wcefp-checkin-header h2,
+.wcefp-checkin-theme-dark .wcefp-form-group label {
+    color: #ffffff;
+}
+
+.wcefp-checkin-theme-dark .wcefp-form-control {
+    background: #333;
+    border-color: #555;
+    color: #ffffff;
+}
+
+.wcefp-checkin-theme-dark .wcefp-form-control:focus {
+    border-color: #0073aa;
+    background: #2a2a2a;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .wcefp-mobile-checkin {
+        margin: 10px;
+        padding: 15px;
+        border-radius: 8px;
+    }
+    
+    .wcefp-checkin-header h2 {
+        font-size: 24px;
+    }
+    
+    .wcefp-checkin-subtitle {
+        font-size: 14px;
+    }
+    
+    .wcefp-checkin-tabs {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .wcefp-tab-button {
+        padding: 14px 20px;
+        font-size: 16px;
+    }
+    
+    .wcefp-scanner-viewfinder {
+        max-width: 100%;
+    }
+    
+    .wcefp-modal-content {
+        margin: 20px;
+        max-width: calc(100% - 40px);
+    }
+    
+    .wcefp-modal-footer {
+        flex-direction: column;
+    }
+    
+    .wcefp-btn {
+        width: 100%;
+    }
+    
+    .wcefp-error-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .wcefp-mobile-checkin {
+        margin: 5px;
+        padding: 12px;
+    }
+    
+    .wcefp-form-control {
+        font-size: 16px; /* Prevent zoom on iOS */
+        padding: 14px 16px;
+    }
+    
+    .wcefp-btn {
+        padding: 14px 20px;
+        font-size: 16px;
+    }
+}

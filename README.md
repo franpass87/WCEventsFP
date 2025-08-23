@@ -93,11 +93,34 @@ Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità
   - [x] Capability mapping for existing WordPress roles (Admin, Shop Manager, Editor)
   - [x] Menu visibility and action authorization based on user permissions
 
-#### **Phase 5: Advanced Booking Features**
-- [ ] **Digital Check-in System**
-  - QR code generation for each booking with unique tokens
-  - Mobile-optimized check-in interface for event staff
-  - Real-time check-in status tracking and duplicate prevention
+#### **Phase 5: Advanced Booking Features** ✅ COMPLETED
+- [x] **Digital Check-in System**
+  - [x] QR code generation for each booking with unique tokens
+  - [x] Mobile-optimized check-in interface for event staff
+  - [x] Real-time check-in status tracking and duplicate prevention
+  - [x] Security validation and rate limiting for check-in requests
+  - [x] Email notifications and audit logging for check-in events
+  
+- [x] **Resource Management & Conflict Detection**
+  - [x] Availability calendars with real-time resource status
+  - [x] Automated conflict detection and resolution suggestions
+  - [x] Resource scheduling with utilization tracking
+  - [x] Capacity management with overbooking protection
+  - [x] Alternative time slot recommendations with availability scoring
+  
+- [x] **Multi-Event Booking Flow**
+  - [x] Cart functionality for booking multiple events in single transaction
+  - [x] Combined event packages with cross-event discounts
+  - [x] Group booking management with participant tracking
+  - [x] Booking flow optimization with progress tracking
+  - [x] Multi-event confirmation system with grouped notifications
+  
+- [x] **Advanced Pricing Features**
+  - [x] Dynamic pricing based on demand, capacity, and seasonality
+  - [x] Group discounts with configurable tier system
+  - [x] Season-based pricing with date range and special event rules
+  - [x] Early bird and last-minute pricing adjustments
+  - [x] Loyalty program integration with customer history tracking
   
 - [ ] **Calendar Integration**
   - Public ICS feeds for events with caching and performance optimization

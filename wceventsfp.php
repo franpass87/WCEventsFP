@@ -387,6 +387,15 @@ class WCEventsFP {
                 $GLOBALS['wcefp_enhanced_features'] = new WCEFP_Enhanced_Features();
             }
 
+            // Initialize Phase 5: Advanced Booking Features
+            if (file_exists(WCEFP_PLUGIN_DIR . 'includes/BookingFeatures/BookingFeaturesServiceProvider.php')) {
+                require_once WCEFP_PLUGIN_DIR . 'includes/BookingFeatures/BookingFeaturesServiceProvider.php';
+                
+                if (class_exists('WCEFP\\BookingFeatures\\BookingFeaturesServiceProvider')) {
+                    $GLOBALS['wcefp_booking_features'] = new WCEFP\BookingFeatures\BookingFeaturesServiceProvider();
+                }
+            }
+
         } catch (Exception $e) {
             error_log('WCEventsFP: Feature loading failed: ' . $e->getMessage());
         }
