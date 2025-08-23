@@ -361,9 +361,66 @@ class ExportManager {
         }
         
         // TODO: Validate feed permissions and generate calendar content
-        // For now, return a basic public calendar
+        // Validate feed permissions
+        $feed_data = $this->validate_feed_permissions($feed_id);
         
-        $this->output_public_calendar_feed();
+        if (!$feed_data || $feed_data['status'] !== 'active') {
+            wp_die(__('Calendar feed not found or inactive.', 'wceventsfp'), 404);
+        }
+        
+        // Generate calendar content based on permissions
+        $this->output_calendar_feed($feed_data);
+    }
+    
+    /**
+     * Validate calendar feed permissions
+     * 
+     * @param string $feed_id Feed UUID
+     * @return array|false Feed data or false if invalid
+     */
+    private function validate_feed_permissions($feed_id) {
+        // Check for stored calendar feeds in options table
+        $calendar_feeds = get_option('wcefp_calendar_feeds', []);
+        
+        if (!isset($calendar_feeds[$feed_id])) {
+            return false;
+        }
+        
+        $feed_config = $calendar_feeds[$feed_id];
+        
+        // Validate feed is not expired
+        if (isset($feed_config['expires']) && strtotime($feed_config['expires']) < time()) {
+            return false;
+        }
+        
+        // Return feed configuration
+        return $feed_config;
+    }
+    
+    /**
+     * Output calendar feed based on configuration
+     * 
+     * @param array $feed_data Feed configuration
+     */
+    private function output_calendar_feed($feed_data) {
+        // Determine feed type and filters
+        $feed_type = $feed_data['type'] ?? 'public';
+        $filters = $feed_data['filters'] ?? [];
+        
+        switch ($feed_type) {
+            case 'public':
+                $this->output_public_calendar_feed();
+                break;
+            case 'private':
+                $this->output_private_calendar_feed($filters);
+                break;
+            case 'category':
+                $this->output_category_calendar_feed($filters);
+                break;
+            default:
+                $this->output_public_calendar_feed();
+                break;
+        }
     }
     
     /**
@@ -395,12 +452,8 @@ class ExportManager {
             date('Y-m-d', strtotime('+60 days'))
         ));
         
-        // Generate and output ICS
-        header('Content-Type: text/calendar; charset=utf-8');
-        header('Content-Disposition: attachment; filename="calendar.ics"');
-        
-        echo $this->generate_calendar_ics($events);
-        exit;
+        // Generate and output ICS using unified method
+        $this->generate_ics_output($events, 'WCEventsFP Public Calendar');
     }
     
     /**
@@ -423,6 +476,122 @@ class ExportManager {
         return gmdate('Ymd\THis\Z', strtotime($datetime));
     }
     
+    
+    /**
+     * Output private calendar feed with permissions
+     * 
+     * @param array $filters Feed filters
+     */
+    private function output_private_calendar_feed($filters) {
+        global $wpdb;
+        
+        // Similar to public feed but with additional access controls
+        // This would typically include user-specific events
+        $this->output_public_calendar_feed(); // Fallback for now
+    }
+    
+    /**
+     * Output category-based calendar feed
+     * 
+     * @param array $filters Category filters
+     */
+    private function output_category_calendar_feed($filters) {
+        global $wpdb;
+        
+        $category_ids = $filters['categories'] ?? [];
+        
+        if (empty($category_ids)) {
+            $this->output_public_calendar_feed();
+            return;
+        }
+        
+        // Build category filter for query
+        $category_placeholders = implode(',', array_fill(0, count($category_ids), '%d'));
+        
+        $query = "
+            SELECT DISTINCT
+                o.data_evento as event_date,
+                o.ora_evento as event_time,
+                p.post_title as event_title,
+                p.post_content as event_description,
+                o.meetingpoint as location
+            FROM {$wpdb->prefix}wcefp_occorrenze o
+            LEFT JOIN {$wpdb->posts} p ON o.product_id = p.ID
+            LEFT JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+            WHERE o.data_evento >= %s 
+            AND o.data_evento <= %s
+            AND p.post_status = 'publish'
+            AND tr.term_taxonomy_id IN ({$category_placeholders})
+            GROUP BY o.product_id, o.data_evento, o.ora_evento
+            ORDER BY o.data_evento ASC, o.ora_evento ASC
+        ";
+        
+        $params = array_merge(
+            [date('Y-m-d'), date('Y-m-d', strtotime('+60 days'))],
+            $category_ids
+        );
+        
+        $events = $wpdb->get_results($wpdb->prepare($query, $params));
+        
+        // Generate ICS output
+        $this->generate_ics_output($events, 'Category Calendar');
+    }
+    
+    /**
+     * Generate ICS calendar output
+     * 
+     * @param array $events Event data
+     * @param string $calendar_name Calendar name
+     */
+    private function generate_ics_output($events, $calendar_name = 'WCEventsFP Calendar') {
+        header('Content-Type: text/calendar; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . sanitize_file_name($calendar_name) . '.ics"');
+        header('Cache-Control: no-cache, must-revalidate');
+        
+        echo "BEGIN:VCALENDAR\r\n";
+        echo "VERSION:2.0\r\n";
+        echo "PRODID:-//WCEventsFP//Calendar Export//EN\r\n";
+        echo "CALSCALE:GREGORIAN\r\n";
+        echo "X-WR-CALNAME:" . $calendar_name . "\r\n";
+        echo "X-WR-TIMEZONE:Europe/Rome\r\n";
+        
+        foreach ($events as $event) {
+            $start_datetime = $event->event_date . 'T' . ($event->event_time ?: '10:00:00');
+            $uid = 'wcefp-' . md5($event->event_title . $start_datetime) . '@' . $_SERVER['HTTP_HOST'];
+            
+            echo "BEGIN:VEVENT\r\n";
+            echo "UID:" . $uid . "\r\n";
+            echo "DTSTART:" . $this->format_ics_datetime($start_datetime) . "\r\n";
+            echo "SUMMARY:" . $this->escape_ics_text($event->event_title) . "\r\n";
+            
+            if ($event->event_description) {
+                echo "DESCRIPTION:" . $this->escape_ics_text(wp_strip_all_tags($event->event_description)) . "\r\n";
+            }
+            
+            if ($event->location) {
+                echo "LOCATION:" . $this->escape_ics_text($event->location) . "\r\n";
+            }
+            
+            echo "DTSTAMP:" . gmdate('Ymd\THis\Z') . "\r\n";
+            echo "END:VEVENT\r\n";
+        }
+        
+        echo "END:VCALENDAR\r\n";
+        exit;
+    }
+    
+    /**
+     * Escape text for ICS format
+     * 
+     * @param string $text Text to escape
+     * @return string Escaped text
+     */
+    private function escape_ics_text($text) {
+        $text = str_replace(["\r\n", "\r", "\n"], '\\n', $text);
+        $text = str_replace([',', ';', '\\'], ['\\,', '\\;', '\\\\'], $text);
+        return $text;
+    }
+
     private function get_status_label($status) {
         $labels = [
             'pending' => __('Pending', 'wceventsfp'),
