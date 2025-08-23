@@ -8,7 +8,7 @@
  * Usage: Include this file at the very beginning of wceventsfp.php
  * 
  * @package WCEventsFP
- * @version 2.0.2
+ * @version 2.1.1
  */
 
 if (!defined('ABSPATH')) {

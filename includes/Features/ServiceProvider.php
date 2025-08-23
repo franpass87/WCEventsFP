@@ -42,7 +42,7 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
             return new CacheManager();
         });
         
-        // TODO: Implement and register when ready:
+        // TODO: Implement and register additional features when ready:
         // - AnalyticsTracker
         // - NotificationSystem  
         // - SecurityManager

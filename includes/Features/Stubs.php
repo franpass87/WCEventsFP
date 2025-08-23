@@ -24,41 +24,11 @@ class VoucherManager {
 }
 
 /**
- * Analytics Tracker stub
- */
-class AnalyticsTracker {
-    
-    public function __construct() {
-        // TODO: Implement analytics tracking
-    }
-}
-
-/**
- * Notification System stub
- */
-class NotificationSystem {
-    
-    public function __construct() {
-        // TODO: Implement notification system
-    }
-}
-
-/**
  * Cache Manager stub - wraps existing WCEFP_Cache
  */
 class CacheManager {
     
     public function __construct() {
         // Existing WCEFP_Cache functionality
-    }
-}
-
-/**
- * Security Manager stub
- */
-class SecurityManager {
-    
-    public function __construct() {
-        // TODO: Implement security features
     }
 }

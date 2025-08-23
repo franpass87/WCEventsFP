@@ -245,7 +245,7 @@ class InstallationManager {
      */
     private function set_essential_options() {
         $essential_options = [
-            'wcefp_version' => '2.1.0',
+            'wcefp_version' => '2.1.1',
             'wcefp_installation_mode' => $this->installation_mode,
             'wcefp_enabled_features' => $this->enabled_features,
             'wcefp_performance_settings' => $this->performance_settings,
