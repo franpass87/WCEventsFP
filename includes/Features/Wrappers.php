@@ -32,10 +32,20 @@ class VoucherManager {
     /**
      * Check if voucher functionality is available
      * 
-     * @return bool
+     * @return bool True if voucher system is available
+     * @since 2.1.1
      */
     public function is_available() {
-        return class_exists('WCEFP_Gift');
+        $available = class_exists('WCEFP_Gift');
+        
+        if (!$available && class_exists('WCEFP\\Utils\\Logger')) {
+            \WCEFP\Utils\Logger::info('Voucher system not available', [
+                'class' => 'WCEFP_Gift',
+                'status' => 'class not found'
+            ]);
+        }
+        
+        return $available;
     }
 }
 
@@ -56,41 +66,128 @@ class CacheManager {
      * Get cached data
      * 
      * @param string $key Cache key
-     * @param mixed $default Default value
-     * @return mixed
+     * @param mixed $default Default value if not found or on error
+     * @return mixed Cached value or default
+     * @since 2.1.1
      */
     public function get($key, $default = false) {
-        if (class_exists('WCEFP_Cache')) {
-            return \WCEFP_Cache::get($key, $default);
+        if (!is_string($key) || empty($key)) {
+            if (class_exists('WCEFP\\Utils\\Logger')) {
+                \WCEFP\Utils\Logger::error('Invalid cache key provided', [
+                    'key' => $key,
+                    'type' => gettype($key),
+                    'caller' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0] ?? 'unknown'
+                ]);
+            }
+            return $default;
         }
+        
+        if (class_exists('WCEFP_Cache')) {
+            try {
+                return \WCEFP_Cache::get($key, $default);
+            } catch (\Throwable $e) {
+                if (class_exists('WCEFP\\Utils\\Logger')) {
+                    \WCEFP\Utils\Logger::error('Cache retrieval failed', [
+                        'key' => $key,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+                return $default;
+            }
+        }
+        
+        if (class_exists('WCEFP\\Utils\\Logger')) {
+            \WCEFP\Utils\Logger::warning('Legacy cache class not available', [
+                'class' => 'WCEFP_Cache',
+                'fallback' => 'returning default value'
+            ]);
+        }
+        
         return $default;
     }
     
     /**
-     * Set cached data
+     * Set cached data with expiration
      * 
      * @param string $key Cache key
      * @param mixed $data Data to cache
-     * @param int $expiration Expiration in seconds
-     * @return bool
+     * @param int $expiration Expiration time in seconds
+     * @return bool True on success, false on failure
+     * @since 2.1.1
      */
     public function set($key, $data, $expiration = 3600) {
-        if (class_exists('WCEFP_Cache')) {
-            return \WCEFP_Cache::set($key, $data, $expiration);
+        if (!is_string($key) || empty($key)) {
+            if (class_exists('WCEFP\\Utils\\Logger')) {
+                \WCEFP\Utils\Logger::error('Invalid cache key for set operation', [
+                    'key' => $key,
+                    'type' => gettype($key)
+                ]);
+            }
+            return false;
         }
+        
+        if (class_exists('WCEFP_Cache')) {
+            try {
+                return \WCEFP_Cache::set($key, $data, $expiration);
+            } catch (\Throwable $e) {
+                if (class_exists('WCEFP\\Utils\\Logger')) {
+                    \WCEFP\Utils\Logger::error('Cache set operation failed', [
+                        'key' => $key,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+                return false;
+            }
+        }
+        
+        if (class_exists('WCEFP\\Utils\\Logger')) {
+            \WCEFP\Utils\Logger::warning('Legacy cache class not available for set operation', [
+                'class' => 'WCEFP_Cache'
+            ]);
+        }
+        
         return false;
     }
     
     /**
-     * Delete cached data
+     * Delete cached data by key
      * 
-     * @param string $key Cache key
-     * @return bool
+     * @param string $key Cache key to delete
+     * @return bool True on success, false on failure
+     * @since 2.1.1
      */
     public function delete($key) {
-        if (class_exists('WCEFP_Cache')) {
-            return \WCEFP_Cache::delete($key);
+        if (!is_string($key) || empty($key)) {
+            if (class_exists('WCEFP\\Utils\\Logger')) {
+                \WCEFP\Utils\Logger::error('Invalid cache key for delete operation', [
+                    'key' => $key,
+                    'type' => gettype($key)
+                ]);
+            }
+            return false;
         }
+        
+        if (class_exists('WCEFP_Cache')) {
+            try {
+                return \WCEFP_Cache::delete($key);
+            } catch (\Throwable $e) {
+                if (class_exists('WCEFP\\Utils\\Logger')) {
+                    \WCEFP\Utils\Logger::error('Cache delete operation failed', [
+                        'key' => $key,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+                return false;
+            }
+        }
+        
+        if (class_exists('WCEFP\\Utils\\Logger')) {
+            \WCEFP\Utils\Logger::warning('Legacy cache class not available for delete operation', [
+                'class' => 'WCEFP_Cache'
+            ]);
+        }
+        
         return false;
     }
     
