@@ -40,9 +40,18 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
             return new ProductAdmin($container);
         });
         
-        // TODO: Implement additional admin services when needed:
-        // - SettingsManager 
-        // - DashboardWidgets
+        // Additional admin services
+        $this->container->singleton('admin.settings', function($container) {
+            return new SettingsManager($container);
+        });
+        
+        $this->container->singleton('admin.dashboard', function($container) {
+            return new DashboardWidgets($container);
+        });
+        
+        $this->container->singleton('admin.features', function($container) {
+            return new FeatureManager($container);
+        });
     }
     
     /**
@@ -55,9 +64,22 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
-        // Initialize only functional admin services
+        // Initialize admin services (conditionally)
         $this->container->get('admin.menu');
         $this->container->get('admin.product');
+        
+        // Initialize additional services if classes exist
+        if (class_exists('\WCEFP\Admin\SettingsManager')) {
+            $this->container->get('admin.settings');
+        }
+        
+        if (class_exists('\WCEFP\Admin\DashboardWidgets')) {
+            $this->container->get('admin.dashboard');
+        }
+        
+        if (class_exists('\WCEFP\Admin\FeatureManager')) {
+            $this->container->get('admin.features');
+        }
     }
 
 }
