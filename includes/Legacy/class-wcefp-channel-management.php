@@ -924,5 +924,5 @@ class WCEFP_Channel_Management {
     }
 }
 
-// Initialize the channel management system
-WCEFP_Channel_Management::init();
+// Auto-initialization removed - this class is now managed by the service provider system
+// Use WCEFP\Admin\MenuManager for consolidated admin menu management
