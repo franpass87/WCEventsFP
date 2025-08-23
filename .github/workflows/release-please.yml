@@ -12,7 +12,24 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - name: Check for Personal Access Token
+        run: |
+          if [ -z "${{ secrets.RELEASE_PLEASE_TOKEN }}" ]; then
+            echo "⚠️  RELEASE_PLEASE_TOKEN secret not found"
+            echo "ℹ️  The default GITHUB_TOKEN cannot create pull requests due to GitHub security policies"
+            echo "📚 See RELEASE-AUTOMATION.md for setup instructions"
+            echo "🔧 To fix this issue:"
+            echo "   1. Create a Personal Access Token with 'repo' and 'workflow' scopes"
+            echo "   2. Add it as repository secret named 'RELEASE_PLEASE_TOKEN'"
+            echo "   3. Repository Settings → Secrets and variables → Actions → New repository secret"
+            echo ""
+            echo "Attempting to use GITHUB_TOKEN (this will likely fail for PR creation)..."
+          else
+            echo "✅ RELEASE_PLEASE_TOKEN configured - using Personal Access Token"
+          fi
+      
+      - name: Run release-please
+        uses: googleapis/release-please-action@v4
         with:
           config-file: .github/release-please-config.json
           manifest-file: .github/.release-please-manifest.json
