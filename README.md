@@ -78,17 +78,20 @@ Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità
   - [x] Server-side rendering for performance and SEO
   - [x] Block editor UI with event/product selector and configuration options
 
-#### **Phase 4: API & Developer Experience**
-- [ ] **REST API Enhancement**  
-  - Secure `wcefp/v1` namespace with comprehensive endpoints
-  - Events, occurrences, and bookings CRUD operations
-  - Rate limiting, input validation, and comprehensive error handling
-  - OpenAPI documentation with request/response schemas
+#### **Phase 4: API & Developer Experience** ✅ COMPLETED
+- [x] **Enhanced REST API**  
+  - [x] Secure `wcefp/v2` namespace with comprehensive endpoints for bookings, events, analytics
+  - [x] Rate limiting and throttling with configurable limits per client type
+  - [x] Advanced authentication (API keys, Bearer tokens, WordPress sessions)
+  - [x] OpenAPI 3.0 documentation generation with interactive Swagger UI
+  - [x] Input validation, error handling, and comprehensive logging
   
-- [ ] **Role-Based Access Control**
-  - Custom `event_manager` role with granular capabilities  
-  - Capability mapping for existing roles (Shop Manager integration)
-  - Menu visibility and action authorization based on user permissions
+- [x] **Role-Based Access Control**
+  - [x] Custom `event_manager` role with granular capabilities  
+  - [x] Advanced Event Manager role with enterprise features access
+  - [x] Event Viewer role for read-only access with API permissions
+  - [x] Capability mapping for existing WordPress roles (Admin, Shop Manager, Editor)
+  - [x] Menu visibility and action authorization based on user permissions
 
 #### **Phase 5: Advanced Booking Features**
 - [ ] **Digital Check-in System**

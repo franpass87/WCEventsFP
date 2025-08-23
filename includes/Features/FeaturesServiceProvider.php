@@ -44,6 +44,9 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
         
         // Register Phase 3: Data & Integration features
         $this->register_data_integration_services();
+        
+        // Register Phase 4: API & Developer Experience features
+        $this->register_api_developer_experience_services();
     }
     
     /**
@@ -86,6 +89,28 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
     }
     
     /**
+     * Register Phase 4 API & Developer Experience services
+     */
+    private function register_api_developer_experience_services() {
+        // Load API & Developer Experience classes
+        require_once __DIR__ . '/ApiDeveloperExperience/EnhancedRestApiManager.php';
+        require_once __DIR__ . '/ApiDeveloperExperience/RoleManager.php';
+        require_once __DIR__ . '/ApiDeveloperExperience/RateLimiter.php';
+        require_once __DIR__ . '/ApiDeveloperExperience/DocumentationManager.php';
+        require_once __DIR__ . '/ApiDeveloperExperience/DeveloperTools.php';
+        require_once __DIR__ . '/ApiDeveloperExperience/ApiDeveloperExperienceServiceProvider.php';
+        
+        // Register API & Developer Experience Service Provider
+        $api_dev_provider = new \WCEFP\Features\ApiDeveloperExperience\ApiDeveloperExperienceServiceProvider($this->container);
+        $api_dev_provider->register();
+        
+        // Store provider reference for booting
+        $this->container->singleton('api_dev_provider', function() use ($api_dev_provider) {
+            return $api_dev_provider;
+        });
+    }
+    
+    /**
      * Boot services
      * 
      * @return void
@@ -112,6 +137,9 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
         
         // Boot Phase 3: Data & Integration features
         $this->boot_data_integration_services();
+        
+        // Boot Phase 4: API & Developer Experience features
+        $this->boot_api_developer_experience_services();
     }
     
     /**
@@ -131,6 +159,16 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
         if ($this->container->has('data_integration_provider')) {
             $data_integration_provider = $this->container->get('data_integration_provider');
             $data_integration_provider->boot();
+        }
+    }
+    
+    /**
+     * Boot Phase 4 API & Developer Experience services
+     */
+    private function boot_api_developer_experience_services() {
+        if ($this->container->has('api_dev_provider')) {
+            $api_dev_provider = $this->container->get('api_dev_provider');
+            $api_dev_provider->boot();
         }
     }
 }
