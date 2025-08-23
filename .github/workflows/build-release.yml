@@ -28,7 +28,7 @@ jobs:
           # Es: refs/tags/v1.0.0 -> 1.0.0
           if [ "${GITHUB_REF}" = "${GITHUB_REF#refs/tags/}" ]; then
             # workflow_dispatch - usa versione dal plugin
-            VERSION=$(grep "Version:" wceventsfp.php | head -1 | awk '{print $2}')
+            VERSION=$(grep "^ \* Version:" wceventsfp.php | head -1 | awk '{print $3}' | tr -d ' ')
           else
             # tag push - estrai dalla tag
             RAW="${GITHUB_REF_NAME}"
