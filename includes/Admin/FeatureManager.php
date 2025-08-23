@@ -38,16 +38,15 @@ class FeatureManager {
      * @return void
      */
     public function add_admin_menu() {
-        add_menu_page(
-            __('WCEventsFP Dashboard', 'wceventsfp'),
-            __('WCEventsFP', 'wceventsfp'),
-            'manage_options',
+        add_submenu_page(
             'wcefp',
-            [$this, 'render_dashboard'],
-            'dashicons-calendar-alt',
-            30
+            __('WCEventsFP Dashboard', 'wceventsfp'),
+            __('Dashboard', 'wceventsfp'),
+            'manage_options',
+            'wcefp-dashboard',
+            [$this, 'render_dashboard']
         );
-        
+
         add_submenu_page(
             'wcefp',
             __('Feature Manager', 'wceventsfp'),
@@ -56,7 +55,7 @@ class FeatureManager {
             'wcefp-features',
             [$this, 'render_feature_manager']
         );
-        
+
         add_submenu_page(
             'wcefp',
             __('Performance Monitor', 'wceventsfp'),
@@ -65,7 +64,7 @@ class FeatureManager {
             'wcefp-performance',
             [$this, 'render_performance_monitor']
         );
-        
+
         add_submenu_page(
             'wcefp',
             __('Installation Status', 'wceventsfp'),
