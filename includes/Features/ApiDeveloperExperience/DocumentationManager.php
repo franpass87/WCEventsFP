@@ -990,7 +990,7 @@ headers = {
         
         if ($last_generated !== $current_version) {
             delete_transient('wcefp_openapi_spec');
-            update_option('wcefp_docs_last_generated', $current_version);
+            update_option('wcefp_docs_last_generated', $current_version, false);
         }
     }
 }

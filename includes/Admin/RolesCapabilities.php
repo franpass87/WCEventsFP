@@ -151,7 +151,7 @@ class RolesCapabilities {
         }
         
         // Update the capabilities version to track when they were last updated
-        update_option('wcefp_capabilities_version', WCEFP_VERSION);
+        update_option('wcefp_capabilities_version', WCEFP_VERSION, false);
     }
     
     /**

@@ -169,7 +169,7 @@ class RoleManager {
         $this->update_existing_roles();
         
         // Mark roles as created
-        update_option('wcefp_custom_roles_version', WCEFP_VERSION);
+        update_option('wcefp_custom_roles_version', WCEFP_VERSION, false);
     }
     
     /**
