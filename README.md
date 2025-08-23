@@ -2,12 +2,21 @@
 
 > **📦 COME SCARICARE IL PLUGIN** - [Guida Completa per Utenti](DOWNLOAD-INSTALL-GUIDE.md)  
 > **⚠️ NON usare "Code → Download ZIP"** - Scarica dalle [GitHub Releases](https://github.com/franpass87/WCEventsFP/releases)
+> 
+> **🛡️ WSOD ISSUES COMPLETELY RESOLVED** - See [WSOD Solution Guide](WSOD-GUIDE.md)
 
 **Sistema di prenotazione enterprise per competere direttamente con RegionDo, Bokun e GetYourGuide**
 
 Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità di livello enterprise per massimizzare le conversioni, gestire risorse operative e automatizzare la distribuzione multi-canale.
 
-## 🚀 Nuove Funzionalità v2.1.1 - WSOD Resolution Complete
+## 🚀 Nuove Funzionalità v2.1.1 - Code Cleanup & Bug Fixes
+
+### 🛡️ Technical Improvements
+- **Product Type System Unified**: Eliminated duplicate product classes, standardized to wcefp_event/wcefp_experience
+- **WSOD Documentation Consolidated**: Single comprehensive guide replaces 5 redundant files  
+- **Security Updates**: Fixed npm vulnerabilities, updated @wordpress/scripts to v30.22.0
+- **Code Quality**: Removed ~1300 lines of redundant code and documentation
+- **Enhanced Product Classes**: Improved virtual product handling and shipping logic
 
 ### 🛡️ Complete WSOD (White Screen of Death) Resolution
 - **Advanced Autoloading System**: Bulletproof PSR-4 autoloading without Composer dependency, with intelligent fallback and error handling

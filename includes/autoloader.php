@@ -34,8 +34,8 @@ class WCEFP_Autoloader {
         'WCEFP_Cache' => 'includes/Legacy/class-wcefp-cache.php',
         'WCEFP_Enhanced_Features' => 'includes/Legacy/class-wcefp-enhanced-features.php',
         'WCEFP_Product_Types' => 'includes/Legacy/class-wcefp-product-types.php',
-        'WC_Product_Evento' => 'includes/WooCommerce/ProductEvento.php',
-        'WC_Product_Esperienza' => 'includes/WooCommerce/ProductEsperienza.php'
+        'WC_Product_WCEFP_Event' => 'includes/Legacy/class-wcefp-product-types.php',
+        'WC_Product_WCEFP_Experience' => 'includes/Legacy/class-wcefp-product-types.php'
     ];
     
     /**
