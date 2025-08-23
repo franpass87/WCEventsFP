@@ -3,6 +3,9 @@ if (!defined('ABSPATH')) exit;
 
 class WCEFP_Admin {
 
+    /**
+     * Initialize admin functionality
+     */
     public static function init() {
         add_action('admin_menu', [__CLASS__, 'admin_menu']);
         add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin']);
@@ -13,7 +16,9 @@ class WCEFP_Admin {
         }
     }
 
-    /* ---------- Menu ---------- */
+    /**
+     * Register admin menu pages
+     */
     public static function admin_menu() {
         $cap = 'manage_woocommerce';
 
@@ -34,7 +39,11 @@ class WCEFP_Admin {
         add_submenu_page('wcefp', __('Impostazioni','wceventsfp'), __('Impostazioni','wceventsfp'), $cap,'wcefp-settings',[__CLASS__,'render_new_settings_page']);
     }
 
-    /* ---------- Enqueue admin ---------- */
+    /**
+     * Enqueue admin scripts and styles
+     * 
+     * @param string $hook Current admin page hook
+     */
     public static function enqueue_admin($hook) {
         $is_wcefp_page = strpos($hook, 'wcefp') !== false;
         $is_product_edit = in_array($hook, ['post.php', 'post-new.php'], true);
@@ -106,6 +115,11 @@ class WCEFP_Admin {
         }
     }
 
+    /**
+     * Get events products for filter dropdown
+     * 
+     * @return array Array of products with ID and title
+     */
     private static function get_events_products_for_filter(){
         $q = new WP_Query([
             'post_type' => 'product',
@@ -305,6 +319,9 @@ class WCEFP_Admin {
     }
 
 
+    /**
+     * Render the calendar view page
+     */
     public static function render_calendar_page() {
         if (!current_user_can('manage_woocommerce')) return; ?>
         <div class="wrap">
@@ -342,6 +359,9 @@ class WCEFP_Admin {
         </div><?php
     }
 
+    /**
+     * Render the export data page
+     */
     public static function render_export_page() {
         if (!current_user_can('manage_woocommerce')) return; ?>
         <div class="wrap">

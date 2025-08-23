@@ -20,7 +20,7 @@ class WCEFP_Vouchers_Table extends WP_List_Table {
         $tbl = $wpdb->prefix . 'wcefp_vouchers';
 
         $orderby = !empty($_REQUEST['orderby']) ? sanitize_sql_orderby($_REQUEST['orderby']) : 'created_at';
-        $order   = (isset($_REQUEST['order']) && strtolower($_REQUEST['order']) === 'asc') ? 'ASC' : 'DESC';
+        $order   = (isset($_REQUEST['order']) && strtolower(sanitize_text_field(wp_unslash($_REQUEST['order']))) === 'asc') ? 'ASC' : 'DESC';
 
         $where = '1=1';
         $params = [];
