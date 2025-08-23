@@ -185,6 +185,8 @@ Per aggiungere altri screenshot, inserire le immagini in `assets/screenshots/` e
 ## Installazione
 1. Copia la cartella `WCEventsFP` in `wp-content/plugins/`.
 2. Attiva **WCEventsFP** da **Plugin** in WordPress.
+   - ✅ **Attivazione Immediata**: Tutte le funzionalità sono disponibili subito
+   - ✅ **Nessun Setup**: Non sono richiesti passaggi di configurazione
 3. Vai su **Eventi & Degustazioni → Impostazioni** e configura:
    - **Tracking**: abilita GA4/DTL, inserisci **Meta Pixel ID**.
    - **Brevo**: API Key, mittente, Template ID (opzionale), **Lista IT** e **Lista EN**.
