@@ -122,10 +122,10 @@ Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità
   - [x] Early bird and last-minute pricing adjustments
   - [x] Loyalty program integration with customer history tracking
   
-- [ ] **Calendar Integration**
-  - Public ICS feeds for events with caching and performance optimization
-  - Google Calendar "Add Event" integration buttons  
-  - Authenticated feeds for admin calendar synchronization
+- [x] **Calendar Integration** ✅ COMPLETED
+  - [x] Public ICS feeds for events with caching and performance optimization
+  - [x] Google Calendar "Add Event" integration buttons  
+  - [x] Authenticated feeds for admin calendar synchronization
 
 #### **Phase 6: Analytics & Automation** ✅ COMPLETED  
 - [x] **Interactive Analytics Dashboard**
