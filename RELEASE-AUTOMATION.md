@@ -113,12 +113,45 @@ If plugin files are moved, update the paths in:
 - `.github/release-please-config.json`
 - Existing GitHub Actions workflows that reference plugin files
 
+## Setup Requirements
+
+### Personal Access Token Configuration
+
+The release-please workflow requires a Personal Access Token (PAT) to create pull requests due to repository security settings.
+
+**Setup Steps:**
+
+1. **Create a Personal Access Token:**
+   - Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
+   - Click "Generate new token (classic)"
+   - Set expiration (recommended: 1 year)
+   - Select scopes:
+     - ✅ `repo` (Full control of private repositories)
+     - ✅ `workflow` (Update GitHub Action workflows)
+
+2. **Add Token to Repository:**
+   - Go to repository Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `RELEASE_PLEASE_TOKEN`
+   - Value: Your PAT from step 1
+   - Click "Add secret"
+
+3. **Verify Configuration:**
+   - The workflow will now use this token instead of the default GITHUB_TOKEN
+   - This allows creation of release PRs even with repository restrictions
+
 ## Troubleshooting
 
 ### Release PR Not Created
 - Check commit messages follow conventional format
+- Verify `RELEASE_PLEASE_TOKEN` secret is configured (see Setup Requirements above)
 - Verify workflow has proper permissions (contents: write, pull-requests: write)
-- Check GitHub Actions logs
+- Check GitHub Actions logs for authentication errors
+
+### Authentication Errors
+- Ensure `RELEASE_PLEASE_TOKEN` secret exists and is not expired
+- Verify PAT has `repo` and `workflow` scopes
+- Check if PAT owner has write access to the repository
 
 ### Version Not Updated in Files  
 - Verify `// x-release-please-version` or `<!-- x-release-please-version -->` markers exist
