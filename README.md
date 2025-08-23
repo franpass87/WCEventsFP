@@ -1,5 +1,8 @@
 # WCEventsFP (v2.1.1) - Enterprise Booking Platform
 
+> **📦 COME SCARICARE IL PLUGIN** - [Guida Completa per Utenti](DOWNLOAD-INSTALL-GUIDE.md)  
+> **⚠️ NON usare "Code → Download ZIP"** - Scarica dalle [GitHub Releases](https://github.com/franpass87/WCEventsFP/releases)
+
 **Sistema di prenotazione enterprise per competere direttamente con RegionDo, Bokun e GetYourGuide**
 
 Plugin WordPress/WooCommerce completo per eventi ed esperienze con funzionalità di livello enterprise per massimizzare le conversioni, gestire risorse operative e automatizzare la distribuzione multi-canale.

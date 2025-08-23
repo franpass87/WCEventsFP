@@ -1,9 +1,9 @@
-name: Build & Release WP Plugin
+name: Build & Release WCEventsFP Plugin
 
 on:
   push:
     tags:
-      - 'v*'            # es: v1.0.0
+      - 'v*'            # es: v1.0.0, v2.1.1
   workflow_dispatch:     # esecuzione manuale
 
 permissions:
@@ -14,108 +14,115 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PLUGIN_SLUG: wp-performance-suite  # nome cartella plugin
-      PHP_VERSION: '8.2'                 # per il build; runtime su hosting può essere 8.1+
+      PLUGIN_SLUG: wceventsfp
+      PLUGIN_DIR: wceventsfp
+      PHP_VERSION: '8.2'
     
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.PHP_VERSION }}
-          tools: composer
-          coverage: none
-
-      - name: Install Composer deps (if any)
-        run: |
-          if [ -f "composer.json" ]; then
-            composer install --no-dev --prefer-dist --optimize-autoloader
-          fi
-
       - name: Determine version
         id: ver
         run: |
           # Es: refs/tags/v1.0.0 -> 1.0.0
-          RAW="${GITHUB_REF_NAME}"
-          VERSION="${RAW#v}"
+          if [ "${GITHUB_REF}" = "${GITHUB_REF#refs/tags/}" ]; then
+            # workflow_dispatch - usa versione dal plugin
+            VERSION=$(grep "Version:" wceventsfp.php | head -1 | awk '{print $2}')
+          else
+            # tag push - estrai dalla tag
+            RAW="${GITHUB_REF_NAME}"
+            VERSION="${RAW#v}"
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "ZIP_NAME=${PLUGIN_SLUG}-${VERSION}.zip" >> $GITHUB_OUTPUT
 
-      - name: Prepare dist structure
+      - name: Prepare distribution structure
         run: |
           rm -rf dist
-          mkdir -p "dist/${{ env.PLUGIN_SLUG }}"
-          rsync -a \
+          mkdir -p dist/${{ env.PLUGIN_DIR }}
+          
+          # Copia tutti i file necessari
+          rsync -av \
             --exclude='.git*' \
-            --exclude='.github' \
-            --exclude='dist' \
-            --exclude='tests' \
-            --exclude='node_modules' \
-            --exclude='.idea' \
-            --exclude='.vscode' \
-            . "dist/${{ env.PLUGIN_SLUG }}/"
+            --exclude='.github/' \
+            --exclude='dist/' \
+            --exclude='tests/' \
+            --exclude='node_modules/' \
+            --exclude='.idea/' \
+            --exclude='.vscode/' \
+            --exclude='*.log' \
+            --exclude='phpunit.xml' \
+            --exclude='phpcs.xml' \
+            --exclude='phpstan.neon' \
+            --exclude='composer.json' \
+            --exclude='composer.lock' \
+            --exclude='package.json' \
+            --exclude='package-lock.json' \
+            --exclude='webpack.config.js' \
+            --exclude='DEVELOPMENT.md' \
+            --exclude='CONTRIBUTING.md' \
+            --exclude='tools/backups/' \
+            . dist/${{ env.PLUGIN_DIR }}/
+          
+          # Assicurati che vendor/wcefp-fpdf.php sia presente
+          mkdir -p dist/${{ env.PLUGIN_DIR }}/vendor
+          if [ -f vendor/wcefp-fpdf.php ]; then
+            cp vendor/wcefp-fpdf.php dist/${{ env.PLUGIN_DIR }}/vendor/
+          fi
 
-      - name: Create zip
+      - name: Verify plugin structure
+        run: |
+          echo "=== Plugin structure verification ==="
+          echo "Main plugin file:"
+          ls -la dist/${{ env.PLUGIN_DIR }}/wceventsfp.php
+          echo ""
+          echo "Includes directory:"
+          ls -la dist/${{ env.PLUGIN_DIR }}/includes/
+          echo ""
+          echo "Vendor directory:"
+          ls -la dist/${{ env.PLUGIN_DIR }}/vendor/ || echo "No vendor directory"
+          echo ""
+          echo "Total files in distribution:"
+          find dist/${{ env.PLUGIN_DIR }} -type f | wc -l
+
+      - name: Create distribution ZIP
         working-directory: dist
         run: |
-          zip -r "${{ env.PLUGIN_SLUG }}-${{ steps.ver.outputs.version }}.zip" "${{ env.PLUGIN_SLUG }}"
+          zip -r "${{ steps.ver.outputs.ZIP_NAME }}" "${{ env.PLUGIN_DIR }}"
+          echo "Created: ${{ steps.ver.outputs.ZIP_NAME }}"
+          ls -lh "${{ steps.ver.outputs.ZIP_NAME }}"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PLUGIN_SLUG }}-${{ steps.ver.outputs.version }}.zip
-          path: dist/${{ env.PLUGIN_SLUG }}-${{ steps.ver.outputs.version }}.zip
+          name: ${{ steps.ver.outputs.ZIP_NAME }}
+          path: dist/${{ steps.ver.outputs.ZIP_NAME }}
+          retention-days: 30
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/${{ env.PLUGIN_SLUG }}-${{ steps.ver.outputs.version }}.zip
-          generate_release_notes: true
-              fi
-              mv "$f" "${PLUGIN_DIR}/"
-            done
-            shopt -u dotglob
-          fi
-          echo "Contenuto ${PLUGIN_DIR}/:"
-          ls -la "${PLUGIN_DIR}"
-
-      - name: Rimuove file non necessari dallo ZIP
-        shell: bash
-        run: |
-          set -e
-          rm -rf "${PLUGIN_DIR}/.git" \
-                 "${PLUGIN_DIR}/.github" \
-                 "${PLUGIN_DIR}/node_modules" \
-                 "${PLUGIN_DIR}/vendor" \
-                 "${PLUGIN_DIR}/tests" \
-                 "${PLUGIN_DIR}/.DS_Store" \
-                 "${PLUGIN_DIR}/Thumbs.db"
-          # opzionale: rimuovi file dev se presenti
-          rm -f "${PLUGIN_DIR}/package-lock.json" \
-                "${PLUGIN_DIR}/pnpm-lock.yaml" \
-                "${PLUGIN_DIR}/yarn.lock"
-
-      - name: Crea ZIP del plugin
-        run: zip -r "${ZIP_NAME}" "${PLUGIN_DIR}" -x "*/.git/*" "*/.github/*" "*.zip"
-
-      - name: Pubblica artifact (build logico)
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.ZIP_NAME }}
-          path: ${{ env.ZIP_NAME }}
-          retention-days: 7
-
-      - name: Crea GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: WCEventsFP ${{ github.ref_name }}
-          body_path: CHANGELOG.md
+          name: WCEventsFP v${{ steps.ver.outputs.version }}
+          body: |
+            ## WCEventsFP v${{ steps.ver.outputs.version }}
+            
+            **📦 Download Pronto all'Uso**
+            
+            Scarica il file ZIP qui sotto e caricalo direttamente in WordPress:
+            - ✅ Tutte le dipendenze incluse
+            - ✅ Nessun Composer richiesto
+            - ✅ Funziona immediatamente dopo l'attivazione
+            - ✅ Sistema anti-WSOD integrato
+            
+            **🚀 Come Installare:**
+            1. Scarica `${{ steps.ver.outputs.ZIP_NAME }}`
+            2. Vai in WordPress Admin → Plugin → Aggiungi Nuovo
+            3. Clicca "Carica Plugin" e seleziona il file ZIP
+            4. Attiva il plugin
+            
+            **⚠️ Non scaricare il codice sorgente** - usa solo il file ZIP qui sotto!
+          files: dist/${{ steps.ver.outputs.ZIP_NAME }}
           draft: false
           prerelease: false
-          files: |
-            ${{ env.ZIP_NAME }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
