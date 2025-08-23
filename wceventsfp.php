@@ -330,44 +330,25 @@ class WCEventsFP {
      * @return void
      */
     private function setup_progressive_loading() {
-        if (!class_exists('WCEFP\\Core\\ProgressiveLoader')) {
-            return;
-        }
-        
+        // Load all core features immediately without resource-based scaling
         try {
-            $loader = new WCEFP\Core\ProgressiveLoader();
-            
-            // Add core features with priorities
-            $loader->add_feature('logging', function() {
-                // Load logging functionality
-                if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-logger.php')) {
-                    require_once WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-logger.php';
-                }
-            }, 1);
-            
-            $loader->add_feature('cache', function() {
-                // Load caching functionality
-                if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-cache.php')) {
-                    require_once WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-cache.php';
-                }
-            }, 2);
-            
-            $loader->add_feature('enhanced_features', function() {
-                // Load enhanced features
-                if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-enhanced-features.php')) {
-                    require_once WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-enhanced-features.php';
-                }
-            }, 3);
-            
-            // Load first batch immediately
-            $loaded = $loader->load_features();
-            
-            if (!empty($loaded)) {
-                error_log('WCEventsFP: Progressive loading initialized. Loaded: ' . implode(', ', $loaded));
+            // Load logging functionality
+            if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-logger.php')) {
+                require_once WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-logger.php';
             }
-            
+
+            // Load caching functionality
+            if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-cache.php')) {
+                require_once WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-cache.php';
+            }
+
+            // Load enhanced features
+            if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-enhanced-features.php')) {
+                require_once WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-enhanced-features.php';
+            }
+
         } catch (Exception $e) {
-            error_log('WCEventsFP: Progressive loading setup failed: ' . $e->getMessage());
+            error_log('WCEventsFP: Feature loading failed: ' . $e->getMessage());
         }
     }
 }
