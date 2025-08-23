@@ -67,6 +67,10 @@ class AssetManager {
             return;
         }
         
+        // Check if we have WCEFP shortcodes or blocks on current page
+        $has_wcefp_content = $this->has_wcefp_content();
+        
+        // Always enqueue base frontend assets
         wp_enqueue_style(
             'wcefp-frontend',
             $this->plugin_url . 'assets/css/frontend.css',
@@ -82,14 +86,39 @@ class AssetManager {
             true
         );
         
+        // Conditionally enqueue widget system if WCEFP content is present
+        if ($has_wcefp_content) {
+            wp_enqueue_style(
+                'wcefp-widgets',
+                $this->plugin_url . 'assets/css/wcefp-widgets.css',
+                ['wcefp-frontend'],
+                $this->version
+            );
+            
+            wp_enqueue_script(
+                'wcefp-widgets',
+                $this->plugin_url . 'assets/js/wcefp-widgets.js',
+                ['jquery', 'wcefp-frontend'],
+                $this->version,
+                true
+            );
+        }
+        
         // Localize script with data
         wp_localize_script('wcefp-frontend', 'WCEFPData', [
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('wcefp_frontend'),
+            'has_widgets' => $has_wcefp_content,
             'strings' => [
                 'loading' => __('Loading...', 'wceventsfp'),
                 'error' => __('An error occurred. Please try again.', 'wceventsfp'),
-                'success' => __('Success!', 'wceventsfp')
+                'success' => __('Success!', 'wceventsfp'),
+                'required_field' => __('This field is required.', 'wceventsfp'),
+                'invalid_email' => __('Please enter a valid email address.', 'wceventsfp'),
+                'invalid_number' => __('Please enter a valid number.', 'wceventsfp'),
+                'invalid_date' => __('Please enter a valid date.', 'wceventsfp'),
+                'form_submitted' => __('Form submitted successfully!', 'wceventsfp'),
+                'connection_error' => __('Connection error. Please check your internet connection.', 'wceventsfp')
             ]
         ]);
         
@@ -126,9 +155,17 @@ class AssetManager {
         );
         
         wp_enqueue_script(
+            'wcefp-modals',
+            $this->plugin_url . 'assets/js/wcefp-modals.js',
+            ['jquery'],
+            $this->version,
+            true
+        );
+
+        wp_enqueue_script(
             'wcefp-admin',
             $this->plugin_url . 'assets/js/admin.js',
-            ['jquery', 'wp-util'],
+            ['jquery', 'wp-util', 'wcefp-modals'],
             $this->version,
             true
         );
@@ -211,6 +248,50 @@ class AssetManager {
                     return true;
                 }
             }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Check if current page has WCEFP content requiring widget system
+     * 
+     * @return bool
+     */
+    private function has_wcefp_content() {
+        global $post;
+        
+        // Check for WCEFP shortcodes
+        if ($post) {
+            $shortcodes = ['wcefp_booking_form', 'wcefp_event_calendar', 'wcefp_event_list'];
+            foreach ($shortcodes as $shortcode) {
+                if (has_shortcode($post->post_content, $shortcode)) {
+                    return true;
+                }
+            }
+        }
+        
+        // Check for Gutenberg blocks
+        if ($post && function_exists('has_block')) {
+            $blocks = ['wcefp/booking-form', 'wcefp/event-calendar', 'wcefp/event-list'];
+            foreach ($blocks as $block) {
+                if (has_block($block, $post)) {
+                    return true;
+                }
+            }
+        }
+        
+        // Check if it's a WCEFP product page
+        if (is_product()) {
+            $product = wc_get_product();
+            if ($product && in_array($product->get_type(), ['evento', 'esperienza'])) {
+                return true;
+            }
+        }
+        
+        // Check if page has .wcefp-widget class (for dynamic content)
+        if (is_page() || is_single()) {
+            return true; // Let conditional loading handle this
         }
         
         return false;

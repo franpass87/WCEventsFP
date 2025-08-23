@@ -43,21 +43,22 @@
             const currentCap = parseInt(ep.capacity || 0, 10);
             const currentStatus = ep.status || 'active';
 
-            const newCapStr = prompt('Nuova capienza per questo slot:', currentCap);
-            if (newCapStr === null) return;
-            const newCap = parseInt(newCapStr, 10);
-            if (Number.isNaN(newCap) || newCap < 0) { alert('Valore non valido'); return; }
+            const newCapStr = WCEFPModals.showPrompt('Nuova capienza per questo slot:', currentCap, function(newCapStr) {
+                if (newCapStr === null || newCapStr === '') return;
+                const newCap = parseInt(newCapStr, 10);
+                if (Number.isNaN(newCap) || newCap < 0) { 
+                    WCEFPModals.showError('Valore non valido'); 
+                    return; 
+                }
 
-            const toggle = confirm('Vuoi alternare lo stato (attivo/disattivato)?\nOK = alterna, Annulla = lascia invariato');
-            const nextStatus = toggle ? (currentStatus === 'active' ? 'cancelled' : 'active') : currentStatus;
-
-            $.post(WCEFPAdmin.ajaxUrl, {action:'wcefp_update_occurrence', nonce: WCEFPAdmin.nonce, occ: occ, capacity: newCap, status: nextStatus}, function(res){
-              if(res && res.success){
-                alert('Aggiornato.');
-                loadCalendar();
-              } else {
-                alert('Errore aggiornamento.');
-              }
+                WCEFPModals.showConfirm('Vuoi alternare lo stato (attivo/disattivato)?', function() {
+                    // OK = alterna
+                    const nextStatus = currentStatus === 'active' ? 'cancelled' : 'active';
+                    updateOccurrence(occ, newCap, nextStatus);
+                }, function() {
+                    // Annulla = lascia invariato
+                    updateOccurrence(occ, newCap, currentStatus);
+                });
             });
           },
           eventDidMount: function(arg){
@@ -69,6 +70,24 @@
         });
         calendar.render();
       });
+    }
+
+    // Helper function to update occurrence
+    function updateOccurrence(occ, capacity, status) {
+        $.post(WCEFPAdmin.ajaxUrl, {
+            action: 'wcefp_update_occurrence', 
+            nonce: WCEFPAdmin.nonce, 
+            occ: occ, 
+            capacity: capacity, 
+            status: status
+        }, function(res) {
+            if(res && res.success) {
+                WCEFPModals.showSuccess('Aggiornato.');
+                loadCalendar();
+            } else {
+                WCEFPModals.showError('Errore aggiornamento.');
+            }
+        });
     }
 
     function loadList(){

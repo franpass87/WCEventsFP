@@ -154,6 +154,15 @@ class MenuManager {
             return;
         }
         
+        // Enqueue modal system first
+        wp_enqueue_script(
+            'wcefp-modals',
+            WCEFP_PLUGIN_URL . 'assets/js/wcefp-modals.js',
+            ['jquery'],
+            WCEFP_VERSION,
+            true
+        );
+        
         wp_enqueue_script('jquery-ui-datepicker');
         wp_enqueue_style('wp-jquery-ui-dialog');
     }

@@ -325,3 +325,225 @@
 .wcefp-status-indicator.error {
     background-color: #d63638;
 }
+
+/* Enhanced booking table with status indicators */
+.wcefp-booking-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wcefp-booking-status.confirmed {
+    background-color: #d1e7dd;
+    color: #0f5132;
+    border: 1px solid #a3cfbb;
+}
+
+.wcefp-booking-status.pending {
+    background-color: #fff3cd;
+    color: #664d03;
+    border: 1px solid #ffecb5;
+}
+
+.wcefp-booking-status.cancelled {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c2c7;
+}
+
+/* ==========================================================================
+   WCEFP Modal System - WordPress-native modals
+   ========================================================================== */
+
+/* Modal overlay */
+.wcefp-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 160000; /* Higher than WordPress admin bar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: wcefp-modal-fade-in 0.2s ease-out;
+}
+
+@keyframes wcefp-modal-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal dialog */
+.wcefp-modal-dialog {
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    min-width: 400px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: wcefp-modal-slide-in 0.3s ease-out;
+}
+
+@keyframes wcefp-modal-slide-in {
+    from {
+        transform: scale(0.9) translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Modal header */
+.wcefp-modal-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.wcefp-modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #23282d;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wcefp-modal-title .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.wcefp-modal-close {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #666;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+}
+
+.wcefp-modal-close:hover,
+.wcefp-modal-close:focus {
+    color: #d63384;
+    background: #f8f9fa;
+}
+
+.wcefp-modal-close .dashicons {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+}
+
+/* Modal body */
+.wcefp-modal-body {
+    padding: 20px;
+    line-height: 1.5;
+}
+
+.wcefp-modal-body p {
+    margin-bottom: 15px;
+    color: #3c434a;
+}
+
+.wcefp-modal-input {
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.wcefp-modal-input:focus {
+    border-color: #007cba;
+    box-shadow: 0 0 0 1px #007cba;
+    outline: none;
+}
+
+/* Modal footer */
+.wcefp-modal-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.wcefp-modal-footer .button {
+    min-width: 80px;
+    height: auto;
+    padding: 8px 16px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .wcefp-modal-dialog {
+        min-width: auto;
+        width: 95vw;
+        margin: 20px;
+    }
+    
+    .wcefp-modal-header,
+    .wcefp-modal-body,
+    .wcefp-modal-footer {
+        padding: 15px;
+    }
+    
+    .wcefp-modal-title {
+        font-size: 16px;
+    }
+    
+    .wcefp-modal-footer {
+        flex-direction: column;
+    }
+    
+    .wcefp-modal-footer .button {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+}
+
+/* Accessibility improvements */
+.wcefp-modal-overlay:focus {
+    outline: none;
+}
+
+.wcefp-modal-dialog[role="document"]:focus {
+    outline: 2px solid #007cba;
+    outline-offset: -2px;
+}
+
+/* Screen reader only text */
+.wcefp-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
