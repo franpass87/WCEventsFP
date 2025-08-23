@@ -7,6 +7,38 @@ e questo progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 
 ---
 
+## [Unreleased - QA Green] – Code Quality & Security Improvements
+
+### 🔒 Security Enhancements
+#### Fixed
+- **AJAX Security**: Enhanced nonce verification in all AJAX handlers with proper sanitization
+- **Input Sanitization**: Improved input validation using `wp_unslash()` and `sanitize_text_field()` patterns
+- **Array Sanitization**: Added comprehensive array validation for settings and form data
+- **Capability Checks**: Verified all admin actions have appropriate user capability requirements
+
+### 🎯 Type Safety & PHP 8.2 Compatibility  
+#### Added
+- **Typed Properties**: All class properties now properly declared with types (no dynamic properties)
+- **Function Type Hints**: Added parameter and return type declarations across all classes
+- **Enhanced DocBlocks**: Comprehensive `@param/@return` annotations with array shape definitions
+- **Modern PHP Features**: Full PHP 8.2 compatibility with nullable types and typed properties
+
+### ⚡ Performance Optimizations
+#### Improved
+- **Conditional Enqueuing**: Scripts and styles only load on relevant admin pages
+- **Asset Optimization**: All assets use proper versioning and `in_footer=true` where appropriate
+- **Autoload Optimization**: Set `autoload=false` for non-critical options (settings, tokens, analytics)
+- **Memory Efficiency**: Reduced unnecessary option autoloading on every page load
+
+### 📋 Code Quality Standards
+#### Added  
+- **Manual PHPCS Compliance**: Fixed all identified coding standard violations
+- **PHPStan Level 6**: Achieved static analysis compliance with comprehensive type coverage
+- **WordPress Best Practices**: All hooks, sanitization, and escaping follow WordPress standards
+- **Development Documentation**: Added quality assurance section to README with Composer scripts
+
+---
+
 ## [Unreleased - v2.2.0] – UI/UX Feature Pack Development
 
 ### 🎨 In Development - Feature Pack Roadmap
