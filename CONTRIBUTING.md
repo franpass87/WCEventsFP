@@ -2,6 +2,40 @@
 
 Thank you for your interest in contributing to WCEventsFP! This document provides guidelines and information for contributors.
 
+## Commit Message Guidelines
+
+We use [Conventional Commits](https://www.conventionalcommits.org/) for automated changelog generation and semantic versioning. Please follow this format:
+
+### Commit Types
+
+- **feat**: New features (triggers minor version bump)
+- **fix**: Bug fixes (triggers patch version bump)
+- **perf**: Performance improvements (triggers patch version bump)
+- **refactor**: Code refactoring without changing functionality (triggers patch version bump)
+- **docs**: Documentation changes (triggers patch version bump)
+- **chore**: Maintenance tasks, dependency updates (triggers patch version bump)
+- **feat!** or **fix!**: Breaking changes (triggers major version bump)
+
+### Examples
+
+```
+feat: add automated email notifications for bookings
+fix: resolve WSOD issue with memory allocation
+docs: update installation guide with new requirements
+chore: update dependencies to latest versions
+feat!: change booking API structure (breaking change)
+```
+
+### Format
+
+```
+<type>(<optional scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
 ## Development Setup
 
 ### Prerequisites
