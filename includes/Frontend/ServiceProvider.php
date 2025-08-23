@@ -4,7 +4,7 @@
  * 
  * @package WCEFP
  * @subpackage Frontend
- * @since 2.0.1
+ * @since 2.1.1
  */
 
 namespace WCEFP\Frontend;
@@ -31,11 +31,12 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
-        // TODO: Implement and register frontend services when ready:
-        // - WidgetManager
-        // - ShortcodeManager  
-        // - AjaxHandler
-        // - TemplateManager
+        // Frontend services not yet implemented
+        // Future implementations:
+        // - WidgetManager (custom WordPress widgets)
+        // - ShortcodeManager (custom shortcodes)
+        // - AjaxHandler (frontend AJAX endpoints)
+        // - TemplateManager (template overrides)
     }
     
     /**
@@ -48,7 +49,7 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
-        // Initialize only functional frontend services
-        // (Currently none implemented)
+        // No frontend services to initialize yet
+        // This service provider is ready for future frontend implementations
     }
 }

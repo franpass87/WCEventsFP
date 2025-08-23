@@ -4,7 +4,7 @@
  * 
  * @package WCEFP
  * @subpackage Features
- * @since 2.0.1
+ * @since 2.1.1
  */
 
 namespace WCEFP\Features;
@@ -27,25 +27,17 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
      * @return void
      */
     public function register() {
-        // Load stub classes
-        require_once __DIR__ . '/Stubs.php';
+        // Load wrapper classes for legacy functionality
+        require_once __DIR__ . '/Wrappers.php';
         
-        // Only register classes that have actual implementations
-        // Voucher and Cache managers wrap existing legacy classes
+        // Register wrappers for existing legacy classes
         $this->container->singleton('features.vouchers', function($container) {
-            // Wrap existing WCEFP_Gift class
             return new VoucherManager();
         });
         
         $this->container->singleton('features.caching', function($container) {
-            // Wrap existing WCEFP_Cache class
             return new CacheManager();
         });
-        
-        // TODO: Implement and register additional features when ready:
-        // - AnalyticsTracker
-        // - NotificationSystem  
-        // - SecurityManager
     }
     
     /**
@@ -54,8 +46,20 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
      * @return void
      */
     public function boot() {
-        // Initialize only implemented features
-        $this->container->get('features.caching');
-        // $this->container->get('features.vouchers'); // Initialize when needed
+        // Initialize cache wrapper (always available)
+        if ($this->container->has('features.caching')) {
+            $cache_manager = $this->container->get('features.caching');
+            if ($cache_manager->is_available()) {
+                // Cache manager is ready
+            }
+        }
+        
+        // Initialize voucher wrapper only if legacy class is available
+        if ($this->container->has('features.vouchers')) {
+            $voucher_manager = $this->container->get('features.vouchers');
+            if ($voucher_manager->is_available()) {
+                // Voucher manager is ready
+            }
+        }
     }
 }

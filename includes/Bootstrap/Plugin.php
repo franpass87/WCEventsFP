@@ -4,7 +4,7 @@
  * 
  * @package WCEFP
  * @subpackage Bootstrap
- * @since 2.0.1
+ * @since 2.1.1
  */
 
 namespace WCEFP\Bootstrap;

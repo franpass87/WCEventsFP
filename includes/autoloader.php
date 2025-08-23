@@ -3,7 +3,7 @@
  * Simple PSR-4 Autoloader for WCEventsFP
  * 
  * @package WCEFP
- * @since 2.1.0
+ * @since 2.1.1
  */
 
 if (!defined('ABSPATH')) {
