@@ -566,7 +566,7 @@ class RateLimiter {
             }
         }
         
-        update_option('wcefp_rate_limits', $sanitized_limits);
+        update_option('wcefp_rate_limits', $sanitized_limits, false);
         
         DiagnosticLogger::instance()->info('Rate limits updated', [
             'new_limits' => $sanitized_limits,
