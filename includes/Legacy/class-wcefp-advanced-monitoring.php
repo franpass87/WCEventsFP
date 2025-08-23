@@ -107,7 +107,7 @@ class WCEFP_Advanced_Monitoring {
                 }
                 
             } catch (Exception $e) {
-                WCEFP_Logger::error("Monitor '$name' failed", [
+                \WCEFP\Utils\Logger::error("Monitor '$name' failed", [
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
                 ]);
@@ -128,7 +128,7 @@ class WCEFP_Advanced_Monitoring {
             $this->send_alert($alert);
         }
         
-        WCEFP_Logger::info('Monitoring check completed', [
+        \WCEFP\Utils\Logger::info('Monitoring check completed', [
             'monitors_checked' => count($this->monitors),
             'alerts_triggered' => count($alerts_triggered)
         ]);

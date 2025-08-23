@@ -82,7 +82,7 @@ class WCEFP_Realtime_Features {
         set_transient("wcefp_realtime_conn_$session_id", $connection_data, 3600);
         
         // Log connection
-        WCEFP_Logger::info('Real-time connection established', [
+        \WCEFP\Utils\Logger::info('Real-time connection established', [
             'session_id' => $session_id,
             'user_id' => $user_id,
             'ip' => $ip_address
@@ -330,7 +330,7 @@ class WCEFP_Realtime_Features {
         
         update_option('wcefp_global_realtime_updates', array_values($recent_updates));
         
-        WCEFP_Logger::info('Realtime data cleanup completed', [
+        \WCEFP\Utils\Logger::info('Realtime data cleanup completed', [
             'removed_updates' => count($global_updates) - count($recent_updates)
         ]);
     }

@@ -7,6 +7,26 @@ e questo progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 
 ---
 
+## [2.1.2] – 2025-01-23
+
+### 🐛 Bug Fixes & Code Cleanup
+
+#### Fixed
+- **Logger Deprecato**: Sostituiti tutti i riferimenti al sistema WCEFP_Logger deprecato con il nuovo WCEFP\Utils\Logger
+- **Test JavaScript**: Risolto test Jest con timeout che era stato saltato (skip) utilizzando fake timers per comportamento consistente
+- **Compatibilità WordPress**: Aggiornata compatibilità da WordPress 6.4 a 6.7+ (latest)
+- **Compatibilità WooCommerce**: Aggiornata compatibilità da WooCommerce 8.3 a 9.3+ (latest)
+
+#### Security
+- **Dipendenze Dev**: Risolte vulnerabilità moderate nelle dipendenze di sviluppo JavaScript (non influenzano produzione)
+
+#### Code Quality  
+- **Redundancy Removal**: Eliminata completamente la dipendenza dal logger legacy in tutti i file Legacy/
+- **Performance**: Ottimizzazioni minori nelle chiamate di logging
+- **Test Coverage**: Tutti i test Jest ora passano (5/5 invece di 4/5 con 1 skipped)
+
+---
+
 ## [2.1.1] – 2025-01-23
 
 ### 🛡️ Bug Fixes & Code Cleanup (Latest)

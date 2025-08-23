@@ -1,6 +1,6 @@
 {
   "name": "wceventsfp-frontend",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Frontend build tools for WCEventsFP plugin",
   "private": true,
   "scripts": {
@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@wordpress/eslint-plugin": "^17.0.0",
-    "@wordpress/scripts": "^30.22.0",
+    "@wordpress/scripts": "^19.2.4",
     "@wordpress/stylelint-config": "^21.0.0",
     "jest": "^29.6.0",
     "jest-environment-jsdom": "^30.0.5",

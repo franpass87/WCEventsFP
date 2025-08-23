@@ -349,7 +349,7 @@ class WCEFP_Frontend {
             }
 
             if (($ad + $ch) <= 0) {
-                WCEFP_Logger::warning('Invalid booking attempt with zero quantity', [
+                \WCEFP\Utils\Logger::warning('Invalid booking attempt with zero quantity', [
                     'product_id' => $pid,
                     'occurrence_id' => $occ,
                     'adults' => $ad,
@@ -370,7 +370,7 @@ class WCEFP_Frontend {
             ), ARRAY_A);
             
             if (!$row) {
-                WCEFP_Logger::error('Occurrence not found for booking', [
+                \WCEFP\Utils\Logger::error('Occurrence not found for booking', [
                     'occurrence_id' => $occ,
                     'product_id' => $pid
                 ]);
@@ -378,7 +378,7 @@ class WCEFP_Frontend {
             }
             
             if (($row['status'] ?? '') !== 'active') {
-                WCEFP_Logger::info('Booking attempt on inactive slot', [
+                \WCEFP\Utils\Logger::info('Booking attempt on inactive slot', [
                     'occurrence_id' => $occ,
                     'status' => $row['status']
                 ]);
@@ -387,7 +387,7 @@ class WCEFP_Frontend {
             
             $available = max(0, intval($row['capacity']) - intval($row['booked']));
             if ($available < $qty) {
-                WCEFP_Logger::info('Insufficient capacity for booking', [
+                \WCEFP\Utils\Logger::info('Insufficient capacity for booking', [
                     'occurrence_id' => $occ,
                     'available' => $available,
                     'requested' => $qty
@@ -498,7 +498,7 @@ class WCEFP_Frontend {
         wp_send_json_success(['cart_url'=>wc_get_cart_url()]);
         
         } catch (Exception $e) {
-            WCEFP_Logger::error('Booking error in ajax_add_to_cart', [
+            \WCEFP\Utils\Logger::error('Booking error in ajax_add_to_cart', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

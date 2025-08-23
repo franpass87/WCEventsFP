@@ -49,7 +49,7 @@ class WCEFP_Closures {
         try {
             check_ajax_referer('wcefp_admin','nonce');
             if (!current_user_can('manage_woocommerce')) {
-                WCEFP_Logger::warning('Unauthorized access attempt to add closure');
+                \WCEFP\Utils\Logger::warning('Unauthorized access attempt to add closure');
                 wp_send_json_error(['msg'=>'No perms']);
             }
 
@@ -71,7 +71,7 @@ class WCEFP_Closures {
             $note = $validated['note'] ?? '';
 
             if ($from > $to) {
-                WCEFP_Logger::warning('Invalid date range for closure', [
+                \WCEFP\Utils\Logger::warning('Invalid date range for closure', [
                     'from' => $from, 
                     'to' => $to
                 ]);
@@ -88,7 +88,7 @@ class WCEFP_Closures {
             ], ['%d','%s','%s','%s']);
 
             if (!$ins) {
-                WCEFP_Logger::error('Failed to insert closure', [
+                \WCEFP\Utils\Logger::error('Failed to insert closure', [
                     'product_id' => $pid,
                     'from' => $from,
                     'to' => $to,
@@ -97,7 +97,7 @@ class WCEFP_Closures {
                 wp_send_json_error(['msg'=>__('Errore salvataggio','wceventsfp')]);
             }
 
-            WCEFP_Logger::info('Closure added successfully', [
+            \WCEFP\Utils\Logger::info('Closure added successfully', [
                 'closure_id' => $wpdb->insert_id,
                 'product_id' => $pid,
                 'from' => $from,
@@ -107,7 +107,7 @@ class WCEFP_Closures {
             wp_send_json_success(['ok'=>true, 'id' => $wpdb->insert_id]);
             
         } catch (Exception $e) {
-            WCEFP_Logger::error('Exception in ajax_add_closure', [
+            \WCEFP\Utils\Logger::error('Exception in ajax_add_closure', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

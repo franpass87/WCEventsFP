@@ -51,7 +51,7 @@ class WCEFP_Cache {
         // Set transient as fallback
         set_transient($cache_key, $data, $expiration);
         
-        WCEFP_Logger::debug("Cache set: {$key}", ['expiration' => $expiration]);
+        \WCEFP\Utils\Logger::debug("Cache set: {$key}", ['expiration' => $expiration]);
         
         return $result;
     }
@@ -68,7 +68,7 @@ class WCEFP_Cache {
         wp_cache_delete($cache_key, self::CACHE_GROUP);
         delete_transient($cache_key);
         
-        WCEFP_Logger::debug("Cache deleted: {$key}");
+        \WCEFP\Utils\Logger::debug("Cache deleted: {$key}");
         
         return true;
     }
@@ -95,7 +95,7 @@ class WCEFP_Cache {
             wp_cache_flush_group(self::CACHE_GROUP);
         }
         
-        WCEFP_Logger::info('All caches cleared');
+        \WCEFP\Utils\Logger::info('All caches cleared');
     }
     
     /**
@@ -173,7 +173,7 @@ class WCEFP_Cache {
             // Cache for 30 minutes
             self::set($cache_key, $data, 1800);
             
-            WCEFP_Logger::debug("KPI data generated and cached", $data);
+            \WCEFP\Utils\Logger::debug("KPI data generated and cached", $data);
         }
         
         return $data;
@@ -227,7 +227,7 @@ class WCEFP_Cache {
         
         foreach ($patterns as $pattern) {
             // This is simplified - in production you might want to track cache keys
-            WCEFP_Logger::debug("Invalidating cache pattern: {$pattern}");
+            \WCEFP\Utils\Logger::debug("Invalidating cache pattern: {$pattern}");
         }
         
         // Clear KPI cache as it might be affected
