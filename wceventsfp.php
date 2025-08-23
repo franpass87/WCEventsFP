@@ -290,7 +290,6 @@ class WCEventsFP {
         $old_options = [
             'wcefp_installation_status',
             'wcefp_installation_mode', 
-            'wcefp_enabled_features',
             'wcefp_performance_settings',
             'wcefp_selected_features',
             'wcefp_installed_features',
