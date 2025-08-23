@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{site_name}} - Conferma Prenotazione</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa; }
+        .email-container { background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 30px 20px; text-align: center; color: white; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 300; }
+        .header .emoji { font-size: 48px; display: block; margin-bottom: 10px; }
+        .content { padding: 30px; }
+        .content h2 { color: #333; font-size: 24px; margin-bottom: 20px; }
+        .booking-card { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); padding: 25px; border-radius: 12px; margin: 25px 0; box-shadow: 0 4px 12px rgba(168,237,234,0.3); }
+        .booking-detail { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.5); }
+        .booking-detail:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .booking-label { font-weight: bold; color: #2c3e50; }
+        .booking-value { color: #34495e; text-align: right; }
+        .booking-id { font-family: 'Monaco', monospace; font-size: 18px; font-weight: bold; color: #e74c3c; }
+        .reminder-info { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }
+        .important-note { background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 14px; color: #6c757d; border-top: 1px solid #e9ecef; }
+        .footer a { color: #4facfe; text-decoration: none; }
+        .calendar-icon { font-size: 24px; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <span class="emoji">✅</span>
+            <h1>{{site_name}}</h1>
+        </div>
+        
+        <div class="content">
+            <h2>Prenotazione Confermata!</h2>
+            <p>Ciao <strong>{{customer_name}}</strong>,</p>
+            <p>Perfetto! La tua prenotazione è stata confermata con successo.</p>
+            
+            <div class="booking-card">
+                <div class="booking-detail">
+                    <span class="booking-label">🆔 ID Prenotazione:</span>
+                    <span class="booking-value booking-id">#{{booking_id}}</span>
+                </div>
+                
+                <div class="booking-detail">
+                    <span class="booking-label">🎭 Evento:</span>
+                    <span class="booking-value">{{event_title}}</span>
+                </div>
+                
+                <div class="booking-detail">
+                    <span class="booking-label">📅 Data:</span>
+                    <span class="booking-value">{{event_date}}</span>
+                </div>
+                
+                <div class="booking-detail">
+                    <span class="booking-label">🕐 Orario:</span>
+                    <span class="booking-value">{{event_time}}</span>
+                </div>
+                
+                <div class="booking-detail">
+                    <span class="booking-label">📍 Luogo:</span>
+                    <span class="booking-value">{{event_location}}</span>
+                </div>
+            </div>
+            
+            <div class="reminder-info">
+                <strong>📬 Promemoria Automatico</strong><br>
+                Ti invieremo un promemoria qualche giorno prima dell'evento per assicurarti di non perdertelo!
+            </div>
+            
+            <div class="important-note">
+                <strong>📝 Informazioni Importanti:</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Conserva questo numero di prenotazione: <strong>#{{booking_id}}</strong></li>
+                    <li>Presenta un documento di identità valido il giorno dell'evento</li>
+                    <li>Ti consigliamo di arrivare 15 minuti prima dell'orario previsto</li>
+                    <li>In caso di necessità, contattaci il prima possibile</li>
+                </ul>
+            </div>
+            
+            <p style="margin-top: 30px;">Siamo entusiasti di vederti e di offrirti un'esperienza straordinaria!</p>
+            
+            <p>Se hai domande o hai bisogno di modificare la prenotazione, non esitare a contattarci.</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>{{site_name}}</strong></p>
+            <p><a href="{{site_url}}">{{site_url}}</a></p>
+            <p style="font-size: 12px; margin-top: 15px;">
+                📞 Per assistenza, contattaci - siamo qui per aiutarti!
+            </p>
+        </div>
+    </div>
+</body>
+</html>

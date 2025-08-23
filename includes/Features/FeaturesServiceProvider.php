@@ -38,6 +38,29 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
         $this->container->singleton('features.caching', function($container) {
             return new CacheManager();
         });
+        
+        // Register Phase 2: Communication & Automation features
+        $this->register_communication_services();
+    }
+    
+    /**
+     * Register Phase 2 communication services
+     */
+    private function register_communication_services() {
+        // Load communication classes
+        require_once __DIR__ . '/Communication/EmailManager.php';
+        require_once __DIR__ . '/Communication/VoucherManager.php';
+        require_once __DIR__ . '/Communication/AutomationManager.php';
+        require_once __DIR__ . '/Communication/CommunicationServiceProvider.php';
+        
+        // Register Communication Service Provider
+        $communication_provider = new \WCEFP\Features\Communication\CommunicationServiceProvider($this->container);
+        $communication_provider->register();
+        
+        // Store provider reference for booting
+        $this->container->singleton('communication_provider', function() use ($communication_provider) {
+            return $communication_provider;
+        });
     }
     
     /**
@@ -60,6 +83,19 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
             if ($voucher_manager->is_available()) {
                 // Voucher manager is ready
             }
+        }
+        
+        // Boot Phase 2: Communication & Automation features
+        $this->boot_communication_services();
+    }
+    
+    /**
+     * Boot Phase 2 communication services
+     */
+    private function boot_communication_services() {
+        if ($this->container->has('communication_provider')) {
+            $communication_provider = $this->container->get('communication_provider');
+            $communication_provider->boot();
         }
     }
 }

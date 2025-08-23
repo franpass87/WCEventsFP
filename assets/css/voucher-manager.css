@@ -1,0 +1,614 @@
+/**
+ * Enhanced Voucher Management Styles
+ * 
+ * Phase 2: Communication & Automation - Modern voucher management
+ * with WordPress-native modals and enhanced user experience
+ *
+ * @package WCEFP
+ * @since 2.1.2
+ */
+
+/* ========================================
+   Voucher Table Enhancements
+   ======================================== */
+
+.voucher-table-controls {
+    background: #f9f9f9;
+    padding: 15px;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.voucher-table-controls input,
+.voucher-table-controls select {
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+.voucher-table-controls input:focus,
+.voucher-table-controls select:focus {
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+    outline: none;
+}
+
+/* Quick Action Buttons */
+.voucher-quick-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.voucher-quick-actions .button {
+    min-width: auto;
+    padding: 2px 6px;
+    line-height: 1.2;
+    font-size: 12px;
+    height: auto;
+}
+
+.voucher-quick-actions .button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Voucher Status Indicators */
+.voucher-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.voucher-status.status-active {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.voucher-status.status-redeemed {
+    background: #cce7ff;
+    color: #004085;
+    border: 1px solid #b3d7ff;
+}
+
+.voucher-status.status-expired {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.voucher-status.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* ========================================
+   Modal Enhancements
+   ======================================== */
+
+.wcefp-modal-large .wcefp-modal-content {
+    max-width: 900px;
+    width: 90vw;
+}
+
+/* Voucher Details Modal */
+.voucher-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .voucher-details-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+.voucher-details-grid h3 {
+    margin: 0 0 15px 0;
+    color: #23282d;
+    font-size: 16px;
+    font-weight: 600;
+    border-bottom: 2px solid #0073aa;
+    padding-bottom: 8px;
+}
+
+.voucher-details-grid .widefat td {
+    padding: 8px 12px;
+    vertical-align: top;
+}
+
+.voucher-details-grid .widefat td:first-child {
+    width: 40%;
+    font-weight: 500;
+}
+
+.voucher-details-grid code {
+    background: #f1f1f1;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 13px;
+    color: #d63384;
+}
+
+/* Usage History Table */
+.voucher-usage-history {
+    margin-top: 30px;
+    border-top: 1px solid #e1e1e1;
+    padding-top: 20px;
+}
+
+.voucher-usage-history h3 {
+    margin: 0 0 15px 0;
+    color: #23282d;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.voucher-usage-history .widefat th {
+    background: #f9f9f9;
+    font-weight: 600;
+    text-align: left;
+}
+
+/* Voucher Details Actions */
+.voucher-details-actions {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e1e1e1;
+    text-align: right;
+}
+
+.voucher-details-actions .button {
+    margin-left: 10px;
+}
+
+/* ========================================
+   Analytics Dashboard
+   ======================================== */
+
+.analytics-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.analytics-card {
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+
+.analytics-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.analytics-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.analytics-card p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Analytics Details */
+.analytics-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+@media (max-width: 768px) {
+    .analytics-details {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+.analytics-details h3 {
+    margin: 0 0 15px 0;
+    color: #23282d;
+    font-size: 16px;
+    font-weight: 600;
+    border-bottom: 2px solid #0073aa;
+    padding-bottom: 8px;
+}
+
+.analytics-details .widefat {
+    border: 1px solid #e1e1e1;
+}
+
+.analytics-details .widefat th {
+    background: #f9f9f9;
+    font-weight: 600;
+    text-align: left;
+    border-bottom: 2px solid #e1e1e1;
+}
+
+.analytics-details .widefat td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.analytics-details .widefat tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.analytics-details .widefat tbody tr:hover {
+    background: #f9f9f9;
+}
+
+/* ========================================
+   Loading States
+   ======================================== */
+
+.wcefp-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #666;
+}
+
+.wcefp-loading .spinner {
+    margin-bottom: 10px;
+}
+
+/* ========================================
+   Frontend Voucher Widgets
+   ======================================== */
+
+/* Enhanced Redeem Widget */
+.wcefp-voucher-redeem-widget {
+    max-width: 500px;
+    margin: 20px auto;
+    background: var(--wcefp-bg-color, #fff);
+    border: 1px solid var(--wcefp-border-color, #e1e1e1);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.wcefp-voucher-redeem-widget .wcefp-widget-header {
+    background: var(--wcefp-primary-color, #0073aa);
+    color: white;
+    padding: 20px;
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+}
+
+.wcefp-voucher-redeem-widget .wcefp-widget-header h3 {
+    margin: 0 0 8px 0;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.wcefp-voucher-redeem-widget .wcefp-widget-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.wcefp-voucher-redeem-form {
+    padding: 30px;
+}
+
+.wcefp-form-group {
+    margin-bottom: 20px;
+}
+
+.wcefp-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--wcefp-text-color, #333);
+}
+
+.wcefp-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--wcefp-border-color, #e1e1e1);
+    border-radius: 6px;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.wcefp-input:focus {
+    border-color: var(--wcefp-primary-color, #0073aa);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
+}
+
+.wcefp-button {
+    display: inline-block;
+    padding: 12px 24px;
+    background: var(--wcefp-primary-color, #0073aa);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    min-width: 120px;
+}
+
+.wcefp-button:hover {
+    background: var(--wcefp-primary-hover-color, #005a87);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.wcefp-button:active {
+    transform: translateY(0);
+}
+
+.wcefp-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.wcefp-form-actions {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* Voucher Status Widget */
+.wcefp-voucher-status {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 6px;
+    border: 1px solid #e1e1e1;
+}
+
+.wcefp-voucher-status-widget {
+    max-width: 400px;
+    margin: 20px auto;
+    background: var(--wcefp-bg-color, #fff);
+    border: 1px solid var(--wcefp-border-color, #e1e1e1);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.wcefp-voucher-status-header {
+    background: var(--wcefp-secondary-color, #f8f9fa);
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--wcefp-border-color, #e1e1e1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wcefp-voucher-status-header h4 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--wcefp-text-color, #333);
+}
+
+.wcefp-voucher-code {
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 14px;
+    background: var(--wcefp-primary-color, #0073aa);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.wcefp-voucher-details {
+    padding: 20px;
+}
+
+.wcefp-voucher-amount {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.wcefp-voucher-amount strong {
+    font-size: 28px;
+    color: var(--wcefp-primary-color, #0073aa);
+    font-weight: 700;
+}
+
+.wcefp-voucher-status {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.wcefp-voucher-expiry,
+.wcefp-voucher-message {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.wcefp-voucher-expiry small {
+    color: #666;
+    font-size: 12px;
+}
+
+.wcefp-voucher-message {
+    font-style: italic;
+    color: #555;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    border-left: 3px solid var(--wcefp-primary-color, #0073aa);
+}
+
+/* ========================================
+   Error and Success Messages
+   ======================================== */
+
+.wcefp-error {
+    color: #721c24;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.wcefp-success {
+    color: #155724;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 768px) {
+    .voucher-table-controls {
+        padding: 10px;
+    }
+    
+    .voucher-table-controls > div {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch !important;
+    }
+    
+    .voucher-table-controls input,
+    .voucher-table-controls select,
+    .voucher-table-controls button {
+        width: 100%;
+        margin: 0;
+    }
+    
+    .voucher-quick-actions {
+        flex-wrap: wrap;
+    }
+    
+    .wcefp-voucher-redeem-widget,
+    .wcefp-voucher-status-widget {
+        margin: 10px;
+        max-width: none;
+    }
+    
+    .wcefp-voucher-redeem-form {
+        padding: 20px;
+    }
+    
+    .analytics-overview {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+    }
+    
+    .analytics-card {
+        padding: 15px;
+    }
+    
+    .analytics-card h3 {
+        font-size: 24px;
+    }
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+    .voucher-quick-actions,
+    .voucher-table-controls,
+    .wcefp-modal-footer,
+    .voucher-details-actions,
+    .button {
+        display: none !important;
+    }
+    
+    .wcefp-modal-content {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    .voucher-status {
+        border: 1px solid #000 !important;
+        background: transparent !important;
+        color: #000 !important;
+    }
+    
+    .analytics-card {
+        border: 1px solid #000;
+        box-shadow: none;
+    }
+}
+
+/* ========================================
+   Accessibility Enhancements
+   ======================================== */
+
+.voucher-quick-actions .button:focus,
+.wcefp-button:focus {
+    outline: 2px solid var(--wcefp-primary-color, #0073aa);
+    outline-offset: 2px;
+}
+
+.wcefp-input:focus {
+    outline: 2px solid var(--wcefp-primary-color, #0073aa);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .voucher-status,
+    .analytics-card,
+    .wcefp-voucher-redeem-widget,
+    .wcefp-voucher-status-widget {
+        border: 2px solid;
+    }
+    
+    .wcefp-button,
+    .button {
+        border: 2px solid;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .analytics-card,
+    .wcefp-button,
+    .button,
+    .voucher-quick-actions .button {
+        transition: none;
+    }
+    
+    .analytics-card:hover,
+    .wcefp-button:hover,
+    .voucher-quick-actions .button:hover {
+        transform: none;
+    }
+}

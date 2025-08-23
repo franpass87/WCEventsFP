@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{site_name}} - Voucher Regalo</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa; }
+        .email-container { background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px; text-align: center; color: white; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 300; }
+        .header .emoji { font-size: 48px; display: block; margin-bottom: 10px; }
+        .content { padding: 30px; }
+        .content h2 { color: #333; font-size: 24px; margin-bottom: 20px; }
+        .voucher-card { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 25px; border-radius: 12px; text-align: center; margin: 25px 0; box-shadow: 0 4px 12px rgba(240,147,251,0.3); }
+        .voucher-code { font-size: 32px; font-weight: bold; letter-spacing: 3px; margin: 15px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .voucher-amount { font-size: 20px; margin-bottom: 10px; }
+        .message-card { background: #f8f9fa; padding: 20px; border-left: 4px solid #667eea; border-radius: 0 8px 8px 0; margin: 20px 0; }
+        .instructions { background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .instructions h3 { margin-top: 0; color: #1976d2; }
+        .instructions ol { padding-left: 20px; }
+        .instructions li { margin-bottom: 8px; }
+        .cta-button { display: inline-block; background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 20px 0; box-shadow: 0 4px 12px rgba(102,126,234,0.3); transition: all 0.3s ease; }
+        .cta-button:hover { background: #5a67d8; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(102,126,234,0.4); }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 14px; color: #6c757d; border-top: 1px solid #e9ecef; }
+        .footer a { color: #667eea; text-decoration: none; }
+        .expiry-info { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <span class="emoji">🎁</span>
+            <h1>{{site_name}}</h1>
+        </div>
+        
+        <div class="content">
+            <h2>Hai ricevuto un voucher regalo!</h2>
+            <p>Ciao <strong>{{recipient_name}}</strong>,</p>
+            <p>Fantastico! <strong>{{sender_name}}</strong> ti ha fatto un regalo speciale.</p>
+            
+            <div class="message-card">
+                <strong>Messaggio per te:</strong><br>
+                <em>"{{gift_message}}"</em>
+            </div>
+            
+            <div class="voucher-card">
+                <div class="voucher-amount">Valore: {{voucher_amount}}</div>
+                <div class="voucher-code">{{voucher_code}}</div>
+                <div style="font-size: 14px; opacity: 0.9;">Il tuo codice voucher</div>
+            </div>
+            
+            <div class="expiry-info">
+                <strong>⏰ Scadenza:</strong> {{expiry_date}}
+            </div>
+            
+            <div class="instructions">
+                <h3>🚀 Come utilizzare il tuo voucher</h3>
+                <ol>
+                    <li>Visita il nostro sito web</li>
+                    <li>Scegli l'esperienza che desideri prenotare</li>
+                    <li>Inserisci il codice voucher durante il checkout</li>
+                    <li>Goditi la tua esperienza!</li>
+                </ol>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{voucher_url}}" class="cta-button">🎯 Visualizza Voucher</a>
+            </div>
+            
+            <p>Non vediamo l'ora di offrirti un'esperienza indimenticabile!</p>
+            
+            <p style="color: #6c757d; font-size: 14px; margin-top: 30px;">
+                <em>Questo voucher è personale e non trasferibile. Conserva questo codice in un posto sicuro.</em>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>{{site_name}}</strong></p>
+            <p><a href="{{site_url}}">{{site_url}}</a></p>
+            <p style="font-size: 12px; margin-top: 15px;">
+                Hai domande? Contattaci, saremo felici di aiutarti!
+            </p>
+        </div>
+    </div>
+</body>
+</html>
