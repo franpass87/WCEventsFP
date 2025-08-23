@@ -82,12 +82,12 @@ class WCEFP_Performance_Optimization {
         
         // CSS minification and combination
         if (get_option('wcefp_combine_css', true)) {
-            add_action('wp_print_styles', [$this, 'combine_css_files']);
+            add_action('wp_enqueue_scripts', [$this, 'combine_css_files'], 999);
         }
         
         // JavaScript optimization
         if (get_option('wcefp_optimize_js', true)) {
-            add_action('wp_print_scripts', [$this, 'optimize_javascript']);
+            add_action('wp_enqueue_scripts', [$this, 'optimize_javascript'], 999);
         }
     }
     

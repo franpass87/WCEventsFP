@@ -360,6 +360,16 @@ class RateLimiter {
      * Render rate limit admin page
      */
     public function render_rate_limit_admin_page() {
+        // Enqueue admin scripts and styles
+        wp_enqueue_script('wcefp-admin-settings', WCEFP_PLUGIN_URL . 'assets/js/admin-settings.js', ['jquery'], WCEFP_VERSION, true);
+        wp_enqueue_style('wcefp-admin-rate-limits', WCEFP_PLUGIN_URL . 'assets/css/admin-rate-limits.css', [], WCEFP_VERSION);
+        wp_localize_script('wcefp-admin-settings', 'wcefpSettings', [
+            'nonce' => wp_create_nonce('wcefp_rate_limits'),
+            'strings' => [
+                'resetRateLimitsConfirm' => __('Reset all rate limits to default values?', 'wceventsfp')
+            ]
+        ]);
+        
         $stats = $this->get_rate_limit_statistics();
         $current_limits = get_option('wcefp_rate_limits', []);
         
@@ -468,49 +478,6 @@ class RateLimiter {
             </div>
         </div>
         
-        <script>
-        document.getElementById('save-rate-limits').addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            var formData = new FormData(document.getElementById('wcefp-rate-limits-form'));
-            formData.append('action', 'wcefp_update_rate_limits');
-            
-            fetch(ajaxurl, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('<?php esc_js_e('Rate limits updated successfully', 'wceventsfp'); ?>');
-                    location.reload();
-                } else {
-                    alert('<?php esc_js_e('Failed to update rate limits', 'wceventsfp'); ?>');
-                }
-            });
-        });
-        
-        document.getElementById('reset-rate-limits').addEventListener('click', function() {
-            if (confirm('<?php esc_js_e('Reset all rate limits to default values?', 'wceventsfp'); ?>')) {
-                var formData = new FormData();
-                formData.append('action', 'wcefp_update_rate_limits');
-                formData.append('reset', '1');
-                formData.append('_wpnonce', '<?php echo wp_create_nonce('wcefp_rate_limits'); ?>');
-                
-                fetch(ajaxurl, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    }
-                });
-            }
-        });
-        </script>
-        
         <style>
         .wcefp-rate-limits .stat-boxes {
             display: flex;
@@ -599,7 +566,7 @@ class RateLimiter {
             }
         }
         
-        update_option('wcefp_rate_limits', $sanitized_limits);
+        update_option('wcefp_rate_limits', $sanitized_limits, false);
         
         DiagnosticLogger::instance()->info('Rate limits updated', [
             'new_limits' => $sanitized_limits,

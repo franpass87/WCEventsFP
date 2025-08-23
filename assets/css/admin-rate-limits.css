@@ -1,0 +1,76 @@
+/**
+ * WCEventsFP Rate Limits Admin Styles
+ * Styles for the API rate limits admin page
+ */
+
+.wcefp-rate-limits .stat-boxes {
+    display: flex;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.wcefp-rate-limits .stat-box {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+    min-width: 150px;
+}
+
+.wcefp-rate-limits .stat-box h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.wcefp-rate-limits .stat-number {
+    display: block;
+    font-size: 24px;
+    font-weight: bold;
+    color: #135e96;
+}
+
+.wcefp-rate-limits .form-table {
+    margin: 20px 0;
+}
+
+.wcefp-rate-limits .form-table th {
+    font-weight: 600;
+}
+
+.wcefp-rate-limits .form-table td input[type="number"] {
+    width: 100px;
+}
+
+.wcefp-rate-limits .rate-limit-actions {
+    margin: 20px 0;
+    padding: 20px 0;
+    border-top: 1px solid #c3c4c7;
+}
+
+.wcefp-rate-limits .button {
+    margin-right: 10px;
+}
+
+.wcefp-rate-limits .rate-limit-table {
+    margin: 20px 0;
+}
+
+.wcefp-rate-limits .rate-limit-table th,
+.wcefp-rate-limits .rate-limit-table td {
+    text-align: left;
+    padding: 10px;
+}
+
+.wcefp-rate-limits .client-status {
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.wcefp-rate-limits .status-active {
+    background: #d4edda;
+    color: #155724;
+}

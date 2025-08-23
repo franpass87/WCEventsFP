@@ -205,7 +205,7 @@ class DataIntegrationServiceProvider extends ServiceProvider {
             }
         }
         
-        update_option('wcefp_calendar_usage', $usage_data);
+        update_option('wcefp_calendar_usage', $usage_data, false);
         
         wp_send_json_success();
     }

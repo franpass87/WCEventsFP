@@ -237,7 +237,7 @@ class GutenbergManager {
                 'title' => $event->post_title,
                 'excerpt' => wp_trim_words($event->post_excerpt ?: $event->post_content, 20),
                 'price' => get_post_meta($event->ID, '_price', true),
-                'currency' => get_woocommerce_currency_symbol(),
+                'currency' => get_option('woocommerce_currency'),
                 'featured_image' => get_the_post_thumbnail_url($event->ID, 'medium'),
             ];
         }
@@ -265,7 +265,7 @@ class GutenbergManager {
             'excerpt' => $event->post_excerpt,
             'price' => $product->get_price(),
             'sale_price' => $product->get_sale_price(),
-            'currency' => get_woocommerce_currency_symbol(),
+            'currency' => get_option('woocommerce_currency'),
             'featured_image' => get_the_post_thumbnail_url($event->ID, 'large'),
             'gallery' => $this->get_product_gallery_images($product),
             'meta' => [

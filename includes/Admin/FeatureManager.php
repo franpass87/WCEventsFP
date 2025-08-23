@@ -320,6 +320,12 @@ class FeatureManager {
      * @return int
      */
     private function convert_memory_to_bytes($val) {
+        // Use shared utilities if available 
+        if (function_exists('wcefp_convert_memory_to_bytes')) {
+            return wcefp_convert_memory_to_bytes($val);
+        }
+        
+        // Fallback implementation
         $val = trim($val);
         if (empty($val)) return 0;
         

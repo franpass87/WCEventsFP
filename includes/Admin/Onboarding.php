@@ -633,13 +633,13 @@ class Onboarding {
         
         if ($current_index < count($steps) - 1) {
             $next_step = $steps[$current_index + 1];
-            update_option('wcefp_onboarding_step', $next_step);
+            update_option('wcefp_onboarding_step', $next_step, false);
         }
     }
     
     private function save_basic_settings() {
         if (isset($_POST['wcefp_default_capacity'])) {
-            update_option('wcefp_default_capacity', absint($_POST['wcefp_default_capacity']));
+            update_option('wcefp_default_capacity', absint($_POST['wcefp_default_capacity']), false);
         }
         
         $disable_emails = isset($_POST['wcefp_disable_wc_emails_for_events']) ? true : false;
@@ -657,8 +657,8 @@ class Onboarding {
     }
     
     private function complete_onboarding() {
-        update_option('wcefp_onboarding_completed', true);
-        update_option('wcefp_onboarding_completed_date', current_time('mysql'));
+        update_option('wcefp_onboarding_completed', true, false);
+        update_option('wcefp_onboarding_completed_date', current_time('mysql'), false);
         delete_option('wcefp_onboarding_step');
     }
     

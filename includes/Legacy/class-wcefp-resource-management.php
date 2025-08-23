@@ -446,7 +446,7 @@ class WCEFP_Resource_Management {
                 <th><label for="wcefp_cost_per_use">Costo per Utilizzo</label></th>
                 <td>
                     <input type="number" name="wcefp_cost_per_use" id="wcefp_cost_per_use" value="<?php echo esc_attr($cost_per_use); ?>" step="0.01" min="0" />
-                    <span><?php echo get_woocommerce_currency_symbol(); ?></span>
+                    <span><?php echo esc_html(html_entity_decode(get_woocommerce_currency_symbol(get_option('woocommerce_currency')))); ?></span>
                     <p class="description">Costo aggiuntivo per l'utilizzo di questa risorsa (opzionale)</p>
                 </td>
             </tr>
