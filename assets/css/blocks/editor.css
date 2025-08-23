@@ -1,6 +1,6 @@
 /**
  * Gutenberg Block Editor Styles
- * 
+ *
  * Styles for WCEventsFP blocks in the WordPress block editor.
  * Part of Phase 3: Data & Integration
  */
@@ -8,264 +8,273 @@
 /* Block Editor Styles */
 .wcefp-booking-form-block-editor,
 .wcefp-event-list-block-editor {
-    padding: 20px;
-    border: 2px dashed #e1e1e1;
-    border-radius: 4px;
-    background: #fafafa;
+	padding: 20px;
+	border: 2px dashed #e1e1e1;
+	border-radius: 4px;
+	background: #fafafa;
 }
 
 .wcefp-block-preview {
-    background: #fff;
-    border: 1px solid #e1e1e1;
-    border-radius: 4px;
-    padding: 20px;
-    margin-top: 10px;
+	background: #fff;
+	border: 1px solid #e1e1e1;
+	border-radius: 4px;
+	padding: 20px;
+	margin-top: 10px;
 }
 
 /* Booking Form Block Preview */
 .wcefp-booking-form-preview {
-    max-width: 600px;
+	max-width: 600px;
 }
 
 .wcefp-block-title {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: #23282d;
-    font-size: 1.5em;
-    font-weight: 600;
+	margin-top: 0;
+	margin-bottom: 15px;
+	color: #23282d;
+	font-size: 1.5em;
+	font-weight: 600;
 }
 
 .wcefp-block-images {
-    margin-bottom: 15px;
+	margin-bottom: 15px;
 }
 
 .wcefp-block-images img {
-    max-width: 200px;
-    height: auto;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	max-width: 200px;
+	height: auto;
+	border-radius: 4px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .wcefp-block-description {
-    margin-bottom: 15px;
-    font-size: 14px;
-    line-height: 1.6;
-    color: #666;
+	margin-bottom: 15px;
+	font-size: 14px;
+	line-height: 1.6;
+	color: #666;
 }
 
 .wcefp-block-price {
-    margin-bottom: 20px;
-    font-size: 1.2em;
-    font-weight: 600;
-    color: #0073aa;
+	margin-bottom: 20px;
+	font-size: 1.2em;
+	font-weight: 600;
+	color: #0073aa;
 }
 
 .wcefp-block-form-placeholder {
-    background: #e7f3ff;
-    border: 2px dashed #0073aa;
-    border-radius: 4px;
-    padding: 20px;
-    text-align: center;
-    color: #0073aa;
-    font-style: italic;
+	background: #e7f3ff;
+	border: 2px dashed #0073aa;
+	border-radius: 4px;
+	padding: 20px;
+	text-align: center;
+	color: #0073aa;
+	font-style: italic;
 }
 
 /* Event List Block Preview */
 .wcefp-event-list-preview {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
 }
 
 .wcefp-event-item-preview {
-    display: flex;
-    gap: 15px;
-    padding: 15px;
-    border: 1px solid #e1e1e1;
-    border-radius: 4px;
-    background: #fff;
+	display: flex;
+	gap: 15px;
+	padding: 15px;
+	border: 1px solid #e1e1e1;
+	border-radius: 4px;
+	background: #fff;
 }
 
 .wcefp-event-image {
-    flex-shrink: 0;
+	flex-shrink: 0;
 }
 
 .wcefp-event-image img {
-    width: 80px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 4px;
+	width: 80px;
+	height: 60px;
+	object-fit: cover;
+	border-radius: 4px;
 }
 
 .wcefp-event-content {
-    flex: 1;
+	flex: 1;
 }
 
 .wcefp-event-title {
-    margin: 0 0 8px 0;
-    font-size: 1.1em;
-    font-weight: 600;
-    color: #23282d;
+	margin: 0 0 8px 0;
+	font-size: 1.1em;
+	font-weight: 600;
+	color: #23282d;
 }
 
 .wcefp-event-excerpt {
-    margin-bottom: 10px;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #666;
+	margin-bottom: 10px;
+	font-size: 13px;
+	line-height: 1.5;
+	color: #666;
 }
 
 .wcefp-event-meta {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+	display: flex;
+	align-items: center;
+	gap: 15px;
 }
 
 .wcefp-event-price {
-    font-weight: 600;
-    color: #0073aa;
+	font-weight: 600;
+	color: #0073aa;
 }
 
 .wcefp-event-actions button {
-    background: #0073aa;
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: not-allowed;
-    opacity: 0.7;
+	background: #0073aa;
+	color: #fff;
+	border: none;
+	border-radius: 3px;
+	padding: 6px 12px;
+	font-size: 12px;
+	cursor: not-allowed;
+	opacity: 0.7;
 }
 
 /* Inspector Controls */
 .components-panel__body .components-base-control {
-    margin-bottom: 16px;
+	margin-bottom: 16px;
 }
 
 .components-base-control__label {
-    font-weight: 500;
+	font-weight: 500;
 }
 
 /* Placeholder Styles */
 .components-placeholder {
-    border: 2px dashed #e1e1e1;
-    background: #f9f9f9;
+	border: 2px dashed #e1e1e1;
+	background: #f9f9f9;
 }
 
 .components-placeholder.is-large {
-    min-height: 200px;
+	min-height: 200px;
 }
 
 .components-placeholder__label {
-    color: #23282d;
-    font-weight: 600;
+	color: #23282d;
+	font-weight: 600;
 }
 
 .components-placeholder__instructions {
-    color: #666;
-    font-size: 13px;
-    margin-bottom: 15px;
+	color: #666;
+	font-size: 13px;
+	margin-bottom: 15px;
 }
 
 .components-placeholder .components-spinner {
-    margin-right: 10px;
+	margin-right: 10px;
 }
 
 /* Block Icons */
 .wcefp-booking-form-block-editor::before,
 .wcefp-event-list-block-editor::before {
-    content: '';
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTMgNEgxN1Y2SDNWNFpNMyA4SDE3VjEwSDNWOFpNMyAxMkgxN1YxNEgzVjEyWk0zIDE2SDE3VjE4SDNWMTZaIiBmaWxsPSIjMDA3M0FBIi8+Cjwvc3ZnPgo=');
-    background-size: contain;
-    margin-right: 8px;
-    vertical-align: middle;
+	content: "";
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTMgNEgxN1Y2SDNWNFpNMyA4SDE3VjEwSDNWOFpNMyAxMkgxN1YxNEgzVjEyWk0zIDE2SDE3VjE4SDNWMTZaIiBmaWxsPSIjMDA3M0FBIi8+Cjwvc3ZnPgo=");
+	background-size: contain;
+	margin-right: 8px;
+	vertical-align: middle;
 }
 
 /* Responsive Editor Styles */
 @media (max-width: 768px) {
-    .wcefp-booking-form-block-editor,
-    .wcefp-event-list-block-editor {
-        padding: 15px;
-    }
-    
-    .wcefp-block-preview {
-        padding: 15px;
-    }
-    
-    .wcefp-event-item-preview {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .wcefp-event-image img {
-        width: 100%;
-        height: 120px;
-        max-width: 200px;
-    }
-    
-    .wcefp-event-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
+
+	.wcefp-booking-form-block-editor,
+	.wcefp-event-list-block-editor {
+		padding: 15px;
+	}
+
+	.wcefp-block-preview {
+		padding: 15px;
+	}
+
+	.wcefp-event-item-preview {
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.wcefp-event-image img {
+		width: 100%;
+		height: 120px;
+		max-width: 200px;
+	}
+
+	.wcefp-event-meta {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+	}
 }
 
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
-    .wcefp-booking-form-block-editor,
-    .wcefp-event-list-block-editor {
-        background: #2c2c2c;
-        border-color: #4a4a4a;
-    }
-    
-    .wcefp-block-preview {
-        background: #1e1e1e;
-        border-color: #4a4a4a;
-    }
-    
-    .wcefp-block-title {
-        color: #fff;
-    }
-    
-    .wcefp-block-description {
-        color: #ccc;
-    }
-    
-    .wcefp-event-item-preview {
-        background: #1e1e1e;
-        border-color: #4a4a4a;
-    }
-    
-    .wcefp-event-title {
-        color: #fff;
-    }
-    
-    .wcefp-event-excerpt {
-        color: #ccc;
-    }
+
+	.wcefp-booking-form-block-editor,
+	.wcefp-event-list-block-editor {
+		background: #2c2c2c;
+		border-color: #4a4a4a;
+	}
+
+	.wcefp-block-preview {
+		background: #1e1e1e;
+		border-color: #4a4a4a;
+	}
+
+	.wcefp-block-title {
+		color: #fff;
+	}
+
+	.wcefp-block-description {
+		color: #ccc;
+	}
+
+	.wcefp-event-item-preview {
+		background: #1e1e1e;
+		border-color: #4a4a4a;
+	}
+
+	.wcefp-event-title {
+		color: #fff;
+	}
+
+	.wcefp-event-excerpt {
+		color: #ccc;
+	}
 }
 
 /* Animation for Loading States */
 .wcefp-block-loading {
-    position: relative;
-    overflow: hidden;
+	position: relative;
+	overflow: hidden;
 }
 
 .wcefp-block-loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
-    animation: shimmer 1.5s infinite;
+	content: "";
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 100%;
+	height: 100%;
+	background:
+ linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+	animation: shimmer 1.5s infinite;
 }
 
 @keyframes shimmer {
-    0% { left: -100%; }
-    100% { left: 100%; }
+
+	0% {
+		left: -100%;
+	}
+
+	100% {
+		left: 100%;
+	}
 }
