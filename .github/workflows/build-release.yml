@@ -1,39 +1,78 @@
-name: Build & Release WCEventsFP
+name: Build & Release WP Plugin
 
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'            # es: v1.0.0
+  workflow_dispatch:     # esecuzione manuale
+
+permissions:
+  contents: write        # necessario per creare la Release
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     env:
-      PLUGIN_DIR: WCEventsFP
-      ZIP_NAME: wceventsfp-${{ github.ref_name }}.zip
-
+      PLUGIN_SLUG: wp-performance-suite  # nome cartella plugin
+      PHP_VERSION: '8.2'                 # per il build; runtime su hosting può essere 8.1+
+    
     steps:
       - name: Checkout
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
 
-      - name: Mostra struttura repo (debug)
-        run: ls -la
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          tools: composer
+          coverage: none
 
-      - name: Prepara cartella plugin
-        shell: bash
+      - name: Install Composer deps (if any)
         run: |
-          set -e
-          if [ -d "${PLUGIN_DIR}" ]; then
-            echo "Trovata cartella ${PLUGIN_DIR}/ (ok)."
-          else
-            echo "Non trovo ${PLUGIN_DIR}/: impacchetto il root nella cartella ${PLUGIN_DIR}/"
-            mkdir "${PLUGIN_DIR}"
-            shopt -s dotglob
-            for f in *; do
-              # esclude la cartella .git e la dir .github dal pacchetto
-              if [ "$f" = ".git" ] || [ "$f" = ".github" ]; then
-                continue
+          if [ -f "composer.json" ]; then
+            composer install --no-dev --prefer-dist --optimize-autoloader
+          fi
+
+      - name: Determine version
+        id: ver
+        run: |
+          # Es: refs/tags/v1.0.0 -> 1.0.0
+          RAW="${GITHUB_REF_NAME}"
+          VERSION="${RAW#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Prepare dist structure
+        run: |
+          rm -rf dist
+          mkdir -p "dist/${{ env.PLUGIN_SLUG }}"
+          rsync -a \
+            --exclude='.git*' \
+            --exclude='.github' \
+            --exclude='dist' \
+            --exclude='tests' \
+            --exclude='node_modules' \
+            --exclude='.idea' \
+            --exclude='.vscode' \
+            . "dist/${{ env.PLUGIN_SLUG }}/"
+
+      - name: Create zip
+        working-directory: dist
+        run: |
+          zip -r "${{ env.PLUGIN_SLUG }}-${{ steps.ver.outputs.version }}.zip" "${{ env.PLUGIN_SLUG }}"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PLUGIN_SLUG }}-${{ steps.ver.outputs.version }}.zip
+          path: dist/${{ env.PLUGIN_SLUG }}-${{ steps.ver.outputs.version }}.zip
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/${{ env.PLUGIN_SLUG }}-${{ steps.ver.outputs.version }}.zip
+          generate_release_notes: true
               fi
               mv "$f" "${PLUGIN_DIR}/"
             done
