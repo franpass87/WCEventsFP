@@ -629,7 +629,8 @@ class AutomationManager {
      * Handle AJAX automation settings update
      */
     public function handle_automation_settings_update() {
-        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'wcefp_automation_settings')) {
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'wcefp_automation_settings')) {
             wp_die(__('Sicurezza non valida.', 'wceventsfp'));
         }
         
@@ -637,7 +638,20 @@ class AutomationManager {
             wp_die(__('Permessi insufficienti.', 'wceventsfp'));
         }
         
-        $settings = $_POST['settings'] ?? [];
+        // Properly sanitize settings array
+        $raw_settings = isset($_POST['settings']) ? wp_unslash($_POST['settings']) : [];
+        $settings = [];
+        
+        if (is_array($raw_settings)) {
+            foreach ($raw_settings as $key => $value) {
+                $sanitized_key = sanitize_key($key);
+                if (is_array($value)) {
+                    $settings[$sanitized_key] = array_map('sanitize_text_field', $value);
+                } else {
+                    $settings[$sanitized_key] = sanitize_text_field($value);
+                }
+            }
+        }
         
         // Validate and save automation settings
         $valid_rules = array_keys($this->automation_rules);

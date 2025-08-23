@@ -104,7 +104,8 @@ class DataIntegrationServiceProvider extends ServiceProvider {
      * Handle bookings export AJAX request
      */
     public function handle_export_bookings() {
-        if (!current_user_can('export') || !wp_verify_nonce($_POST['nonce'] ?? '', 'wcefp_export')) {
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+        if (!current_user_can('export') || !wp_verify_nonce($nonce, 'wcefp_export')) {
             wp_die(__('Access denied.', 'wceventsfp'));
         }
         
@@ -116,7 +117,8 @@ class DataIntegrationServiceProvider extends ServiceProvider {
      * Handle calendar export AJAX request
      */
     public function handle_export_calendar() {
-        if (!current_user_can('export') || !wp_verify_nonce($_POST['nonce'] ?? '', 'wcefp_export')) {
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+        if (!current_user_can('export') || !wp_verify_nonce($nonce, 'wcefp_export')) {
             wp_die(__('Access denied.', 'wceventsfp'));
         }
         
