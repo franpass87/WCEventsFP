@@ -756,5 +756,5 @@ class WCEFP_Analytics_Dashboard {
     }
 }
 
-// Initialize the analytics dashboard
-WCEFP_Analytics_Dashboard::get_instance();
+// Auto-initialization removed - this class is now managed by the AdminServiceProvider
+// Use WCEFP\Admin\MenuManager for consolidated admin menu management

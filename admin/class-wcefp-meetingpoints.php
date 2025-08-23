@@ -98,4 +98,5 @@ class WCEFP_MeetingPoints {
     }
 }
 
-new WCEFP_MeetingPoints();
+// Auto-initialization removed - this class is now managed by the AdminServiceProvider
+// Use WCEFP\Admin\MenuManager for consolidated admin menu management
