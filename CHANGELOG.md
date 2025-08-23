@@ -1,8 +1,39 @@
 # 📜 Changelog – WCEventsFP
 
-[2.1.1] – 2025-01-23
+Tutte le modifiche significative al progetto saranno documentate in questo file.
 
-## 🔧 Code Health & Quality Improvements
+Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/),
+e questo progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
+
+---
+
+## [2.1.1] – 2025-01-23
+
+### 🛡️ Bug Fixes & Code Cleanup (Latest)
+
+#### Fixed
+- **Removed Product Type Duplication**: Eliminated duplicate product classes (WC_Product_Evento/WC_Product_Esperienza vs WC_Product_WCEFP_Event/WC_Product_WCEFP_Experience)
+- **Enhanced Legacy Product Types**: Improved wcefp_event and wcefp_experience classes with proper virtual product handling and shipping logic
+- **Consolidated WSOD Documentation**: Merged 5 redundant WSOD documentation files into single comprehensive guide (WSOD-GUIDE.md)
+- **Updated Autoloader References**: Cleaned up autoloader to remove references to deleted duplicate classes
+
+#### Security
+- **NPM Dependencies Updated**: Fixed multiple security vulnerabilities by upgrading @wordpress/scripts from 27.0.0 to 30.22.0
+- **Deprecated Packages Removed**: Addressed warnings for deprecated packages including eslint@8.57.1, domexception@4.0.0, abab@2.0.6
+
+#### Improved
+- **Code Documentation**: Enhanced inline documentation for product type classes with proper PHPDoc
+- **Legacy System Consistency**: Standardized product type implementation to use wcefp_event/wcefp_experience throughout codebase
+- **File Structure**: Removed unused duplicate files reducing codebase bloat
+
+#### Technical Debt Reduction
+- **Eliminated Code Redundancy**: Removed ~300 lines of duplicate product class implementations
+- **Documentation Consolidation**: Reduced ~1000 lines of redundant WSOD documentation into single authoritative guide
+- **Improved Maintainability**: Simplified product type system to single consistent implementation
+
+---
+
+## 🔧 Code Health & Quality Improvements (Previous)
 
 ### Added  
 

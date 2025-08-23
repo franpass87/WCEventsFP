@@ -44,20 +44,8 @@ class ProductAdmin {
      * @return void
      */
     private function load_product_classes() {
-        // Ensure WooCommerce product classes exist
-        if (!class_exists('WC_Product_Evento')) {
-            $evento_path = WCEFP_PLUGIN_DIR . 'includes/WooCommerce/ProductEvento.php';
-            if (file_exists($evento_path)) {
-                require_once $evento_path;
-            }
-        }
-        
-        if (!class_exists('WC_Product_Esperienza')) {
-            $esperienza_path = WCEFP_PLUGIN_DIR . 'includes/WooCommerce/ProductEsperienza.php';
-            if (file_exists($esperienza_path)) {
-                require_once $esperienza_path;
-            }
-        }
+        // Product classes are now handled by the main autoloader
+        // Legacy product types (wcefp_event, wcefp_experience) are loaded as needed
     }
     
     /**
@@ -93,8 +81,11 @@ class ProductAdmin {
      * @return string Product class name
      */
     public function product_class($classname, $product_type) {
-        if ($product_type === 'evento' || $product_type === 'esperienza') {
-            return 'WC_Product_' . ucfirst($product_type);
+        if ($product_type === 'wcefp_event') {
+            return 'WC_Product_WCEFP_Event';
+        }
+        if ($product_type === 'wcefp_experience') {
+            return 'WC_Product_WCEFP_Experience';
         }
         return $classname;
     }
