@@ -11,7 +11,7 @@
  */
 
 if (!defined('WCEFP_PLUGIN_DIR')) {
-    define('WCEFP_PLUGIN_DIR', dirname(__FILE__) . '/');
+    define('WCEFP_PLUGIN_DIR', dirname(__DIR__, 2) . '/');
 }
 
 echo "=== WCEventsFP Pre-Activation WSOD Prevention Test ===\n\n";

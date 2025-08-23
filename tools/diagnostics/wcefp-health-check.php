@@ -9,7 +9,7 @@
 require_once __DIR__ . '/wcefp-shared-utilities.php';
 
 if (!defined('WCEFP_PLUGIN_DIR')) {
-    define('WCEFP_PLUGIN_DIR', dirname(__DIR__) . '/');
+    define('WCEFP_PLUGIN_DIR', dirname(__DIR__, 2) . '/');
 }
 
 echo "=== WCEventsFP Plugin Health Check ===\n\n";
@@ -32,15 +32,14 @@ foreach ($env_check['checks'] as $check_name => $check_result) {
 // Check required files
 echo "\n2. Checking required files...\n";
 $required_files = [
-    'includes/class-wcefp-logger.php',
-    'includes/class-wcefp-validator.php', 
-    'includes/class-wcefp-cache.php',
-    'includes/class-wcefp-recurring.php',
-    'includes/class-wcefp-closures.php',
-    'includes/class-wcefp-gift.php',
-    'includes/class-wcefp-frontend.php',
-    'includes/class-wcefp-templates.php',
-    'includes/class-wcefp-product-types.php',
+    'includes/Utils/Logger.php',
+    'includes/Legacy/class-wcefp-cache.php',
+    'includes/Legacy/class-wcefp-product-types.php',
+    'includes/Frontend/ServiceProvider.php',
+    'includes/Admin/ServiceProvider.php',
+    'includes/Core/ActivationHandler.php',
+    'includes/Core/Container.php',
+    'includes/Bootstrap/Plugin.php',
     'admin/class-wcefp-admin.php',
     'admin/class-wcefp-admin-settings.php'
 ];

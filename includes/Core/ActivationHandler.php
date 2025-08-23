@@ -77,7 +77,7 @@ class ActivationHandler {
                 $error_html .= '<li>Ensure WooCommerce is installed and activated</li>';
                 $error_html .= '<li>Check that PHP version is 7.4 or higher</li>';
                 $error_html .= '<li>Verify database permissions</li>';
-                $error_html .= '<li>Run the activation test: <code>php wcefp-activation-test.php</code></li>';
+                $error_html .= '<li>Run the pre-activation test: <code>php tools/diagnostics/wcefp-pre-activation-test.php</code></li>';
                 $error_html .= '</ol>';
                 
                 wp_die($error_html, 'Plugin Activation Error', [
