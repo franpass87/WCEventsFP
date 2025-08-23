@@ -1,0 +1,46 @@
+/**
+ * Voucher Print Styles
+ * 
+ * Styles for printable voucher pages.
+ * Moved from inline styles in class-wcefp-gift.php for better maintainability.
+ * 
+ * @package WCEFP
+ * @since 2.1.4
+ */
+
+body {
+    font-family: system-ui, Arial, sans-serif;
+    margin: 20px;
+}
+
+.box {
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 680px;
+}
+
+.muted {
+    color: #666;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid #ccc;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+/* Print-specific styles */
+@media print {
+    body {
+        margin: 0;
+    }
+    
+    .box {
+        border: 2px solid #000;
+        box-shadow: none;
+    }
+}

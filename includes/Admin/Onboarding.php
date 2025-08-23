@@ -657,7 +657,7 @@ class Onboarding {
     }
     
     private function complete_onboarding() {
-        update_option('wcefp_onboarding_completed', true);
+        update_option('wcefp_onboarding_completed', true, false);
         update_option('wcefp_onboarding_completed_date', current_time('mysql'), false);
         delete_option('wcefp_onboarding_step');
     }

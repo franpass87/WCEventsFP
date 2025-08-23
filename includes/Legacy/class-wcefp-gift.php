@@ -210,7 +210,7 @@ class WCEFP_Gift {
         // Semplice pagina stampabile
         header('Content-Type: text/html; charset=utf-8');
         echo '<!doctype html><html><head><meta charset="utf-8"><title>Voucher '.$code.'</title>';
-        echo '<style>body{font-family:system-ui,Arial,sans-serif;margin:20px;} .box{border:1px solid #ddd;padding:20px;border-radius:10px;max-width:680px} .muted{color:#666} .badge{display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid #ccc;font-size:12px;margin-left:8px}</style>';
+        echo '<link rel="stylesheet" href="' . esc_url(WCEFP_PLUGIN_URL . 'assets/css/voucher-print.css') . '?v=' . WCEFP_VERSION . '">';
         echo '</head><body>';
         echo '<div class="box">';
         echo '<h1>'.esc_html($site).' — '.esc_html__('Voucher Regalo','wceventsfp').'</h1>';

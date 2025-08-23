@@ -128,8 +128,13 @@ class WCEFP_Debug_Tools {
             'is_debug_enabled' => $this->debug_enabled
         ]);
         
-        // Add debug CSS
-        wp_add_inline_style('wp-admin-bar', $this->get_debug_css());
+        // Enqueue debug CSS
+        wp_enqueue_style(
+            'wcefp-debug-tools',
+            WCEFP_PLUGIN_URL . 'assets/css/debug-tools.css',
+            ['wp-admin-bar'],
+            WCEFP_VERSION
+        );
     }
     
     /**
@@ -470,122 +475,6 @@ class WCEFP_Debug_Tools {
     /**
      * Get debug CSS
      */
-    private function get_debug_css() {
-        return "
-            #wcefp-debug-panel {
-                position: fixed;
-                top: 50px;
-                right: 20px;
-                width: 600px;
-                max-height: 80vh;
-                background: #fff;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-                z-index: 99999;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                font-size: 12px;
-            }
-            
-            .wcefp-debug-header {
-                background: #0073aa;
-                color: #fff;
-                padding: 10px 15px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            
-            .wcefp-debug-header h3 {
-                margin: 0;
-                font-size: 14px;
-            }
-            
-            .wcefp-debug-header button {
-                background: none;
-                border: none;
-                color: #fff;
-                font-size: 20px;
-                cursor: pointer;
-                padding: 0;
-                width: 25px;
-                height: 25px;
-            }
-            
-            .wcefp-debug-tabs {
-                background: #f1f1f1;
-                display: flex;
-                border-bottom: 1px solid #ddd;
-            }
-            
-            .wcefp-debug-tab {
-                background: none;
-                border: none;
-                padding: 10px 15px;
-                cursor: pointer;
-                font-size: 12px;
-            }
-            
-            .wcefp-debug-tab.active {
-                background: #fff;
-                border-bottom: 2px solid #0073aa;
-            }
-            
-            .wcefp-debug-tab-content {
-                max-height: 400px;
-                overflow-y: auto;
-                padding: 15px;
-                display: none;
-            }
-            
-            .wcefp-debug-tab-content.active {
-                display: block;
-            }
-            
-            .wcefp-debug-entry {
-                margin-bottom: 10px;
-                padding: 8px;
-                border-left: 3px solid #ddd;
-                font-size: 11px;
-            }
-            
-            .wcefp-debug-info { border-left-color: #0073aa; }
-            .wcefp-debug-warning { border-left-color: #ffb900; }
-            .wcefp-debug-error { border-left-color: #dc3232; }
-            .wcefp-debug-performance { border-left-color: #00a32a; }
-            
-            .wcefp-debug-time {
-                color: #666;
-                margin-right: 10px;
-            }
-            
-            .wcefp-debug-level {
-                font-weight: bold;
-                margin-right: 10px;
-                text-transform: uppercase;
-            }
-            
-            .wcefp-debug-context {
-                margin-top: 5px;
-                background: #f9f9f9;
-                padding: 5px;
-                border-radius: 3px;
-            }
-            
-            .wcefp-debug-location {
-                float: right;
-                color: #666;
-                font-style: italic;
-            }
-            
-            .wcefp-debug-context pre {
-                margin: 0;
-                font-size: 10px;
-                max-height: 200px;
-                overflow: auto;
-            }
-        ";
-    }
     
     /**
      * Get debug log
