@@ -96,10 +96,7 @@ class Plugin {
                 return;
             }
             
-            // Load textdomain
-            $this->load_textdomain();
-            
-            // Initialize services
+            // Initialize services (modules will load textdomain on init)
             $this->init_services();
             
             // Register hooks
@@ -181,20 +178,14 @@ class Plugin {
     }
     
     /**
-     * Load plugin textdomain
+     * Load plugin textdomain - moved to init hook via ModulesServiceProvider
      * 
      * @return void
+     * @deprecated 2.1.4 Moved to ModulesServiceProvider::load_textdomain()
      */
     private function load_textdomain() {
-        $loaded = load_plugin_textdomain(
-            'wceventsfp',
-            false,
-            dirname(plugin_basename($this->plugin_file)) . '/languages'
-        );
-        
-        if (!$loaded) {
-            Logger::warning('Failed to load textdomain - translations may not work properly');
-        }
+        // Textdomain loading moved to ModulesServiceProvider on init hook
+        // This method kept for backward compatibility but is no longer called
     }
     
     /**
@@ -204,6 +195,7 @@ class Plugin {
      */
     private function init_services() {
         $service_providers = [
+            \WCEFP\Modules\ModulesServiceProvider::class, // New centralized modules - priority loading
             \WCEFP\Admin\AdminServiceProvider::class,
             \WCEFP\Frontend\FrontendServiceProvider::class,
             \WCEFP\Core\Database\DatabaseServiceProvider::class,
