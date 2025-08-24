@@ -31,12 +31,15 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
-        // Frontend services not yet implemented
-        // Future implementations:
-        // - WidgetManager (custom WordPress widgets)
-        // - ShortcodeManager (custom shortcodes)
-        // - AjaxHandler (frontend AJAX endpoints)
-        // - TemplateManager (template overrides)
+        // Register booking widget
+        $this->container->singleton('frontend.booking_widget', function($container) {
+            return new BookingWidget($container);
+        });
+        
+        // Register shortcode manager
+        $this->container->singleton('frontend.shortcodes', function($container) {
+            return new ShortcodeManager($container);
+        });
     }
     
     /**
@@ -49,7 +52,12 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
-        // No frontend services to initialize yet
-        // This service provider is ready for future frontend implementations
+        // Initialize booking widget
+        $this->container->get('frontend.booking_widget');
+        
+        // Initialize shortcode manager if it exists
+        if (class_exists('\WCEFP\Frontend\ShortcodeManager')) {
+            $this->container->get('frontend.shortcodes');
+        }
     }
 }
