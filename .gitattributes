@@ -1,0 +1,73 @@
+# WordPress Plugin Git Attributes
+# Configure export behavior and file handling
+
+# Exclude development files from git archive exports
+/.github export-ignore
+/docs export-ignore
+/tests export-ignore
+/node_modules export-ignore
+/build-tools export-ignore
+
+# Documentation (keep only essential in distribution)
+CONTRIBUTING.md export-ignore
+DEVELOPMENT.md export-ignore
+API.md export-ignore
+
+# Development configuration files
+webpack.config.js export-ignore
+package.json export-ignore
+package-lock.json export-ignore
+composer.json export-ignore
+composer.lock export-ignore
+phpunit.xml export-ignore
+phpcs.xml export-ignore
+phpstan.neon export-ignore
+phpstan-bootstrap.php export-ignore
+.eslintrc.js export-ignore
+.stylelintrc.json export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+
+# Build and temporary files
+*.map export-ignore
+*.log export-ignore
+*.bak export-ignore
+*.old export-ignore
+*.orig export-ignore
+*.tmp export-ignore
+*~ export-ignore
+
+# OS artifacts
+.DS_Store export-ignore
+Thumbs.db export-ignore
+desktop.ini export-ignore
+
+# Development tools
+build-distribution.sh export-ignore
+tools/analyze-obsolete-files.sh export-ignore
+tools/analyze-assets.sh export-ignore
+tools/check-orphans*.sh export-ignore
+
+# Line ending normalization for cross-platform compatibility
+*.php text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.webp binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary

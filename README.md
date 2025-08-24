@@ -1,9 +1,9 @@
 # WCEventsFP (v2.1.4) - Enterprise Booking Platform<!-- x-release-please-version -->
 
-> **📦 COME SCARICARE IL PLUGIN** - [Guida Completa per Utenti](DOWNLOAD-INSTALL-GUIDE.md)  
-> **⚠️ NON usare "Code → Download ZIP"** - Scarica dalle [GitHub Releases](https://github.com/franpass87/WCEventsFP/releases)
-> 
-> **🛡️ WSOD ISSUES COMPLETELY RESOLVED** - See [WSOD Solution Guide](WSOD-GUIDE.md)
+> **📦 PLUGIN DOWNLOAD** - Get the latest stable release from [GitHub Releases](https://github.com/franpass87/WCEventsFP/releases)  
+> **⚠️ DON'T use "Code → Download ZIP"** - Use official releases for proper plugin packaging
+
+> **🛡️ DIAGNOSTICS & TROUBLESHOOTING** - See [Diagnostic Tools Guide](tools/diagnostics/DIAGNOSTIC-TOOLS-GUIDE.md)
 
 **Sistema di prenotazione enterprise per competere direttamente con RegionDo, Bokun e GetYourGuide**
 
@@ -633,3 +633,55 @@ grep -r "wp_enqueue\|update_option.*false" includes/
 - **WordPress**: 6.0+ 
 - **WooCommerce**: 7.0+
 - **Development**: Composer, Node.js 16+ (for frontend assets)
+
+## 📦 Packaging & Distribution
+
+WCEventsFP uses `.distignore` and `.gitattributes` to maintain lean distribution packages.
+
+### Distribution Exclusions
+The following files and directories are excluded from plugin distribution packages:
+
+#### Development Directories
+- `/.github` - GitHub Actions, issue templates, and repository configuration
+- `/docs` - Development documentation and guides
+- `/tests` - PHPUnit and Jest test suites
+- `/node_modules` - Node.js dependencies (development only)
+- `/build-tools` - Build scripts and development tooling
+
+#### Configuration Files
+- `webpack.config.js`, `package.json`, `composer.json` - Build system configuration
+- `phpunit.xml`, `phpcs.xml`, `phpstan.neon` - Testing and code quality configurations
+- `.eslintrc.js`, `.stylelintrc.json` - Frontend linting configurations
+
+#### Temporary & Development Files
+- `*.map` - Source maps for debugging
+- `*.log` - Build and runtime logs
+- `*.bak`, `*.old`, `*.orig`, `*.tmp` - Backup and temporary files
+- `.DS_Store`, `Thumbs.db` - OS artifacts
+
+### Git Export Configuration
+Files marked with `export-ignore` in `.gitattributes` are excluded from `git archive` exports, ensuring consistent packaging across different deployment methods.
+
+### Production Package Contents
+The final plugin package includes only:
+- Core PHP files (`includes/`, `admin/`, `templates/`)
+- Frontend assets (`assets/css/`, `assets/js/`)
+- Language files (`languages/`)
+- Main plugin file (`wceventsfp.php`)
+- Essential documentation (`README.md`, `CHANGELOG.md`)
+
+**Estimated package size**: ~2.5MB (down from ~15MB with development files)
+
+## 📚 Documentation
+
+### Essential Documentation
+- **[README.md](README.md)** - This file, plugin overview and features
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development guidelines and release process
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Development environment setup
+- **[API.md](API.md)** - Technical API reference and integration guide
+
+### Specialized Guides
+- **[Diagnostic Tools Guide](tools/diagnostics/DIAGNOSTIC-TOOLS-GUIDE.md)** - Troubleshooting and maintenance
+- **[Legacy Code Documentation](includes/Legacy/README.md)** - Backward compatibility notes
+- **[Obsolete Files Analysis](docs/OBSOLETE_FILES.md)** - Maintenance and cleanup documentation

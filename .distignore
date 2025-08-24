@@ -1,0 +1,53 @@
+# WordPress Plugin Distribution Exclusions
+# Files and directories excluded from distribution packages
+
+# Development directories
+/.github
+/docs
+/tests
+/node_modules
+/vendor
+/build-tools
+
+# Documentation (keep only essential)
+CONTRIBUTING.md
+DEVELOPMENT.md
+API.md
+
+# Build and development files
+webpack.config.js
+package.json
+package-lock.json
+composer.json
+composer.lock
+phpunit.xml
+phpcs.xml
+phpstan.neon
+phpstan-bootstrap.php
+.eslintrc.js
+.stylelintrc.json
+.gitignore
+.gitattributes
+
+# Source maps and logs
+*.map
+*.log
+*.lock
+
+# Backup and temporary files
+*.bak
+*.old
+*.orig
+*.tmp
+*~
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Development tools
+build-distribution.sh
+tools/analyze-obsolete-files.sh
+tools/analyze-assets.sh
+tools/check-orphans*.sh
