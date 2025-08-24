@@ -12,6 +12,8 @@
 
 namespace WCEFP\Features\Communication;
 
+use WCEFP\Utils\StringHelper;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -240,7 +242,7 @@ class EmailManager {
         }
         
         // Clean up any remaining template variables
-        $template_content = preg_replace('/\{\{[^}]+\}\}/', '', $template_content);
+        $template_content = StringHelper::safe_preg_replace('/\{\{[^}]+\}\}/', '', $template_content);
         
         return $template_content;
     }

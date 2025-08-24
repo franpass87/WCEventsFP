@@ -12,6 +12,7 @@
 namespace WCEFP\CLI;
 
 use WCEFP\Utils\DiagnosticLogger;
+use WCEFP\Utils\StringHelper;
 use WCEFP\Admin\RolesCapabilities;
 use WP_CLI;
 use WP_CLI_Command;
@@ -138,7 +139,7 @@ class Commands extends WP_CLI_Command {
         
         // Database tables check
         $tables_status = $diagnostics['database']['tables_exist'];
-        $tables_ok = strpos($tables_status, '/') === false || $tables_status === '5/5';
+        $tables_ok = StringHelper::safe_strpos($tables_status, '/') === false || $tables_status === '5/5';
         $checks[] = [
             'check' => 'Database Tables',
             'status' => $tables_ok ? 'PASS' : 'WARN',

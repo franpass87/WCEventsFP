@@ -507,7 +507,7 @@ class DiagnosticLogger {
         
         $entry = [
             'timestamp' => $timestamp,
-            'level' => strtoupper($level),
+            'level' => StringHelper::safe_strtoupper($level),
             'channel' => $channel,
             'message' => $message,
             'user_id' => $user_id,
@@ -561,7 +561,7 @@ class DiagnosticLogger {
         foreach ($headers as $header) {
             if (!empty($_SERVER[$header])) {
                 $ips = explode(',', $_SERVER[$header]);
-                return trim($ips[0]);
+                return StringHelper::safe_trim($ips[0]);
             }
         }
         
@@ -590,8 +590,8 @@ class DiagnosticLogger {
             self::DEBUG => 7
         ];
         
-        $level1_value = $levels[strtolower($level1)] ?? 7;
-        $level2_value = $levels[strtolower($level2)] ?? 7;
+        $level1_value = $levels[StringHelper::safe_strtolower($level1)] ?? 7;
+        $level2_value = $levels[StringHelper::safe_strtolower($level2)] ?? 7;
         
         return $level1_value - $level2_value;
     }
