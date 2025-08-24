@@ -37,15 +37,57 @@
 	gap: 12px;
 	flex-wrap: wrap;
 	align-items: flex-end;
+	margin-bottom: 20px;
 }
 
 .wcefp-closures-form label {
 	display: flex;
 	flex-direction: column;
+	min-width: 120px;
+}
+
+.wcefp-closures-form label span {
+	font-weight: 600;
+	margin-bottom: 4px;
 }
 
 .wcefp-closures-note {
 	flex: 1 1 320px;
+}
+
+.wcefp-closures-table {
+	margin-top: 20px;
+}
+
+.wcefp-closures-table table {
+	background: #fff;
+	border-collapse: collapse;
+}
+
+.wcefp-closures-table th,
+.wcefp-closures-table td {
+	padding: 12px;
+	text-align: left;
+	border-bottom: 1px solid #e1e1e1;
+}
+
+.wcefp-closures-table th {
+	background: #f7f7f7;
+	font-weight: 600;
+}
+
+.wcefp-closures-table tbody tr:hover {
+	background: #f9f9f9;
+}
+
+.wcefp-delete-closure {
+	color: #d63638;
+	border-color: #d63638;
+}
+
+.wcefp-delete-closure:hover {
+	background: #d63638;
+	color: #fff;
 }
 
 .wcefp-weekdays {
