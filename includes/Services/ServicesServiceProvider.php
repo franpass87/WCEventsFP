@@ -17,6 +17,7 @@ use WCEFP\Services\Domain\ExtrasService;
 use WCEFP\Services\Domain\MeetingPointService;
 use WCEFP\Services\Domain\PolicyService;
 use WCEFP\Services\Domain\NotificationService;
+use WCEFP\Services\Domain\StockHoldManager;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -79,6 +80,10 @@ class ServicesServiceProvider {
         $this->container->singleton('notification_service', function() {
             return new NotificationService();
         });
+        
+        $this->container->singleton('stock_hold_manager', function() {
+            return new StockHoldManager();
+        });
     }
     
     /**
@@ -104,6 +109,10 @@ class ServicesServiceProvider {
         
         // Cleanup hooks
         add_action('wcefp_cleanup_expired_reservations', [$this, 'cleanup_expired_reservations']);
+        add_action('wcefp_cleanup_expired_holds', [$this, 'cleanup_expired_holds']);
+        
+        // Stock hold cleanup cron
+        add_filter('cron_schedules', [$this, 'add_custom_cron_schedules']);
         
         // AJAX hooks for admin
         add_action('wp_ajax_wcefp_get_available_slots', [$this, 'ajax_get_available_slots']);
@@ -363,6 +372,40 @@ class ServicesServiceProvider {
         
         $scheduling_service->cleanup_expired_reservations();
         $extras_service->cleanup_expired_reservations();
+    }
+    
+    /**
+     * Cleanup expired stock holds
+     * 
+     * @return void
+     */
+    public function cleanup_expired_holds() {
+        $stock_hold_manager = $this->container->get('stock_hold_manager');
+        $cleaned = $stock_hold_manager->cleanup_expired_holds();
+        
+        if ($cleaned > 0) {
+            Logger::log('info', "Cleaned up {$cleaned} expired stock holds");
+        }
+    }
+    
+    /**
+     * Add custom cron schedules
+     * 
+     * @param array $schedules Existing schedules
+     * @return array Modified schedules
+     */
+    public function add_custom_cron_schedules($schedules) {
+        $schedules['wcefp_5_minutes'] = [
+            'interval' => 300, // 5 minutes
+            'display' => __('Every 5 Minutes', 'wceventsfp')
+        ];
+        
+        $schedules['wcefp_15_minutes'] = [
+            'interval' => 900, // 15 minutes
+            'display' => __('Every 15 Minutes', 'wceventsfp')
+        ];
+        
+        return $schedules;
     }
     
     /**

@@ -13,6 +13,7 @@ use WCEFP\Core\Container;
 use WCEFP\Core\ServiceProvider;
 use WCEFP\Core\SecurityManager;
 use WCEFP\Core\PerformanceManager;
+use WCEFP\Core\Database\DatabaseManager;
 use WCEFP\Utils\Logger;
 use WCEFP\Utils\CompatibilityHelper;
 
@@ -200,6 +201,9 @@ class Plugin {
         // Initialize compatibility helper first
         CompatibilityHelper::init();
         
+        // Initialize database tables
+        DatabaseManager::init_tables();
+        
         // Initialize security manager
         $security_manager = new SecurityManager();
         $security_manager->init();
@@ -216,6 +220,7 @@ class Plugin {
         
         $service_providers = [
             \WCEFP\Modules\ModulesServiceProvider::class, // New centralized modules - priority loading
+            \WCEFP\Services\ServicesServiceProvider::class, // Domain services
             \WCEFP\Admin\AdminServiceProvider::class,
             \WCEFP\Frontend\FrontendServiceProvider::class,
             \WCEFP\Core\Database\DatabaseServiceProvider::class,

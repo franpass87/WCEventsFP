@@ -171,6 +171,84 @@ class RestApiManager {
                 'args' => $this->get_webhook_args()
             ]
         ]);
+        
+        // Enhanced booking endpoints for v2
+        
+        // Cart operations
+        register_rest_route(self::NAMESPACE, '/cart/add', [
+            'methods' => WP_REST_Server::CREATABLE,
+            'callback' => [$this, 'add_to_cart_v2'],
+            'permission_callback' => '__return_true', // Public endpoint
+            'args' => [
+                'product_id' => [
+                    'required' => true,
+                    'validate_callback' => function($param) { return is_numeric($param); }
+                ],
+                'occurrence_id' => [
+                    'required' => false,
+                    'validate_callback' => function($param) { return empty($param) || is_numeric($param); }
+                ],
+                'tickets' => [
+                    'required' => true,
+                    'validate_callback' => [$this, 'validate_tickets_data']
+                ],
+                'extras' => [
+                    'required' => false,
+                    'validate_callback' => [$this, 'validate_extras_data']
+                ]
+            ]
+        ]);
+        
+        // Price calculation
+        register_rest_route(self::NAMESPACE, '/calculate-price', [
+            'methods' => WP_REST_Server::CREATABLE,
+            'callback' => [$this, 'calculate_price_v2'],
+            'permission_callback' => '__return_true', // Public endpoint
+            'args' => [
+                'product_id' => [
+                    'required' => true,
+                    'validate_callback' => function($param) { return is_numeric($param); }
+                ],
+                'tickets' => [
+                    'required' => true,
+                    'validate_callback' => [$this, 'validate_tickets_data']
+                ],
+                'extras' => [
+                    'required' => false,
+                    'validate_callback' => [$this, 'validate_extras_data']
+                ],
+                'date' => [
+                    'required' => false,
+                    'validate_callback' => function($param) { return empty($param) || $this->validate_date_format($param); }
+                ]
+            ]
+        ]);
+        
+        // Get tickets for a product
+        register_rest_route(self::NAMESPACE, '/events/(?P<id>\d+)/tickets', [
+            'methods' => WP_REST_Server::READABLE,
+            'callback' => [$this, 'get_event_tickets_v2'],
+            'permission_callback' => '__return_true', // Public endpoint
+            'args' => [
+                'id' => [
+                    'required' => true,
+                    'validate_callback' => function($param) { return is_numeric($param); }
+                ]
+            ]
+        ]);
+        
+        // Get extras for a product
+        register_rest_route(self::NAMESPACE, '/events/(?P<id>\d+)/extras', [
+            'methods' => WP_REST_Server::READABLE,
+            'callback' => [$this, 'get_event_extras_v2'],
+            'permission_callback' => '__return_true', // Public endpoint
+            'args' => [
+                'id' => [
+                    'required' => true,
+                    'validate_callback' => function($param) { return is_numeric($param); }
+                ]
+            ]
+        ]);
     }
     
     /**
@@ -1520,5 +1598,264 @@ class RestApiManager {
         ];
         
         return $labels[$status] ?? ucfirst($status);
+    }
+    
+    // Enhanced V2 API Methods
+    
+    /**
+     * Add to cart with enhanced functionality
+     * 
+     * @param WP_REST_Request $request Request object
+     * @return WP_REST_Response|WP_Error Response
+     */
+    public function add_to_cart_v2(WP_REST_Request $request) {
+        try {
+            if (!class_exists('WooCommerce') || !WC()->cart) {
+                return new WP_Error('wcefp_wc_not_ready', __('WooCommerce not available', 'wceventsfp'), ['status' => 503]);
+            }
+            
+            $product_id = (int) $request['product_id'];
+            $occurrence_id = $request['occurrence_id'] ? (int) $request['occurrence_id'] : null;
+            $tickets = $request['tickets'];
+            $extras = $request['extras'] ?: [];
+            
+            // Verify product
+            $product = wc_get_product($product_id);
+            if (!$product || !in_array($product->get_type(), ['evento', 'esperienza'])) {
+                return new WP_Error('wcefp_invalid_product', __('Invalid product', 'wceventsfp'), ['status' => 400]);
+            }
+            
+            // Add to cart with event data
+            $cart_item_data = [
+                'wcefp_event_data' => [
+                    'occurrence_id' => $occurrence_id,
+                    'tickets' => $tickets,
+                    'extras' => $extras,
+                    'timestamp' => time()
+                ]
+            ];
+            
+            $cart_item_key = WC()->cart->add_to_cart($product_id, 1, 0, [], $cart_item_data);
+            
+            if (!$cart_item_key) {
+                return new WP_Error('wcefp_cart_failed', __('Unable to add to cart', 'wceventsfp'), ['status' => 500]);
+            }
+            
+            return new WP_REST_Response([
+                'success' => true,
+                'cart_item_key' => $cart_item_key,
+                'message' => __('Added to cart successfully', 'wceventsfp'),
+                'cart_total' => WC()->cart->get_cart_total()
+            ]);
+            
+        } catch (\Exception $e) {
+            return new WP_Error('wcefp_cart_error', $e->getMessage(), ['status' => 500]);
+        }
+    }
+    
+    /**
+     * Calculate booking price v2
+     * 
+     * @param WP_REST_Request $request Request object
+     * @return WP_REST_Response|WP_Error Response
+     */
+    public function calculate_price_v2(WP_REST_Request $request) {
+        try {
+            $product_id = (int) $request['product_id'];
+            $tickets = $request['tickets'];
+            $extras = $request['extras'] ?: [];
+            $date = $request['date'] ?: date('Y-m-d');
+            
+            $product = wc_get_product($product_id);
+            if (!$product) {
+                return new WP_Error('wcefp_invalid_product', __('Product not found', 'wceventsfp'), ['status' => 404]);
+            }
+            
+            $total_price = 0;
+            $calculation_details = [
+                'tickets' => [],
+                'extras' => [],
+                'currency' => get_woocommerce_currency()
+            ];
+            
+            // Calculate ticket prices
+            foreach ($tickets as $ticket_key => $quantity) {
+                if ($quantity > 0) {
+                    $base_price = (float) $product->get_regular_price();
+                    
+                    // Apply ticket-specific price modifications if available
+                    $ticket_price = apply_filters('wcefp_ticket_price', $base_price, $ticket_key, $product_id, $date);
+                    $line_total = $ticket_price * $quantity;
+                    
+                    $calculation_details['tickets'][] = [
+                        'type' => $ticket_key,
+                        'quantity' => $quantity,
+                        'unit_price' => $ticket_price,
+                        'total' => $line_total
+                    ];
+                    
+                    $total_price += $line_total;
+                }
+            }
+            
+            // Calculate extras prices
+            foreach ($extras as $extra_key => $quantity) {
+                if ($quantity > 0) {
+                    $extra_price = apply_filters('wcefp_extra_price', 0, $extra_key, $product_id, $tickets);
+                    $line_total = $extra_price * $quantity;
+                    
+                    $calculation_details['extras'][] = [
+                        'type' => $extra_key,
+                        'quantity' => $quantity,
+                        'unit_price' => $extra_price,
+                        'total' => $line_total
+                    ];
+                    
+                    $total_price += $line_total;
+                }
+            }
+            
+            $calculation_details['total'] = $total_price;
+            
+            return new WP_REST_Response($calculation_details);
+            
+        } catch (\Exception $e) {
+            return new WP_Error('wcefp_calculation_error', $e->getMessage(), ['status' => 500]);
+        }
+    }
+    
+    /**
+     * Get event tickets v2
+     * 
+     * @param WP_REST_Request $request Request object
+     * @return WP_REST_Response|WP_Error Response
+     */
+    public function get_event_tickets_v2(WP_REST_Request $request) {
+        try {
+            $product_id = (int) $request['id'];
+            
+            $product = wc_get_product($product_id);
+            if (!$product || !in_array($product->get_type(), ['evento', 'esperienza'])) {
+                return new WP_Error('wcefp_invalid_product', __('Invalid product', 'wceventsfp'), ['status' => 404]);
+            }
+            
+            // Get ticket types from meta or database
+            $ticket_types = get_post_meta($product_id, '_wcefp_ticket_types', true) ?: [];
+            
+            // Default ticket types if none configured
+            if (empty($ticket_types)) {
+                $ticket_types = [
+                    [
+                        'ticket_key' => 'adult',
+                        'label' => __('Adulto', 'wceventsfp'),
+                        'price' => (float) $product->get_regular_price(),
+                        'min_quantity' => 0,
+                        'max_quantity' => 10,
+                        'is_active' => true
+                    ]
+                ];
+                
+                // Add child ticket if child price is set
+                $child_price = get_post_meta($product_id, '_wcefp_child_price', true);
+                if ($child_price && is_numeric($child_price)) {
+                    $ticket_types[] = [
+                        'ticket_key' => 'child',
+                        'label' => __('Bambino', 'wceventsfp'),
+                        'price' => (float) $child_price,
+                        'min_quantity' => 0,
+                        'max_quantity' => 10,
+                        'age_max' => 12,
+                        'is_active' => true
+                    ];
+                }
+            }
+            
+            return new WP_REST_Response([
+                'product_id' => $product_id,
+                'tickets' => $ticket_types
+            ]);
+            
+        } catch (\Exception $e) {
+            return new WP_Error('wcefp_tickets_error', $e->getMessage(), ['status' => 500]);
+        }
+    }
+    
+    /**
+     * Get event extras v2
+     * 
+     * @param WP_REST_Request $request Request object
+     * @return WP_REST_Response|WP_Error Response
+     */
+    public function get_event_extras_v2(WP_REST_Request $request) {
+        try {
+            $product_id = (int) $request['id'];
+            
+            $product = wc_get_product($product_id);
+            if (!$product || !in_array($product->get_type(), ['evento', 'esperienza'])) {
+                return new WP_Error('wcefp_invalid_product', __('Invalid product', 'wceventsfp'), ['status' => 404]);
+            }
+            
+            // Get extras from meta or database
+            $extras = get_post_meta($product_id, '_wcefp_extras', true) ?: [];
+            
+            return new WP_REST_Response([
+                'product_id' => $product_id,
+                'extras' => $extras
+            ]);
+            
+        } catch (\Exception $e) {
+            return new WP_Error('wcefp_extras_error', $e->getMessage(), ['status' => 500]);
+        }
+    }
+    
+    /**
+     * Validate tickets data format
+     * 
+     * @param mixed $tickets Tickets data
+     * @return bool Valid status
+     */
+    private function validate_tickets_data($tickets) {
+        if (!is_array($tickets)) {
+            return false;
+        }
+        
+        foreach ($tickets as $key => $quantity) {
+            if (!is_string($key) || !is_numeric($quantity) || $quantity < 0) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Validate extras data format
+     * 
+     * @param mixed $extras Extras data
+     * @return bool Valid status
+     */
+    private function validate_extras_data($extras) {
+        if (!is_array($extras)) {
+            return false;
+        }
+        
+        foreach ($extras as $key => $quantity) {
+            if (!is_string($key) || !is_numeric($quantity) || $quantity < 0) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Validate date format
+     * 
+     * @param string $date Date string
+     * @return bool Valid status
+     */
+    private function validate_date_format($date) {
+        $d = \DateTime::createFromFormat('Y-m-d', $date);
+        return $d && $d->format('Y-m-d') === $date;
     }
 }
