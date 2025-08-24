@@ -698,22 +698,8 @@ jobs:
           
           # Add QA section to changelog
           if ! grep -q "QA: passed checks" CHANGELOG.md; then
-            # Create temporary file with QA section
-            echo "## QA Validation - $CURRENT_DATE
-
-**✅ All Quality Assurance checks passed:**
-- Static Analysis (PHPCS, PHPStan, PHPCPD, deprecated functions)
-- WordPress Compatibility Matrix (WP 6.2-6.6, PHP 8.1-8.3)  
-- Functional Smoke Tests (cache, assets, lazy loading)
-- Plugin Packaging & Clean Install Tests
-
----
-
-" > qa_section.tmp
-            
-            # Insert QA section after the first heading
-            sed -i '2r qa_section.tmp' CHANGELOG.md
-            rm qa_section.tmp
+            # Create QA section in CHANGELOG
+            sed -i '2i\\## QA Validation - '$(date +"%Y-%m-%d")'\\n\\n✅ All Quality Assurance checks passed:\\n- Static Analysis (PHPCS, PHPStan, PHPCPD, deprecated functions)\\n- WordPress Compatibility Matrix (WP 6.2-6.6, PHP 8.1-8.3)\\n- Functional Smoke Tests (cache, assets, lazy loading)\\n- Plugin Packaging & Clean Install Tests\\n\\n---\\n' CHANGELOG.md
           fi
           
           echo "✅ CHANGELOG updated with QA validation status"
