@@ -49,6 +49,9 @@ class MenuManager {
         // Add AJAX handlers for booking quick actions
         add_action('wp_ajax_wcefp_booking_quick_action', [$this, 'handle_booking_quick_action']);
         add_action('wp_ajax_wcefp_get_booking_calendar_events', [$this, 'handle_get_calendar_events']);
+        
+        // Add AJAX handler for voucher table creation
+        add_action('wp_ajax_wcefp_create_voucher_table', [$this, 'handle_create_voucher_table']);
     }
     
     /**
@@ -372,23 +375,351 @@ class MenuManager {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Vouchers', 'wceventsfp') . '</h1>';
         
-        // Integrate with existing voucher management
-        if (class_exists('WCEFP_Vouchers_Admin')) {
-            // Ensure the class is properly initialized
-            if (method_exists('WCEFP_Vouchers_Admin', 'dispatch')) {
-                // Remove the wrap div since dispatch() may include its own
+        // Check if voucher table exists
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'wcefp_vouchers';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name;
+        
+        if ($table_exists) {
+            // Check if voucher admin classes are available
+            $voucher_admin_file = WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-admin.php';
+            $voucher_table_file = WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-table.php';
+            
+            if (file_exists($voucher_admin_file) && file_exists($voucher_table_file)) {
+                // Load voucher management classes
+                require_once $voucher_admin_file;
+                require_once $voucher_table_file;
+                
+                if (class_exists('WCEFP_Vouchers_Admin') && method_exists('WCEFP_Vouchers_Admin', 'dispatch')) {
+                    // Remove the wrap div since dispatch() includes its own
+                    echo '</div>';
+                    WCEFP_Vouchers_Admin::dispatch();
+                    return;
+                }
+            }
+            
+            // Fallback: Basic voucher listing with WP_List_Table
+            $this->render_basic_voucher_interface();
+            
+        } else {
+            // Show onboarding interface
+            $this->render_voucher_onboarding();
+        }
+        
+        echo '</div>';
+    }
+    
+    /**
+     * Render basic voucher interface when full system not available
+     * 
+     * @return void
+     */
+    private function render_basic_voucher_interface() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'wcefp_vouchers';
+        
+        // Get voucher count
+        $voucher_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+        
+        echo '<div class="wcefp-voucher-interface">';
+        echo '<div class="wcefp-voucher-stats">';
+        echo '<div class="wcefp-stat-card">';
+        echo '<h3>' . esc_html__('Total Vouchers', 'wceventsfp') . '</h3>';
+        echo '<div class="wcefp-stat-number">' . absint($voucher_count) . '</div>';
+        echo '</div>';
+        
+        // Get recent vouchers
+        $recent_vouchers = $wpdb->get_results(
+            "SELECT * FROM $table_name ORDER BY created_at DESC LIMIT 10",
+            ARRAY_A
+        );
+        
+        if (!empty($recent_vouchers)) {
+            echo '<div class="wcefp-stat-card">';
+            echo '<h3>' . esc_html__('Recent Vouchers', 'wceventsfp') . '</h3>';
+            echo '<div class="wcefp-recent-vouchers">';
+            foreach ($recent_vouchers as $voucher) {
+                $status_class = 'wcefp-status-' . sanitize_html_class($voucher['status'] ?? 'pending');
+                echo '<div class="wcefp-voucher-item">';
+                echo '<strong>' . esc_html($voucher['code'] ?? 'N/A') . '</strong>';
+                echo '<span class="wcefp-voucher-meta">';
+                echo esc_html($voucher['recipient_name'] ?? 'N/A') . ' | ';
+                echo '<span class="' . esc_attr($status_class) . '">' . esc_html(ucfirst($voucher['status'] ?? 'pending')) . '</span>';
+                echo '</span>';
                 echo '</div>';
-                WCEFP_Vouchers_Admin::dispatch();
-                return;
+            }
+            echo '</div>';
+            echo '</div>';
+        }
+        echo '</div>';
+        
+        // Voucher actions
+        echo '<div class="wcefp-voucher-actions">';
+        echo '<h3>' . esc_html__('Voucher Actions', 'wceventsfp') . '</h3>';
+        echo '<div class="wcefp-action-buttons">';
+        
+        // Generate new voucher button
+        echo '<button type="button" class="button button-primary" onclick="wcefpGenerateVoucher()">';
+        echo esc_html__('Generate New Voucher', 'wceventsfp');
+        echo '</button>';
+        
+        // Export vouchers button
+        echo '<button type="button" class="button button-secondary" onclick="wcefpExportVouchers()">';
+        echo esc_html__('Export Vouchers', 'wceventsfp') . '</button>';
+        
+        echo '</div>';
+        echo '</div>';
+        
+        // Status notice
+        echo '<div class="notice notice-info">';
+        echo '<p><strong>' . esc_html__('Voucher System Active', 'wceventsfp') . '</strong></p>';
+        echo '<p>' . sprintf(
+            esc_html__('The voucher database table exists with %d vouchers. The full voucher management interface will be available once all components are loaded.', 'wceventsfp'),
+            absint($voucher_count)
+        ) . '</p>';
+        echo '</div>';
+        
+        echo '</div>';
+        
+        // Add basic JavaScript for voucher actions
+        $this->add_voucher_scripts();
+    }
+    
+    /**
+     * Render voucher onboarding interface
+     * 
+     * @return void
+     */
+    private function render_voucher_onboarding() {
+        echo '<div class="wcefp-voucher-onboarding">';
+        echo '<div class="wcefp-onboarding-header">';
+        echo '<h2>🎁 ' . esc_html__('Voucher System', 'wceventsfp') . '</h2>';
+        echo '<p class="wcefp-onboarding-intro">' . esc_html__('Enable gift vouchers for your events and experiences to increase sales and customer satisfaction.', 'wceventsfp') . '</p>';
+        echo '</div>';
+        
+        echo '<div class="wcefp-onboarding-features">';
+        echo '<div class="wcefp-feature-grid">';
+        
+        // Feature cards
+        $features = [
+            [
+                'icon' => '🎫',
+                'title' => __('Digital Vouchers', 'wceventsfp'),
+                'description' => __('Generate beautiful PDF vouchers with QR codes for easy redemption.', 'wceventsfp')
+            ],
+            [
+                'icon' => '💳',
+                'title' => __('Custom Values', 'wceventsfp'),
+                'description' => __('Create vouchers with fixed or custom amounts for any experience.', 'wceventsfp')
+            ],
+            [
+                'icon' => '📧',
+                'title' => __('Email Delivery', 'wceventsfp'),
+                'description' => __('Automatically send vouchers via email to recipients.', 'wceventsfp')
+            ],
+            [
+                'icon' => '📊',
+                'title' => __('Usage Tracking', 'wceventsfp'),
+                'description' => __('Track voucher usage, redemption rates, and expiration dates.', 'wceventsfp')
+            ]
+        ];
+        
+        foreach ($features as $feature) {
+            echo '<div class="wcefp-feature-card">';
+            echo '<div class="wcefp-feature-icon">' . $feature['icon'] . '</div>';
+            echo '<h4>' . esc_html($feature['title']) . '</h4>';
+            echo '<p>' . esc_html($feature['description']) . '</p>';
+            echo '</div>';
+        }
+        
+        echo '</div>';
+        echo '</div>';
+        
+        echo '<div class="wcefp-onboarding-actions">';
+        echo '<h3>' . esc_html__('How to Enable Vouchers', 'wceventsfp') . '</h3>';
+        echo '<div class="wcefp-setup-steps">';
+        
+        echo '<div class="wcefp-setup-step">';
+        echo '<div class="wcefp-step-number">1</div>';
+        echo '<div class="wcefp-step-content">';
+        echo '<h4>' . esc_html__('Create Voucher Database Table', 'wceventsfp') . '</h4>';
+        echo '<p>' . esc_html__('The voucher system requires a database table to store voucher information.', 'wceventsfp') . '</p>';
+        echo '<button type="button" class="button button-primary" onclick="wcefpCreateVoucherTable()">';
+        echo esc_html__('Create Voucher Table', 'wceventsfp') . '</button>';
+        echo '</div>';
+        echo '</div>';
+        
+        echo '<div class="wcefp-setup-step">';
+        echo '<div class="wcefp-step-number">2</div>';
+        echo '<div class="wcefp-step-content">';
+        echo '<h4>' . esc_html__('Configure Settings', 'wceventsfp') . '</h4>';
+        echo '<p>' . esc_html__('Set up voucher expiration periods, email templates, and other preferences.', 'wceventsfp') . '</p>';
+        echo '<a href="' . admin_url('admin.php?page=wcefp-settings&tab=integrations') . '" class="button button-secondary">';
+        echo esc_html__('Go to Settings', 'wceventsfp') . '</a>';
+        echo '</div>';
+        echo '</div>';
+        
+        echo '<div class="wcefp-setup-step">';
+        echo '<div class="wcefp-step-number">3</div>';
+        echo '<div class="wcefp-step-content">';
+        echo '<h4>' . esc_html__('Add Voucher Products', 'wceventsfp') . '</h4>';
+        echo '<p>' . esc_html__('Create voucher products in WooCommerce that customers can purchase.', 'wceventsfp') . '</p>';
+        echo '<a href="' . admin_url('post-new.php?post_type=product') . '" class="button button-secondary">';
+        echo esc_html__('Add Voucher Product', 'wceventsfp') . '</a>';
+        echo '</div>';
+        echo '</div>';
+        
+        echo '</div>';
+        echo '</div>';
+        
+        echo '</div>';
+        
+        // Add onboarding scripts
+        $this->add_onboarding_scripts();
+    }
+    
+    /**
+     * Add voucher management scripts
+     * 
+     * @return void
+     */
+    private function add_voucher_scripts() {
+        ?>
+        <script type="text/javascript">
+        function wcefpGenerateVoucher() {
+            if (confirm('<?php echo esc_js(__("Generate a new voucher code?", "wceventsfp")); ?>')) {
+                // Implementation would go here
+                alert('<?php echo esc_js(__("Voucher generation feature will be available in the full interface.", "wceventsfp")); ?>');
             }
         }
         
-        // Fallback: show placeholder interface
-        echo '<div class="wcefp-voucher-placeholder">';
-        echo '<p>' . esc_html__('Voucher management system is being loaded...', 'wceventsfp') . '</p>';
-        echo '<p class="description">' . esc_html__('If this message persists, please check that all plugin components are properly installed.', 'wceventsfp') . '</p>';
-        echo '</div>';
-        echo '</div>';
+        function wcefpExportVouchers() {
+            // Implementation would go here
+            alert('<?php echo esc_js(__("Voucher export feature will be available in the full interface.", "wceventsfp")); ?>');
+        }
+        </script>
+        
+        <style>
+        .wcefp-voucher-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .wcefp-stat-card {
+            background: white;
+            padding: 20px;
+            border: 1px solid #ccd0d4;
+            border-radius: 4px;
+        }
+        .wcefp-stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #0073aa;
+        }
+        .wcefp-voucher-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .wcefp-voucher-meta {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .wcefp-action-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        </style>
+        <?php
+    }
+    
+    /**
+     * Add onboarding scripts
+     * 
+     * @return void
+     */
+    private function add_onboarding_scripts() {
+        ?>
+        <script type="text/javascript">
+        function wcefpCreateVoucherTable() {
+            if (confirm('<?php echo esc_js(__("Create the voucher database table? This action cannot be undone.", "wceventsfp")); ?>')) {
+                jQuery.post(ajaxurl, {
+                    action: 'wcefp_create_voucher_table',
+                    nonce: '<?php echo wp_create_nonce("wcefp_voucher_setup"); ?>'
+                }, function(response) {
+                    if (response.success) {
+                        alert('<?php echo esc_js(__("Voucher table created successfully! Please refresh the page.", "wceventsfp")); ?>');
+                        location.reload();
+                    } else {
+                        alert('<?php echo esc_js(__("Error creating voucher table: ", "wceventsfp")); ?>' + (response.data || 'Unknown error'));
+                    }
+                });
+            }
+        }
+        </script>
+        
+        <style>
+        .wcefp-onboarding-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .wcefp-onboarding-intro {
+            font-size: 1.1em;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .wcefp-feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .wcefp-feature-card {
+            background: white;
+            padding: 20px;
+            border: 1px solid #ccd0d4;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .wcefp-feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        .wcefp-setup-steps {
+            max-width: 800px;
+        }
+        .wcefp-setup-step {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border: 1px solid #ccd0d4;
+            border-radius: 4px;
+        }
+        .wcefp-step-number {
+            background: #0073aa;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        .wcefp-step-content {
+            flex-grow: 1;
+        }
+        .wcefp-step-content h4 {
+            margin-top: 0;
+        }
+        </style>
+        <?php
     }
     
     /**
@@ -1330,5 +1661,70 @@ class MenuManager {
         }
         
         return array_values($sample_events);
+    }
+    
+    /**
+     * Handle voucher table creation via AJAX
+     * 
+     * @return void
+     */
+    public function handle_create_voucher_table() {
+        // Security checks
+        if (!check_ajax_referer('wcefp_voucher_setup', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'wceventsfp'));
+        }
+        
+        if (!current_user_can('manage_woocommerce')) {
+            wp_send_json_error(__('Insufficient permissions.', 'wceventsfp'));
+        }
+        
+        try {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'wcefp_vouchers';
+            
+            // Check if table already exists
+            if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name) {
+                wp_send_json_error(__('Voucher table already exists.', 'wceventsfp'));
+            }
+            
+            $charset_collate = $wpdb->get_charset_collate();
+            
+            $sql = "CREATE TABLE $table_name (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                code varchar(50) NOT NULL UNIQUE,
+                order_id bigint(20) DEFAULT NULL,
+                product_id bigint(20) DEFAULT NULL,
+                recipient_name varchar(255) DEFAULT NULL,
+                recipient_email varchar(255) DEFAULT NULL,
+                sender_name varchar(255) DEFAULT NULL,
+                sender_email varchar(255) DEFAULT NULL,
+                message text,
+                value decimal(10,2) NOT NULL DEFAULT 0.00,
+                currency char(3) DEFAULT 'EUR',
+                status varchar(20) DEFAULT 'pending',
+                expiry_date datetime DEFAULT NULL,
+                used_date datetime DEFAULT NULL,
+                used_order_id bigint(20) DEFAULT NULL,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY code (code),
+                KEY order_id (order_id),
+                KEY status (status),
+                KEY expiry_date (expiry_date)
+            ) $charset_collate;";
+            
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            $result = dbDelta($sql);
+            
+            if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name) {
+                wp_send_json_success(__('Voucher table created successfully.', 'wceventsfp'));
+            } else {
+                wp_send_json_error(__('Failed to create voucher table.', 'wceventsfp'));
+            }
+            
+        } catch (\Exception $e) {
+            wp_send_json_error(__('Database error: ', 'wceventsfp') . $e->getMessage());
+        }
     }
 }
