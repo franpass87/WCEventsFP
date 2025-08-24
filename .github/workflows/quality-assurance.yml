@@ -207,3 +207,16 @@ jobs:
           echo "❌ Security issues to address:"
           echo "Checking for potential XSS vulnerabilities..."
           grep -r "echo.*\$_" --include="*.php" . && echo "Found direct variable output - needs escaping" || echo "✅ No direct variable output found"
+
+  orphan-check:
+    name: Orphan File Detection
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Orphan File Checker
+        run: |
+          chmod +x tools/check-orphans-simple.sh
+          ./tools/check-orphans-simple.sh
