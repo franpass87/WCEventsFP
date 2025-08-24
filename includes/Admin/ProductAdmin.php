@@ -234,12 +234,13 @@ class ProductAdmin {
         
         echo '<div class="wcefp-weekdays-selection">';
         echo '<label class="wcefp-field-label"><strong>🗓️ ' . __('Giorni della settimana disponibili:', 'wceventsfp') . '</strong></label>';
-        echo '<div class="wcefp-checkbox-grid">';
+        echo '<div class="wcefp-checkbox-grid wcefp-weekdays-fixed">';
         foreach ($day_labels as $day_num => $day_name) {
             $checked = in_array($day_num, $weekdays) ? 'checked="checked"' : '';
-            echo '<label class="wcefp-checkbox-item">';
-            echo '<input type="checkbox" name="_wcefp_weekdays[]" value="' . $day_num . '" ' . $checked . ' />';
-            echo '<span>' . $day_name . '</span>';
+            $field_id = 'wcefp-weekday-' . $day_num;
+            echo '<label class="wcefp-checkbox-item" for="' . esc_attr($field_id) . '">';
+            echo '<input type="checkbox" id="' . esc_attr($field_id) . '" name="_wcefp_weekdays[]" value="' . $day_num . '" ' . $checked . ' />';
+            echo '<span>' . esc_html($day_name) . '</span>';
             echo '</label>';
         }
         echo '</div>';

@@ -86,13 +86,19 @@
 
 .wcefp-checkbox-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+	grid-template-columns: repeat(7, minmax(0, 1fr));
 	gap: 8px;
 	margin: 10px 0;
 	padding: 10px;
 	background: #f9f9f9;
 	border: 1px solid #ddd;
 	border-radius: 4px;
+}
+
+/* Fixed weekdays grid for stable 7-column layout */
+.wcefp-weekdays-fixed {
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	gap: .5rem;
 }
 
 .wcefp-checkbox-item {
@@ -104,6 +110,10 @@
 	border-radius: 3px;
 	cursor: pointer;
 	transition: all 0.2s ease;
+	position: relative;
+	z-index: 1;
+	min-height: 36px;
+	justify-content: flex-start;
 }
 
 .wcefp-checkbox-item:hover {
@@ -114,6 +124,20 @@
 .wcefp-checkbox-item input[type="checkbox"] {
 	margin-right: 6px;
 	margin-left: 0;
+	position: relative;
+	z-index: 2;
+	flex-shrink: 0;
+	pointer-events: auto;
+}
+
+.wcefp-checkbox-item span {
+	position: relative;
+	z-index: 1;
+	flex-grow: 1;
+	text-align: center;
+	font-size: 13px;
+	line-height: 1.2;
+	pointer-events: none;
 }
 
 .wcefp-checkbox-item input[type="checkbox"]:checked + span {
