@@ -189,6 +189,70 @@ class MenuManager {
         
         wp_enqueue_script('jquery-ui-datepicker');
         wp_enqueue_style('wp-jquery-ui-dialog');
+        
+        // Enqueue settings page assets when on settings page
+        if (strpos($screen->id, 'wcefp-settings') !== false) {
+            $this->enqueue_settings_assets();
+        }
+        
+        // Enqueue booking calendar assets when on calendar page
+        if (strpos($screen->id, 'wcefp-booking-calendar') !== false) {
+            $this->enqueue_calendar_assets();
+        }
+    }
+    
+    /**
+     * Enqueue settings page specific assets
+     * 
+     * @return void
+     */
+    private function enqueue_settings_assets() {
+        // Enqueue admin settings CSS
+        $settings_css = WCEFP_PLUGIN_URL . 'assets/css/admin-settings.css';
+        if (file_exists(WCEFP_PLUGIN_DIR . 'assets/css/admin-settings.css')) {
+            wp_enqueue_style(
+                'wcefp-admin-settings',
+                $settings_css,
+                ['dashicons'],
+                WCEFP_VERSION
+            );
+        }
+        
+        // Enqueue admin settings JS
+        $settings_js = WCEFP_PLUGIN_URL . 'assets/js/admin-settings.js';
+        if (file_exists(WCEFP_PLUGIN_DIR . 'assets/js/admin-settings.js')) {
+            wp_enqueue_script(
+                'wcefp-admin-settings',
+                $settings_js,
+                ['jquery', 'wp-util'],
+                WCEFP_VERSION,
+                true
+            );
+            
+            // Localize script with settings data
+            wp_localize_script('wcefp-admin-settings', 'wcefpSettings', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'rest_url' => rest_url('wcefp/v1/'),
+                'nonce' => wp_create_nonce('wcefp_admin_settings'),
+                'rest_nonce' => wp_create_nonce('wp_rest'),
+                'strings' => [
+                    'saving' => __('Saving...', 'wceventsfp'),
+                    'saved' => __('Settings saved successfully', 'wceventsfp'),
+                    'error' => __('Error saving settings', 'wceventsfp'),
+                    'confirm_reset' => __('Are you sure you want to reset these settings?', 'wceventsfp'),
+                ]
+            ]);
+        }
+    }
+    
+    /**
+     * Enqueue calendar assets
+     * 
+     * @return void
+     */
+    private function enqueue_calendar_assets() {
+        // Calendar assets are handled in render_booking_calendar_page method
+        // This is just a placeholder for future calendar-specific assets
     }
     
     /**
@@ -359,7 +423,13 @@ class MenuManager {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Impostazioni WCEventsFP', 'wceventsfp') . '</h1>';
         
-        // Try to use the new settings system first
+        // Load the WCEFP_Admin_Settings class if it exists
+        $settings_file = WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin-settings.php';
+        if (file_exists($settings_file)) {
+            require_once $settings_file;
+        }
+        
+        // Try to use the settings system
         if (class_exists('WCEFP_Admin_Settings')) {
             try {
                 $settings = WCEFP_Admin_Settings::get_instance();
@@ -372,28 +442,101 @@ class MenuManager {
             } catch (\Exception $e) {
                 // Log error but continue with fallback
                 error_log('WCEventsFP: Settings rendering error: ' . $e->getMessage());
+                
+                // Show debug error if WP_DEBUG is enabled
+                if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
+                    echo '<div class="notice notice-error"><p>';
+                    echo '<strong>WCEFP Debug:</strong> Settings error: ' . esc_html($e->getMessage());
+                    echo '</p></div>';
+                }
             }
         }
         
-        // Fallback: Use WordPress Settings API
-        echo '<form method="post" action="options.php">';
+        // Fallback: Basic WordPress Settings API implementation
+        echo '<form method="post" action="options.php" class="wcefp-settings-fallback">';
         
-        // Check if settings are registered
-        if (false !== get_option('wcefp_settings', false)) {
-            settings_fields('wcefp_settings');
-            do_settings_sections('wcefp_settings');
-            submit_button();
-        } else {
-            // Basic settings interface
-            echo '<div class="wcefp-settings-placeholder">';
-            echo '<h2>' . esc_html__('Basic Settings', 'wceventsfp') . '</h2>';
-            echo '<p>' . esc_html__('Settings system is being initialized...', 'wceventsfp') . '</p>';
-            echo '<p class="description">' . esc_html__('The full settings interface will be available once all components are loaded.', 'wceventsfp') . '</p>';
-            echo '</div>';
-        }
+        // Create basic settings if they don't exist
+        $this->register_fallback_settings();
+        
+        settings_fields('wcefp_basic_settings');
+        
+        echo '<table class="form-table">';
+        echo '<tbody>';
+        
+        // Basic capacity setting
+        echo '<tr>';
+        echo '<th scope="row">' . esc_html__('Default Capacity', 'wceventsfp') . '</th>';
+        echo '<td>';
+        $capacity = get_option('wcefp_default_capacity', 0);
+        echo '<input type="number" name="wcefp_default_capacity" value="' . esc_attr($capacity) . '" min="0" class="regular-text" />';
+        echo '<p class="description">' . esc_html__('Default number of available seats for each slot when a new occurrence is created.', 'wceventsfp') . '</p>';
+        echo '</td>';
+        echo '</tr>';
+        
+        // Debug mode setting  
+        echo '<tr>';
+        echo '<th scope="row">' . esc_html__('Debug Mode', 'wceventsfp') . '</th>';
+        echo '<td>';
+        $debug = get_option('wcefp_debug_mode', 0);
+        echo '<label><input type="checkbox" name="wcefp_debug_mode" value="1" ' . checked($debug, 1, false) . ' /> ';
+        echo esc_html__('Enable debug logging', 'wceventsfp') . '</label>';
+        echo '<p class="description">' . esc_html__('Enable detailed logging for troubleshooting. Logs are written to the WordPress debug log.', 'wceventsfp') . '</p>';
+        echo '</td>';
+        echo '</tr>';
+        
+        // Plugin version info
+        echo '<tr>';
+        echo '<th scope="row">' . esc_html__('Plugin Version', 'wceventsfp') . '</th>';
+        echo '<td>';
+        echo '<strong>' . esc_html(defined('WCEFP_VERSION') ? WCEFP_VERSION : '2.1.4') . '</strong>';
+        echo '<p class="description">' . esc_html__('Current plugin version. The full settings interface will be available as more components are loaded.', 'wceventsfp') . '</p>';
+        echo '</td>';
+        echo '</tr>';
+        
+        echo '</tbody>';
+        echo '</table>';
+        
+        submit_button(__('Save Settings', 'wceventsfp'));
         
         echo '</form>';
+        
+        // Add instructions for full settings access
+        echo '<div class="notice notice-info">';
+        echo '<h3>' . esc_html__('Full Settings Interface', 'wceventsfp') . '</h3>';
+        echo '<p>' . esc_html__('This is a simplified settings interface. The complete settings system with advanced options will be available once all plugin components are properly loaded.', 'wceventsfp') . '</p>';
+        echo '<p>' . esc_html__('If you continue to see this message, please check:', 'wceventsfp') . '</p>';
+        echo '<ul>';
+        echo '<li>' . esc_html__('WordPress debug log for any error messages', 'wceventsfp') . '</li>';
+        echo '<li>' . esc_html__('Plugin file permissions and integrity', 'wceventsfp') . '</li>';
+        echo '<li>' . esc_html__('PHP version compatibility (requires PHP 7.4+)', 'wceventsfp') . '</li>';
+        echo '</ul>';
         echo '</div>';
+        
+        echo '</div>';
+    }
+    
+    /**
+     * Register fallback settings for basic functionality
+     * 
+     * @return void
+     */
+    private function register_fallback_settings() {
+        // Register basic settings if not already registered
+        if (!get_registered_settings()['wcefp_default_capacity'] ?? false) {
+            register_setting('wcefp_basic_settings', 'wcefp_default_capacity', [
+                'type' => 'integer',
+                'sanitize_callback' => 'absint',
+                'default' => 0
+            ]);
+        }
+        
+        if (!get_registered_settings()['wcefp_debug_mode'] ?? false) {
+            register_setting('wcefp_basic_settings', 'wcefp_debug_mode', [
+                'type' => 'boolean',
+                'sanitize_callback' => function($value) { return !empty($value) ? 1 : 0; },
+                'default' => 0
+            ]);
+        }
     }
     
     /**
