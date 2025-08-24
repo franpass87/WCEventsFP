@@ -1,0 +1,87 @@
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+
+Copyright (C) 2024 Francesco Passeri
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+---
+
+Full GPL v3.0 License Text:
+https://www.gnu.org/licenses/gpl-3.0.html
+
+---
+
+THIRD PARTY LIBRARIES & LICENSES:
+
+This plugin includes the following third-party libraries:
+
+1. FullCalendar (MIT License)
+   - Homepage: https://fullcalendar.io/
+   - License: MIT License
+   - Copyright (c) 2013-2024 Adam Shaw
+   - Used for: Calendar display functionality in admin interface
+
+2. Chart.js (MIT License) 
+   - Homepage: https://www.chartjs.org/
+   - License: MIT License
+   - Copyright (c) 2014-2024 Chart.js Contributors
+   - Used for: Analytics dashboard charts in admin interface
+
+3. WordPress Core Dependencies
+   - All WordPress core functions and classes used
+   - License: GPL v2 or later
+   - Copyright: WordPress Contributors
+   - Used for: Plugin framework, hooks, database abstraction
+
+4. WooCommerce Integration
+   - WooCommerce hooks and classes used
+   - License: GPL v3 or later  
+   - Copyright: Automattic Inc.
+   - Used for: E-commerce functionality, product integration
+
+5. JavaScript Utilities
+   - Select modern JavaScript ES6+ features
+   - License: Public Domain / Built-in browser APIs
+   - Used for: Frontend interactivity, AJAX communication
+
+All third-party libraries maintain their original licenses and copyright notices.
+This plugin's code (excluding third-party libraries) is licensed under GPL v3.0.
+
+For complete license texts of included libraries, see their respective documentation.
+
+CREDITS:
+- Francesco Passeri - Lead Developer & Plugin Architecture
+- WordPress Community - Core framework and documentation
+- WooCommerce Team - E-commerce integration patterns
+- Open Source Contributors - Third-party libraries and tools
+
+---
+
+DISTRIBUTION NOTES:
+
+When redistributing this plugin:
+1. Include this LICENSE file
+2. Maintain copyright notices in source files  
+3. Include third-party library credits
+4. Follow GPL v3.0 redistribution requirements
+5. Provide source code access per GPL terms
+
+For WordPress.org distribution:
+- Plugin follows WordPress.org guidelines
+- GPL v3.0 compatible with WordPress GPL v2+
+- All included assets properly licensed
+- No proprietary code or restricted libraries included
+
+Contact: https://github.com/franpass87/WCEventsFP for licensing questions.

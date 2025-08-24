@@ -1,0 +1,457 @@
+name: 'Pull Request Quality Gates'
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  statuses: write
+
+env:
+  PHP_VERSION: '8.1'
+  NODE_VERSION: '18'
+
+jobs:
+  # =======================
+  # AUTOMATED PR VALIDATION
+  # =======================
+  pr_validation:
+    name: 'PR Validation & Triage'
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Analyze PR changes
+        id: changes
+        run: |
+          echo "=== Pull Request Analysis ==="
+          
+          # Get changed files
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD)
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Categorize changes
+          php_changes=$(echo "$CHANGED_FILES" | grep -c "\.php$" || echo "0")
+          js_changes=$(echo "$CHANGED_FILES" | grep -c "\.js$" || echo "0")
+          css_changes=$(echo "$CHANGED_FILES" | grep -c "\.css$" || echo "0")
+          config_changes=$(echo "$CHANGED_FILES" | grep -c -E "\.(json|xml|yml|yaml)$" || echo "0")
+          docs_changes=$(echo "$CHANGED_FILES" | grep -c -E "\.(md|txt)$" || echo "0")
+          
+          echo "php_changes=$php_changes" >> $GITHUB_OUTPUT
+          echo "js_changes=$js_changes" >> $GITHUB_OUTPUT
+          echo "css_changes=$css_changes" >> $GITHUB_OUTPUT
+          echo "config_changes=$config_changes" >> $GITHUB_OUTPUT
+          echo "docs_changes=$docs_changes" >> $GITHUB_OUTPUT
+          
+          # Check for critical file changes
+          critical_files_changed=false
+          if echo "$CHANGED_FILES" | grep -q -E "(wceventsfp\.php|composer\.json|package\.json|\.github/)"; then
+            critical_files_changed=true
+          fi
+          echo "critical_files_changed=$critical_files_changed" >> $GITHUB_OUTPUT
+          
+          # Calculate change complexity
+          total_changes=$((php_changes + js_changes + css_changes + config_changes))
+          if (( total_changes > 50 )); then
+            complexity="high"
+          elif (( total_changes > 20 )); then
+            complexity="medium"
+          else
+            complexity="low"
+          fi
+          echo "complexity=$complexity" >> $GITHUB_OUTPUT
+          
+          echo "Change complexity: $complexity ($total_changes files)"
+
+      - name: PR size validation
+        run: |
+          # Check PR size (lines changed)
+          ADDITIONS=$(jq -r '.pull_request.additions' "$GITHUB_EVENT_PATH")
+          DELETIONS=$(jq -r '.pull_request.deletions' "$GITHUB_EVENT_PATH")
+          TOTAL_CHANGES=$((ADDITIONS + DELETIONS))
+          
+          echo "Lines changed: +$ADDITIONS -$DELETIONS (total: $TOTAL_CHANGES)"
+          
+          if (( TOTAL_CHANGES > 1000 )); then
+            echo "⚠️ Large PR detected ($TOTAL_CHANGES lines changed)"
+            echo "Consider breaking this into smaller PRs for easier review"
+          elif (( TOTAL_CHANGES > 500 )); then
+            echo "📝 Medium-sized PR ($TOTAL_CHANGES lines changed)"
+          else
+            echo "✅ Reasonably sized PR ($TOTAL_CHANGES lines changed)"
+          fi
+
+      - name: PR title and description check
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+          
+          echo "=== PR Content Validation ==="
+          
+          # Check title format
+          if [[ "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?:\ .+ ]]; then
+            echo "✅ PR title follows conventional commit format"
+          else
+            echo "⚠️ PR title should follow conventional commit format"
+            echo "Examples: feat: add new feature, fix: resolve bug, docs: update documentation"
+          fi
+          
+          # Check description
+          if [[ -n "$PR_BODY" ]] && [[ ${#PR_BODY} -gt 50 ]]; then
+            echo "✅ PR has adequate description"
+          else
+            echo "⚠️ PR description is too short - please provide more context"
+          fi
+
+  # =======================
+  # FAST QUALITY CHECKS
+  # =======================
+  quick_checks:
+    name: 'Quick Quality Checks'
+    runs-on: ubuntu-latest
+    needs: pr_validation
+    
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: dom, curl, libxml, mbstring, zip
+          tools: composer
+          coverage: none
+
+      - name: PHP syntax validation
+        if: needs.pr_validation.outputs.php_changes > 0
+        run: |
+          echo "=== PHP Syntax Check ==="
+          
+          # Get changed PHP files
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_PHP_FILES=$(git diff --name-only --diff-filter=AM origin/${{ github.event.pull_request.base.ref }}...HEAD | grep "\.php$" || true)
+          
+          if [[ -n "$CHANGED_PHP_FILES" ]]; then
+            echo "Checking PHP syntax for changed files:"
+            echo "$CHANGED_PHP_FILES"
+            
+            for file in $CHANGED_PHP_FILES; do
+              if [[ -f "$file" ]]; then
+                echo "Checking: $file"
+                php -l "$file" || {
+                  echo "❌ PHP syntax error in $file"
+                  exit 1
+                }
+              fi
+            done
+            
+            echo "✅ All changed PHP files have valid syntax"
+          else
+            echo "No PHP files changed"
+          fi
+
+      - name: Security pattern check
+        run: |
+          echo "=== Security Pattern Check ==="
+          
+          # Get all changed files
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_FILES=$(git diff --name-only --diff-filter=AM origin/${{ github.event.pull_request.base.ref }}...HEAD)
+          
+          security_issues=0
+          
+          # Check for dangerous patterns in changed files
+          for file in $CHANGED_FILES; do
+            if [[ -f "$file" && "$file" =~ \.(php|js)$ ]]; then
+              
+              # Check for direct superglobal output
+              if grep -q "echo.*\$_\|print.*\$_" "$file"; then
+                echo "⚠️ Direct superglobal output found in $file (potential XSS)"
+                ((security_issues++))
+              fi
+              
+              # Check for SQL without preparation
+              if grep -q "SELECT.*\$\|INSERT.*\$\|UPDATE.*\$\|DELETE.*\$" "$file" && ! grep -q "prepare" "$file"; then
+                echo "⚠️ Potential SQL injection in $file"
+                ((security_issues++))
+              fi
+              
+              # Check for dangerous functions
+              if grep -q "eval\|exec\|system\|shell_exec" "$file"; then
+                echo "⚠️ Dangerous function usage in $file"
+                ((security_issues++))
+              fi
+              
+            fi
+          done
+          
+          if (( security_issues > 0 )); then
+            echo "❌ $security_issues security issues found"
+            echo "Please review and address security concerns before merging"
+          else
+            echo "✅ No obvious security issues detected"
+          fi
+
+      - name: Code style consistency
+        if: needs.pr_validation.outputs.php_changes > 0
+        run: |
+          echo "=== Code Style Check ==="
+          
+          # Basic code style checks for changed PHP files
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_PHP_FILES=$(git diff --name-only --diff-filter=AM origin/${{ github.event.pull_request.base.ref }}...HEAD | grep "\.php$" || true)
+          
+          style_issues=0
+          
+          for file in $CHANGED_PHP_FILES; do
+            if [[ -f "$file" ]]; then
+              
+              # Check for proper namespace usage
+              if grep -q "^class \|^interface \|^trait " "$file" && ! grep -q "^namespace " "$file"; then
+                echo "⚠️ $file: Class without namespace (should use WCEFP namespace)"
+                ((style_issues++))
+              fi
+              
+              # Check for proper PHP opening tags
+              if ! head -1 "$file" | grep -q "^<?php$"; then
+                echo "⚠️ $file: Should start with <?php on first line"
+                ((style_issues++))
+              fi
+              
+              # Check for WordPress security check
+              if grep -q "^class \|^interface \|^trait " "$file" && ! grep -q "defined.*ABSPATH" "$file"; then
+                echo "⚠️ $file: Missing ABSPATH security check"
+                ((style_issues++))
+              fi
+              
+            fi
+          done
+          
+          if (( style_issues > 0 )); then
+            echo "⚠️ $style_issues code style issues found - consider addressing for consistency"
+          else
+            echo "✅ Code style looks consistent"
+          fi
+
+  # =======================
+  # TARGETED TESTING
+  # =======================
+  targeted_tests:
+    name: 'Targeted Testing'
+    runs-on: ubuntu-latest
+    needs: [pr_validation, quick_checks]
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: dom, curl, libxml, mbstring, zip, mysql, pdo_mysql
+          tools: composer, wp-cli
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci --legacy-peer-deps
+
+      - name: JavaScript tests (if JS changes)
+        if: needs.pr_validation.outputs.js_changes > 0
+        run: |
+          echo "=== JavaScript Tests ==="
+          npm run test:js -- --verbose
+
+      - name: Plugin activation test
+        if: needs.pr_validation.outputs.critical_files_changed == 'true' || needs.pr_validation.outputs.php_changes > 0
+        run: |
+          echo "=== Plugin Activation Test ==="
+          
+          # Setup WordPress
+          wp core download --path=/tmp/wordpress
+          wp config create --path=/tmp/wordpress \
+            --dbname=wordpress_test \
+            --dbuser=root \
+            --dbpass=root \
+            --dbhost=127.0.0.1:3306 \
+            --skip-check
+          
+          wp core install --path=/tmp/wordpress \
+            --url=http://localhost:8080 \
+            --title="PR Test" \
+            --admin_user=admin \
+            --admin_password=password \
+            --admin_email=admin@example.com \
+            --skip-email
+          
+          # Install WooCommerce
+          wp plugin install woocommerce --path=/tmp/wordpress --activate
+          
+          # Copy and test plugin activation
+          cp -r . /tmp/wordpress/wp-content/plugins/wceventsfp/
+          
+          # Activate plugin - this will fail if there are fatal errors
+          wp plugin activate wceventsfp --path=/tmp/wordpress || {
+            echo "❌ Plugin activation failed"
+            exit 1
+          }
+          
+          echo "✅ Plugin activates successfully"
+          
+          # Basic functionality test
+          wp eval --path=/tmp/wordpress 'echo "Plugin loaded: " . (class_exists("WCEFP\Bootstrap\Plugin") ? "YES" : "NO") . "\n";'
+
+      - name: Run basic tests
+        run: |
+          echo "=== Basic Tests ==="
+          php tests/basic-test-runner.php
+
+  # =======================
+  # AUTOMATED FEEDBACK
+  # =======================
+  pr_feedback:
+    name: 'Automated PR Feedback'
+    runs-on: ubuntu-latest
+    needs: [pr_validation, quick_checks, targeted_tests]
+    if: always()
+    
+    steps:
+      - name: Generate PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prData = context.payload.pull_request;
+            const complexity = '${{ needs.pr_validation.outputs.complexity }}';
+            const phpChanges = '${{ needs.pr_validation.outputs.php_changes }}';
+            const jsChanges = '${{ needs.pr_validation.outputs.js_changes }}';
+            const criticalFiles = '${{ needs.pr_validation.outputs.critical_files_changed }}';
+            
+            const quickChecks = '${{ needs.quick_checks.result }}';
+            const targetedTests = '${{ needs.targeted_tests.result }}';
+            
+            let comment = '## 🤖 Automated PR Review\n\n';
+            
+            // Change summary
+            comment += '### 📊 Change Summary\n';
+            comment += `- **Complexity**: ${complexity.toUpperCase()}\n`;
+            comment += `- **PHP files changed**: ${phpChanges}\n`;
+            comment += `- **JavaScript files changed**: ${jsChanges}\n`;
+            comment += `- **Critical files modified**: ${criticalFiles === 'true' ? '⚠️ YES' : '✅ NO'}\n\n`;
+            
+            // Test results
+            comment += '### 🧪 Test Results\n';
+            comment += `- **Quick Quality Checks**: ${quickChecks === 'success' ? '✅ PASSED' : '❌ FAILED'}\n`;
+            comment += `- **Targeted Tests**: ${targetedTests === 'success' ? '✅ PASSED' : '❌ FAILED'}\n\n`;
+            
+            // Recommendations
+            comment += '### 💡 Recommendations\n';
+            
+            if (complexity === 'high') {
+              comment += '- ⚠️ This is a large PR - consider breaking it into smaller, focused changes\n';
+            }
+            
+            if (criticalFiles === 'true') {
+              comment += '- ⚠️ Critical files modified - extra review attention recommended\n';
+            }
+            
+            if (quickChecks !== 'success') {
+              comment += '- ❌ Quick checks failed - please address issues before review\n';
+            }
+            
+            if (targetedTests !== 'success') {
+              comment += '- ❌ Tests failed - please fix failing tests\n';
+            }
+            
+            if (quickChecks === 'success' && targetedTests === 'success') {
+              comment += '- ✅ All automated checks passed - ready for human review!\n';
+            }
+            
+            comment += '\n---\n*This comment was generated automatically. Please address any issues before requesting review.*';
+            
+            // Post comment
+            github.rest.issues.createComment({
+              issue_number: prData.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Set PR status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const state = '${{ needs.targeted_tests.result }}' === 'success' && '${{ needs.quick_checks.result }}' === 'success' ? 'success' : 'failure';
+            const description = state === 'success' ? 'All quality gates passed' : 'Some quality gates failed';
+            
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state: state,
+              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              description: description,
+              context: 'ci/quality-gates'
+            });
+
+  # =======================
+  # MERGE READINESS CHECK
+  # =======================
+  merge_readiness:
+    name: 'Merge Readiness Check'
+    runs-on: ubuntu-latest
+    needs: [targeted_tests]
+    if: needs.targeted_tests.result == 'success' && github.event.pull_request.mergeable == true
+    
+    steps:
+      - name: Check merge conflicts
+        run: |
+          echo "=== Merge Readiness Check ==="
+          echo "✅ All tests passed"
+          echo "✅ No merge conflicts detected"
+          echo "✅ PR is ready for human review and merge"
+
+      - name: Add ready-for-review label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.payload.pull_request.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['✅ ready-for-review', '🤖 tests-passed']
+            });

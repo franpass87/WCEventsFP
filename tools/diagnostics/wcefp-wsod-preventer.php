@@ -90,8 +90,8 @@ function wcefp_ultra_safe_environment_check() {
     $warnings = [];
     
     // PHP version check
-    if (version_compare(PHP_VERSION, '7.4.0', '<')) {
-        $errors[] = "PHP 7.4+ richiesto. Versione attuale: " . PHP_VERSION;
+    if (version_compare(PHP_VERSION, '8.0.0', '<')) {
+        $errors[] = "PHP 8.0+ richiesto. Versione attuale: " . PHP_VERSION;
     }
     
     // WordPress check

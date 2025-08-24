@@ -11,7 +11,10 @@ namespace WCEFP\Bootstrap;
 
 use WCEFP\Core\Container;
 use WCEFP\Core\ServiceProvider;
+use WCEFP\Core\SecurityManager;
+use WCEFP\Core\PerformanceManager;
 use WCEFP\Utils\Logger;
+use WCEFP\Utils\CompatibilityHelper;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -96,10 +99,7 @@ class Plugin {
                 return;
             }
             
-            // Load textdomain
-            $this->load_textdomain();
-            
-            // Initialize services
+            // Initialize services (modules will load textdomain on init)
             $this->init_services();
             
             // Register hooks
@@ -172,7 +172,7 @@ class Plugin {
         }
         
         // Check PHP version
-        if (version_compare(PHP_VERSION, '7.4.0', '<')) {
+        if (version_compare(PHP_VERSION, '8.0.0', '<')) {
             add_action('admin_notices', [$this, 'php_version_notice']);
             return false;
         }
@@ -181,20 +181,14 @@ class Plugin {
     }
     
     /**
-     * Load plugin textdomain
+     * Load plugin textdomain - moved to init hook via ModulesServiceProvider
      * 
      * @return void
+     * @deprecated 2.1.4 Moved to ModulesServiceProvider::load_textdomain()
      */
     private function load_textdomain() {
-        $loaded = load_plugin_textdomain(
-            'wceventsfp',
-            false,
-            dirname(plugin_basename($this->plugin_file)) . '/languages'
-        );
-        
-        if (!$loaded) {
-            Logger::warning('Failed to load textdomain - translations may not work properly');
-        }
+        // Textdomain loading moved to ModulesServiceProvider on init hook
+        // This method kept for backward compatibility but is no longer called
     }
     
     /**
@@ -203,7 +197,25 @@ class Plugin {
      * @return void
      */
     private function init_services() {
+        // Initialize compatibility helper first
+        CompatibilityHelper::init();
+        
+        // Initialize security manager
+        $security_manager = new SecurityManager();
+        $security_manager->init();
+        $this->container->singleton('security', function() use ($security_manager) {
+            return $security_manager;
+        });
+        
+        // Initialize performance manager
+        $performance_manager = new PerformanceManager();
+        $performance_manager->init();
+        $this->container->singleton('performance', function() use ($performance_manager) {
+            return $performance_manager;
+        });
+        
         $service_providers = [
+            \WCEFP\Modules\ModulesServiceProvider::class, // New centralized modules - priority loading
             \WCEFP\Admin\AdminServiceProvider::class,
             \WCEFP\Frontend\FrontendServiceProvider::class,
             \WCEFP\Core\Database\DatabaseServiceProvider::class,

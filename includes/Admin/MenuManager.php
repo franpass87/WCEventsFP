@@ -48,7 +48,7 @@ class MenuManager {
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts'], 10);
         
         // Add redirect for top-level menu page
-        add_action('load-toplevel_page_wcefp', [$this, 'redirect_toplevel_to_bookings']);
+        add_action('load-toplevel_page_wcefp-events', [$this, 'redirect_toplevel_to_bookings']);
         
         // Add AJAX handlers for booking quick actions
         add_action('wp_ajax_wcefp_booking_quick_action', [$this, 'handle_booking_quick_action']);
@@ -93,7 +93,7 @@ class MenuManager {
     }
     
     /**
-     * Add admin menu items
+     * Add admin menu items - rationalized structure
      * 
      * @return void
      */
@@ -105,81 +105,97 @@ class MenuManager {
         // Load legacy admin classes if they exist
         $this->load_legacy_admin_classes();
         
-        // Main menu page
+        // Main top-level menu page (redirects to Prenotazioni)
         add_menu_page(
-            __('WC Events', 'wceventsfp'),
-            __('WC Events', 'wceventsfp'),
+            __('WC Events FP', 'wceventsfp'),
+            __('WC Events FP', 'wceventsfp'),
             'manage_woocommerce',
-            'wcefp',
-            [$this, 'render_main_page'],
+            'wcefp-events', // Changed slug for consistency
+            [$this, 'redirect_toplevel_to_bookings'], // Direct callback to redirect
             'dashicons-calendar-alt',
             56
         );
         
-        // Submenu pages
+        // Rationalized submenu structure in requested order
         add_submenu_page(
-            'wcefp',
-            __('Occorrenze', 'wceventsfp'),
-            __('Occorrenze', 'wceventsfp'),
-            'manage_woocommerce',
-            'wcefp-occurrences',
-            [$this, 'render_occurrences_page']
-        );
-        
-        add_submenu_page(
-            'wcefp',
-            __('Prenotazioni', 'wceventsfp'),
-            __('Prenotazioni', 'wceventsfp'),
+            'wcefp-events',
+            __('Bookings Management', 'wceventsfp'),
+            __('Prenotazioni', 'wceventsfp'), // 1st position
             'manage_woocommerce',
             'wcefp-bookings',
             [$this, 'render_bookings_page']
         );
         
-        // Hidden booking view page (not shown in menu)
         add_submenu_page(
-            null, // Hidden from menu
-            __('Visualizza Prenotazione', 'wceventsfp'),
-            __('Visualizza Prenotazione', 'wceventsfp'),
-            'manage_wcefp_bookings',
-            'wcefp-booking-view',
-            [$this, 'render_booking_view_page']
-        );
-        
-        // Booking calendar view (submenu under bookings)
-        add_submenu_page(
-            'wcefp',
-            __('Calendario Prenotazioni', 'wceventsfp'),
-            __('📅 Calendario', 'wceventsfp'),
-            'manage_wcefp_bookings',
-            'wcefp-booking-calendar',
-            [$this, 'render_booking_calendar_page']
-        );
-        
-        add_submenu_page(
-            'wcefp',
-            __('Vouchers', 'wceventsfp'),
-            __('Vouchers', 'wceventsfp'),
+            'wcefp-events',
+            __('Vouchers Management', 'wceventsfp'),
+            __('Voucher', 'wceventsfp'), // 2nd position
             'manage_woocommerce',
             'wcefp-vouchers',
             [$this, 'render_vouchers_page']
         );
         
         add_submenu_page(
-            'wcefp',
-            __('Chiusure', 'wceventsfp'),
-            __('Chiusure', 'wceventsfp'),
+            'wcefp-events',
+            __('Closures Management', 'wceventsfp'),
+            __('Chiusure', 'wceventsfp'), // 3rd position
             'manage_woocommerce',
             'wcefp-closures',
             [$this, 'render_closures_page']
         );
         
         add_submenu_page(
-            'wcefp',
-            __('Impostazioni', 'wceventsfp'),
-            __('Impostazioni', 'wceventsfp'),
-            'manage_woocommerce',
+            'wcefp-events',
+            __('Plugin Settings', 'wceventsfp'),
+            __('Impostazioni', 'wceventsfp'), // 4th position
+            'manage_options',
             'wcefp-settings',
             [$this, 'render_settings_page']
+        );
+        
+        // Optional advanced features (shown conditionally)
+        $features_settings = get_option('wcefp_features_settings', []);
+        
+        if (!empty($features_settings['enable_meeting_points'])) {
+            add_submenu_page(
+                'wcefp-events',
+                __('Meeting Points', 'wceventsfp'),
+                __('Meeting Points', 'wceventsfp'), // 5th position if enabled
+                'manage_woocommerce',
+                'edit.php?post_type=wcefp_meeting_point',
+                null // WordPress handles CPT pages automatically
+            );
+        }
+        
+        if (defined('WCEFP_SHOW_EXTRAS_MENU')) {
+            add_submenu_page(
+                'wcefp-events',
+                __('Extra Services', 'wceventsfp'),
+                __('Extras', 'wceventsfp'), // 6th position if enabled
+                'manage_woocommerce',
+                'wcefp-extras',
+                [$this, 'render_extras_page']
+            );
+        }
+        
+        // Hidden booking view page (not shown in menu)
+        add_submenu_page(
+            null, // Hidden from menu
+            __('View Booking Details', 'wceventsfp'),
+            __('Visualizza Prenotazione', 'wceventsfp'),
+            'manage_woocommerce',
+            'wcefp-booking-view',
+            [$this, 'render_booking_view_page']
+        );
+        
+        // Hidden booking calendar (accessible via bookings page)
+        add_submenu_page(
+            null, // Hidden from main menu - accessible via bookings page
+            __('Booking Calendar', 'wceventsfp'),
+            __('Calendario Prenotazioni', 'wceventsfp'),
+            'manage_woocommerce',
+            'wcefp-booking-calendar',
+            [$this, 'render_booking_calendar_page']
         );
     }
     
@@ -282,12 +298,18 @@ class MenuManager {
     }
     
     /**
-     * Remove unwanted menu items (Dashboard/Performance)
+     * Remove unwanted menu items (already prevented in add_admin_menu)
      * 
      * @return void
      */
     public function remove_unwanted_menus() {
-        // Remove Dashboard and Performance submenus as requested
+        // Dashboard and Performance pages no longer added - clean menu structure achieved
+        // Remove any legacy pages that might still be registered by other plugins/features
+        remove_submenu_page('wcefp-events', 'wcefp-dashboard');
+        remove_submenu_page('wcefp-events', 'wcefp-performance'); 
+        remove_submenu_page('wcefp-events', 'wcefp-occurrences'); // Remove old occurrences page
+        
+        // Also clean up any old menu structure references
         remove_submenu_page('wcefp', 'wcefp-dashboard');
         remove_submenu_page('wcefp', 'wcefp-performance');
     }
@@ -298,8 +320,12 @@ class MenuManager {
      * @return void
      */
     public function redirect_toplevel_to_bookings() {
-        wp_safe_redirect(admin_url('admin.php?page=wcefp-bookings'));
-        exit;
+        // Direct redirect to bookings page as requested
+        if (isset($_GET['page']) && $_GET['page'] === 'wcefp-events') {
+            $redirect_url = admin_url('admin.php?page=wcefp-bookings');
+            wp_redirect($redirect_url);
+            exit;
+        }
     }
     
     /**
@@ -363,11 +389,11 @@ class MenuManager {
     }
     
     /**
-     * Render bookings page
+     * Render bookings page (legacy implementation)
      * 
      * @return void
      */
-    public function render_bookings_page() {
+    public function render_bookings_page_legacy() {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Prenotazioni', 'wceventsfp') . '</h1>';
         
@@ -408,11 +434,11 @@ class MenuManager {
     }
     
     /**
-     * Render vouchers page with WP_List_Table
+     * Render vouchers page with WP_List_Table (legacy implementation)
      * 
      * @return void
      */
-    public function render_vouchers_page() {
+    public function render_vouchers_page_legacy() {
         // Security check
         if (!current_user_can('manage_woocommerce')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'wceventsfp'));
@@ -1087,7 +1113,7 @@ class MenuManager {
      * 
      * @return void
      */
-    public function render_closures_page() {
+    public function render_closures_page_legacy() {
         if (class_exists('WCEFP_Closures') && method_exists('WCEFP_Closures', 'render_admin_page')) {
             WCEFP_Closures::render_admin_page();
         } else {
@@ -1110,7 +1136,7 @@ class MenuManager {
      * 
      * @return void
      */
-    public function render_settings_page() {
+    public function render_settings_page_legacy() {
         // Security check
         if (!current_user_can('manage_woocommerce')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'wceventsfp'));
@@ -2512,5 +2538,122 @@ class MenuManager {
         } catch (\Exception $e) {
             wp_send_json_error(__('Database error: ', 'wceventsfp') . $e->getMessage());
         }
+    }
+    
+    // ========== Delegate Methods to Modules ==========
+    
+    /**
+     * Delegate to BookingsModule for rendering
+     * 
+     * @return void
+     */
+    public function render_bookings_page() {
+        $module = $this->get_module('bookings');
+        if ($module && method_exists($module, 'render_bookings_page')) {
+            $module->render_bookings_page();
+        } else {
+            $this->render_fallback_page(__('Bookings Management', 'wceventsfp'), 
+                __('Booking management system is being loaded...', 'wceventsfp'));
+        }
+    }
+    
+    /**
+     * Delegate to VouchersModule for rendering
+     * 
+     * @return void
+     */
+    public function render_vouchers_page() {
+        $module = $this->get_module('vouchers');
+        if ($module && method_exists($module, 'render_vouchers_page')) {
+            $module->render_vouchers_page();
+        } else {
+            // Keep existing voucher rendering logic as fallback
+            $this->render_existing_voucher_page();
+        }
+    }
+    
+    /**
+     * Delegate to ClosuresModule for rendering
+     * 
+     * @return void
+     */
+    public function render_closures_page() {
+        $module = $this->get_module('closures');
+        if ($module && method_exists($module, 'render_closures_page')) {
+            $module->render_closures_page();
+        } else {
+            $this->render_fallback_page(__('Closures Management', 'wceventsfp'),
+                __('Closure management system is being loaded...', 'wceventsfp'));
+        }
+    }
+    
+    /**
+     * Delegate to SettingsModule for rendering
+     * 
+     * @return void
+     */
+    public function render_settings_page() {
+        $module = $this->get_module('settings');
+        if ($module && method_exists($module, 'render_settings_page')) {
+            $module->render_settings_page();
+        } else {
+            $this->render_fallback_page(__('Plugin Settings', 'wceventsfp'),
+                __('Settings system is being loaded...', 'wceventsfp'));
+        }
+    }
+    
+    /**
+     * Delegate to ExtrasModule for rendering
+     * 
+     * @return void
+     */
+    public function render_extras_page() {
+        $module = $this->get_module('extras');
+        if ($module && method_exists($module, 'render_extras_page')) {
+            $module->render_extras_page();
+        } else {
+            $this->render_fallback_page(__('Extra Services', 'wceventsfp'),
+                __('Extra services management is being loaded...', 'wceventsfp'));
+        }
+    }
+    
+    /**
+     * Get module from container
+     * 
+     * @param string $module_key
+     * @return mixed|null
+     */
+    private function get_module($module_key) {
+        try {
+            return $this->container->get("modules.{$module_key}");
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+    
+    /**
+     * Render existing voucher page as fallback
+     * 
+     * @return void
+     */
+    private function render_existing_voucher_page() {
+        // Delegate to the legacy voucher implementation which is functional
+        $this->render_vouchers_page_legacy();
+    }
+    
+    /**
+     * Render fallback page when module is not available
+     * 
+     * @param string $title
+     * @param string $message
+     * @return void
+     */
+    private function render_fallback_page($title, $message) {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html($title) . '</h1>';
+        echo '<div class="notice notice-info">';
+        echo '<p>' . esc_html($message) . '</p>';
+        echo '</div>';
+        echo '</div>';
     }
 }

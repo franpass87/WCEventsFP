@@ -1,0 +1,289 @@
+/*
+ * WCEventsFP Language Switcher Styles
+ * Provides accessible and responsive language selection interface
+ */
+
+/* Language Switcher Container */
+.wcefp-language-switcher {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+/* Current Language Button */
+.wcefp-current-language {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #495057;
+    transition: all 0.2s ease;
+}
+
+.wcefp-current-language:hover,
+.wcefp-current-language:focus {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.wcefp-current-language[aria-expanded="true"] {
+    background: #e9ecef;
+    border-color: #0066cc;
+}
+
+/* Flag and Language Name */
+.wcefp-flag {
+    font-size: 1.2em;
+    line-height: 1;
+}
+
+.wcefp-language-name {
+    font-weight: 500;
+}
+
+.wcefp-dropdown-arrow {
+    font-size: 0.8em;
+    transition: transform 0.2s ease;
+    margin-left: auto;
+}
+
+.wcefp-current-language[aria-expanded="true"] .wcefp-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+/* Language Menu Dropdown */
+.wcefp-language-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: none;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 0.25rem;
+}
+
+.wcefp-language-menu[style*="display: block"] {
+    display: block !important;
+}
+
+/* Language Options */
+.wcefp-language-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: #495057;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.wcefp-language-option:hover,
+.wcefp-language-option:focus {
+    background: #f8f9fa;
+    color: #0066cc;
+    text-decoration: none;
+    outline: none;
+}
+
+.wcefp-language-option:focus {
+    box-shadow: inset 0 0 0 2px #0066cc;
+}
+
+/* Translation Status Indicator */
+.wcefp-translation-status {
+    margin-left: auto;
+    font-size: 0.75em;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Accessibility Enhancements */
+
+/* Skip Links */
+.wcefp-skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: #000000;
+    color: #ffffff;
+    padding: 8px;
+    text-decoration: none;
+    border-radius: 3px;
+    z-index: 10000;
+    font-weight: 600;
+}
+
+.wcefp-skip-link:focus {
+    top: 6px;
+}
+
+/* Screen Reader Only Text */
+.wcefp-sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Focus Indicators */
+.wcefp-focused {
+    outline: 2px solid #0073aa !important;
+    outline-offset: 2px !important;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .wcefp-current-language,
+    .wcefp-language-menu {
+        border-width: 2px;
+    }
+    
+    .wcefp-language-option:hover,
+    .wcefp-language-option:focus {
+        background: #000000;
+        color: #ffffff;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .wcefp-current-language {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .wcefp-current-language:hover,
+    .wcefp-current-language:focus {
+        background: #4a5568;
+        border-color: #63b3ed;
+    }
+    
+    .wcefp-language-menu {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .wcefp-language-option {
+        color: #e2e8f0;
+    }
+    
+    .wcefp-language-option:hover,
+    .wcefp-language-option:focus {
+        background: #4a5568;
+        color: #63b3ed;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .wcefp-current-language,
+    .wcefp-dropdown-arrow,
+    .wcefp-language-option {
+        transition: none !important;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .wcefp-language-switcher {
+        width: 100%;
+        margin-bottom: 1.5rem;
+    }
+    
+    .wcefp-current-language {
+        width: 100%;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+    }
+    
+    .wcefp-language-menu {
+        left: 0;
+        right: 0;
+    }
+}
+
+/* RTL Support */
+[dir="rtl"] .wcefp-current-language {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .wcefp-language-menu {
+    left: auto;
+    right: 0;
+}
+
+/* Print Styles */
+@media print {
+    .wcefp-language-switcher {
+        display: none !important;
+    }
+}
+
+/* Form Integration Styles */
+.wcefp-booking-form .wcefp-language-switcher {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1rem;
+}
+
+/* Loading State */
+.wcefp-language-switcher.loading .wcefp-current-language {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.wcefp-language-switcher.loading .wcefp-language-menu {
+    display: none !important;
+}
+
+/* Error State */
+.wcefp-language-switcher.error .wcefp-current-language {
+    border-color: #dc3545;
+    background: #f8d7da;
+}
+
+/* Success State */
+.wcefp-language-switcher.success .wcefp-current-language {
+    border-color: #28a745;
+    background: #d1eddd;
+}
+
+/* Animation for Language Changes */
+.wcefp-locale-changing {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.wcefp-locale-changed {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0.7; }
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wcefp-locale-changed {
+        animation: none;
+    }
+}
