@@ -7,6 +7,27 @@ e questo progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 
 ---
 
+## [Unreleased] - Admin Menu Restructuring & Page Polish
+
+### 🔧 Admin Interface Improvements
+- **Main Page Redirect**: Top-level plugin menu now redirects to Prenotazioni instead of showing dashboard
+- **Menu Cleanup**: Removed Dashboard and Performance pages from admin menu as per requirements
+- **Functional Pages**: Ensured Voucher, Chiusure, Impostazioni pages display functional content instead of spinners/empty screens
+- **UI Polish**: Removed inline CSS from Closures page, added responsive admin-closures.css with proper WordPress styling
+- **Consistent Navigation**: Updated all dashboard redirects in onboarding flow to point to Prenotazioni
+
+### ⚡ Performance & UX
+- **Conditional CSS Loading**: Admin closures CSS only loaded on relevant pages
+- **Responsive Design**: Closures form now properly responsive with CSS Grid layout
+- **WordPress Standards**: Replaced inline styles with proper CSS classes and WordPress admin styling
+
+### 🔧 Code Quality
+- **CSS Organization**: Moved inline styles to dedicated CSS files
+- **File Structure**: Maintained backward compatibility while improving organization
+- **PHP Standards**: All modified files pass PHP syntax validation
+
+---
+
 ## [Unreleased] - PHP 8.1+ Compatibility & Security Hardening
 
 ### 🔧 Bug Fixes

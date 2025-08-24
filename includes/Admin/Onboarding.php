@@ -71,7 +71,7 @@ class Onboarding {
         add_action('admin_notices', [$this, 'show_onboarding_notice']);
         
         // Add help tabs to plugin pages
-        add_action('load-toplevel_page_wcefp-dashboard', [$this, 'add_help_tabs']);
+        add_action('load-toplevel_page_wcefp', [$this, 'add_help_tabs']);
         add_action('load-wcefp_page_wcefp-settings', [$this, 'add_settings_help_tabs']);
         add_action('load-wcefp_page_wcefp-bookings', [$this, 'add_bookings_help_tabs']);
     }
@@ -129,7 +129,7 @@ class Onboarding {
         switch ($action) {
             case 'skip_onboarding':
                 $this->complete_onboarding();
-                wp_safe_redirect(admin_url('admin.php?page=wcefp-dashboard'));
+                wp_safe_redirect(admin_url('admin.php?page=wcefp-bookings'));
                 exit;
                 
             case 'next_step':
@@ -152,7 +152,7 @@ class Onboarding {
                 
             case 'complete_onboarding':
                 $this->complete_onboarding();
-                wp_safe_redirect(admin_url('admin.php?page=wcefp-dashboard&wcefp_onboarding_complete=1'));
+                wp_safe_redirect(admin_url('admin.php?page=wcefp-bookings&wcefp_onboarding_complete=1'));
                 exit;
         }
         
@@ -485,10 +485,10 @@ class Onboarding {
                 </div>
                 
                 <div class="wcefp-option-card">
-                    <h3><?php esc_html_e('Esplora Dashboard', 'wceventsfp'); ?></h3>
+                    <h3><?php esc_html_e('Esplora Prenotazioni', 'wceventsfp'); ?></h3>
                     <p><?php esc_html_e('Familiarizza con le funzionalità del plugin prima di creare eventi.', 'wceventsfp'); ?></p>
-                    <a href="<?php echo esc_url(admin_url('admin.php?page=wcefp-dashboard')); ?>" class="button button-secondary">
-                        <?php esc_html_e('Vai alla Dashboard', 'wceventsfp'); ?>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=wcefp-bookings')); ?>" class="button button-secondary">
+                        <?php esc_html_e('Vai alle Prenotazioni', 'wceventsfp'); ?>
                     </a>
                 </div>
                 
@@ -560,8 +560,8 @@ class Onboarding {
             </div>
             
             <div class="wcefp-step-actions">
-                <a href="<?php echo esc_url(admin_url('admin.php?page=wcefp-dashboard')); ?>" class="button button-primary button-hero">
-                    <?php esc_html_e('Vai alla Dashboard', 'wceventsfp'); ?>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=wcefp-bookings')); ?>" class="button button-primary button-hero">
+                    <?php esc_html_e('Vai alle Prenotazioni', 'wceventsfp'); ?>
                 </a>
             </div>
         </div>
@@ -676,7 +676,7 @@ class Onboarding {
         }
         
         $screen = get_current_screen();
-        return !in_array($screen->id, ['admin_page_wcefp-onboarding', 'toplevel_page_wcefp-dashboard']);
+        return !in_array($screen->id, ['admin_page_wcefp-onboarding', 'toplevel_page_wcefp']);
     }
     
     // Help content methods...

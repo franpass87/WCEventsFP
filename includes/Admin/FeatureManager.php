@@ -21,36 +21,13 @@ if (!defined('ABSPATH')) {
 class FeatureManager {
     
     /**
-     * Constructor
+     * Constructor - Dashboard and Performance pages removed per requirements
      */
     public function __construct() {
-        add_action('admin_menu', [$this, 'add_admin_menu'], 20); // Lower priority to load after main menu
+        // Note: Dashboard and Performance menu items removed as per requirements
+        // Main page now redirects to Prenotazioni in MenuManager
+        // Only enqueue assets for debugging/development features if needed
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
-    }
-    
-    /**
-     * Add admin menu
-     * 
-     * @return void
-     */
-    public function add_admin_menu() {
-        add_submenu_page(
-            'wcefp',
-            __('WCEventsFP Dashboard', 'wceventsfp'),
-            __('Dashboard', 'wceventsfp'),
-            'manage_options',
-            'wcefp-dashboard',
-            [$this, 'render_dashboard']
-        );
-
-        add_submenu_page(
-            'wcefp',
-            __('Performance Monitor', 'wceventsfp'),
-            __('Performance', 'wceventsfp'),
-            'manage_options',
-            'wcefp-performance',
-            [$this, 'render_performance_monitor']
-        );
     }
     
     /**
@@ -135,8 +112,8 @@ class FeatureManager {
             <div class="wcefp-quick-actions">
                 <h2><?php _e('Quick Actions', 'wceventsfp'); ?></h2>
                 <div class="action-buttons">
-                    <a href="<?php echo admin_url('admin.php?page=wcefp-performance'); ?>" class="button button-primary">
-                        <?php _e('Performance Monitor', 'wceventsfp'); ?>
+                    <a href="<?php echo admin_url('admin.php?page=wcefp-bookings'); ?>" class="button button-primary">
+                        <?php _e('Gestisci Prenotazioni', 'wceventsfp'); ?>
                     </a>
                     <a href="<?php echo admin_url('admin.php?page=woocommerce'); ?>" class="button">
                         <?php _e('WooCommerce Settings', 'wceventsfp'); ?>

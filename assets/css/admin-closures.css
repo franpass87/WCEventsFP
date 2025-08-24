@@ -1,0 +1,83 @@
+/**
+ * WCEventsFP Admin Closures Styles
+ * Replaces inline CSS with proper WordPress styling
+ *
+ * @since 2.1.4
+ */
+
+.wcefp-closures-form-card {
+    max-width: 880px;
+    padding: 16px;
+    margin-top: 12px;
+}
+
+.wcefp-closures-form-card h2 {
+    margin-top: 0;
+}
+
+.wcefp-closures-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.wcefp-closures-form label {
+    display: flex;
+    flex-direction: column;
+    font-weight: 600;
+}
+
+.wcefp-closures-form input,
+.wcefp-closures-form select {
+    margin-top: 4px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.wcefp-closures-note {
+    grid-column: 1 / -1;
+}
+
+.wcefp-closures-form > div {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 8px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .wcefp-closures-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .wcefp-closures-form-card {
+        max-width: 100%;
+        padding: 12px;
+    }
+}
+
+/* Loading and status styles */
+.wcefp-closures-list .loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.wcefp-closures-list .error {
+    color: #d63638;
+    background: #fcf0f1;
+    border: 1px solid #f0a5a8;
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.wcefp-closures-list .success {
+    color: #00a32a;
+    background: #f0f6fc;
+    border: 1px solid #c3e4ed;
+    padding: 12px;
+    border-radius: 4px;
+}
