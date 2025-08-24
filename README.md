@@ -1,9 +1,9 @@
 # WCEventsFP (v2.1.4) - Enterprise Booking Platform<!-- x-release-please-version -->
 
-> **📦 COME SCARICARE IL PLUGIN** - [Guida Completa per Utenti](DOWNLOAD-INSTALL-GUIDE.md)  
-> **⚠️ NON usare "Code → Download ZIP"** - Scarica dalle [GitHub Releases](https://github.com/franpass87/WCEventsFP/releases)
-> 
-> **🛡️ WSOD ISSUES COMPLETELY RESOLVED** - See [WSOD Solution Guide](WSOD-GUIDE.md)
+> **📦 PLUGIN DOWNLOAD** - Get the latest stable release from [GitHub Releases](https://github.com/franpass87/WCEventsFP/releases)  
+> **⚠️ DON'T use "Code → Download ZIP"** - Use official releases for proper plugin packaging
+
+> **🛡️ DIAGNOSTICS & TROUBLESHOOTING** - See [Diagnostic Tools Guide](tools/diagnostics/DIAGNOSTIC-TOOLS-GUIDE.md)
 
 **Sistema di prenotazione enterprise per competere direttamente con RegionDo, Bokun e GetYourGuide**
 
@@ -671,3 +671,17 @@ The final plugin package includes only:
 - Essential documentation (`README.md`, `CHANGELOG.md`)
 
 **Estimated package size**: ~2.5MB (down from ~15MB with development files)
+
+## 📚 Documentation
+
+### Essential Documentation
+- **[README.md](README.md)** - This file, plugin overview and features
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development guidelines and release process
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Development environment setup
+- **[API.md](API.md)** - Technical API reference and integration guide
+
+### Specialized Guides
+- **[Diagnostic Tools Guide](tools/diagnostics/DIAGNOSTIC-TOOLS-GUIDE.md)** - Troubleshooting and maintenance
+- **[Legacy Code Documentation](includes/Legacy/README.md)** - Backward compatibility notes
+- **[Obsolete Files Analysis](docs/OBSOLETE_FILES.md)** - Maintenance and cleanup documentation

@@ -8,6 +8,11 @@
 /node_modules export-ignore
 /build-tools export-ignore
 
+# Documentation (keep only essential in distribution)
+CONTRIBUTING.md export-ignore
+DEVELOPMENT.md export-ignore
+API.md export-ignore
+
 # Development configuration files
 webpack.config.js export-ignore
 package.json export-ignore
@@ -40,6 +45,8 @@ desktop.ini export-ignore
 # Development tools
 build-distribution.sh export-ignore
 tools/analyze-obsolete-files.sh export-ignore
+tools/analyze-assets.sh export-ignore
+tools/check-orphans*.sh export-ignore
 
 # Line ending normalization for cross-platform compatibility
 *.php text eol=lf

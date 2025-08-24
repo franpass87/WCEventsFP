@@ -313,10 +313,63 @@ When reporting bugs or requesting features:
 
 ## Release Process
 
+WCEventsFP uses [release-please](https://github.com/googleapis/release-please) for automated changelog generation, version bumping, and GitHub releases based on Conventional Commits.
+
+### 🚨 Setup Requirements
+
+**Personal Access Token Required**: The release-please workflow requires a Personal Access Token (PAT) to function properly. The default GitHub token cannot create pull requests due to security policies.
+
+**Setup Steps:**
+1. [Create a Personal Access Token](https://github.com/settings/personal-access-tokens/new) with `repo` and `workflow` scopes
+2. Add it as repository secret named `RELEASE_PLEASE_TOKEN`
+3. Navigate to: Repository → Settings → Secrets and variables → Actions → New repository secret
+
+### Conventional Commits
+
+All commits must follow the [Conventional Commits](https://www.conventionalcommits.org/) format for automated version management:
+
+**Format:**
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Release Triggers:**
+- **feat**: New features → Minor version bump (1.0.0 → 1.1.0)
+- **fix**, **perf**: Bug fixes, performance improvements → Patch bump (1.0.0 → 1.0.1)
+- **feat!**, **fix!**: Breaking changes → Major version bump (1.0.0 → 2.0.0)
+- **docs**, **chore**: Documentation, maintenance → Patch bump
+
+**Examples:**
+```bash
+feat: add mobile check-in system
+fix: resolve booking conflict detection bug
+docs: update installation guide
+feat!: change booking API structure (breaking change)
+```
+
+### Automated Release Workflow
+
+1. **Commits**: Push conventional commits to main branch
+2. **Release PR**: release-please creates a PR with updated CHANGELOG.md and version numbers
+3. **Review**: Team reviews the generated release PR
+4. **Merge**: Merging the PR triggers:
+   - GitHub release creation
+   - Git tag creation
+   - CHANGELOG.md publication
+   - Version updates in plugin files
+
+### Manual Release Process (Fallback)
+
+If automation is unavailable:
+
 1. Feature branches merge to `develop`
 2. Regular releases from `develop` to `main`
-3. Semantic versioning (MAJOR.MINOR.PATCH)
-4. Detailed release notes in CHANGELOG.md
+3. Manual semantic versioning (MAJOR.MINOR.PATCH)
+4. Manual CHANGELOG.md updates
 
 ## License
 

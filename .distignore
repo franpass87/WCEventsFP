@@ -9,6 +9,11 @@
 /vendor
 /build-tools
 
+# Documentation (keep only essential)
+CONTRIBUTING.md
+DEVELOPMENT.md
+API.md
+
 # Build and development files
 webpack.config.js
 package.json
@@ -44,3 +49,5 @@ desktop.ini
 # Development tools
 build-distribution.sh
 tools/analyze-obsolete-files.sh
+tools/analyze-assets.sh
+tools/check-orphans*.sh
