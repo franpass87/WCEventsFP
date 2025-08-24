@@ -21,14 +21,76 @@ class CalendarIntegrationManager {
         add_shortcode('wcefp_add_to_calendar', [$this, 'add_to_calendar_shortcode']);
         add_filter('wcefp_booking_details_buttons', [$this, 'add_calendar_buttons'], 10, 2);
         
-        // Admin calendar synchronization
-        add_action('admin_init', [$this, 'handle_admin_calendar_sync']);
+        // Admin calendar synchronization - removed problematic hook, moved to register()
         add_action('wp_ajax_wcefp_generate_admin_calendar_feed', [$this, 'generate_admin_calendar_feed']);
         add_action('wp_ajax_wcefp_refresh_calendar_token', [$this, 'refresh_calendar_token']);
         
         // Calendar feed endpoints
         add_action('init', [$this, 'add_authenticated_endpoints']);
         add_action('template_redirect', [$this, 'handle_authenticated_feed']);
+    }
+    
+    /**
+     * Register AJAX hooks for admin calendar synchronization
+     */
+    public function register(): void {
+        // AJAX admin autenticato
+        add_action('wp_ajax_wcefp_admin_calendar_sync', [$this, 'handle_admin_calendar_sync']);
+        // Fallback per form POST admin
+        add_action('admin_post_wcefp_admin_calendar_sync', [$this, 'handle_admin_calendar_sync']);
+    }
+    
+    /**
+     * Gestisce la sincronizzazione calendario dal pannello admin.
+     * Supporta sia AJAX (admin-ajax.php) sia admin-post.php con redirect.
+     */
+    public function handle_admin_calendar_sync(): void {
+        // Capability: usa quella del plugin se presente, altrimenti fallback
+        $cap = function_exists('wcefp_capability') ? wcefp_capability('manage') : 'manage_woocommerce';
+        if (!current_user_can($cap)) {
+            if (wp_doing_ajax()) {
+                wp_send_json_error(['message' => 'Forbidden'], 403);
+            } else {
+                wp_die(__('Non hai i permessi necessari.', 'wcefp'), 403);
+            }
+            return;
+        }
+
+        // Nonce
+        $nonce = $_REQUEST['_wpnonce'] ?? '';
+        if (!wp_verify_nonce($nonce, 'wcefp_calendar_sync')) {
+            if (wp_doing_ajax()) {
+                wp_send_json_error(['message' => 'Bad nonce'], 400);
+            } else {
+                wp_die(__('Nonce non valido.', 'wcefp'), 400);
+            }
+            return;
+        }
+
+        // TODO: implementa qui la logica di sync (ICS/Google/etc.)
+        // Mantieni idempotenza e gestisci eccezioni
+        try {
+            $result = [
+                'synced'   => 0,
+                'skipped'  => 0,
+                'messages' => ['Stub: sincronizzazione eseguita (implementare logica reale).'],
+            ];
+        } catch (\Throwable $e) {
+            error_log('WCEFP calendar sync error: ' . $e->getMessage());
+            if (wp_doing_ajax()) {
+                wp_send_json_error(['message' => 'Sync failed', 'error' => $e->getMessage()], 500);
+            }
+            wp_die(__('Errore durante la sincronizzazione.', 'wcefp'), 500);
+        }
+
+        if (wp_doing_ajax()) {
+            wp_send_json_success($result);
+        } else {
+            // Redirect di cortesia
+            $url = add_query_arg(['wcefp_calendar_sync' => 'done'], admin_url('admin.php?page=wcefp-calendar'));
+            wp_safe_redirect($url);
+            exit;
+        }
     }
     
     /**

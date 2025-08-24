@@ -22,6 +22,11 @@ e questo progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Unreleased - QA Green] – Code Quality & Security Improvements
 
+### 🔧 Bug Fixes
+#### Fixed
+- **Calendar Sync Hook**: Fixed `call_user_func_array()` error due to missing `handle_admin_calendar_sync` method in CalendarIntegrationManager
+- **Hook Registration**: Implemented instance-based hook registration with proper nonce validation and capability checks for calendar sync operations
+
 ### 🔒 Security Enhancements
 #### Fixed
 - **AJAX Security**: Enhanced nonce verification in all AJAX handlers with proper sanitization
