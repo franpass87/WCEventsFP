@@ -1,52 +1,343 @@
 
----
-
-# 6.2) `wp-content/plugins/WCEventsFP/languages/wceventsfp.pot`
-
-```pot
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the WCEventsFP package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: WCEventsFP 2.1.1\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-23 00:00+0000\n"
+"Project-Id-Version: WCEventsFP 2.1.4\n"
+"Report-Msgid-Bugs-To: https://github.com/franpass87/WCEventsFP/issues\n"
+"POT-Creation-Date: 2024-01-01 12:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
-"Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: wceventsfp\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: WCEventsFP POT Generator\n"
 
-#: includes/class-wcefp-closures.php:14
-msgid "Chiusure straordinarie"
+# Plugin Information
+msgid "WCEventsFP - Enterprise Booking Platform"
 msgstr ""
 
-#: includes/class-wcefp-closures.php:19
-msgid "Aggiungi chiusura"
+msgid "Complete WordPress/WooCommerce booking platform for events and experiences with enterprise-level functionality."
 msgstr ""
 
-#: includes/class-wcefp-closures.php:23
-msgid "Prodotto"
+# General Terms
+msgid "Event"
 msgstr ""
 
-#: includes/class-wcefp-closures.php:26
-msgid "Tutti gli eventi/esperienze"
+msgid "Events"
 msgstr ""
 
-#: includes/class-wcefp-closures.php:30
-msgid "Dal"
+msgid "Booking"
 msgstr ""
 
-#: includes/class-wcefp-closures.php:34
-msgid "Al"
+msgid "Bookings"
 msgstr ""
 
-#: includes/class-wcefp-closures.php:38
-msgid "Nota (opzionale)"
+msgid "Customer"
 msgstr ""
 
-#: includes/class-wcefp-closures.php:39
-msgid "Es. Manutenzione, festività…"
+msgid "Customers"
+msgstr ""
+
+msgid "Participant"
+msgstr ""
+
+msgid "Participants"
+msgstr ""
+
+msgid "Voucher"
+msgstr ""
+
+msgid "Vouchers"
+msgstr ""
+
+# Status Terms
+msgid "Confirmed"
+msgstr ""
+
+msgid "Pending"
+msgstr ""
+
+msgid "Cancelled"
+msgstr ""
+
+msgid "Completed"
+msgstr ""
+
+msgid "Active"
+msgstr ""
+
+msgid "Inactive"
+msgstr ""
+
+# Actions
+msgid "Add New"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Submit"
+msgstr ""
+
+msgid "Search"
+msgstr ""
+
+msgid "Filter"
+msgstr ""
+
+msgid "Export"
+msgstr ""
+
+msgid "Import"
+msgstr ""
+
+# Admin Menu Items
+msgid "Bookings"
+msgstr ""
+
+msgid "Vouchers"
+msgstr ""
+
+msgid "Closures"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Meeting Points"
+msgstr ""
+
+msgid "Extras"
+msgstr ""
+
+# Form Labels
+msgid "Name"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Phone"
+msgstr ""
+
+msgid "Date"
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "Adults"
+msgstr ""
+
+msgid "Children"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "Price"
+msgstr ""
+
+msgid "Capacity"
+msgstr ""
+
+msgid "Duration"
+msgstr ""
+
+msgid "Location"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
+msgid "Notes"
+msgstr ""
+
+msgid "Special Requests"
+msgstr ""
+
+# Error Messages
+msgid "An error occurred. Please try again."
+msgstr ""
+
+msgid "Invalid email address."
+msgstr ""
+
+msgid "Required field."
+msgstr ""
+
+msgid "Invalid date format."
+msgstr ""
+
+msgid "Booking not found."
+msgstr ""
+
+msgid "Event not found."
+msgstr ""
+
+msgid "Insufficient permissions."
+msgstr ""
+
+# Success Messages
+msgid "Booking created successfully."
+msgstr ""
+
+msgid "Booking updated successfully."
+msgstr ""
+
+msgid "Settings saved successfully."
+msgstr ""
+
+msgid "Export completed successfully."
+msgstr ""
+
+# Accessibility Labels
+msgid "Main navigation"
+msgstr ""
+
+msgid "Skip to content"
+msgstr ""
+
+msgid "Close dialog"
+msgstr ""
+
+msgid "Open calendar"
+msgstr ""
+
+msgid "Select date"
+msgstr ""
+
+msgid "Previous month"
+msgstr ""
+
+msgid "Next month"
+msgstr ""
+
+msgid "Sort ascending"
+msgstr ""
+
+msgid "Sort descending"
+msgstr ""
+
+msgid "Loading..."
+msgstr ""
+
+# REST API Messages
+msgid "Invalid API request."
+msgstr ""
+
+msgid "Authentication required."
+msgstr ""
+
+msgid "Resource not found."
+msgstr ""
+
+msgid "Internal server error."
+msgstr ""
+
+# Settings Section Titles
+msgid "General Settings"
+msgstr ""
+
+msgid "Email & Notifications"
+msgstr ""
+
+msgid "Feature Flags"
+msgstr ""
+
+msgid "Integrations"
+msgstr ""
+
+# Time and Date Formats
+msgid "January"
+msgstr ""
+
+msgid "February"
+msgstr ""
+
+msgid "March"
+msgstr ""
+
+msgid "April"
+msgstr ""
+
+msgid "May"
+msgstr ""
+
+msgid "June"
+msgstr ""
+
+msgid "July"
+msgstr ""
+
+msgid "August"
+msgstr ""
+
+msgid "September"
+msgstr ""
+
+msgid "October"
+msgstr ""
+
+msgid "November"
+msgstr ""
+
+msgid "December"
+msgstr ""
+
+msgid "Today"
+msgstr ""
+
+msgid "Tomorrow"
+msgstr ""
+
+msgid "Yesterday"
+msgstr ""
+
+# Pluralization Examples
+msgid "%d booking"
+msgid_plural "%d bookings"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "%d participant"
+msgid_plural "%d participants"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "%d voucher"
+msgid_plural "%d vouchers"
+msgstr[0] ""
+msgstr[1] ""
+
+# Translator Notes
+#. translators: %s is the customer name
+msgid "Booking for %s"
+msgstr ""
+
+#. translators: %s is the event title, %d is the capacity
+msgid "Event: %s (Capacity: %d)"
+msgstr ""
+
+#. translators: %s is the price with currency
+msgid "Total: %s"
 msgstr ""
 
 #: includes/class-wcefp-closures.php:46

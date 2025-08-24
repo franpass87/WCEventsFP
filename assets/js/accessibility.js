@@ -1,33 +1,495 @@
 /**
- * WCEventsFP Accessibility JavaScript
- * Provides accessibility enhancements and WCAG 2.1 AA compliance features
+ * WCEventsFP Accessibility Enhancement
+ * 
+ * Provides JavaScript-based accessibility improvements for WCAG 2.1 AA compliance.
+ * Handles keyboard navigation, screen reader announcements, and dynamic content accessibility.
+ * 
+ * @package WCEventsFP
+ * @since 2.1.4
  */
 
-( function ( $ ) {
-	'use strict';
-
-	class WCEFPAccessibilityManager {
-		constructor() {
-			this.init();
-			this.bindEvents();
-			this.setupKeyboardNavigation();
-			this.enhanceFormAccessibility();
-			this.setupAriaLiveRegions();
-		}
-
-		init() {
-			// Initialize accessibility preferences from localStorage
-			this.preferences = {
-				highContrast:
-					localStorage.getItem( 'wcefp_high_contrast' ) === 'true',
-				textSize:
-					parseInt( localStorage.getItem( 'wcefp_text_size' ) ) ||
-					100,
-				focusMode:
-					localStorage.getItem( 'wcefp_focus_mode' ) === 'true',
-			};
-
-			// Apply saved preferences
+(function($) {
+    'use strict';
+    
+    // Global accessibility object
+    window.WCEFPAccessibility = {
+        settings: {},
+        announcer: null,
+        assertiveAnnouncer: null,
+        preferences: {},
+        
+        init: function() {
+            this.settings = wcefpA11y?.settings || {};
+            this.loadPreferences();
+            this.setupAnnouncers();
+            this.setupKeyboardNavigation();
+            this.setupFocusManagement();
+            this.setupFormEnhancements();
+            this.setupDynamicContent();
+            this.setupHighContrast();
+            this.bindEvents();
+            this.applyPreferences();
+            
+            console.log('WCEventsFP Accessibility initialized');
+        },
+        
+        /**
+         * Load accessibility preferences from localStorage
+         */
+        loadPreferences: function() {
+            this.preferences = {
+                highContrast: localStorage.getItem('wcefp_high_contrast') === 'true',
+                textSize: parseInt(localStorage.getItem('wcefp_text_size')) || 100,
+                focusMode: localStorage.getItem('wcefp_focus_mode') === 'true',
+                reducedMotion: localStorage.getItem('wcefp_reduced_motion') === 'true'
+            };
+        },
+        
+        /**
+         * Apply accessibility preferences
+         */
+        applyPreferences: function() {
+            if (this.preferences.highContrast) {
+                $('body').addClass('wcefp-high-contrast');
+            }
+            
+            if (this.preferences.focusMode) {
+                $('body').addClass('wcefp-focus-mode');
+            }
+            
+            if (this.preferences.reducedMotion) {
+                $('body').addClass('wcefp-reduced-motion');
+            }
+            
+            if (this.preferences.textSize !== 100) {
+                $('body').css('font-size', this.preferences.textSize + '%');
+            }
+        },
+        
+        /**
+         * Setup screen reader announcers
+         */
+        setupAnnouncers: function() {
+            this.announcer = $('#wcefp-a11y-announcer');
+            this.assertiveAnnouncer = $('#wcefp-a11y-announcer-assertive');
+            
+            if (!this.announcer.length) {
+                this.announcer = $('<div id="wcefp-a11y-announcer" aria-live="polite" aria-atomic="true" class="screen-reader-text"></div>')
+                    .appendTo('body');
+            }
+            
+            if (!this.assertiveAnnouncer.length) {
+                this.assertiveAnnouncer = $('<div id="wcefp-a11y-announcer-assertive" aria-live="assertive" aria-atomic="true" class="screen-reader-text"></div>')
+                    .appendTo('body');
+            }
+        },
+        
+        /**
+         * Announce message to screen readers
+         */
+        announce: function(message, priority = 'polite') {
+            if (!this.settings.announceChanges) return;
+            
+            const announcer = priority === 'assertive' ? this.assertiveAnnouncer : this.announcer;
+            
+            // Clear and announce
+            announcer.text('');
+            setTimeout(() => {
+                announcer.text(message);
+            }, 100);
+            
+            // Clear after announcement
+            setTimeout(() => {
+                announcer.text('');
+            }, 1000);
+        },
+        
+        /**
+         * Setup keyboard navigation
+         */
+        setupKeyboardNavigation: function() {
+            if (!this.settings.keyboardNavigation) return;
+            
+            // Skip links
+            this.addSkipLinks();
+            
+            // Arrow key navigation for lists and grids
+            $('.wcefp-events-grid, .wcefp-bookings-list').on('keydown', this.handleArrowNavigation);
+            
+            // Tab trap for modals
+            $(document).on('keydown', '.wcefp-modal', this.trapTabInModal);
+            
+            // Escape key handling
+            $(document).on('keydown', this.handleEscapeKey);
+        },
+        
+        /**
+         * Add skip links
+         */
+        addSkipLinks: function() {
+            if (!$('.wcefp-skip-link').length && $('.wcefp-container').length) {
+                const skipLink = $('<a href="#wcefp-main-content" class="wcefp-skip-link">')
+                    .text(wcefpA11y.strings.skipToContent)
+                    .on('focus', function() {
+                        $(this).css({
+                            'position': 'static',
+                            'width': 'auto',
+                            'height': 'auto',
+                            'padding': '8px 16px',
+                            'background': '#000',
+                            'color': '#fff',
+                            'text-decoration': 'none',
+                            'z-index': '999999'
+                        });
+                    })
+                    .on('blur', function() {
+                        $(this).css({
+                            'position': 'absolute',
+                            'left': '-9999px',
+                            'top': 'auto',
+                            'width': '1px',
+                            'height': '1px',
+                            'overflow': 'hidden'
+                        });
+                    });
+                    
+                $('.wcefp-container').first().before(skipLink);
+            }
+        },
+        
+        /**
+         * Handle arrow key navigation
+         */
+        handleArrowNavigation: function(e) {
+            const $items = $(this).find('[tabindex], a, button, input, select, textarea').filter(':visible');
+            const $current = $items.filter(':focus');
+            
+            if (!$current.length) return;
+            
+            const currentIndex = $items.index($current);
+            let nextIndex;
+            
+            switch(e.which) {
+                case 37: // Left arrow
+                    nextIndex = currentIndex > 0 ? currentIndex - 1 : $items.length - 1;
+                    break;
+                case 39: // Right arrow
+                    nextIndex = currentIndex < $items.length - 1 ? currentIndex + 1 : 0;
+                    break;
+                case 38: // Up arrow
+                    e.preventDefault();
+                    nextIndex = currentIndex > 0 ? currentIndex - 1 : $items.length - 1;
+                    break;
+                case 40: // Down arrow
+                    e.preventDefault();
+                    nextIndex = currentIndex < $items.length - 1 ? currentIndex + 1 : 0;
+                    break;
+                default:
+                    return;
+            }
+            
+            $items.eq(nextIndex).focus();
+        },
+        
+        /**
+         * Trap tab navigation within modals
+         */
+        trapTabInModal: function(e) {
+            if (e.which !== 9) return; // Not tab key
+            
+            const $modal = $(this);
+            const $focusableElements = $modal.find('a, button, input, select, textarea, [tabindex]').filter(':visible');
+            const $firstElement = $focusableElements.first();
+            const $lastElement = $focusableElements.last();
+            
+            if (e.shiftKey) {
+                // Shift + Tab
+                if (document.activeElement === $firstElement[0]) {
+                    e.preventDefault();
+                    $lastElement.focus();
+                }
+            } else {
+                // Tab
+                if (document.activeElement === $lastElement[0]) {
+                    e.preventDefault();
+                    $firstElement.focus();
+                }
+            }
+        },
+        
+        /**
+         * Handle escape key
+         */
+        handleEscapeKey: function(e) {
+            if (e.which !== 27) return; // Not escape key
+            
+            // Close modals
+            if ($('.wcefp-modal:visible').length) {
+                WCEFPAccessibility.closeModal();
+                return;
+            }
+            
+            // Clear search
+            if ($('.wcefp-search input:focus').length) {
+                $('.wcefp-search input').val('').trigger('input');
+                return;
+            }
+            
+            // Close dropdowns
+            $('.wcefp-dropdown.open').removeClass('open');
+        },
+        
+        /**
+         * Setup focus management
+         */
+        setupFocusManagement: function() {
+            // Enhance focus indicators
+            $('a, button, input, select, textarea, [tabindex]').on('focus', function() {
+                $(this).addClass('wcefp-focused');
+            }).on('blur', function() {
+                $(this).removeClass('wcefp-focused');
+            });
+            
+            // Manage focus for dynamic content
+            $(document).on('wcefp:content-loaded', function(e, $container) {
+                WCEFPAccessibility.manageFocus($container);
+            });
+        },
+        
+        /**
+         * Setup form enhancements
+         */
+        setupFormEnhancements: function() {
+            // Add ARIA attributes to form fields
+            $('.wcefp-form').each(function() {
+                WCEFPAccessibility.enhanceForm($(this));
+            });
+            
+            // Live validation feedback
+            $('.wcefp-form input, .wcefp-form select, .wcefp-form textarea').on('blur', function() {
+                WCEFPAccessibility.validateField($(this));
+            });
+        },
+        
+        /**
+         * Enhance form accessibility
+         */
+        enhanceForm: function($form) {
+            $form.find('input, select, textarea').each(function() {
+                const $field = $(this);
+                const $label = $form.find('label[for="' + $field.attr('id') + '"]');
+                
+                // Ensure field has an ID
+                if (!$field.attr('id')) {
+                    const id = 'wcefp-field-' + Math.random().toString(36).substr(2, 9);
+                    $field.attr('id', id);
+                    $label.attr('for', id);
+                }
+                
+                // Add aria-describedby for help text
+                const $helpText = $field.next('.wcefp-field-description');
+                if ($helpText.length) {
+                    const descId = $field.attr('id') + '-description';
+                    $helpText.attr('id', descId);
+                    $field.attr('aria-describedby', descId);
+                }
+                
+                // Add aria-required for required fields
+                if ($field.prop('required') || $field.hasClass('required')) {
+                    $field.attr('aria-required', 'true');
+                }
+            });
+        },
+        
+        /**
+         * Validate form field
+         */
+        validateField: function($field) {
+            let isValid = true;
+            let errorMessage = '';
+            
+            // Required field check
+            if ($field.attr('aria-required') === 'true' && !$field.val()) {
+                isValid = false;
+                errorMessage = wcefpA11y.strings.required;
+            }
+            
+            // Email validation
+            if ($field.attr('type') === 'email' && $field.val()) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test($field.val())) {
+                    isValid = false;
+                    errorMessage = wcefpA11y.strings.invalid;
+                }
+            }
+            
+            // Update ARIA attributes
+            $field.attr('aria-invalid', isValid ? 'false' : 'true');
+            
+            return isValid;
+        },
+        
+        /**
+         * Setup dynamic content accessibility
+         */
+        setupDynamicContent: function() {
+            // Monitor for AJAX loading states
+            $(document).on('wcefp:ajax-start', function() {
+                WCEFPAccessibility.announce(wcefpA11y.strings.loading);
+            });
+            
+            $(document).on('wcefp:ajax-success', function() {
+                WCEFPAccessibility.announce(wcefpA11y.strings.success);
+            });
+            
+            $(document).on('wcefp:ajax-error', function() {
+                WCEFPAccessibility.announce(wcefpA11y.strings.error, 'assertive');
+            });
+        },
+        
+        /**
+         * Setup high contrast mode
+         */
+        setupHighContrast: function() {
+            // Add accessibility control panel
+            this.addAccessibilityControls();
+        },
+        
+        /**
+         * Add accessibility control panel
+         */
+        addAccessibilityControls: function() {
+            if ($('.wcefp-accessibility-controls').length) return;
+            
+            const $controls = $(`
+                <div class="wcefp-accessibility-controls" role="toolbar" aria-label="Accessibility Controls">
+                    <button class="wcefp-a11y-toggle-contrast" data-setting="highContrast">
+                        <span class="screen-reader-text">Toggle High Contrast</span>
+                        <span aria-hidden="true">🎨</span>
+                    </button>
+                    <button class="wcefp-a11y-toggle-focus" data-setting="focusMode">
+                        <span class="screen-reader-text">Toggle Focus Mode</span>
+                        <span aria-hidden="true">🎯</span>
+                    </button>
+                    <button class="wcefp-a11y-text-size" data-action="increase">
+                        <span class="screen-reader-text">Increase Text Size</span>
+                        <span aria-hidden="true">🔍+</span>
+                    </button>
+                    <button class="wcefp-a11y-text-size" data-action="decrease">
+                        <span class="screen-reader-text">Decrease Text Size</span>
+                        <span aria-hidden="true">🔍-</span>
+                    </button>
+                </div>
+            `);
+            
+            $('body').append($controls);
+        },
+        
+        /**
+         * Toggle accessibility setting
+         */
+        toggleSetting: function(setting) {
+            this.preferences[setting] = !this.preferences[setting];
+            localStorage.setItem('wcefp_' + setting.replace(/([A-Z])/g, '_$1').toLowerCase(), 
+                                this.preferences[setting].toString());
+            
+            this.applyPreferences();
+            
+            // Announce change
+            const message = setting + ' ' + (this.preferences[setting] ? 'enabled' : 'disabled');
+            this.announce(message);
+        },
+        
+        /**
+         * Change text size
+         */
+        changeTextSize: function(action) {
+            let newSize = this.preferences.textSize;
+            
+            if (action === 'increase' && newSize < 150) {
+                newSize += 10;
+            } else if (action === 'decrease' && newSize > 80) {
+                newSize -= 10;
+            }
+            
+            if (newSize !== this.preferences.textSize) {
+                this.preferences.textSize = newSize;
+                localStorage.setItem('wcefp_text_size', newSize.toString());
+                $('body').css('font-size', newSize + '%');
+                
+                this.announce('Text size changed to ' + newSize + '%');
+            }
+        },
+        
+        /**
+         * Close modal
+         */
+        closeModal: function() {
+            const $modal = $('.wcefp-modal:visible');
+            if ($modal.length) {
+                $modal.hide().attr('aria-hidden', 'true');
+                
+                // Return focus to trigger element
+                const triggerId = $modal.data('trigger');
+                if (triggerId) {
+                    $('#' + triggerId).focus();
+                }
+                
+                this.announce(wcefpA11y.strings.closeDialog);
+            }
+        },
+        
+        /**
+         * Bind events
+         */
+        bindEvents: function() {
+            const self = this;
+            
+            // Accessibility controls
+            $(document).on('click', '.wcefp-a11y-toggle-contrast, .wcefp-a11y-toggle-focus', function() {
+                const setting = $(this).data('setting');
+                self.toggleSetting(setting);
+            });
+            
+            $(document).on('click', '.wcefp-a11y-text-size', function() {
+                const action = $(this).data('action');
+                self.changeTextSize(action);
+            });
+            
+            // Modal triggers
+            $(document).on('click', '[data-wcefp-modal]', function(e) {
+                e.preventDefault();
+                const modalId = $(this).data('wcefp-modal');
+                const $modal = $('#' + modalId);
+                
+                if ($modal.length) {
+                    $modal.show().attr('aria-hidden', 'false').data('trigger', $(this).attr('id'));
+                    $modal.find('a, button, input, select, textarea').first().focus();
+                }
+            });
+            
+            // Modal close
+            $(document).on('click', '.wcefp-modal-close', function() {
+                self.closeModal();
+            });
+        }
+    };
+    
+    // Backward compatibility wrapper
+    class WCEFPAccessibilityManager {
+        constructor() {
+            WCEFPAccessibility.init();
+        }
+    }
+    
+    // Initialize when DOM is ready
+    $(document).ready(function() {
+        if (typeof wcefpA11y !== 'undefined') {
+            window.wcefpAccessibilityManager = new WCEFPAccessibilityManager();
+        }
+    });
+    
+})(jQuery);
 			this.applyPreferences();
 
 			// Setup skip links
