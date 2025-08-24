@@ -11,7 +11,10 @@ namespace WCEFP\Bootstrap;
 
 use WCEFP\Core\Container;
 use WCEFP\Core\ServiceProvider;
+use WCEFP\Core\SecurityManager;
+use WCEFP\Core\PerformanceManager;
 use WCEFP\Utils\Logger;
+use WCEFP\Utils\CompatibilityHelper;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -194,6 +197,23 @@ class Plugin {
      * @return void
      */
     private function init_services() {
+        // Initialize compatibility helper first
+        CompatibilityHelper::init();
+        
+        // Initialize security manager
+        $security_manager = new SecurityManager();
+        $security_manager->init();
+        $this->container->singleton('security', function() use ($security_manager) {
+            return $security_manager;
+        });
+        
+        // Initialize performance manager
+        $performance_manager = new PerformanceManager();
+        $performance_manager->init();
+        $this->container->singleton('performance', function() use ($performance_manager) {
+            return $performance_manager;
+        });
+        
         $service_providers = [
             \WCEFP\Modules\ModulesServiceProvider::class, // New centralized modules - priority loading
             \WCEFP\Admin\AdminServiceProvider::class,
