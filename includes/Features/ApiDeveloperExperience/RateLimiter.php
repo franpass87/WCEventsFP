@@ -12,6 +12,7 @@
 namespace WCEFP\Features\ApiDeveloperExperience;
 
 use WCEFP\Utils\DiagnosticLogger;
+use WCEFP\Utils\StringHelper;
 use WP_Error;
 use WP_REST_Request;
 
@@ -153,8 +154,8 @@ class RateLimiter {
         $route = $request->get_route();
         
         // Extract base endpoint (remove IDs and query params)
-        $endpoint = preg_replace('/\/\d+/', '', $route);
-        $endpoint = preg_replace('/^\/wcefp\/v[12]/', '', $endpoint);
+        $endpoint = StringHelper::safe_preg_replace('/\/\d+/', '', $route);
+        $endpoint = StringHelper::safe_preg_replace('/^\/wcefp\/v[12]/', '', $endpoint);
         
         return $endpoint ?: '/';
     }
@@ -166,7 +167,7 @@ class RateLimiter {
      * @return string
      */
     private function get_client_type($client_id) {
-        if (strpos($client_id, 'user_') === 0) {
+        if (StringHelper::safe_strpos($client_id, 'user_') === 0) {
             $user_id = str_replace('user_', '', $client_id);
             $user = get_user_by('id', $user_id);
             
@@ -175,7 +176,7 @@ class RateLimiter {
             } elseif ($user && $user->has_cap('access_wcefp_api')) {
                 return 'authenticated';
             }
-        } elseif (strpos($client_id, 'api_key_') === 0) {
+        } elseif (StringHelper::safe_strpos($client_id, 'api_key_') === 0) {
             return 'api_key';
         }
         
@@ -266,7 +267,7 @@ class RateLimiter {
             if (isset($wp_object_cache->cache)) {
                 foreach ($wp_object_cache->cache as $group => $cache_group) {
                     foreach ($cache_group as $key => $value) {
-                        if (strpos($key, $pattern) === 0) {
+                        if (StringHelper::safe_strpos($key, $pattern) === 0) {
                             wp_cache_delete($key);
                         }
                     }

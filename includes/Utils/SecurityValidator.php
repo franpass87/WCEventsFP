@@ -40,8 +40,8 @@ class SecurityValidator {
         }
         
         // Handle comma-separated IPs from proxies
-        if (strpos($ip, ',') !== false) {
-            $ip = trim(explode(',', $ip)[0]);
+        if (StringHelper::safe_strpos($ip, ',') !== false) {
+            $ip = StringHelper::safe_trim(explode(',', $ip)[0]);
         }
         
         // Validate IP format
@@ -75,7 +75,8 @@ class SecurityValidator {
         }
         
         // Validate token format
-        if (!preg_match('/^[a-zA-Z0-9]{32}$/', $request_data['token'])) {
+        $token = sanitize_text_field($request_data['token'] ?? '');
+        if (!StringHelper::safe_preg_match('/^[a-zA-Z0-9]{32}$/', $token)) {
             return new \WP_Error('invalid_token_format', __('Invalid token format', 'wceventsfp'));
         }
         
@@ -86,23 +87,25 @@ class SecurityValidator {
         
         // Validate optional location field
         if (!empty($request_data['location'])) {
-            if (strlen($request_data['location']) > 255) {
+            $location = sanitize_text_field($request_data['location']);
+            if (StringHelper::safe_strlen($location) > 255) {
                 return new \WP_Error('location_too_long', __('Location field is too long', 'wceventsfp'));
             }
             
             // Check for suspicious patterns
-            if ($this->contains_suspicious_content($request_data['location'])) {
+            if ($this->contains_suspicious_content($location)) {
                 return new \WP_Error('suspicious_location', __('Location contains invalid content', 'wceventsfp'));
             }
         }
         
         // Validate optional notes field
         if (!empty($request_data['notes'])) {
-            if (strlen($request_data['notes']) > 1000) {
+            $notes = sanitize_textarea_field($request_data['notes']);
+            if (StringHelper::safe_strlen($notes) > 1000) {
                 return new \WP_Error('notes_too_long', __('Notes field is too long', 'wceventsfp'));
             }
             
-            if ($this->contains_suspicious_content($request_data['notes'])) {
+            if ($this->contains_suspicious_content($notes)) {
                 return new \WP_Error('suspicious_notes', __('Notes contain invalid content', 'wceventsfp'));
             }
         }
@@ -176,7 +179,7 @@ class SecurityValidator {
         ];
         
         foreach ($suspicious_patterns as $pattern) {
-            if (preg_match($pattern, $content)) {
+            if (StringHelper::safe_preg_match($pattern, $content)) {
                 return true;
             }
         }
@@ -206,12 +209,12 @@ class SecurityValidator {
             return false;
         }
         
-        if (strlen($token) !== $expected_length) {
+        if (StringHelper::safe_strlen($token) !== $expected_length) {
             return false;
         }
         
         // Check if token contains only alphanumeric characters
-        return preg_match('/^[a-zA-Z0-9]+$/', $token);
+        return StringHelper::safe_preg_match('/^[a-zA-Z0-9]+$/', $token);
     }
     
     /**
@@ -319,13 +322,13 @@ class SecurityValidator {
         }
         
         // Wildcard support (e.g., 192.168.1.*)
-        if (strpos($pattern, '*') !== false) {
+        if (StringHelper::safe_strpos($pattern, '*') !== false) {
             $regex = '/^' . str_replace('*', '\d+', preg_quote($pattern, '/')) . '$/';
-            return preg_match($regex, $ip);
+            return StringHelper::safe_preg_match($regex, $ip);
         }
         
         // CIDR notation support (basic)
-        if (strpos($pattern, '/') !== false) {
+        if (StringHelper::safe_strpos($pattern, '/') !== false) {
             return $this->ip_in_cidr($ip, $pattern);
         }
         

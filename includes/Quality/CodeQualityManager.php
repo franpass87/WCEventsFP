@@ -13,6 +13,7 @@
 namespace WCEFP\Quality;
 
 use WCEFP\Utils\DiagnosticLogger;
+use WCEFP\Utils\StringHelper;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -123,7 +124,7 @@ class CodeQualityManager {
             } else {
                 // Fallback: check for basic syntax issues
                 $content = file_get_contents($file);
-                if (strpos($content, '<?php') === false && strpos($content, '<?') === false) {
+                if (StringHelper::safe_strpos($content, '<?php') === false && StringHelper::safe_strpos($content, '<?') === false) {
                     self::$quality_issues[] = [
                         'type' => self::CHECK_SYNTAX,
                         'severity' => 'error',

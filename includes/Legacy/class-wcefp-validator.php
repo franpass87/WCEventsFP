@@ -136,10 +136,10 @@ class WCEFP_Validator {
      * @return string|false
      */
     public static function validate_voucher_code($code) {
-        $code = strtoupper(sanitize_text_field($code));
+        $code = wcefp_safe_strtoupper(sanitize_text_field($code));
         
         // Voucher code should be alphanumeric, 8-20 characters
-        if (!preg_match('/^[A-Z0-9]{8,20}$/', $code)) {
+        if (!wcefp_safe_preg_match('/^[A-Z0-9]{8,20}$/', $code)) {
             \WCEFP\Utils\Logger::warning('Invalid voucher code format', ['code' => $code]);
             return false;
         }
@@ -195,9 +195,9 @@ class WCEFP_Validator {
     public static function validate_text($text, $max_length = 255) {
         $text = sanitize_text_field($text);
         
-        if (strlen($text) > $max_length) {
+        if (wcefp_safe_strlen($text) > $max_length) {
             \WCEFP\Utils\Logger::warning('Text too long', [
-                'length' => strlen($text),
+                'length' => wcefp_safe_strlen($text),
                 'max_length' => $max_length
             ]);
             return false;
@@ -216,9 +216,9 @@ class WCEFP_Validator {
     public static function validate_textarea($content, $max_length = 5000) {
         $content = sanitize_textarea_field($content);
         
-        if (strlen($content) > $max_length) {
+        if (wcefp_safe_strlen($content) > $max_length) {
             \WCEFP\Utils\Logger::warning('Textarea content too long', [
-                'length' => strlen($content),
+                'length' => wcefp_safe_strlen($content),
                 'max_length' => $max_length
             ]);
             return false;

@@ -10,6 +10,8 @@
 
 namespace WCEFP\Features\DataIntegration;
 
+use WCEFP\Utils\StringHelper;
+
 class ExportManager {
     
     /**
@@ -356,7 +358,8 @@ class ExportManager {
         }
         
         // Validate feed ID format (should be uuid or token)
-        if (!preg_match('/^[a-f0-9-]{36}$/', $feed_id)) {
+        $safe_feed_id = sanitize_text_field($feed_id);
+        if (!StringHelper::safe_preg_match('/^[a-f0-9-]{36}$/', $safe_feed_id)) {
             wp_die(__('Invalid calendar feed ID.', 'wceventsfp'), 404);
         }
         

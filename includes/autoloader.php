@@ -64,12 +64,13 @@ class WCEFP_Autoloader {
         }
         
         // Check if this is a WCEFP namespaced class
-        if (strpos($class_name, 'WCEFP\\') !== 0) {
+        $safe_class_name = is_string($class_name) ? $class_name : '';
+        if (strpos($safe_class_name, 'WCEFP\\') !== 0) {
             return false;
         }
         
         // Convert namespace to file path
-        $relative_class = substr($class_name, 6); // Remove 'WCEFP\' prefix
+        $relative_class = substr($safe_class_name, 6); // Remove 'WCEFP\' prefix
         $file_path = str_replace('\\', '/', $relative_class) . '.php';
         
         // Build full path
