@@ -6,9 +6,9 @@
  * Author:      Francesco Passeri
  * Text Domain: wceventsfp
  * Domain Path: /languages
- * Requires at least: 5.0
+ * Requires at least: 6.5
  * Tested up to: 6.7
- * Requires PHP: 7.4
+ * Requires PHP: 8.0
  * WC requires at least: 5.0
  * WC tested up to: 9.3
  */
@@ -162,14 +162,14 @@ class WCEventsFP {
     private function check_dependencies() {
         // Check WordPress version
         global $wp_version;
-        if (version_compare($wp_version, '5.0', '<')) {
-            $this->add_admin_notice('WCEventsFP requires WordPress 5.0 or higher.', 'error');
+        if (version_compare($wp_version, '6.5', '<')) {
+            $this->add_admin_notice('WCEventsFP requires WordPress 6.5 or higher.', 'error');
             return false;
         }
         
         // Check PHP version
-        if (version_compare(PHP_VERSION, '7.4.0', '<')) {
-            $this->add_admin_notice('WCEventsFP requires PHP 7.4 or higher. Current version: ' . PHP_VERSION, 'error');
+        if (version_compare(PHP_VERSION, '8.0.0', '<')) {
+            $this->add_admin_notice('WCEventsFP requires PHP 8.0 or higher. Current version: ' . PHP_VERSION, 'error');
             return false;
         }
         

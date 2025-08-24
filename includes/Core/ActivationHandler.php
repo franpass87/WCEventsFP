@@ -134,9 +134,9 @@ class ActivationHandler {
      */
     private static function check_system_requirements() {
         // Check PHP version
-        if (version_compare(PHP_VERSION, '7.4.0', '<')) {
+        if (version_compare(PHP_VERSION, '8.0.0', '<')) {
             throw new \Exception(
-                sprintf('PHP 7.4 or higher required. Current version: %s', PHP_VERSION)
+                sprintf('PHP 8.0 or higher required. Current version: %s', PHP_VERSION)
             );
         }
         

@@ -22,8 +22,8 @@ $critical_errors = [];
 
 // Test 1: Basic requirements
 echo "1. Testing Basic Requirements...\n";
-if (version_compare(PHP_VERSION, '7.4.0', '<')) {
-    $critical_errors[] = 'PHP 7.4+ required. Current: ' . PHP_VERSION;
+if (version_compare(PHP_VERSION, '8.0.0', '<')) {
+    $critical_errors[] = 'PHP 8.0+ required. Current: ' . PHP_VERSION;
     echo "   ❌ PHP Version: " . PHP_VERSION . "\n";
     $test_passed = false;
 } else {

@@ -172,7 +172,7 @@ class Plugin {
         }
         
         // Check PHP version
-        if (version_compare(PHP_VERSION, '7.4.0', '<')) {
+        if (version_compare(PHP_VERSION, '8.0.0', '<')) {
             add_action('admin_notices', [$this, 'php_version_notice']);
             return false;
         }
