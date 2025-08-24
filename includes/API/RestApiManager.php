@@ -149,6 +149,524 @@ class RestApiManager {
         register_rest_field('product', 'wcefp_event_data', [
             'get_callback' => [$this, 'get_event_data'],
             'update_callback' => [$this, 'update_event_data'],
+            'schema' => [
+                'description' => __('WCEventsFP event data', 'wceventsfp'),
+                'type' => 'object',
+                'context' => ['view', 'edit'],
+                'properties' => [
+                    'is_event' => ['type' => 'boolean'],
+                    'capacity' => ['type' => 'integer'],
+                    'duration' => ['type' => 'integer'],
+                    'location' => ['type' => 'string'],
+                    'meeting_point_id' => ['type' => 'integer'],
+                    'available_dates' => ['type' => 'array'],
+                    'price_rules' => ['type' => 'object']
+                ]
+            ]
+        ]);
+    }
+    
+    // Bookings endpoints implementation
+    
+    /**
+     * Get bookings list
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function get_bookings(WP_REST_Request $request) {
+        try {
+            global $wpdb;
+            
+            $per_page = min(100, max(1, intval($request->get_param('per_page') ?: 20)));
+            $page = max(1, intval($request->get_param('page') ?: 1));
+            $offset = ($page - 1) * $per_page;
+            $status = sanitize_text_field($request->get_param('status') ?: '');
+            $event_id = intval($request->get_param('event_id') ?: 0);
+            $date_from = sanitize_text_field($request->get_param('date_from') ?: '');
+            $date_to = sanitize_text_field($request->get_param('date_to') ?: '');
+            
+            $where_conditions = ['1=1'];
+            $params = [];
+            
+            if ($status) {
+                $where_conditions[] = 'status = %s';
+                $params[] = $status;
+            }
+            
+            if ($event_id) {
+                $where_conditions[] = 'product_id = %d';
+                $params[] = $event_id;
+            }
+            
+            if ($date_from) {
+                $where_conditions[] = 'booking_date >= %s';
+                $params[] = $date_from;
+            }
+            
+            if ($date_to) {
+                $where_conditions[] = 'booking_date <= %s';
+                $params[] = $date_to;
+            }
+            
+            $where_clause = implode(' AND ', $where_conditions);
+            
+            // Get total count
+            $count_query = "SELECT COUNT(*) FROM {$wpdb->prefix}wcefp_bookings WHERE {$where_clause}";
+            $total = intval($wpdb->get_var($wpdb->prepare($count_query, $params)));
+            
+            // Get bookings
+            $bookings_query = "SELECT * FROM {$wpdb->prefix}wcefp_bookings WHERE {$where_clause} ORDER BY created_at DESC LIMIT %d OFFSET %d";
+            $params[] = $per_page;
+            $params[] = $offset;
+            
+            $bookings = $wpdb->get_results($wpdb->prepare($bookings_query, $params));
+            
+            $formatted_bookings = [];
+            foreach ($bookings as $booking) {
+                $formatted_bookings[] = $this->format_booking_for_api($booking);
+            }
+            
+            $response = new WP_REST_Response($formatted_bookings);
+            $response->header('X-WP-Total', $total);
+            $response->header('X-WP-TotalPages', ceil($total / $per_page));
+            
+            return $response;
+            
+        } catch (\Exception $e) {
+            DiagnosticLogger::instance()->error('REST API error: get_bookings', [
+                'error' => $e->getMessage(),
+                'request_params' => $request->get_params()
+            ]);
+            
+            return new WP_Error('api_error', __('Unable to retrieve bookings', 'wceventsfp'), ['status' => 500]);
+        }
+    }
+    
+    /**
+     * Get single booking
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function get_booking(WP_REST_Request $request) {
+        $booking_id = intval($request->get_param('id'));
+        
+        global $wpdb;
+        $booking = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}wcefp_bookings WHERE id = %d",
+            $booking_id
+        ));
+        
+        if (!$booking) {
+            return new WP_Error('booking_not_found', __('Booking not found', 'wceventsfp'), ['status' => 404]);
+        }
+        
+        return new WP_REST_Response($this->format_booking_for_api($booking));
+    }
+    
+    /**
+     * Create new booking
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function create_booking(WP_REST_Request $request) {
+        try {
+            global $wpdb;
+            
+            $event_id = intval($request->get_param('event_id'));
+            $booking_date = sanitize_text_field($request->get_param('booking_date'));
+            $booking_time = sanitize_text_field($request->get_param('booking_time') ?: '');
+            $participants = max(1, intval($request->get_param('participants')));
+            $customer_name = sanitize_text_field($request->get_param('customer_name'));
+            $customer_email = sanitize_email($request->get_param('customer_email'));
+            $customer_phone = sanitize_text_field($request->get_param('customer_phone') ?: '');
+            $special_requests = sanitize_textarea_field($request->get_param('special_requests') ?: '');
+            
+            // Validate event exists
+            $event = get_post($event_id);
+            if (!$event || $event->post_type !== 'product') {
+                return new WP_Error('invalid_event', __('Event not found', 'wceventsfp'), ['status' => 400]);
+            }
+            
+            // Check if it's actually an event
+            if (get_post_meta($event_id, '_wcefp_is_event', true) !== '1') {
+                return new WP_Error('invalid_event', __('Product is not an event', 'wceventsfp'), ['status' => 400]);
+            }
+            
+            // Validate booking date
+            if (!$booking_date || strtotime($booking_date) < strtotime(date('Y-m-d'))) {
+                return new WP_Error('invalid_date', __('Invalid booking date', 'wceventsfp'), ['status' => 400]);
+            }
+            
+            // Check capacity (simplified - in real implementation would check existing bookings)
+            $capacity = intval(get_post_meta($event_id, '_wcefp_capacity', true) ?: 10);
+            if ($participants > $capacity) {
+                return new WP_Error('capacity_exceeded', __('Requested participants exceed event capacity', 'wceventsfp'), ['status' => 400]);
+            }
+            
+            // Calculate price
+            $product = wc_get_product($event_id);
+            $unit_price = $product ? floatval($product->get_price()) : 0;
+            $total_price = $unit_price * $participants;
+            
+            // Insert booking
+            $result = $wpdb->insert(
+                $wpdb->prefix . 'wcefp_bookings',
+                [
+                    'product_id' => $event_id,
+                    'customer_name' => $customer_name,
+                    'customer_email' => $customer_email,
+                    'customer_phone' => $customer_phone,
+                    'booking_date' => $booking_date,
+                    'booking_time' => $booking_time,
+                    'participants' => $participants,
+                    'unit_price' => $unit_price,
+                    'total_price' => $total_price,
+                    'status' => 'confirmed',
+                    'special_requests' => $special_requests,
+                    'created_at' => current_time('mysql')
+                ],
+                [
+                    '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%f', '%f', '%s', '%s', '%s'
+                ]
+            );
+            
+            if ($result === false) {
+                return new WP_Error('booking_creation_failed', __('Failed to create booking', 'wceventsfp'), ['status' => 500]);
+            }
+            
+            $booking_id = $wpdb->insert_id;
+            
+            // Get created booking
+            $booking = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}wcefp_bookings WHERE id = %d",
+                $booking_id
+            ));
+            
+            // Fire booking created hook
+            do_action('wcefp_booking_created', $booking_id, $booking);
+            
+            $response = new WP_REST_Response($this->format_booking_for_api($booking));
+            $response->set_status(201);
+            
+            return $response;
+            
+        } catch (\Exception $e) {
+            DiagnosticLogger::instance()->error('REST API error: create_booking', [
+                'error' => $e->getMessage(),
+                'request_params' => $request->get_params()
+            ]);
+            
+            return new WP_Error('api_error', __('Unable to create booking', 'wceventsfp'), ['status' => 500]);
+        }
+    }
+    
+    /**
+     * Update booking
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function update_booking(WP_REST_Request $request) {
+        global $wpdb;
+        
+        $booking_id = intval($request->get_param('id'));
+        
+        // Check if booking exists
+        $existing_booking = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}wcefp_bookings WHERE id = %d",
+            $booking_id
+        ));
+        
+        if (!$existing_booking) {
+            return new WP_Error('booking_not_found', __('Booking not found', 'wceventsfp'), ['status' => 404]);
+        }
+        
+        $update_data = [];
+        $update_format = [];
+        
+        // Only update provided fields
+        if ($request->has_param('status')) {
+            $status = sanitize_text_field($request->get_param('status'));
+            if (in_array($status, ['pending', 'confirmed', 'cancelled', 'completed'])) {
+                $update_data['status'] = $status;
+                $update_format[] = '%s';
+            }
+        }
+        
+        if ($request->has_param('participants')) {
+            $participants = max(1, intval($request->get_param('participants')));
+            $update_data['participants'] = $participants;
+            $update_format[] = '%d';
+            
+            // Recalculate price if participants changed
+            $update_data['total_price'] = $existing_booking->unit_price * $participants;
+            $update_format[] = '%f';
+        }
+        
+        if ($request->has_param('special_requests')) {
+            $update_data['special_requests'] = sanitize_textarea_field($request->get_param('special_requests'));
+            $update_format[] = '%s';
+        }
+        
+        if (empty($update_data)) {
+            return new WP_Error('no_update_data', __('No valid update data provided', 'wceventsfp'), ['status' => 400]);
+        }
+        
+        $update_data['updated_at'] = current_time('mysql');
+        $update_format[] = '%s';
+        
+        $result = $wpdb->update(
+            $wpdb->prefix . 'wcefp_bookings',
+            $update_data,
+            ['id' => $booking_id],
+            $update_format,
+            ['%d']
+        );
+        
+        if ($result === false) {
+            return new WP_Error('update_failed', __('Failed to update booking', 'wceventsfp'), ['status' => 500]);
+        }
+        
+        // Get updated booking
+        $booking = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}wcefp_bookings WHERE id = %d",
+            $booking_id
+        ));
+        
+        // Fire booking updated hook
+        do_action('wcefp_booking_updated', $booking_id, $booking, $update_data);
+        
+        return new WP_REST_Response($this->format_booking_for_api($booking));
+    }
+    
+    /**
+     * Delete booking
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function delete_booking(WP_REST_Request $request) {
+        global $wpdb;
+        
+        $booking_id = intval($request->get_param('id'));
+        
+        // Check if booking exists
+        $booking = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}wcefp_bookings WHERE id = %d",
+            $booking_id
+        ));
+        
+        if (!$booking) {
+            return new WP_Error('booking_not_found', __('Booking not found', 'wceventsfp'), ['status' => 404]);
+        }
+        
+        // Instead of hard delete, update status to cancelled
+        $result = $wpdb->update(
+            $wpdb->prefix . 'wcefp_bookings',
+            [
+                'status' => 'cancelled',
+                'updated_at' => current_time('mysql')
+            ],
+            ['id' => $booking_id],
+            ['%s', '%s'],
+            ['%d']
+        );
+        
+        if ($result === false) {
+            return new WP_Error('delete_failed', __('Failed to cancel booking', 'wceventsfp'), ['status' => 500]);
+        }
+        
+        // Fire booking deleted/cancelled hook
+        do_action('wcefp_booking_cancelled', $booking_id, $booking);
+        
+        return new WP_REST_Response(['deleted' => true, 'status' => 'cancelled']);
+    }
+    
+    // Events endpoints implementation
+    
+    /**
+     * Get events list
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function get_events(WP_REST_Request $request) {
+        $per_page = min(100, max(1, intval($request->get_param('per_page') ?: 20)));
+        $page = max(1, intval($request->get_param('page') ?: 1));
+        $category = sanitize_text_field($request->get_param('category') ?: '');
+        $search = sanitize_text_field($request->get_param('search') ?: '');
+        $date_from = sanitize_text_field($request->get_param('date_from') ?: '');
+        $orderby = sanitize_text_field($request->get_param('orderby') ?: 'date');
+        $order = sanitize_text_field($request->get_param('order') ?: 'DESC');
+        
+        $args = [
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => $per_page,
+            'paged' => $page,
+            'orderby' => $orderby,
+            'order' => $order,
+            'meta_query' => [
+                [
+                    'key' => '_wcefp_is_event',
+                    'value' => '1',
+                    'compare' => '='
+                ]
+            ]
+        ];
+        
+        if ($search) {
+            $args['s'] = $search;
+        }
+        
+        if ($category) {
+            $args['tax_query'] = [
+                [
+                    'taxonomy' => 'product_cat',
+                    'field' => 'slug',
+                    'terms' => $category
+                ]
+            ];
+        }
+        
+        if ($date_from) {
+            // This would need more complex meta query for available dates
+            // For now, just add to meta query
+            $args['meta_query'][] = [
+                'key' => '_wcefp_available_from',
+                'value' => $date_from,
+                'compare' => '>=',
+                'type' => 'DATE'
+            ];
+        }
+        
+        $query = new \WP_Query($args);
+        
+        $events = [];
+        foreach ($query->posts as $post) {
+            $events[] = $this->format_event_for_api($post);
+        }
+        
+        $response = new WP_REST_Response($events);
+        $response->header('X-WP-Total', $query->found_posts);
+        $response->header('X-WP-TotalPages', $query->max_num_pages);
+        
+        return $response;
+    }
+    
+    /**
+     * Get single event
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function get_event(WP_REST_Request $request) {
+        $event_id = intval($request->get_param('id'));
+        
+        $event = get_post($event_id);
+        
+        if (!$event || $event->post_type !== 'product') {
+            return new WP_Error('event_not_found', __('Event not found', 'wceventsfp'), ['status' => 404]);
+        }
+        
+        if (get_post_meta($event_id, '_wcefp_is_event', true) !== '1') {
+            return new WP_Error('not_event', __('Product is not an event', 'wceventsfp'), ['status' => 400]);
+        }
+        
+        return new WP_REST_Response($this->format_event_for_api($event, true));
+    }
+    
+    // System endpoints implementation
+    
+    /**
+     * Get system status
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response
+     */
+    public function get_system_status(WP_REST_Request $request) {
+        global $wpdb;
+        
+        // Basic system info
+        $status = [
+            'plugin_version' => WCEFP_VERSION,
+            'wordpress_version' => get_bloginfo('version'),
+            'php_version' => PHP_VERSION,
+            'mysql_version' => $wpdb->db_version(),
+            'server_time' => current_time('c'),
+            'timezone' => wp_timezone_string(),
+            'memory_limit' => ini_get('memory_limit'),
+            'max_execution_time' => ini_get('max_execution_time')
+        ];
+        
+        // Database status
+        $bookings_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wcefp_bookings");
+        $events_count = $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->posts} p 
+             INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id 
+             WHERE p.post_type = 'product' 
+             AND p.post_status = 'publish' 
+             AND pm.meta_key = '_wcefp_is_event' 
+             AND pm.meta_value = '1'"
+        );
+        
+        $status['database'] = [
+            'bookings_count' => intval($bookings_count),
+            'events_count' => intval($events_count),
+            'tables_exist' => $this->check_database_tables()
+        ];
+        
+        // Plugin dependencies
+        $status['dependencies'] = [
+            'woocommerce_active' => class_exists('WooCommerce'),
+            'woocommerce_version' => defined('WC_VERSION') ? WC_VERSION : null
+        ];
+        
+        // Settings status
+        $status['settings'] = [
+            'default_capacity' => get_option('wcefp_default_capacity', 10),
+            'booking_window_days' => get_option('wcefp_booking_window_days', 30),
+            'email_notifications' => get_option('wcefp_email_notifications', false)
+        ];
+        
+        return new WP_REST_Response($status);
+    }
+    
+    /**
+     * Get system health
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response
+     */
+    public function get_system_health(WP_REST_Request $request) {
+        $health_checks = [
+            'database' => $this->check_database_health(),
+            'file_permissions' => $this->check_file_permissions(),
+            'memory_usage' => $this->check_memory_usage(),
+            'external_connections' => $this->check_external_connections(),
+            'cron_jobs' => $this->check_cron_status()
+        ];
+        
+        $overall_status = 'good';
+        foreach ($health_checks as $check) {
+            if ($check['status'] === 'critical') {
+                $overall_status = 'critical';
+                break;
+            } elseif ($check['status'] === 'warning' && $overall_status !== 'critical') {
+                $overall_status = 'warning';
+            }
+        }
+        
+        return new WP_REST_Response([
+            'overall_status' => $overall_status,
+            'checks' => $health_checks,
+            'checked_at' => current_time('c')
+        ]);
+    }
+            'update_callback' => [$this, 'update_event_data'],
             'schema' => $this->get_event_data_schema()
         ]);
         

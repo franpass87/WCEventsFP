@@ -39,7 +39,9 @@ class MeetingPointsModule extends ServiceProvider {
         // Hook into WordPress lifecycle
         add_action('init', [$this, 'initialize_cpt'], 20);
         add_action('add_meta_boxes', [$this, 'add_meta_boxes']);
+        add_action('add_meta_boxes', [$this, 'add_product_meeting_point_meta_box']);
         add_action('save_post', [$this, 'save_meeting_point_meta']);
+        add_action('save_post', [$this, 'save_product_meeting_point_meta']);
         
         Logger::info('Meeting Points module booted successfully');
     }
@@ -107,79 +109,104 @@ class MeetingPointsModule extends ServiceProvider {
     public function render_meeting_point_meta_box($post): void {
         wp_nonce_field('wcefp_meeting_point_meta', 'wcefp_meeting_point_nonce');
         
-        $address = get_post_meta($post->ID, '_meeting_point_address', true);
-        $latitude = get_post_meta($post->ID, '_meeting_point_latitude', true);
-        $longitude = get_post_meta($post->ID, '_meeting_point_longitude', true);
-        $instructions = get_post_meta($post->ID, '_meeting_point_instructions', true);
-        $contact_info = get_post_meta($post->ID, '_meeting_point_contact', true);
+        $address = get_post_meta($post->ID, '_wcefp_address', true);
+        $latitude = get_post_meta($post->ID, '_wcefp_latitude', true);
+        $longitude = get_post_meta($post->ID, '_wcefp_longitude', true);
+        $contact_name = get_post_meta($post->ID, '_wcefp_contact_name', true);
+        $contact_phone = get_post_meta($post->ID, '_wcefp_contact_phone', true);
+        $contact_email = get_post_meta($post->ID, '_wcefp_contact_email', true);
+        $instructions = get_post_meta($post->ID, '_wcefp_instructions', true);
         
         ?>
         <table class="form-table">
             <tr>
                 <th scope="row">
-                    <label for="meeting_point_address"><?php esc_html_e('Address', 'wceventsfp'); ?></label>
+                    <label for="wcefp_address"><?php esc_html_e('Address', 'wceventsfp'); ?></label>
                 </th>
                 <td>
-                    <input type="text" 
-                           id="meeting_point_address" 
-                           name="meeting_point_address" 
-                           value="<?php echo esc_attr($address); ?>" 
-                           class="large-text" />
+                    <textarea id="wcefp_address" name="wcefp_address" rows="3" class="large-text"><?php echo esc_textarea($address); ?></textarea>
                     <p class="description"><?php esc_html_e('Full address of the meeting point', 'wceventsfp'); ?></p>
                 </td>
             </tr>
             <tr>
                 <th scope="row">
-                    <label for="meeting_point_latitude"><?php esc_html_e('Latitude', 'wceventsfp'); ?></label>
+                    <label for="wcefp_latitude"><?php esc_html_e('Latitude', 'wceventsfp'); ?></label>
                 </th>
                 <td>
-                    <input type="number" 
-                           id="meeting_point_latitude" 
-                           name="meeting_point_latitude" 
-                           value="<?php echo esc_attr($latitude); ?>" 
-                           step="any" 
-                           class="regular-text" />
+                    <input type="number" step="any" id="wcefp_latitude" name="wcefp_latitude" value="<?php echo esc_attr($latitude); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e('GPS latitude coordinate (e.g., 45.4642)', 'wceventsfp'); ?></p>
                 </td>
             </tr>
             <tr>
                 <th scope="row">
-                    <label for="meeting_point_longitude"><?php esc_html_e('Longitude', 'wceventsfp'); ?></label>
+                    <label for="wcefp_longitude"><?php esc_html_e('Longitude', 'wceventsfp'); ?></label>
                 </th>
                 <td>
-                    <input type="number" 
-                           id="meeting_point_longitude" 
-                           name="meeting_point_longitude" 
-                           value="<?php echo esc_attr($longitude); ?>" 
-                           step="any" 
-                           class="regular-text" />
+                    <input type="number" step="any" id="wcefp_longitude" name="wcefp_longitude" value="<?php echo esc_attr($longitude); ?>" class="regular-text" />
+                    <p class="description"><?php esc_html_e('GPS longitude coordinate (e.g., 9.1900)', 'wceventsfp'); ?></p>
                 </td>
             </tr>
             <tr>
                 <th scope="row">
-                    <label for="meeting_point_instructions"><?php esc_html_e('Instructions', 'wceventsfp'); ?></label>
+                    <label for="wcefp_contact_name"><?php esc_html_e('Contact Person', 'wceventsfp'); ?></label>
                 </th>
                 <td>
-                    <textarea id="meeting_point_instructions" 
-                              name="meeting_point_instructions" 
-                              rows="4" 
-                              class="large-text"><?php echo esc_textarea($instructions); ?></textarea>
-                    <p class="description"><?php esc_html_e('Special instructions for finding the meeting point', 'wceventsfp'); ?></p>
+                    <input type="text" id="wcefp_contact_name" name="wcefp_contact_name" value="<?php echo esc_attr($contact_name); ?>" class="regular-text" />
                 </td>
             </tr>
             <tr>
                 <th scope="row">
-                    <label for="meeting_point_contact"><?php esc_html_e('Contact Information', 'wceventsfp'); ?></label>
+                    <label for="wcefp_contact_phone"><?php esc_html_e('Contact Phone', 'wceventsfp'); ?></label>
                 </th>
                 <td>
-                    <input type="text" 
-                           id="meeting_point_contact" 
-                           name="meeting_point_contact" 
-                           value="<?php echo esc_attr($contact_info); ?>" 
-                           class="large-text" />
-                    <p class="description"><?php esc_html_e('Phone number or contact info for assistance', 'wceventsfp'); ?></p>
+                    <input type="tel" id="wcefp_contact_phone" name="wcefp_contact_phone" value="<?php echo esc_attr($contact_phone); ?>" class="regular-text" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label for="wcefp_contact_email"><?php esc_html_e('Contact Email', 'wceventsfp'); ?></label>
+                </th>
+                <td>
+                    <input type="email" id="wcefp_contact_email" name="wcefp_contact_email" value="<?php echo esc_attr($contact_email); ?>" class="regular-text" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label for="wcefp_instructions"><?php esc_html_e('Special Instructions', 'wceventsfp'); ?></label>
+                </th>
+                <td>
+                    <textarea id="wcefp_instructions" name="wcefp_instructions" rows="4" class="large-text"><?php echo esc_textarea($instructions); ?></textarea>
+                    <p class="description"><?php esc_html_e('Additional instructions for participants (parking, access, etc.)', 'wceventsfp'); ?></p>
                 </td>
             </tr>
         </table>
+        
+        <div id="wcefp-map-container" style="margin-top: 20px;">
+            <h4><?php esc_html_e('Location Preview', 'wceventsfp'); ?></h4>
+            <div id="wcefp-map" style="height: 300px; width: 100%; border: 1px solid #ddd;"></div>
+            <p class="description"><?php esc_html_e('Map will display when coordinates are provided', 'wceventsfp'); ?></p>
+        </div>
+        
+        <script>
+        jQuery(document).ready(function($) {
+            // Simple coordinates validation and map preview
+            $('#wcefp_latitude, #wcefp_longitude').on('input', function() {
+                var lat = parseFloat($('#wcefp_latitude').val());
+                var lng = parseFloat($('#wcefp_longitude').val());
+                
+                if (lat && lng && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                    $('#wcefp-map').html('<p style="text-align: center; padding: 100px;">' +
+                        '📍 Coordinates: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</p>');
+                } else {
+                    $('#wcefp-map').html('<p style="text-align: center; padding: 100px; color: #999;">' +
+                        '<?php esc_html_e('Enter valid coordinates to preview location', 'wceventsfp'); ?></p>');
+                }
+            });
+            
+            // Trigger initial map update
+            $('#wcefp_latitude').trigger('input');
+        });
+        </script>
         <?php
     }
     
@@ -190,51 +217,57 @@ class MeetingPointsModule extends ServiceProvider {
      * @return void
      */
     public function save_meeting_point_meta($post_id): void {
-        // Verify nonce
         if (!isset($_POST['wcefp_meeting_point_nonce']) || 
             !wp_verify_nonce($_POST['wcefp_meeting_point_nonce'], 'wcefp_meeting_point_meta')) {
             return;
         }
         
-        // Check autosave
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
             return;
         }
         
-        // Check permissions
         if (!current_user_can('edit_post', $post_id)) {
             return;
         }
         
-        // Check post type
         if (get_post_type($post_id) !== 'wcefp_meeting_point') {
             return;
         }
         
-        // Save meta fields
-        $fields = [
-            'meeting_point_address' => 'sanitize_text_field',
-            'meeting_point_latitude' => 'floatval',
-            'meeting_point_longitude' => 'floatval',
-            'meeting_point_instructions' => 'sanitize_textarea_field',
-            'meeting_point_contact' => 'sanitize_text_field'
+        // Sanitize and save meta fields
+        $meta_fields = [
+            '_wcefp_address' => 'sanitize_textarea_field',
+            '_wcefp_latitude' => 'floatval',
+            '_wcefp_longitude' => 'floatval',
+            '_wcefp_contact_name' => 'sanitize_text_field',
+            '_wcefp_contact_phone' => 'sanitize_text_field',
+            '_wcefp_contact_email' => 'sanitize_email',
+            '_wcefp_instructions' => 'sanitize_textarea_field'
         ];
         
-        foreach ($fields as $field => $sanitize_callback) {
-            if (isset($_POST[$field])) {
-                $value = $sanitize_callback($_POST[$field]);
-                update_post_meta($post_id, '_' . $field, $value);
+        foreach ($meta_fields as $meta_key => $sanitize_callback) {
+            $field_name = str_replace('_wcefp_', 'wcefp_', $meta_key);
+            $value = $_POST[$field_name] ?? '';
+            
+            if (is_callable($sanitize_callback)) {
+                $value = call_user_func($sanitize_callback, $value);
+            }
+            
+            if (!empty($value)) {
+                update_post_meta($post_id, $meta_key, $value);
+            } else {
+                delete_post_meta($post_id, $meta_key);
             }
         }
     }
     
     /**
-     * Get meeting points for dropdown
+     * Get all meeting points
      * 
      * @return array
      */
-    public function get_meeting_points_for_select(): array {
-        $meeting_points = get_posts([
+    public function get_meeting_points(): array {
+        $posts = get_posts([
             'post_type' => 'wcefp_meeting_point',
             'post_status' => 'publish',
             'numberposts' => -1,
@@ -242,36 +275,132 @@ class MeetingPointsModule extends ServiceProvider {
             'order' => 'ASC'
         ]);
         
-        $options = [];
-        foreach ($meeting_points as $point) {
-            $options[$point->ID] = $point->post_title;
+        $meeting_points = [];
+        foreach ($posts as $post) {
+            $meeting_points[$post->ID] = [
+                'id' => $post->ID,
+                'title' => $post->post_title,
+                'address' => get_post_meta($post->ID, '_wcefp_address', true),
+                'latitude' => get_post_meta($post->ID, '_wcefp_latitude', true),
+                'longitude' => get_post_meta($post->ID, '_wcefp_longitude', true),
+                'contact_name' => get_post_meta($post->ID, '_wcefp_contact_name', true),
+                'contact_phone' => get_post_meta($post->ID, '_wcefp_contact_phone', true),
+                'contact_email' => get_post_meta($post->ID, '_wcefp_contact_email', true),
+                'instructions' => get_post_meta($post->ID, '_wcefp_instructions', true)
+            ];
         }
         
-        return $options;
+        return $meeting_points;
     }
     
     /**
-     * Get meeting point data for frontend display
+     * Add meeting point selection to product meta boxes
      * 
-     * @param int $meeting_point_id
-     * @return array|null
+     * @return void
      */
-    public function get_meeting_point_data($meeting_point_id): ?array {
-        $post = get_post($meeting_point_id);
+    public function add_product_meeting_point_meta_box(): void {
+        $product_types = ['wcefp_event', 'wcefp_experience'];
         
-        if (!$post || $post->post_type !== 'wcefp_meeting_point') {
-            return null;
+        foreach ($product_types as $product_type) {
+            add_meta_box(
+                'wcefp_product_meeting_point',
+                __('Meeting Point', 'wceventsfp'),
+                [$this, 'render_product_meeting_point_meta_box'],
+                'product',
+                'side',
+                'default'
+            );
+        }
+    }
+    
+    /**
+     * Render product meeting point selection
+     * 
+     * @param \WP_Post $post
+     * @return void
+     */
+    public function render_product_meeting_point_meta_box($post): void {
+        wp_nonce_field('wcefp_product_meeting_point_meta', 'wcefp_product_meeting_point_nonce');
+        
+        $selected_meeting_point = get_post_meta($post->ID, '_wcefp_meeting_point_id', true);
+        $meeting_points = $this->get_meeting_points();
+        
+        ?>
+        <p>
+            <label for="wcefp_meeting_point_id"><?php esc_html_e('Select Meeting Point', 'wceventsfp'); ?></label>
+            <select id="wcefp_meeting_point_id" name="wcefp_meeting_point_id" class="widefat">
+                <option value=""><?php esc_html_e('No meeting point', 'wceventsfp'); ?></option>
+                <?php foreach ($meeting_points as $mp): ?>
+                    <option value="<?php echo esc_attr($mp['id']); ?>" <?php selected($selected_meeting_point, $mp['id']); ?>>
+                        <?php echo esc_html($mp['title']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </p>
+        
+        <?php if (!empty($meeting_points)): ?>
+        <div id="wcefp-meeting-point-preview" style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-left: 4px solid #0073aa;">
+            <p><strong><?php esc_html_e('Meeting Point Details:', 'wceventsfp'); ?></strong></p>
+            <div id="wcefp-mp-details" style="display: none;">
+                <p><span id="wcefp-mp-address"></span></p>
+                <p><small id="wcefp-mp-contact"></small></p>
+            </div>
+        </div>
+        
+        <script>
+        jQuery(document).ready(function($) {
+            var meetingPoints = <?php echo wp_json_encode($meeting_points); ?>;
+            
+            $('#wcefp_meeting_point_id').on('change', function() {
+                var selectedId = $(this).val();
+                var $details = $('#wcefp-mp-details');
+                
+                if (selectedId && meetingPoints[selectedId]) {
+                    var mp = meetingPoints[selectedId];
+                    $('#wcefp-mp-address').text(mp.address || '<?php esc_html_e('No address specified', 'wceventsfp'); ?>');
+                    $('#wcefp-mp-contact').text(mp.contact_name ? 
+                        '<?php esc_html_e('Contact:', 'wceventsfp'); ?> ' + mp.contact_name + 
+                        (mp.contact_phone ? ' - ' + mp.contact_phone : '') : '');
+                    $details.show();
+                } else {
+                    $details.hide();
+                }
+            });
+            
+            // Trigger initial update
+            $('#wcefp_meeting_point_id').trigger('change');
+        });
+        </script>
+        <?php endif; ?>
+        <?php
+    }
+    
+    /**
+     * Save product meeting point meta
+     * 
+     * @param int $post_id
+     * @return void
+     */
+    public function save_product_meeting_point_meta($post_id): void {
+        if (!isset($_POST['wcefp_product_meeting_point_nonce']) || 
+            !wp_verify_nonce($_POST['wcefp_product_meeting_point_nonce'], 'wcefp_product_meeting_point_meta')) {
+            return;
         }
         
-        return [
-            'id' => $post->ID,
-            'title' => $post->post_title,
-            'description' => $post->post_content,
-            'address' => get_post_meta($post->ID, '_meeting_point_address', true),
-            'latitude' => get_post_meta($post->ID, '_meeting_point_latitude', true),
-            'longitude' => get_post_meta($post->ID, '_meeting_point_longitude', true),
-            'instructions' => get_post_meta($post->ID, '_meeting_point_instructions', true),
-            'contact' => get_post_meta($post->ID, '_meeting_point_contact', true)
-        ];
+        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            return;
+        }
+        
+        if (!current_user_can('edit_post', $post_id)) {
+            return;
+        }
+        
+        $meeting_point_id = absint($_POST['wcefp_meeting_point_id'] ?? 0);
+        
+        if ($meeting_point_id > 0) {
+            update_post_meta($post_id, '_wcefp_meeting_point_id', $meeting_point_id);
+        } else {
+            delete_post_meta($post_id, '_wcefp_meeting_point_id');
+        }
     }
 }
