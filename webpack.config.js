@@ -18,7 +18,6 @@ module.exports = {
         // Feature-specific bundles  
         'debug-tools': './assets/js/debug-tools.js',
         'conversion-optimization': './assets/js/conversion-optimization.js',
-        'advanced-features': './assets/js/advanced-features.js',
         
         // Admin styles
         'admin-style': './assets/css/admin.css',
