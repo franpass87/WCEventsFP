@@ -44,7 +44,11 @@ class MenuManager {
      */
     private function init() {
         add_action('admin_menu', [$this, 'add_admin_menu'], 10);
+        add_action('admin_menu', [$this, 'remove_unwanted_menus'], 99);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts'], 10);
+        
+        // Add redirect for top-level menu page
+        add_action('load-toplevel_page_wcefp', [$this, 'redirect_toplevel_to_bookings']);
         
         // Add AJAX handlers for booking quick actions
         add_action('wp_ajax_wcefp_booking_quick_action', [$this, 'handle_booking_quick_action']);
@@ -52,6 +56,9 @@ class MenuManager {
         
         // Add AJAX handler for voucher table creation
         add_action('wp_ajax_wcefp_create_voucher_table', [$this, 'handle_create_voucher_table']);
+        
+        // Add AJAX handlers for voucher actions
+        add_action('wp_ajax_wcefp_voucher_action', [$this, 'handle_voucher_action']);
     }
     
     /**
@@ -275,14 +282,34 @@ class MenuManager {
     }
     
     /**
-     * Render main admin page - redirect to Prenotazioni
+     * Remove unwanted menu items (Dashboard/Performance)
+     * 
+     * @return void
+     */
+    public function remove_unwanted_menus() {
+        // Remove Dashboard and Performance submenus as requested
+        remove_submenu_page('wcefp', 'wcefp-dashboard');
+        remove_submenu_page('wcefp', 'wcefp-performance');
+    }
+    
+    /**
+     * Redirect top-level menu page to Prenotazioni
+     * 
+     * @return void
+     */
+    public function redirect_toplevel_to_bookings() {
+        wp_safe_redirect(admin_url('admin.php?page=wcefp-bookings'));
+        exit;
+    }
+    
+    /**
+     * Render main admin page - should never be called due to redirect
      * 
      * @return void
      */
     public function render_main_page() {
-        // Redirect to Prenotazioni page as requested
-        $redirect_url = admin_url('admin.php?page=wcefp-bookings');
-        wp_safe_redirect($redirect_url);
+        // This should not be reached due to load-toplevel_page_wcefp redirect
+        wp_safe_redirect(admin_url('admin.php?page=wcefp-bookings'));
         exit;
     }
     
@@ -381,11 +408,19 @@ class MenuManager {
     }
     
     /**
-     * Render vouchers page
+     * Render vouchers page with WP_List_Table
      * 
      * @return void
      */
     public function render_vouchers_page() {
+        // Security check
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'wceventsfp'));
+        }
+        
+        // Handle voucher actions
+        $this->handle_voucher_page_actions();
+        
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Vouchers', 'wceventsfp') . '</h1>';
         
@@ -396,24 +431,15 @@ class MenuManager {
         
         if ($table_exists) {
             // Check if voucher admin classes are available
-            $voucher_admin_file = WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-admin.php';
-            $voucher_table_file = WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-table.php';
-            
-            if (file_exists($voucher_admin_file) && file_exists($voucher_table_file)) {
-                // Load voucher management classes
-                require_once $voucher_admin_file;
-                require_once $voucher_table_file;
-                
-                if (class_exists('WCEFP_Vouchers_Admin') && method_exists('WCEFP_Vouchers_Admin', 'dispatch')) {
-                    // Remove the wrap div since dispatch() includes its own
-                    echo '</div>';
-                    WCEFP_Vouchers_Admin::dispatch();
-                    return;
-                }
+            if (class_exists('WCEFP_Vouchers_Admin') && method_exists('WCEFP_Vouchers_Admin', 'dispatch')) {
+                // Use existing voucher system
+                echo '</div>'; // Close our wrap
+                WCEFP_Vouchers_Admin::dispatch();
+                return;
             }
             
-            // Fallback: Basic voucher listing with WP_List_Table
-            $this->render_basic_voucher_interface();
+            // Use our enhanced WP_List_Table implementation
+            $this->render_voucher_list_table();
             
         } else {
             // Show onboarding interface
@@ -421,6 +447,326 @@ class MenuManager {
         }
         
         echo '</div>';
+    }
+    
+    /**
+     * Handle voucher page actions
+     * 
+     * @return void
+     */
+    private function handle_voucher_page_actions() {
+        if (!isset($_GET['action']) || !isset($_GET['voucher'])) {
+            return;
+        }
+        
+        $action = sanitize_text_field($_GET['action']);
+        $voucher_id = absint($_GET['voucher']);
+        
+        // Verify nonce based on action
+        $nonce_action = 'wcefp_voucher_' . $action . '_' . $voucher_id;
+        if (!wp_verify_nonce($_GET['_wpnonce'] ?? '', $nonce_action)) {
+            wp_die(__('Security check failed.', 'wceventsfp'));
+        }
+        
+        switch ($action) {
+            case 'regen':
+                $this->handle_voucher_regenerate($voucher_id);
+                break;
+            case 'resend':
+                $this->handle_voucher_resend($voucher_id);
+                break;
+        }
+    }
+    
+    /**
+     * Render voucher list table
+     * 
+     * @return void
+     */
+    private function render_voucher_list_table() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'wcefp_vouchers';
+        
+        // Get current page
+        $current_page = isset($_GET['paged']) ? absint($_GET['paged']) : 1;
+        $per_page = 20;
+        $offset = ($current_page - 1) * $per_page;
+        
+        // Get total count
+        $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+        
+        // Get vouchers for current page
+        $vouchers = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $table_name ORDER BY created_at DESC LIMIT %d OFFSET %d",
+            $per_page,
+            $offset
+        ), ARRAY_A);
+        
+        // Display the table
+        ?>
+        <div class="wcefp-voucher-list-container">
+            <div class="tablenav top">
+                <div class="alignleft actions bulkactions">
+                    <label for="bulk-action-selector-top" class="screen-reader-text"><?php _e('Select bulk action', 'wceventsfp'); ?></label>
+                    <select name="action" id="bulk-action-selector-top">
+                        <option value="-1"><?php _e('Bulk Actions', 'wceventsfp'); ?></option>
+                        <option value="export"><?php _e('Export Selected', 'wceventsfp'); ?></option>
+                        <option value="resend"><?php _e('Resend Selected', 'wceventsfp'); ?></option>
+                    </select>
+                    <input type="submit" class="button action" value="<?php esc_attr_e('Apply', 'wceventsfp'); ?>">
+                </div>
+                <?php
+                // Pagination
+                if ($total_items > $per_page) {
+                    $page_links = paginate_links([
+                        'base' => add_query_arg('paged', '%#%'),
+                        'format' => '',
+                        'prev_text' => __('&laquo;'),
+                        'next_text' => __('&raquo;'),
+                        'total' => ceil($total_items / $per_page),
+                        'current' => $current_page,
+                    ]);
+                    
+                    if ($page_links) {
+                        echo '<div class="tablenav-pages">';
+                        echo '<span class="displaying-num">' . 
+                             sprintf(_n('1 item', '%s items', $total_items, 'wceventsfp'), number_format_i18n($total_items)) . 
+                             '</span>';
+                        echo $page_links;
+                        echo '</div>';
+                    }
+                }
+                ?>
+            </div>
+            
+            <table class="wp-list-table widefat fixed striped vouchers">
+                <thead>
+                    <tr>
+                        <td class="manage-column column-cb check-column">
+                            <input type="checkbox" />
+                        </td>
+                        <th class="manage-column column-code"><?php _e('Codice', 'wceventsfp'); ?></th>
+                        <th class="manage-column column-order"><?php _e('Ordine', 'wceventsfp'); ?></th>
+                        <th class="manage-column column-recipient"><?php _e('Destinatario', 'wceventsfp'); ?></th>
+                        <th class="manage-column column-status"><?php _e('Stato', 'wceventsfp'); ?></th>
+                        <th class="manage-column column-date"><?php _e('Data invio', 'wceventsfp'); ?></th>
+                        <th class="manage-column column-actions"><?php _e('Azioni', 'wceventsfp'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($vouchers)): ?>
+                    <tr class="no-items">
+                        <td class="colspanchange" colspan="7">
+                            <?php _e('Nessun voucher trovato.', 'wceventsfp'); ?>
+                        </td>
+                    </tr>
+                    <?php else: ?>
+                        <?php foreach ($vouchers as $voucher): ?>
+                        <tr>
+                            <th class="check-column">
+                                <input type="checkbox" name="voucher[]" value="<?php echo esc_attr($voucher['id']); ?>" />
+                            </th>
+                            <td class="column-code">
+                                <strong><?php echo esc_html($voucher['code']); ?></strong>
+                            </td>
+                            <td class="column-order">
+                                <?php if ($voucher['order_id']): ?>
+                                    <a href="<?php echo admin_url('post.php?post=' . $voucher['order_id'] . '&action=edit'); ?>">
+                                        #<?php echo esc_html($voucher['order_id']); ?>
+                                    </a>
+                                <?php else: ?>
+                                    <?php _e('N/A', 'wceventsfp'); ?>
+                                <?php endif; ?>
+                            </td>
+                            <td class="column-recipient">
+                                <?php echo esc_html($voucher['recipient_name'] ?: __('N/A', 'wceventsfp')); ?>
+                                <?php if ($voucher['recipient_email']): ?>
+                                    <br><small><?php echo esc_html($voucher['recipient_email']); ?></small>
+                                <?php endif; ?>
+                            </td>
+                            <td class="column-status">
+                                <?php
+                                $status_class = 'wcefp-status-' . sanitize_html_class($voucher['status']);
+                                $status_text = ucfirst($voucher['status']);
+                                ?>
+                                <span class="wcefp-status-badge <?php echo esc_attr($status_class); ?>">
+                                    <?php echo esc_html($status_text); ?>
+                                </span>
+                            </td>
+                            <td class="column-date">
+                                <?php 
+                                if ($voucher['created_at']) {
+                                    echo esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($voucher['created_at'])));
+                                } else {
+                                    _e('N/A', 'wceventsfp');
+                                }
+                                ?>
+                            </td>
+                            <td class="column-actions">
+                                <?php
+                                // Generate secure action URLs
+                                $regen_url = wp_nonce_url(
+                                    admin_url('admin.php?page=wcefp-vouchers&action=regen&voucher=' . $voucher['id']),
+                                    'wcefp_voucher_regen_' . $voucher['id']
+                                );
+                                $resend_url = wp_nonce_url(
+                                    admin_url('admin.php?page=wcefp-vouchers&action=resend&voucher=' . $voucher['id']),
+                                    'wcefp_voucher_resend_' . $voucher['id']
+                                );
+                                ?>
+                                <div class="row-actions">
+                                    <span class="regen">
+                                        <a href="<?php echo esc_url($regen_url); ?>" 
+                                           onclick="return confirm('<?php echo esc_js(__('Rigenerare questo voucher?', 'wceventsfp')); ?>')">
+                                            <?php _e('Rigenera', 'wceventsfp'); ?>
+                                        </a>
+                                    </span>
+                                    <span class="resend"> |
+                                        <a href="<?php echo esc_url($resend_url); ?>"
+                                           onclick="return confirm('<?php echo esc_js(__('Reinviare questo voucher via email?', 'wceventsfp')); ?>')">
+                                            <?php _e('Reinvia', 'wceventsfp'); ?>
+                                        </a>
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+            
+            <div class="tablenav bottom">
+                <?php
+                // Bottom pagination
+                if ($total_items > $per_page && $page_links) {
+                    echo '<div class="tablenav-pages">';
+                    echo '<span class="displaying-num">' . 
+                         sprintf(_n('1 item', '%s items', $total_items, 'wceventsfp'), number_format_i18n($total_items)) . 
+                         '</span>';
+                    echo $page_links;
+                    echo '</div>';
+                }
+                ?>
+            </div>
+        </div>
+        
+        <!-- Add voucher styles -->
+        <style>
+        .wcefp-voucher-list-container {
+            margin-top: 20px;
+        }
+        .wcefp-status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+        }
+        .wcefp-status-active { background-color: #48bb78; }
+        .wcefp-status-pending { background-color: #f6ad55; }
+        .wcefp-status-used { background-color: #4299e1; }
+        .wcefp-status-expired { background-color: #f56565; }
+        .wcefp-status-cancelled { background-color: #a0aec0; }
+        .column-code { width: 120px; }
+        .column-order { width: 80px; }
+        .column-status { width: 80px; }
+        .column-date { width: 140px; }
+        .column-actions { width: 150px; }
+        </style>
+        <?php
+    }
+    
+    /**
+     * Handle voucher regeneration
+     * 
+     * @param int $voucher_id
+     * @return void
+     */
+    private function handle_voucher_regenerate($voucher_id) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'wcefp_vouchers';
+        
+        // Get voucher details
+        $voucher = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $voucher_id), ARRAY_A);
+        if (!$voucher) {
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-error"><p>' . __('Voucher non trovato.', 'wceventsfp') . '</p></div>';
+            });
+            return;
+        }
+        
+        // Generate new code
+        $new_code = 'WCEFP-' . strtoupper(wp_generate_password(8, false));
+        
+        // Update voucher
+        $updated = $wpdb->update(
+            $table_name,
+            ['code' => $new_code, 'updated_at' => current_time('mysql')],
+            ['id' => $voucher_id],
+            ['%s', '%s'],
+            ['%d']
+        );
+        
+        if ($updated) {
+            add_action('admin_notices', function() use ($new_code) {
+                echo '<div class="notice notice-success"><p>' . 
+                     sprintf(__('Voucher rigenerato con successo. Nuovo codice: <strong>%s</strong>', 'wceventsfp'), $new_code) . 
+                     '</p></div>';
+            });
+        } else {
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-error"><p>' . __('Errore durante la rigenerazione del voucher.', 'wceventsfp') . '</p></div>';
+            });
+        }
+    }
+    
+    /**
+     * Handle voucher resend
+     * 
+     * @param int $voucher_id
+     * @return void
+     */
+    private function handle_voucher_resend($voucher_id) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'wcefp_vouchers';
+        
+        // Get voucher details
+        $voucher = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $voucher_id), ARRAY_A);
+        if (!$voucher) {
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-error"><p>' . __('Voucher non trovato.', 'wceventsfp') . '</p></div>';
+            });
+            return;
+        }
+        
+        if (empty($voucher['recipient_email'])) {
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-error"><p>' . __('Impossibile inviare: email destinatario mancante.', 'wceventsfp') . '</p></div>';
+            });
+            return;
+        }
+        
+        // Send email (placeholder implementation)
+        $subject = sprintf(__('Il tuo voucher %s', 'wceventsfp'), $voucher['code']);
+        $message = sprintf(
+            __("Ciao %s,\n\nEcco il tuo voucher: %s\n\nValore: %s\n\nGrazie!", 'wceventsfp'),
+            $voucher['recipient_name'] ?: __('Cliente', 'wceventsfp'),
+            $voucher['code'],
+            wc_price($voucher['value'])
+        );
+        
+        $sent = wp_mail($voucher['recipient_email'], $subject, $message);
+        
+        if ($sent) {
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-success"><p>' . __('Voucher reinviato con successo via email.', 'wceventsfp') . '</p></div>';
+            });
+        } else {
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-error"><p>' . __('Errore durante l\'invio dell\'email.', 'wceventsfp') . '</p></div>';
+            });
+        }
     }
     
     /**
@@ -760,13 +1106,21 @@ class MenuManager {
     }
     
     /**
-     * Render settings page
+     * Render settings page with WordPress Settings API
      * 
      * @return void
      */
     public function render_settings_page() {
+        // Security check
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'wceventsfp'));
+        }
+        
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Impostazioni WCEventsFP', 'wceventsfp') . '</h1>';
+        
+        // Register settings if not already done
+        $this->register_wcefp_settings();
         
         // Load the WCEFP_Admin_Settings class if it exists
         $settings_file = WCEFP_PLUGIN_DIR . 'admin/class-wcefp-admin-settings.php';
@@ -774,7 +1128,7 @@ class MenuManager {
             require_once $settings_file;
         }
         
-        // Try to use the settings system
+        // Try to use the existing settings system first
         if (class_exists('WCEFP_Admin_Settings')) {
             try {
                 $settings = WCEFP_Admin_Settings::get_instance();
@@ -790,97 +1144,515 @@ class MenuManager {
                 
                 // Show debug error if WP_DEBUG is enabled
                 if (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')) {
-                    echo '<div class="notice notice-error"><p>';
-                    echo '<strong>WCEFP Debug:</strong> Settings error: ' . esc_html($e->getMessage());
+                    echo '<div class="notice notice-warning"><p>';
+                    echo '<strong>WCEFP Debug:</strong> Advanced settings interface not available: ' . esc_html($e->getMessage());
+                    echo '<br>Using server-rendered fallback interface.';
                     echo '</p></div>';
                 }
             }
         }
         
-        // Fallback: Basic WordPress Settings API implementation
-        echo '<form method="post" action="options.php" class="wcefp-settings-fallback">';
+        // Get current tab
+        $current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
+        $tabs = $this->get_settings_tabs();
         
-        // Create basic settings if they don't exist
-        $this->register_fallback_settings();
+        // Settings form with tabs
+        ?>
+        <form method="post" action="options.php" class="wcefp-settings-form">
+            <!-- Tab Navigation -->
+            <nav class="nav-tab-wrapper wp-clearfix">
+                <?php foreach ($tabs as $tab_key => $tab_info): ?>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=wcefp-settings&tab=' . $tab_key)); ?>" 
+                   class="nav-tab <?php echo $current_tab === $tab_key ? 'nav-tab-active' : ''; ?>">
+                    <span class="dashicons <?php echo esc_attr($tab_info['icon']); ?>"></span>
+                    <?php echo esc_html($tab_info['title']); ?>
+                </a>
+                <?php endforeach; ?>
+            </nav>
+            
+            <!-- Tab Content -->
+            <div class="wcefp-tab-content">
+                <?php
+                settings_fields('wcefp_settings_' . $current_tab);
+                do_settings_sections('wcefp_settings_' . $current_tab);
+                ?>
+            </div>
+            
+            <?php submit_button(__('Salva Impostazioni', 'wceventsfp')); ?>
+        </form>
         
-        settings_fields('wcefp_basic_settings');
+        <!-- Enhancement Notice -->
+        <div class="notice notice-info">
+            <h3><?php _e('Interfaccia Impostazioni', 'wceventsfp'); ?></h3>
+            <p><?php _e('Questa è l\'interfaccia server-rendered per le impostazioni. Tutte le modifiche vengono salvate immediatamente nel database WordPress.', 'wceventsfp'); ?></p>
+            <p><?php _e('Per funzionalità avanzate come l\'interfaccia React, assicurarsi che tutti i componenti JavaScript siano caricati correttamente.', 'wceventsfp'); ?></p>
+        </div>
         
-        echo '<table class="form-table">';
-        echo '<tbody>';
-        
-        // Basic capacity setting
-        echo '<tr>';
-        echo '<th scope="row">' . esc_html__('Default Capacity', 'wceventsfp') . '</th>';
-        echo '<td>';
-        $capacity = get_option('wcefp_default_capacity', 0);
-        echo '<input type="number" name="wcefp_default_capacity" value="' . esc_attr($capacity) . '" min="0" class="regular-text" />';
-        echo '<p class="description">' . esc_html__('Default number of available seats for each slot when a new occurrence is created.', 'wceventsfp') . '</p>';
-        echo '</td>';
-        echo '</tr>';
-        
-        // Debug mode setting  
-        echo '<tr>';
-        echo '<th scope="row">' . esc_html__('Debug Mode', 'wceventsfp') . '</th>';
-        echo '<td>';
-        $debug = get_option('wcefp_debug_mode', 0);
-        echo '<label><input type="checkbox" name="wcefp_debug_mode" value="1" ' . checked($debug, 1, false) . ' /> ';
-        echo esc_html__('Enable debug logging', 'wceventsfp') . '</label>';
-        echo '<p class="description">' . esc_html__('Enable detailed logging for troubleshooting. Logs are written to the WordPress debug log.', 'wceventsfp') . '</p>';
-        echo '</td>';
-        echo '</tr>';
-        
-        // Plugin version info
-        echo '<tr>';
-        echo '<th scope="row">' . esc_html__('Plugin Version', 'wceventsfp') . '</th>';
-        echo '<td>';
-        echo '<strong>' . esc_html(defined('WCEFP_VERSION') ? WCEFP_VERSION : '2.1.4') . '</strong>';
-        echo '<p class="description">' . esc_html__('Current plugin version. The full settings interface will be available as more components are loaded.', 'wceventsfp') . '</p>';
-        echo '</td>';
-        echo '</tr>';
-        
-        echo '</tbody>';
-        echo '</table>';
-        
-        submit_button(__('Save Settings', 'wceventsfp'));
-        
-        echo '</form>';
-        
-        // Add instructions for full settings access
-        echo '<div class="notice notice-info">';
-        echo '<h3>' . esc_html__('Full Settings Interface', 'wceventsfp') . '</h3>';
-        echo '<p>' . esc_html__('This is a simplified settings interface. The complete settings system with advanced options will be available once all plugin components are properly loaded.', 'wceventsfp') . '</p>';
-        echo '<p>' . esc_html__('If you continue to see this message, please check:', 'wceventsfp') . '</p>';
-        echo '<ul>';
-        echo '<li>' . esc_html__('WordPress debug log for any error messages', 'wceventsfp') . '</li>';
-        echo '<li>' . esc_html__('Plugin file permissions and integrity', 'wceventsfp') . '</li>';
-        echo '<li>' . esc_html__('PHP version compatibility (requires PHP 7.4+)', 'wceventsfp') . '</li>';
-        echo '</ul>';
-        echo '</div>';
-        
+        <?php
         echo '</div>';
     }
     
     /**
-     * Register fallback settings for basic functionality
+     * Get settings tabs configuration
+     * 
+     * @return array
+     */
+    private function get_settings_tabs() {
+        return [
+            'general' => [
+                'title' => __('Generali', 'wceventsfp'),
+                'icon' => 'dashicons-admin-generic'
+            ],
+            'email' => [
+                'title' => __('Email/Notifiche', 'wceventsfp'),
+                'icon' => 'dashicons-email-alt'
+            ],
+            'features' => [
+                'title' => __('Feature Flags', 'wceventsfp'),
+                'icon' => 'dashicons-admin-tools'
+            ],
+            'integrations' => [
+                'title' => __('Integrazioni', 'wceventsfp'),
+                'icon' => 'dashicons-admin-plugins'
+            ]
+        ];
+    }
+    
+    /**
+     * Register WCEFP settings using WordPress Settings API
      * 
      * @return void
      */
-    private function register_fallback_settings() {
-        // Register basic settings if not already registered
-        if (!get_registered_settings()['wcefp_default_capacity'] ?? false) {
-            register_setting('wcefp_basic_settings', 'wcefp_default_capacity', [
-                'type' => 'integer',
-                'sanitize_callback' => 'absint',
-                'default' => 0
-            ]);
+    private function register_wcefp_settings() {
+        // Register settings for each tab
+        $current_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
+        
+        // General settings
+        if ($current_tab === 'general') {
+            register_setting('wcefp_settings_general', 'wcefp_options', [$this, 'sanitize_settings']);
+            
+            add_settings_section(
+                'wcefp_general_section',
+                __('Impostazioni Generali', 'wceventsfp'),
+                [$this, 'render_general_section_info'],
+                'wcefp_settings_general'
+            );
+            
+            add_settings_field(
+                'default_capacity',
+                __('Capacità Predefinita', 'wceventsfp'),
+                [$this, 'render_number_field'],
+                'wcefp_settings_general',
+                'wcefp_general_section',
+                [
+                    'option_name' => 'wcefp_options',
+                    'field_name' => 'default_capacity',
+                    'default' => 10,
+                    'description' => __('Numero predefinito di posti disponibili per ogni slot.', 'wceventsfp')
+                ]
+            );
+            
+            add_settings_field(
+                'safe_mode',
+                __('Modalità Sicura', 'wceventsfp'),
+                [$this, 'render_checkbox_field'],
+                'wcefp_settings_general',
+                'wcefp_general_section',
+                [
+                    'option_name' => 'wcefp_options',
+                    'field_name' => 'safe_mode',
+                    'description' => __('Attiva la modalità sicura per disabilitare funzionalità avanzate.', 'wceventsfp')
+                ]
+            );
+            
+            add_settings_field(
+                'accent_color',
+                __('Colore Accent', 'wceventsfp'),
+                [$this, 'render_color_field'],
+                'wcefp_settings_general',
+                'wcefp_general_section',
+                [
+                    'option_name' => 'wcefp_options',
+                    'field_name' => 'accent_color',
+                    'default' => '#0073aa',
+                    'description' => __('Colore principale per l\'interfaccia del plugin.', 'wceventsfp')
+                ]
+            );
         }
         
-        if (!get_registered_settings()['wcefp_debug_mode'] ?? false) {
-            register_setting('wcefp_basic_settings', 'wcefp_debug_mode', [
-                'type' => 'boolean',
-                'sanitize_callback' => function($value) { return !empty($value) ? 1 : 0; },
-                'default' => 0
-            ]);
+        // Email settings
+        if ($current_tab === 'email') {
+            register_setting('wcefp_settings_email', 'wcefp_email_options', [$this, 'sanitize_email_settings']);
+            
+            add_settings_section(
+                'wcefp_email_section',
+                __('Impostazioni Email', 'wceventsfp'),
+                [$this, 'render_email_section_info'],
+                'wcefp_settings_email'
+            );
+            
+            add_settings_field(
+                'sender_name',
+                __('Nome Mittente', 'wceventsfp'),
+                [$this, 'render_text_field'],
+                'wcefp_settings_email',
+                'wcefp_email_section',
+                [
+                    'option_name' => 'wcefp_email_options',
+                    'field_name' => 'sender_name',
+                    'default' => get_bloginfo('name'),
+                    'description' => __('Nome che apparirà come mittente delle email.', 'wceventsfp')
+                ]
+            );
+            
+            add_settings_field(
+                'sender_email',
+                __('Email Mittente', 'wceventsfp'),
+                [$this, 'render_email_field'],
+                'wcefp_settings_email',
+                'wcefp_email_section',
+                [
+                    'option_name' => 'wcefp_email_options',
+                    'field_name' => 'sender_email',
+                    'default' => get_option('admin_email'),
+                    'description' => __('Indirizzo email mittente per le notifiche.', 'wceventsfp')
+                ]
+            );
+        }
+        
+        // Feature flags
+        if ($current_tab === 'features') {
+            register_setting('wcefp_settings_features', 'wcefp_feature_flags', [$this, 'sanitize_feature_flags']);
+            
+            add_settings_section(
+                'wcefp_features_section',
+                __('Attivazione Funzionalità', 'wceventsfp'),
+                [$this, 'render_features_section_info'],
+                'wcefp_settings_features'
+            );
+            
+            $features = [
+                'vouchers' => __('Sistema Voucher', 'wceventsfp'),
+                'closures' => __('Chiusure Straordinarie', 'wceventsfp'),
+                'analytics' => __('Analytics Avanzate', 'wceventsfp'),
+                'integrations' => __('Integrazioni Esterne', 'wceventsfp')
+            ];
+            
+            foreach ($features as $feature_key => $feature_name) {
+                add_settings_field(
+                    'enable_' . $feature_key,
+                    $feature_name,
+                    [$this, 'render_checkbox_field'],
+                    'wcefp_settings_features',
+                    'wcefp_features_section',
+                    [
+                        'option_name' => 'wcefp_feature_flags',
+                        'field_name' => 'enable_' . $feature_key,
+                        'description' => sprintf(__('Attiva %s', 'wceventsfp'), strtolower($feature_name))
+                    ]
+                );
+            }
+        }
+        
+        // Integrations
+        if ($current_tab === 'integrations') {
+            register_setting('wcefp_settings_integrations', 'wcefp_integrations', [$this, 'sanitize_integrations']);
+            
+            add_settings_section(
+                'wcefp_integrations_section',
+                __('Configurazione Integrazioni', 'wceventsfp'),
+                [$this, 'render_integrations_section_info'],
+                'wcefp_settings_integrations'
+            );
+            
+            add_settings_field(
+                'google_api_key',
+                __('Google API Key', 'wceventsfp'),
+                [$this, 'render_password_field'],
+                'wcefp_settings_integrations',
+                'wcefp_integrations_section',
+                [
+                    'option_name' => 'wcefp_integrations',
+                    'field_name' => 'google_api_key',
+                    'description' => __('Chiave API Google per servizi Maps e Calendar.', 'wceventsfp')
+                ]
+            );
+            
+            add_settings_field(
+                'booking_channel',
+                __('Canale Prenotazioni', 'wceventsfp'),
+                [$this, 'render_select_field'],
+                'wcefp_settings_integrations',
+                'wcefp_integrations_section',
+                [
+                    'option_name' => 'wcefp_integrations',
+                    'field_name' => 'booking_channel',
+                    'options' => [
+                        'direct' => __('Diretto', 'wceventsfp'),
+                        'booking.com' => __('Booking.com', 'wceventsfp'),
+                        'expedia' => __('Expedia', 'wceventsfp')
+                    ],
+                    'description' => __('Canale principale per le prenotazioni.', 'wceventsfp')
+                ]
+            );
+        }
+    }
+    
+    /**
+     * Sanitize general settings
+     * 
+     * @param array $input
+     * @return array
+     */
+    public function sanitize_settings($input) {
+        $output = [];
+        
+        if (isset($input['default_capacity'])) {
+            $output['default_capacity'] = absint($input['default_capacity']);
+        }
+        
+        if (isset($input['safe_mode'])) {
+            $output['safe_mode'] = !empty($input['safe_mode']) ? 1 : 0;
+        }
+        
+        if (isset($input['accent_color'])) {
+            $output['accent_color'] = sanitize_hex_color($input['accent_color']) ?: '#0073aa';
+        }
+        
+        return $output;
+    }
+    
+    /**
+     * Sanitize email settings
+     * 
+     * @param array $input
+     * @return array
+     */
+    public function sanitize_email_settings($input) {
+        $output = [];
+        
+        if (isset($input['sender_name'])) {
+            $output['sender_name'] = sanitize_text_field($input['sender_name']);
+        }
+        
+        if (isset($input['sender_email'])) {
+            $output['sender_email'] = sanitize_email($input['sender_email']);
+        }
+        
+        return $output;
+    }
+    
+    /**
+     * Sanitize feature flags
+     * 
+     * @param array $input
+     * @return array
+     */
+    public function sanitize_feature_flags($input) {
+        $output = [];
+        
+        $features = ['vouchers', 'closures', 'analytics', 'integrations'];
+        foreach ($features as $feature) {
+            $key = 'enable_' . $feature;
+            $output[$key] = !empty($input[$key]) ? 1 : 0;
+        }
+        
+        return $output;
+    }
+    
+    /**
+     * Sanitize integrations settings
+     * 
+     * @param array $input
+     * @return array
+     */
+    public function sanitize_integrations($input) {
+        $output = [];
+        
+        if (isset($input['google_api_key'])) {
+            $output['google_api_key'] = sanitize_text_field($input['google_api_key']);
+        }
+        
+        if (isset($input['booking_channel'])) {
+            $allowed_channels = ['direct', 'booking.com', 'expedia'];
+            $channel = sanitize_text_field($input['booking_channel']);
+            $output['booking_channel'] = in_array($channel, $allowed_channels) ? $channel : 'direct';
+        }
+        
+        return $output;
+    }
+    
+    // Render field methods
+    public function render_general_section_info() {
+        echo '<p>' . __('Configurazioni di base per il plugin WCEventsFP.', 'wceventsfp') . '</p>';
+    }
+    
+    public function render_email_section_info() {
+        echo '<p>' . __('Impostazioni per l\'invio di email e notifiche.', 'wceventsfp') . '</p>';
+    }
+    
+    public function render_features_section_info() {
+        echo '<p>' . __('Attiva o disattiva funzionalità specifiche del plugin.', 'wceventsfp') . '</p>';
+    }
+    
+    public function render_integrations_section_info() {
+        echo '<p>' . __('Configurazione delle integrazioni con servizi esterni.', 'wceventsfp') . '</p>';
+    }
+    
+    public function render_number_field($args) {
+        $options = get_option($args['option_name'], []);
+        $value = isset($options[$args['field_name']]) ? $options[$args['field_name']] : $args['default'];
+        
+        printf(
+            '<input type="number" name="%s[%s]" value="%s" class="regular-text" min="0" />',
+            esc_attr($args['option_name']),
+            esc_attr($args['field_name']),
+            esc_attr($value)
+        );
+        
+        if (isset($args['description'])) {
+            printf('<p class="description">%s</p>', esc_html($args['description']));
+        }
+    }
+    
+    public function render_text_field($args) {
+        $options = get_option($args['option_name'], []);
+        $value = isset($options[$args['field_name']]) ? $options[$args['field_name']] : ($args['default'] ?? '');
+        
+        printf(
+            '<input type="text" name="%s[%s]" value="%s" class="regular-text" />',
+            esc_attr($args['option_name']),
+            esc_attr($args['field_name']),
+            esc_attr($value)
+        );
+        
+        if (isset($args['description'])) {
+            printf('<p class="description">%s</p>', esc_html($args['description']));
+        }
+    }
+    
+    public function render_email_field($args) {
+        $options = get_option($args['option_name'], []);
+        $value = isset($options[$args['field_name']]) ? $options[$args['field_name']] : ($args['default'] ?? '');
+        
+        printf(
+            '<input type="email" name="%s[%s]" value="%s" class="regular-text" />',
+            esc_attr($args['option_name']),
+            esc_attr($args['field_name']),
+            esc_attr($value)
+        );
+        
+        if (isset($args['description'])) {
+            printf('<p class="description">%s</p>', esc_html($args['description']));
+        }
+    }
+    
+    public function render_password_field($args) {
+        $options = get_option($args['option_name'], []);
+        $value = isset($options[$args['field_name']]) ? $options[$args['field_name']] : '';
+        
+        printf(
+            '<input type="password" name="%s[%s]" value="%s" class="regular-text" />',
+            esc_attr($args['option_name']),
+            esc_attr($args['field_name']),
+            esc_attr($value)
+        );
+        
+        if (isset($args['description'])) {
+            printf('<p class="description">%s</p>', esc_html($args['description']));
+        }
+    }
+    
+    public function render_checkbox_field($args) {
+        $options = get_option($args['option_name'], []);
+        $value = isset($options[$args['field_name']]) ? $options[$args['field_name']] : 0;
+        
+        printf(
+            '<label><input type="checkbox" name="%s[%s]" value="1" %s /> %s</label>',
+            esc_attr($args['option_name']),
+            esc_attr($args['field_name']),
+            checked($value, 1, false),
+            esc_html($args['description'] ?? '')
+        );
+    }
+    
+    public function render_color_field($args) {
+        $options = get_option($args['option_name'], []);
+        $value = isset($options[$args['field_name']]) ? $options[$args['field_name']] : ($args['default'] ?? '#0073aa');
+        
+        printf(
+            '<input type="color" name="%s[%s]" value="%s" />',
+            esc_attr($args['option_name']),
+            esc_attr($args['field_name']),
+            esc_attr($value)
+        );
+        
+        if (isset($args['description'])) {
+            printf('<p class="description">%s</p>', esc_html($args['description']));
+        }
+    }
+    
+    public function render_select_field($args) {
+        $options = get_option($args['option_name'], []);
+        $selected = isset($options[$args['field_name']]) ? $options[$args['field_name']] : '';
+        
+        printf(
+            '<select name="%s[%s]" class="regular-text">',
+            esc_attr($args['option_name']),
+            esc_attr($args['field_name'])
+        );
+        
+        foreach ($args['options'] as $value => $label) {
+            printf(
+                '<option value="%s" %s>%s</option>',
+                esc_attr($value),
+                selected($selected, $value, false),
+                esc_html($label)
+            );
+        }
+        
+        echo '</select>';
+        
+        if (isset($args['description'])) {
+            printf('<p class="description">%s</p>', esc_html($args['description']));
+        }
+    }
+    
+    /**
+     * Handle voucher actions via AJAX
+     * 
+     * @return void
+     */
+    public function handle_voucher_action() {
+        // Security checks
+        if (!check_ajax_referer('wcefp_voucher_action', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'wceventsfp'));
+        }
+        
+        if (!current_user_can('manage_woocommerce')) {
+            wp_send_json_error(__('Insufficient permissions.', 'wceventsfp'));
+        }
+        
+        $action = sanitize_text_field($_POST['voucher_action'] ?? '');
+        $voucher_id = absint($_POST['voucher_id'] ?? 0);
+        
+        if (!$voucher_id || !$action) {
+            wp_send_json_error(__('Invalid parameters.', 'wceventsfp'));
+        }
+        
+        switch ($action) {
+            case 'regenerate':
+                $this->handle_voucher_regenerate($voucher_id);
+                wp_send_json_success(__('Voucher code regenerated successfully.', 'wceventsfp'));
+                break;
+                
+            case 'resend':
+                $this->handle_voucher_resend($voucher_id);
+                wp_send_json_success(__('Voucher email resent successfully.', 'wceventsfp'));
+                break;
+                
+            default:
+                wp_send_json_error(__('Unknown action.', 'wceventsfp'));
         }
     }
     
