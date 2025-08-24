@@ -43,7 +43,13 @@ class DataIntegrationServiceProvider extends ServiceProvider {
         $this->container->get('gutenberg.manager')->init();
         
         // Initialize calendar integration manager
-        $this->container->get('calendar.integration')->init();
+        $calendar_integration = $this->container->get('calendar.integration');
+        $calendar_integration->init();
+        
+        // Register calendar integration AJAX hooks with proper timing
+        if (method_exists($calendar_integration, 'register')) {
+            $calendar_integration->register();
+        }
         
         // Add admin menu items
         add_action('admin_menu', [$this, 'add_admin_menus'], 20);
