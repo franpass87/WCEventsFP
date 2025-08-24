@@ -156,6 +156,24 @@ class AssetManager {
             $this->version
         );
         
+        // Product editor specific assets
+        if ($this->is_product_edit_page($screen)) {
+            wp_enqueue_style(
+                'wcefp-product-editor',
+                $this->plugin_url . 'assets/admin/css/product-editor.css',
+                ['wcefp-admin'],
+                $this->version
+            );
+            
+            wp_enqueue_script(
+                'wcefp-product-editor',
+                $this->plugin_url . 'assets/admin/js/product-editor.js',
+                ['jquery', 'select2'],
+                $this->version,
+                true
+            );
+        }
+        
         wp_enqueue_script(
             'wcefp-modals',
             $this->plugin_url . 'assets/js/wcefp-modals.js',
@@ -331,5 +349,18 @@ class AssetManager {
         }
         
         return false;
+    }
+    
+    /**
+     * Check if current page is a product edit page
+     * 
+     * @param \WP_Screen $screen Current screen object
+     * @return bool
+     */
+    private function is_product_edit_page($screen) {
+        return $screen && (
+            $screen->id === 'product' || 
+            $screen->post_type === 'product'
+        );
     }
 }
