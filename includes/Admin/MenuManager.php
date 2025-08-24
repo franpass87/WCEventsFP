@@ -45,6 +45,9 @@ class MenuManager {
     private function init() {
         add_action('admin_menu', [$this, 'add_admin_menu'], 10);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts'], 10);
+        
+        // Add AJAX handlers for booking quick actions
+        add_action('wp_ajax_wcefp_booking_quick_action', [$this, 'handle_booking_quick_action']);
     }
     
     /**
@@ -113,6 +116,16 @@ class MenuManager {
             'manage_woocommerce',
             'wcefp-bookings',
             [$this, 'render_bookings_page']
+        );
+        
+        // Hidden booking view page (not shown in menu)
+        add_submenu_page(
+            null, // Hidden from menu
+            __('Visualizza Prenotazione', 'wceventsfp'),
+            __('Visualizza Prenotazione', 'wceventsfp'),
+            'manage_wcevents',
+            'wcefp-booking-view',
+            [$this, 'render_booking_view_page']
         );
         
         add_submenu_page(
@@ -477,5 +490,382 @@ class MenuManager {
         
         echo '</tbody></table>';
         echo '</div>';
+    }
+    
+    /**
+     * Render booking view page
+     * 
+     * @return void
+     */
+    public function render_booking_view_page() {
+        // Security check
+        if (!current_user_can('manage_wcevents')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'wceventsfp'));
+        }
+        
+        // Verify nonce
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'wcefp_view_booking')) {
+            wp_die(__('Security check failed.', 'wceventsfp'));
+        }
+        
+        $booking_id = absint($_GET['booking_id'] ?? 0);
+        if (!$booking_id) {
+            wp_die(__('Invalid booking ID.', 'wceventsfp'));
+        }
+        
+        // Get booking data (placeholder - would connect to actual data source)
+        $booking_data = $this->get_booking_details($booking_id);
+        if (!$booking_data) {
+            wp_die(__('Booking not found.', 'wceventsfp'));
+        }
+        
+        ?>
+        <div class="wrap">
+            <div class="wcefp-page-header">
+                <h1><?php printf(__('Prenotazione #%d', 'wceventsfp'), $booking_id); ?></h1>
+                <a href="<?php echo admin_url('admin.php?page=wcefp-bookings'); ?>" class="page-title-action">
+                    <?php _e('← Torna alle Prenotazioni', 'wceventsfp'); ?>
+                </a>
+            </div>
+            
+            <div class="wcefp-booking-view">
+                <!-- Customer Information -->
+                <div class="wcefp-section">
+                    <h2><?php _e('Informazioni Cliente', 'wceventsfp'); ?></h2>
+                    <table class="form-table">
+                        <tr>
+                            <th><?php _e('Nome:', 'wceventsfp'); ?></th>
+                            <td><?php echo esc_html($booking_data['customer_name']); ?></td>
+                        </tr>
+                        <tr>
+                            <th><?php _e('Email:', 'wceventsfp'); ?></th>
+                            <td><a href="mailto:<?php echo esc_attr($booking_data['customer_email']); ?>"><?php echo esc_html($booking_data['customer_email']); ?></a></td>
+                        </tr>
+                        <tr>
+                            <th><?php _e('Telefono:', 'wceventsfp'); ?></th>
+                            <td><?php echo esc_html($booking_data['customer_phone'] ?? __('N/A', 'wceventsfp')); ?></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- Event Information -->
+                <div class="wcefp-section">
+                    <h2><?php _e('Dettagli Evento', 'wceventsfp'); ?></h2>
+                    <table class="form-table">
+                        <tr>
+                            <th><?php _e('Evento:', 'wceventsfp'); ?></th>
+                            <td>
+                                <strong><?php echo esc_html($booking_data['event_title']); ?></strong>
+                                <br><small>ID: <?php echo absint($booking_data['event_id']); ?></small>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><?php _e('Data e Ora:', 'wceventsfp'); ?></th>
+                            <td><?php echo esc_html($booking_data['occurrence_datetime']); ?></td>
+                        </tr>
+                        <tr>
+                            <th><?php _e('Partecipanti:', 'wceventsfp'); ?></th>
+                            <td><?php echo absint($booking_data['participants']); ?></td>
+                        </tr>
+                        <tr>
+                            <th><?php _e('Importo:', 'wceventsfp'); ?></th>
+                            <td><strong><?php echo wc_price($booking_data['total_amount']); ?></strong></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- Booking Status -->
+                <div class="wcefp-section">
+                    <h2><?php _e('Stato e Note', 'wceventsfp'); ?></h2>
+                    <table class="form-table">
+                        <tr>
+                            <th><?php _e('Stato:', 'wceventsfp'); ?></th>
+                            <td>
+                                <span class="wcefp-status-badge wcefp-status-<?php echo esc_attr($booking_data['status']); ?>">
+                                    <?php echo esc_html(ucfirst($booking_data['status'])); ?>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><?php _e('Note:', 'wceventsfp'); ?></th>
+                            <td><?php echo nl2br(esc_html($booking_data['notes'] ?? __('Nessuna nota', 'wceventsfp'))); ?></td>
+                        </tr>
+                        <tr>
+                            <th><?php _e('Check-in:', 'wceventsfp'); ?></th>
+                            <td>
+                                <?php if ($booking_data['checkin_status'] === 'checked_in'): ?>
+                                    <span class="wcefp-status-badge wcefp-status-checked-in">
+                                        <?php printf(__('✓ Check-in effettuato: %s', 'wceventsfp'), $booking_data['checkin_time']); ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="wcefp-status-badge wcefp-status-pending">
+                                        <?php _e('In attesa di check-in', 'wceventsfp'); ?>
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="wcefp-section">
+                    <h2><?php _e('Azioni Rapide', 'wceventsfp'); ?></h2>
+                    <div class="wcefp-quick-actions">
+                        <?php if ($booking_data['checkin_status'] !== 'checked_in'): ?>
+                            <button type="button" 
+                                    class="button button-primary wcefp-quick-action" 
+                                    data-action="checkin" 
+                                    data-booking-id="<?php echo $booking_id; ?>">
+                                <?php _e('Segna come Check-in', 'wceventsfp'); ?>
+                            </button>
+                        <?php endif; ?>
+                        
+                        <button type="button" 
+                                class="button button-secondary wcefp-quick-action" 
+                                data-action="resend_email" 
+                                data-booking-id="<?php echo $booking_id; ?>">
+                            <?php _e('Reinvia Email Conferma', 'wceventsfp'); ?>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Extra & Voucher Information -->
+                <?php if (!empty($booking_data['extras']) || !empty($booking_data['voucher_code'])): ?>
+                <div class="wcefp-section">
+                    <h2><?php _e('Extra e Voucher', 'wceventsfp'); ?></h2>
+                    <table class="form-table">
+                        <?php if (!empty($booking_data['extras'])): ?>
+                        <tr>
+                            <th><?php _e('Extra:', 'wceventsfp'); ?></th>
+                            <td><?php echo esc_html($booking_data['extras']); ?></td>
+                        </tr>
+                        <?php endif; ?>
+                        
+                        <?php if (!empty($booking_data['voucher_code'])): ?>
+                        <tr>
+                            <th><?php _e('Voucher:', 'wceventsfp'); ?></th>
+                            <td><?php echo esc_html($booking_data['voucher_code']); ?></td>
+                        </tr>
+                        <?php endif; ?>
+                    </table>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        
+        <!-- Add JavaScript for quick actions -->
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            $('.wcefp-quick-action').on('click', function() {
+                var $button = $(this);
+                var action = $button.data('action');
+                var bookingId = $button.data('booking-id');
+                
+                if (!confirm('<?php _e("Sei sicuro di voler eseguire questa azione?", "wceventsfp"); ?>')) {
+                    return;
+                }
+                
+                $button.prop('disabled', true).text('<?php _e("Elaborazione...", "wceventsfp"); ?>');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'wcefp_booking_quick_action',
+                        booking_action: action,
+                        booking_id: bookingId,
+                        nonce: '<?php echo wp_create_nonce("wcefp_quick_action"); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert(response.data || '<?php _e("Errore durante l\\'operazione", "wceventsfp"); ?>');
+                            $button.prop('disabled', false).text($button.data('original-text'));
+                        }
+                    },
+                    error: function() {
+                        alert('<?php _e("Errore di connessione", "wceventsfp"); ?>');
+                        $button.prop('disabled', false).text($button.data('original-text'));
+                    }
+                });
+            });
+            
+            // Store original button text
+            $('.wcefp-quick-action').each(function() {
+                $(this).data('original-text', $(this).text());
+            });
+        });
+        </script>
+        
+        <style>
+        .wcefp-booking-view {
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #c3c4c7;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .wcefp-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f0f0f1;
+        }
+        .wcefp-section:last-child {
+            border-bottom: none;
+        }
+        .wcefp-section h2 {
+            margin-top: 0;
+            color: #1e1e1e;
+        }
+        .wcefp-quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .wcefp-status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+        .wcefp-status-confirmed { background-color: #48bb78; }
+        .wcefp-status-pending { background-color: #f56565; }
+        .wcefp-status-completed { background-color: #38b2ac; }
+        .wcefp-status-cancelled { background-color: #a0aec0; }
+        .wcefp-status-checked-in { background-color: #48bb78; }
+        </style>
+        <?php
+    }
+    
+    /**
+     * Get booking details for view page
+     * 
+     * @param int $booking_id
+     * @return array|false
+     */
+    private function get_booking_details($booking_id) {
+        // Placeholder implementation - in real application this would query the database
+        // For now, return sample data that matches the booking structure
+        
+        $sample_bookings = [
+            1 => [
+                'id' => 1,
+                'customer_name' => 'Mario Rossi',
+                'customer_email' => 'mario@example.com',
+                'customer_phone' => '+39 123 456 7890',
+                'event_title' => 'Wine Tasting Experience',
+                'event_id' => 123,
+                'occurrence_datetime' => wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime('+7 days 18:00')),
+                'participants' => 2,
+                'status' => 'confirmed',
+                'total_amount' => 89.90,
+                'notes' => 'Preferisce vini rossi. Anniversario di matrimonio.',
+                'checkin_status' => 'pending',
+                'checkin_time' => null,
+                'extras' => 'Degustazione formaggi (+15€)',
+                'voucher_code' => 'WELCOME2024',
+                'created_at' => date('Y-m-d H:i:s', strtotime('-3 days'))
+            ],
+            2 => [
+                'id' => 2,
+                'customer_name' => 'Anna Bianchi',
+                'customer_email' => 'anna@example.com',
+                'customer_phone' => '+39 098 765 4321',
+                'event_title' => 'Cooking Class',
+                'event_id' => 124,
+                'occurrence_datetime' => wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime('+14 days 19:30')),
+                'participants' => 4,
+                'status' => 'pending',
+                'total_amount' => 179.80,
+                'notes' => 'Gruppo vegetariano, nessuna allergia.',
+                'checkin_status' => 'pending',
+                'checkin_time' => null,
+                'extras' => null,
+                'voucher_code' => null,
+                'created_at' => date('Y-m-d H:i:s', strtotime('-1 day'))
+            ]
+        ];
+        
+        return $sample_bookings[$booking_id] ?? false;
+    }
+    
+    /**
+     * Handle booking quick actions via AJAX
+     * 
+     * @return void
+     */
+    public function handle_booking_quick_action() {
+        // Security checks
+        if (!check_ajax_referer('wcefp_quick_action', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'wceventsfp'));
+        }
+        
+        if (!current_user_can('manage_wcevents')) {
+            wp_send_json_error(__('Insufficient permissions.', 'wceventsfp'));
+        }
+        
+        $booking_id = absint($_POST['booking_id'] ?? 0);
+        $booking_action = sanitize_text_field($_POST['booking_action'] ?? '');
+        
+        if (!$booking_id || !$booking_action) {
+            wp_send_json_error(__('Invalid parameters.', 'wceventsfp'));
+        }
+        
+        switch ($booking_action) {
+            case 'checkin':
+                $result = $this->mark_booking_checkin($booking_id);
+                break;
+                
+            case 'resend_email':
+                $result = $this->resend_booking_email($booking_id);
+                break;
+                
+            default:
+                wp_send_json_error(__('Unknown action.', 'wceventsfp'));
+        }
+        
+        if ($result) {
+            wp_send_json_success(__('Action completed successfully.', 'wceventsfp'));
+        } else {
+            wp_send_json_error(__('Action failed.', 'wceventsfp'));
+        }
+    }
+    
+    /**
+     * Mark booking as checked in
+     * 
+     * @param int $booking_id
+     * @return bool
+     */
+    private function mark_booking_checkin($booking_id) {
+        // Placeholder implementation - would update database
+        // For now, just simulate success
+        
+        // In real implementation:
+        // update_post_meta($booking_id, '_wcefp_checkin_status', 'checked_in');
+        // update_post_meta($booking_id, '_wcefp_checkin_time', current_time('mysql'));
+        
+        return true;
+    }
+    
+    /**
+     * Resend booking confirmation email
+     * 
+     * @param int $booking_id
+     * @return bool
+     */
+    private function resend_booking_email($booking_id) {
+        // Placeholder implementation - would send email
+        // For now, just simulate success
+        
+        // In real implementation:
+        // $booking_data = $this->get_booking_details($booking_id);
+        // $email_manager = new EmailManager();
+        // return $email_manager->send_booking_confirmation($booking_id, $booking_data);
+        
+        return true;
     }
 }
