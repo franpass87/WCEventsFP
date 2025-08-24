@@ -4,13 +4,37 @@
  * Description: Plugin di prenotazione eventi & esperienze avanzato per WooCommerce. Sistema enterprise per competere con RegionDo/Bokun: gestione risorse (guide, attrezzature, veicoli), distribuzione multi-canale (Booking.com, Expedia, GetYourGuide), sistema commissioni/reseller, Google Reviews, tracking avanzato GA4/Meta, automazioni Brevo, AI recommendations, analytics real-time.
  * Version:     2.1.4 // x-release-please-version
  * Author:      Francesco Passeri
+ * Author URI:  https://github.com/franpass87
+ * Plugin URI:  https://github.com/franpass87/WCEventsFP
  * Text Domain: wceventsfp
  * Domain Path: /languages
  * Requires at least: 6.5
- * Tested up to: 6.7
+ * Tested up to: 6.7.1
  * Requires PHP: 8.0
- * WC requires at least: 5.0
- * WC tested up to: 9.3
+ * WC requires at least: 8.0
+ * WC tested up to: 9.4
+ * Network: false
+ * License: GPLv3 or later
+ * License URI: http://www.gnu.org/licenses/gpl-3.0.html
+ * 
+ * WCEventsFP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ * 
+ * WCEventsFP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with WCEventsFP. If not, see http://www.gnu.org/licenses/gpl-3.0.html.
+ * 
+ * @package   WCEventsFP
+ * @author    Francesco Passeri
+ * @copyright 2024 Francesco Passeri
+ * @license   GPL-3.0+
+ * @link      https://github.com/franpass87/WCEventsFP
  */
 
 if (!defined('ABSPATH')) {
