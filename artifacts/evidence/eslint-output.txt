@@ -1,0 +1,228 @@
+
+> wceventsfp-frontend@2.1.3 lint:js
+> wp-scripts lint-js assets/js/
+
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/accessibility.js
+  497:3  error  Parsing error: Unexpected token }
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/admin-enhanced.js
+  122:6  warning  Unexpected console statement                     no-console
+  280:3  warning  Move function declaration to function body root  no-inner-declarations
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/admin-export.js
+  168:16  error  'e' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/admin-i18n.js
+    9:12  error  Identifier 'WCEventsFP_Admin_I18n' is not in camel case                         camelcase
+   11:18  error  'wcefp_admin_i18n' is not defined                                               no-undef
+   12:24  error  'wcefp_admin_i18n' is not defined                                               no-undef
+   13:27  error  'wcefp_admin_i18n' is not defined                                               no-undef
+   94:42  error  '$input' is defined but never used. Allowed unused args must match /^_/u        no-unused-vars
+  291:17  error  'key' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  399:13  error  Identifier 'WCEventsFP_Admin_I18n' is not in camel case                         camelcase
+  399:13  error  'WCEventsFP_Admin_I18n' is not defined                                          no-undef
+  404:31  error  Identifier 'WCEventsFP_Admin_I18n' is not in camel case                         camelcase
+  404:31  error  'WCEventsFP_Admin_I18n' is not defined                                          no-undef
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/admin-settings.js
+  523:7   warning  Unexpected console statement    no-console
+  531:19  error    'wcefpSettings' is not defined  no-undef
+  538:34  error    'wcefpSettings' is not defined  no-undef
+  551:7   warning  Unexpected console statement    no-console
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/admin.js
+  74:14  error  'newCapStr' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/advanced-analytics.js
+  208:4  warning  Unexpected console statement                                                      no-console
+  511:9  error    'model' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  644:5  warning  Unexpected console statement                                                      no-console
+  738:4  warning  Unexpected console statement                                                      no-console
+  823:4  warning  Unexpected console statement                                                      no-console
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/analytics-dashboard.js
+   93:12  error  'wcefp_analytics' is not defined               no-undef
+   95:5   error  Identifier 'start_date' is not in camel case   camelcase
+   96:5   error  Identifier 'end_date' is not in camel case     camelcase
+   99:12  error  'wcefp_analytics' is not defined               no-undef
+  118:20  error  'wcefp_analytics' is not defined               no-undef
+  168:12  error  'wcefp_analytics' is not defined               no-undef
+  173:12  error  'wcefp_analytics' is not defined               no-undef
+  199:15  error  'wcefp_analytics' is not defined               no-undef
+  201:21  error  'wcefp_analytics' is not defined               no-undef
+  203:9   error  'wcefp_analytics' is not defined               no-undef
+  208:15  error  'wcefp_analytics' is not defined               no-undef
+  210:21  error  'wcefp_analytics' is not defined               no-undef
+  212:9   error  'wcefp_analytics' is not defined               no-undef
+  238:15  error  'wcefp_analytics' is not defined               no-undef
+  247:15  error  'wcefp_analytics' is not defined               no-undef
+  278:12  error  'wcefp_analytics' is not defined               no-undef
+  282:12  error  'wcefp_analytics' is not defined               no-undef
+  313:9   error  'wcefp_analytics' is not defined               no-undef
+  314:9   error  'wcefp_analytics' is not defined               no-undef
+  315:9   error  'wcefp_analytics' is not defined               no-undef
+  316:9   error  'wcefp_analytics' is not defined               no-undef
+  317:9   error  'wcefp_analytics' is not defined               no-undef
+  348:12  error  'wcefp_analytics' is not defined               no-undef
+  353:12  error  'wcefp_analytics' is not defined               no-undef
+  401:14  error  'wcefp_analytics' is not defined               no-undef
+  443:12  error  'wcefp_analytics' is not defined               no-undef
+  444:5   error  Identifier 'export_type' is not in camel case  camelcase
+  451:9   error  'wcefp_analytics' is not defined               no-undef
+  484:27  error  'wcefp_analytics' is not defined               no-undef
+  496:5   error  'wcefp_analytics' is not defined               no-undef
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/blocks/editor.js
+  121:5  error  Parsing error: Unexpected token <
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/blocks/frontend.js
+  37:51  error  'e' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/calendar-integration.js
+  160:11  error  'wcefpCalendar' is not defined                    no-undef
+  164:7   error  Identifier 'calendar_type' is not in camel case   camelcase
+  165:14  error  'wcefpCalendar' is not defined                    no-undef
+  172:5   error  'gtag' is not defined                             no-undef
+  173:6   error  Identifier 'event_category' is not in camel case  camelcase
+  174:6   error  Identifier 'event_label' is not in camel case     camelcase
+  270:10  error  'wcefpCalendar' is not defined                    no-undef
+  275:13  error  'wcefpCalendar' is not defined                    no-undef
+  399:28  error  'wcefpCalendar' is not defined                    no-undef
+  405:43  error  'wcefpCalendar' is not defined                    no-undef
+  412:43  error  'wcefpCalendar' is not defined                    no-undef
+  421:5   error  'wcefpModals' is not defined                      no-undef
+  422:13  error  'wcefpCalendar' is not defined                    no-undef
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/closures.js
+   37:54  error  'WCEFPClose' is not defined  no-undef
+   39:24  error  'WCEFPClose' is not defined  no-undef
+   51:24  error  'WCEFPClose' is not defined  no-undef
+   69:20  error  'WCEFPClose' is not defined  no-undef
+   97:24  error  'WCEFPClose' is not defined  no-undef
+  101:20  error  'WCEFPClose' is not defined  no-undef
+  121:24  error  'WCEFPClose' is not defined  no-undef
+  126:20  error  'WCEFPClose' is not defined  no-undef
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/conversion-optimization.js
+  34:11  error  'productId' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  85:11  error  'productId' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/debug-tools.js
+  156:12  error    'wcefp_debug' is not defined      no-undef
+  158:12  error    'wcefp_debug' is not defined      no-undef
+  272:12  error    'wcefp_debug' is not defined      no-undef
+  274:12  error    'wcefp_debug' is not defined      no-undef
+  352:12  error    'wcefp_debug' is not defined      no-undef
+  354:12  error    'wcefp_debug' is not defined      no-undef
+  459:18  error    Unnecessary escape character: \[  no-useless-escape
+  492:12  error    'wcefp_debug' is not defined      no-undef
+  494:12  error    'wcefp_debug' is not defined      no-undef
+  571:11  error    'wcefp_debug' is not defined      no-undef
+  574:10  warning  Unexpected console statement      no-console
+  575:11  warning  Unexpected console statement      no-console
+  576:12  warning  Unexpected console statement      no-console
+  581:5   warning  Unexpected console statement      no-console
+  635:5   warning  Unexpected console statement      no-console
+  713:5   warning  Unexpected console statement      no-console
+  736:9   error    'wcefp_debug' is not defined      no-undef
+  737:5   warning  Unexpected console statement      no-console
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/extra-services.js
+  119:23  error  '$checkbox' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  120:23  error  '$select' is assigned a value but never used. Allowed unused vars must match /^_/u    no-unused-vars
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/extras-frontend.js
+  24:20  error  Identifier 'wc_single_product_params' is not in camel case  camelcase
+  32:20  error  'accounting' is not defined                                 no-undef
+  33:25  error  'wcefp_extras' is not defined                               no-undef
+  37:16  error  'wcefp_extras' is not defined                               no-undef
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/frontend.js
+  190:7  error  Identifier 'occurrence_id' is not in camel case         camelcase
+  195:7  error  Identifier 'gift_recipient_name' is not in camel case   camelcase
+  196:7  error  Identifier 'gift_recipient_email' is not in camel case  camelcase
+  197:7  error  Identifier 'gift_message' is not in camel case          camelcase
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/i18n-enhancement.js
+  136:5  warning  Unexpected console statement  no-console
+  175:5  warning  Unexpected console statement  no-console
+  532:5  warning  Unexpected console statement  no-console
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/i18n.js
+    9:12  error    Identifier 'WCEventsFP_I18n' is not in camel case                                camelcase
+   96:17  warning  Unexpected console statement                                                     no-console
+  215:17  error    'self' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  391:29  error    Identifier 'WCEventsFP_I18n' is not in camel case                                camelcase
+  391:29  error    'WCEventsFP_I18n' is not defined                                                 no-undef
+  392:13  error    Identifier 'WCEventsFP_I18n' is not in camel case                                camelcase
+  392:13  error    'WCEventsFP_I18n' is not defined                                                 no-undef
+  395:9   error    Identifier 'WCEventsFP_I18n' is not in camel case                                camelcase
+  395:9   error    'WCEventsFP_I18n' is not defined                                                 no-undef
+  399:25  error    Identifier 'WCEventsFP_I18n' is not in camel case                                camelcase
+  399:25  error    'WCEventsFP_I18n' is not defined                                                 no-undef
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/mobile-checkin.js
+  111:5   warning  Unexpected console statement                                                 no-console
+  120:5   warning  Unexpected console statement                                                 no-console
+  171:5   warning  Unexpected console statement                                                 no-console
+  222:5   warning  Unexpected console statement                                                 no-console
+  231:13  error    'imageData' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  261:5   warning  Unexpected console statement                                                 no-console
+  291:5   warning  Unexpected console statement                                                 no-console
+  373:5   warning  Unexpected console statement                                                 no-console
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/realtime-features.js
+   58:6   warning  Unexpected console statement                                              no-console
+  109:5   warning  Unexpected console statement                                              no-console
+  272:26  error    'update' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  302:6   warning  Unexpected console statement                                              no-console
+  308:5   warning  Unexpected console statement                                              no-console
+  384:7   warning  Unexpected console statement                                              no-console
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/shortcodes.js
+  177:37  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  178:28  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  179:28  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  193:50  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  196:26  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  201:32  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  209:86  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  214:67  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  218:63  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  219:59  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  243:65  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  246:22  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  252:28  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  256:63  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  264:54  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  269:50  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  287:38  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  290:22  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  301:89  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  304:83  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  308:54  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  325:65  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  329:22  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  333:28  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  343:76  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  350:33  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  354:88  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  358:59  error  'wcefp_shortcodes' is not defined                                                 no-undef
+  395:23  error  '$grid' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  404:27  error  'wcefp_shortcodes' is not defined                                                 no-undef
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/templates.js
+  399:4  warning  Mixed spaces and tabs  no-mixed-spaces-and-tabs
+
+/home/runner/work/WCEventsFP/WCEventsFP/assets/js/voucher-manager.js
+   152:10  error    'self' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   339:6   warning  Unexpected console statement                                                     no-console
+   361:5   warning  Unexpected console statement                                                     no-console
+   403:6   warning  Unexpected console statement                                                     no-console
+   627:5   warning  Unexpected console statement                                                     no-console
+   662:6   warning  Unexpected console statement                                                     no-console
+  1032:6   warning  Unexpected console statement                                                     no-console
+
+✖ 173 problems (135 errors, 38 warnings)
+

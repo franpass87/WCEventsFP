@@ -1,0 +1,36 @@
+# WCEventsFP Chinese (Simplified) Translation
+# Copyright (C) 2024 WCEventsFP
+msgid ""
+msgstr ""
+"Project-Id-Version: WCEventsFP 2.1.4\n"
+"Report-Msgid-Bugs-To: https://github.com/franpass87/WCEventsFP/issues\n"
+"POT-Creation-Date: 2024-12-27 12:00+0000\n"
+"PO-Revision-Date: 2024-12-27 12:00+0000\n"
+"Last-Translator: WCEventsFP Team <team@example.com>\n"
+"Language-Team: Chinese (Simplified) <team@example.com>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: WCEventsFP I18n Module\n"
+"X-Translation-Progress: 45%\n"
+
+# Plugin Information
+msgid "WCEventsFP - Enterprise Booking Platform"
+msgstr "WCEventsFP - 企业预订平台"
+
+msgid "Bookings"
+msgstr "预订"
+
+msgid "Vouchers" 
+msgstr "代金券"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Book Now"
+msgstr "立即预订"

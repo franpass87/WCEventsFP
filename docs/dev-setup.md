@@ -2,27 +2,75 @@
 
 > **Target Audience**: Developers contributing to WCEventsFP  
 > **Prerequisites**: PHP 8.0+, Node.js 18+, Composer, Docker (optional)  
-> **Setup Time**: ~30 minutes
+> **Setup Time**: ~10 minutes (automated)
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Automated)
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/franpass87/WCEventsFP.git
 cd WCEventsFP
 
-# 2. Install dependencies
-composer install
+# 2. Run automated setup
+chmod +x dev-setup.sh && ./dev-setup.sh
+
+# 3. Use make commands for development
+make test      # Run all tests
+make lint      # Run linters
+make build     # Build assets
+make package   # Create distribution ZIP
+```
+
+## 📋 Make Commands Reference
+
+The project includes a comprehensive Makefile for automation:
+
+```bash
+# Environment setup
+make setup        # Full setup (npm + composer)
+make setup-quick  # Quick setup (npm only)
+make status       # Show environment status
+
+# Testing
+make test         # Run all tests (Jest + PHP syntax)
+make test-js      # JavaScript tests only
+make test-php     # PHP tests (requires composer)
+
+# Code quality
+make lint         # Run all linters
+make lint-php     # PHP CodeSniffer
+make lint-js      # ESLint
+make fix          # Auto-fix code style
+make analyze      # PHPStan static analysis
+make quality      # Full quality check (lint + analyze + test)
+
+# Build and package
+make build        # Build production assets
+make package      # Create distribution ZIP
+make clean        # Clean build artifacts
+
+# Development
+make dev          # Start development server
+make help         # Show all commands
+```
+
+## 🔧 Manual Setup (Legacy)
+
+If you prefer manual setup:
+
+```bash
+# 1. Install dependencies
+composer install --ignore-platform-reqs
 npm install --legacy-peer-deps
 
-# 3. Start development environment
-npm run dev
-
-# 4. Run tests
+# 2. Run tests
 npm run test:js
-composer run test
+find includes/ -name "*.php" -exec php -l {} \;
+
+# 3. Build package
+./build-distribution.sh
 ```
 
 ---

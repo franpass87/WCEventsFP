@@ -490,13 +490,6 @@
     });
     
 })(jQuery);
-			this.applyPreferences();
-
-			// Setup skip links
-			this.setupSkipLinks();
-		}
-
-		bindEvents() {
 			// High contrast toggle
 			$( document ).on( 'click', '#wcefp-high-contrast-toggle', ( e ) => {
 				this.toggleHighContrast();

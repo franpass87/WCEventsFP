@@ -36,6 +36,12 @@ module.exports = {
 		wcefpBooking: 'readonly',
 		wcefp_checkin: 'readonly',
 		wcefp_i18n: 'readonly',
+		// Missing globals from ESLint errors
+		wcefp_admin_i18n: 'readonly',
+		wcefpSettings: 'readonly', 
+		wcefp_analytics: 'readonly',
+		wcefp_shortcodes: 'readonly',
+		WCEventsFP_Admin_I18n: 'readonly',
 		// Additional globals  
 		WCEFPPublic: 'readonly',
 		dataLayer: 'writable',
