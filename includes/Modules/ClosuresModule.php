@@ -82,19 +82,13 @@ class ClosuresModule extends ServiceProvider {
     }
     
     /**
-     * Add admin menu pages
+     * Add admin menu pages - handled by central MenuManager
      * 
      * @return void
      */
     public function add_admin_pages(): void {
-        add_submenu_page(
-            'wcefp-events',
-            __('Closures Management', 'wceventsfp'),
-            __('Chiusure', 'wceventsfp'),
-            'manage_woocommerce',
-            'wcefp-closures',
-            [$this, 'render_closures_page']
-        );
+        // Menu registration moved to MenuManager for centralized control
+        // This method kept for module compatibility but no longer adds menus
     }
     
     /**

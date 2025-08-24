@@ -389,11 +389,11 @@ class MenuManager {
     }
     
     /**
-     * Render bookings page (legacy implementation)
+     * Render bookings page
      * 
      * @return void
      */
-    public function render_bookings_page_legacy() {
+    public function render_bookings_page() {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Prenotazioni', 'wceventsfp') . '</h1>';
         
@@ -434,11 +434,11 @@ class MenuManager {
     }
     
     /**
-     * Render vouchers page with WP_List_Table (legacy implementation)
+     * Render vouchers page with WP_List_Table
      * 
      * @return void
      */
-    public function render_vouchers_page_legacy() {
+    public function render_vouchers_page() {
         // Security check
         if (!current_user_can('manage_woocommerce')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'wceventsfp'));
@@ -1113,7 +1113,7 @@ class MenuManager {
      * 
      * @return void
      */
-    public function render_closures_page_legacy() {
+    public function render_closures_page() {
         if (class_exists('WCEFP_Closures') && method_exists('WCEFP_Closures', 'render_admin_page')) {
             WCEFP_Closures::render_admin_page();
         } else {
@@ -1136,7 +1136,7 @@ class MenuManager {
      * 
      * @return void
      */
-    public function render_settings_page_legacy() {
+    public function render_settings_page() {
         // Security check
         if (!current_user_can('manage_woocommerce')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'wceventsfp'));
@@ -2637,8 +2637,35 @@ class MenuManager {
      * @return void
      */
     private function render_existing_voucher_page() {
-        // Delegate to the legacy voucher implementation which is functional
-        $this->render_vouchers_page_legacy();
+        // Keep the existing voucher logic as it's functional
+        $this->handle_voucher_page_actions();
+        
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__('Vouchers', 'wceventsfp') . '</h1>';
+        
+        // Check if voucher table exists
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'wcefp_vouchers';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name;
+        
+        if ($table_exists) {
+            // Check if voucher admin classes are available
+            if (class_exists('WCEFP_Vouchers_Admin') && method_exists('WCEFP_Vouchers_Admin', 'dispatch')) {
+                // Use existing voucher system
+                echo '</div>'; // Close our wrap
+                WCEFP_Vouchers_Admin::dispatch();
+                return;
+            }
+            
+            // Use our enhanced WP_List_Table implementation
+            $this->render_voucher_list_table();
+            
+        } else {
+            // Show onboarding interface
+            $this->render_voucher_onboarding();
+        }
+        
+        echo '</div>';
     }
     
     /**

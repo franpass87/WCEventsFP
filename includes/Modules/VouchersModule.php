@@ -59,19 +59,13 @@ class VouchersModule extends ServiceProvider {
     }
     
     /**
-     * Add admin menu pages
+     * Add admin menu pages - handled by central MenuManager
      * 
      * @return void
      */
     public function add_admin_pages(): void {
-        add_submenu_page(
-            'wcefp-events',
-            __('Vouchers Management', 'wceventsfp'),
-            __('Voucher', 'wceventsfp'),
-            'manage_woocommerce',
-            'wcefp-vouchers',
-            [$this, 'render_vouchers_page']
-        );
+        // Menu registration moved to MenuManager for centralized control
+        // This method kept for module compatibility but no longer adds menus
     }
     
     /**
