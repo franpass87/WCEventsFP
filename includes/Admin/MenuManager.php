@@ -66,6 +66,12 @@ class MenuManager {
             require_once $recurring_file;
         }
         
+        // Load legacy closures class
+        $closures_file = WCEFP_PLUGIN_DIR . 'includes/Legacy/class-wcefp-closures.php';
+        if (file_exists($closures_file)) {
+            require_once $closures_file;
+        }
+        
         // Load legacy vouchers admin class
         $vouchers_file = WCEFP_PLUGIN_DIR . 'admin/class-wcefp-vouchers-admin.php';
         if (file_exists($vouchers_file)) {
@@ -198,6 +204,16 @@ class MenuManager {
             $this->enqueue_settings_assets();
         }
         
+        // Enqueue closures page assets when on closures page  
+        if (strpos($screen->id, 'wcefp-closures') !== false) {
+            wp_enqueue_style(
+                'wcefp-admin-closures',
+                WCEFP_PLUGIN_URL . 'assets/css/admin-closures.css',
+                ['wp-admin'],
+                WCEFP_VERSION
+            );
+        }
+        
         // Enqueue booking calendar assets when on calendar page
         if (strpos($screen->id, 'wcefp-booking-calendar') !== false) {
             $this->enqueue_calendar_assets();
@@ -259,17 +275,15 @@ class MenuManager {
     }
     
     /**
-     * Render main admin page
+     * Render main admin page - redirect to Prenotazioni
      * 
      * @return void
      */
     public function render_main_page() {
-        echo '<div class="wrap">';
-        echo '<h1>' . esc_html__('WC Events Dashboard', 'wceventsfp') . '</h1>';
-        echo '<div class="wcefp-admin-section">';
-        echo '<p>' . esc_html__('Welcome to WCEventsFP administration panel.', 'wceventsfp') . '</p>';
-        echo '</div>';
-        echo '</div>';
+        // Redirect to Prenotazioni page as requested
+        $redirect_url = admin_url('admin.php?page=wcefp-bookings');
+        wp_safe_redirect($redirect_url);
+        exit;
     }
     
     /**
