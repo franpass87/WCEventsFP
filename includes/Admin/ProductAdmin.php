@@ -145,6 +145,13 @@ class ProductAdmin {
             'target' => 'wcefp_product_data',
             'class' => ['show_if_evento', 'show_if_esperienza', 'wcefp_tab'],
         ];
+        
+        $tabs['wcefp_extra_services'] = [
+            'label' => '🎁 ' . __('Servizi Extra', 'wceventsfp'),
+            'target' => 'wcefp_extra_services_tab',
+            'class' => ['show_if_evento', 'show_if_esperienza', 'wcefp_tab'],
+        ];
+        
         return $tabs;
     }
     

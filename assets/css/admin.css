@@ -272,6 +272,119 @@
 	color: #fff;
 }
 
+/* Extra Services Admin */
+.wcefp-extras-container {
+	background: #f9f9f9;
+	padding: 20px;
+	border-radius: 8px;
+	margin: 16px 0;
+}
+
+.wcefp-extras-header {
+	display: grid;
+	grid-template-columns: 2fr 2fr 1fr 80px 80px 60px;
+	gap: 12px;
+	padding: 10px;
+	background: #fff;
+	border-radius: 4px;
+	margin-bottom: 12px;
+	font-weight: 600;
+	border: 1px solid #ddd;
+}
+
+.wcefp-extra-row {
+	display: grid;
+	grid-template-columns: 2fr 2fr 1fr 80px 80px 60px;
+	gap: 12px;
+	padding: 12px;
+	background: #fff;
+	border-radius: 4px;
+	margin-bottom: 8px;
+	border: 1px solid #e1e1e1;
+}
+
+.wcefp-extra-row:hover {
+	background: #fafafa;
+}
+
+.wcefp-extra-col input,
+.wcefp-extra-col textarea {
+	width: 100%;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 6px 8px;
+}
+
+.wcefp-extra-col textarea {
+	resize: vertical;
+	min-height: 32px;
+}
+
+.wcefp-extra-col input[type="checkbox"] {
+	width: auto;
+	margin: 0 auto;
+	display: block;
+}
+
+.wcefp-extras-footer {
+	margin-top: 16px;
+	text-align: center;
+}
+
+.wcefp-remove-extra {
+	background: #dc3545 !important;
+	color: white !important;
+	border-color: #dc3545 !important;
+	font-size: 12px;
+	padding: 4px 8px !important;
+	min-height: 32px;
+}
+
+.wcefp-remove-extra:hover {
+	background: #c82333 !important;
+}
+
+/* Original Extra Table Styles (Enhanced) */
+.wcefp-extra-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 16px 0;
+}
+
+.wcefp-extra-table td {
+	padding: 8px;
+	border: 1px solid #ddd;
+	vertical-align: top;
+}
+
+.wcefp-extra-table input {
+	width: 100%;
+	border: 1px solid #ddd;
+	padding: 4px 6px;
+}
+
+/* Mobile Responsiveness for Extra Services */
+@media (max-width: 1200px) {
+	.wcefp-extras-header,
+	.wcefp-extra-row {
+		grid-template-columns: 1fr;
+		gap: 8px;
+	}
+	
+	.wcefp-extra-col {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	
+	.wcefp-extra-col::before {
+		content: attr(data-label);
+		font-weight: 600;
+		min-width: 100px;
+		display: block;
+	}
+}
+
 .wcefp-weekdays {
 	display: flex;
 	flex-wrap: wrap;

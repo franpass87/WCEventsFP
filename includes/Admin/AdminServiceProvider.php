@@ -107,6 +107,12 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
         if (class_exists('WCEFP_MeetingPoints_CPT')) {
             add_action('wp_ajax_wcefp_get_meeting_points', ['WCEFP_MeetingPoints_CPT', 'ajax_get_meeting_points']);
         }
+        
+        // AJAX handlers for extra services
+        if (class_exists('WCEFP_Extra_Services')) {
+            add_action('wp_ajax_wcefp_update_extra_services_price', ['WCEFP_Extra_Services', 'ajax_update_price']);
+            add_action('wp_ajax_nopriv_wcefp_update_extra_services_price', ['WCEFP_Extra_Services', 'ajax_update_price']);
+        }
     }
 
 }
