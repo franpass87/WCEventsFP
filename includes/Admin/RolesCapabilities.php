@@ -208,7 +208,7 @@ class RolesCapabilities {
      */
     public static function can_access_admin_page($page_slug) {
         switch ($page_slug) {
-            case 'wcefp-dashboard':
+            case 'wcefp':
                 return self::current_user_can('view_wcefp_dashboard');
                 
             case 'wcefp-bookings':

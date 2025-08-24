@@ -38,7 +38,7 @@ class SystemStatus {
      */
     public function add_admin_page() {
         add_submenu_page(
-            'wcefp-dashboard',
+            'wcefp',
             __('System Status', 'wceventsfp'),
             __('System Status', 'wceventsfp'),
             'manage_wcefp_settings',
