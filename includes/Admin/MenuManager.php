@@ -48,6 +48,7 @@ class MenuManager {
         
         // Add AJAX handlers for booking quick actions
         add_action('wp_ajax_wcefp_booking_quick_action', [$this, 'handle_booking_quick_action']);
+        add_action('wp_ajax_wcefp_get_booking_calendar_events', [$this, 'handle_get_calendar_events']);
     }
     
     /**
@@ -123,9 +124,19 @@ class MenuManager {
             null, // Hidden from menu
             __('Visualizza Prenotazione', 'wceventsfp'),
             __('Visualizza Prenotazione', 'wceventsfp'),
-            'manage_wcevents',
+            'manage_wcefp_bookings',
             'wcefp-booking-view',
             [$this, 'render_booking_view_page']
+        );
+        
+        // Booking calendar view (submenu under bookings)
+        add_submenu_page(
+            'wcefp',
+            __('Calendario Prenotazioni', 'wceventsfp'),
+            __('📅 Calendario', 'wceventsfp'),
+            'manage_wcefp_bookings',
+            'wcefp-booking-calendar',
+            [$this, 'render_booking_calendar_page']
         );
         
         add_submenu_page(
@@ -499,7 +510,7 @@ class MenuManager {
      */
     public function render_booking_view_page() {
         // Security check
-        if (!current_user_can('manage_wcevents')) {
+        if (!current_user_can('manage_wcefp_bookings')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'wceventsfp'));
         }
         
@@ -803,7 +814,7 @@ class MenuManager {
             wp_send_json_error(__('Security check failed.', 'wceventsfp'));
         }
         
-        if (!current_user_can('manage_wcevents')) {
+        if (!current_user_can('manage_wcefp_bookings')) {
             wp_send_json_error(__('Insufficient permissions.', 'wceventsfp'));
         }
         
@@ -867,5 +878,314 @@ class MenuManager {
         // return $email_manager->send_booking_confirmation($booking_id, $booking_data);
         
         return true;
+    }
+    
+    /**
+     * Render booking calendar page
+     * 
+     * @return void
+     */
+    public function render_booking_calendar_page() {
+        // Security check
+        if (!current_user_can('manage_wcefp_bookings')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'wceventsfp'));
+        }
+        
+        ?>
+        <div class="wrap">
+            <div class="wcefp-page-header">
+                <h1><?php _e('Calendario Prenotazioni', 'wceventsfp'); ?></h1>
+                <p class="wcefp-page-description">
+                    <?php _e('Visualizza tutte le prenotazioni in un\'interfaccia calendario intuitiva.', 'wceventsfp'); ?>
+                </p>
+                <div class="wcefp-page-meta">
+                    <span class="wcefp-page-badge">
+                        📅 <?php _e('Vista Calendario', 'wceventsfp'); ?>
+                    </span>
+                    <span class="wcefp-page-badge">
+                        📋 <?php _e('Gestione Prenotazioni', 'wceventsfp'); ?>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="wcefp-calendar-container">
+                <div class="wcefp-calendar-toolbar">
+                    <div class="wcefp-calendar-nav">
+                        <button type="button" class="button" id="wcefp-calendar-prev">
+                            <?php _e('← Precedente', 'wceventsfp'); ?>
+                        </button>
+                        <button type="button" class="button" id="wcefp-calendar-today">
+                            <?php _e('Oggi', 'wceventsfp'); ?>
+                        </button>
+                        <button type="button" class="button" id="wcefp-calendar-next">
+                            <?php _e('Successivo →', 'wceventsfp'); ?>
+                        </button>
+                    </div>
+                    
+                    <div class="wcefp-calendar-views">
+                        <button type="button" class="button button-primary wcefp-calendar-view" data-view="month">
+                            <?php _e('Mese', 'wceventsfp'); ?>
+                        </button>
+                        <button type="button" class="button wcefp-calendar-view" data-view="agendaWeek">
+                            <?php _e('Settimana', 'wceventsfp'); ?>
+                        </button>
+                        <button type="button" class="button wcefp-calendar-view" data-view="agendaDay">
+                            <?php _e('Giorno', 'wceventsfp'); ?>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="wcefp-booking-calendar" class="wcefp-calendar-widget"></div>
+            </div>
+            
+            <!-- Booking Legend -->
+            <div class="wcefp-calendar-legend">
+                <h3><?php _e('Legenda:', 'wceventsfp'); ?></h3>
+                <div class="wcefp-legend-items">
+                    <span class="wcefp-legend-item">
+                        <span class="wcefp-color-box" style="background-color: #48bb78;"></span>
+                        <?php _e('Confermato', 'wceventsfp'); ?>
+                    </span>
+                    <span class="wcefp-legend-item">
+                        <span class="wcefp-color-box" style="background-color: #f56565;"></span>
+                        <?php _e('In Attesa', 'wceventsfp'); ?>
+                    </span>
+                    <span class="wcefp-legend-item">
+                        <span class="wcefp-color-box" style="background-color: #38b2ac;"></span>
+                        <?php _e('Completato', 'wceventsfp'); ?>
+                    </span>
+                    <span class="wcefp-legend-item">
+                        <span class="wcefp-color-box" style="background-color: #a0aec0;"></span>
+                        <?php _e('Annullato', 'wceventsfp'); ?>
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Load FullCalendar if not already loaded -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+        
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            // Initialize FullCalendar for bookings
+            var calendarEl = document.getElementById('wcefp-booking-calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'it',
+                firstDay: 1, // Monday
+                headerToolbar: false, // We use custom toolbar
+                height: 'auto',
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    // Get booking events via AJAX
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'wcefp_get_booking_calendar_events',
+                            start: fetchInfo.startStr,
+                            end: fetchInfo.endStr,
+                            nonce: '<?php echo wp_create_nonce("wcefp_calendar_events"); ?>'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                successCallback(response.data);
+                            } else {
+                                failureCallback(response.data || 'Error loading events');
+                            }
+                        },
+                        error: function() {
+                            failureCallback('Network error');
+                        }
+                    });
+                },
+                eventClick: function(info) {
+                    // Open booking details
+                    if (info.event.extendedProps.booking_id) {
+                        var viewUrl = '<?php echo admin_url("admin.php?page=wcefp-booking-view&booking_id="); ?>' + 
+                                     info.event.extendedProps.booking_id + 
+                                     '&_wpnonce=<?php echo wp_create_nonce("wcefp_view_booking"); ?>';
+                        window.location.href = viewUrl;
+                    }
+                },
+                eventDidMount: function(info) {
+                    // Add tooltips with booking details
+                    $(info.el).attr('title', info.event.extendedProps.tooltip || info.event.title);
+                }
+            });
+            
+            calendar.render();
+            
+            // Custom toolbar handlers
+            $('#wcefp-calendar-prev').on('click', function() {
+                calendar.prev();
+            });
+            
+            $('#wcefp-calendar-next').on('click', function() {
+                calendar.next();
+            });
+            
+            $('#wcefp-calendar-today').on('click', function() {
+                calendar.today();
+            });
+            
+            $('.wcefp-calendar-view').on('click', function() {
+                var view = $(this).data('view');
+                $('.wcefp-calendar-view').removeClass('button-primary').addClass('button-secondary');
+                $(this).removeClass('button-secondary').addClass('button-primary');
+                calendar.changeView(view);
+            });
+        });
+        </script>
+        
+        <style>
+        .wcefp-calendar-container {
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #c3c4c7;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .wcefp-calendar-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f1;
+        }
+        .wcefp-calendar-nav {
+            display: flex;
+            gap: 5px;
+        }
+        .wcefp-calendar-views {
+            display: flex;
+            gap: 5px;
+        }
+        .wcefp-calendar-widget {
+            min-height: 600px;
+        }
+        .wcefp-calendar-legend {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .wcefp-legend-items {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .wcefp-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .wcefp-color-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+        .wcefp-page-header {
+            margin-bottom: 0;
+        }
+        .wcefp-page-description {
+            font-size: 14px;
+            color: #646970;
+            margin: 10px 0;
+        }
+        .wcefp-page-meta {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .wcefp-page-badge {
+            background: #f0f0f1;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #50575e;
+        }
+        </style>
+        <?php
+    }
+    
+    /**
+     * Handle calendar events AJAX request
+     * 
+     * @return void
+     */
+    public function handle_get_calendar_events() {
+        // Security checks
+        if (!check_ajax_referer('wcefp_calendar_events', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'wceventsfp'));
+        }
+        
+        if (!current_user_can('manage_wcefp_bookings')) {
+            wp_send_json_error(__('Insufficient permissions.', 'wceventsfp'));
+        }
+        
+        $start = sanitize_text_field($_POST['start'] ?? '');
+        $end = sanitize_text_field($_POST['end'] ?? '');
+        
+        // Get booking events for calendar (placeholder implementation)
+        $events = $this->get_booking_calendar_events($start, $end);
+        
+        wp_send_json_success($events);
+    }
+    
+    /**
+     * Get booking events for calendar display
+     * 
+     * @param string $start Start date
+     * @param string $end End date
+     * @return array
+     */
+    private function get_booking_calendar_events($start, $end) {
+        // Placeholder implementation - would query actual booking data
+        $sample_events = [
+            [
+                'id' => 'booking-1',
+                'title' => 'Wine Tasting - Mario Rossi (2 pax)',
+                'start' => date('Y-m-d\TH:i:s', strtotime('+7 days 18:00')),
+                'backgroundColor' => '#48bb78',
+                'borderColor' => '#38a169',
+                'extendedProps' => [
+                    'booking_id' => 1,
+                    'customer_name' => 'Mario Rossi',
+                    'status' => 'confirmed',
+                    'participants' => 2,
+                    'tooltip' => 'Wine Tasting Experience - Mario Rossi (2 partecipanti) - Confermato'
+                ]
+            ],
+            [
+                'id' => 'booking-2',
+                'title' => 'Cooking Class - Anna Bianchi (4 pax)',
+                'start' => date('Y-m-d\TH:i:s', strtotime('+14 days 19:30')),
+                'backgroundColor' => '#f56565',
+                'borderColor' => '#e53e3e',
+                'extendedProps' => [
+                    'booking_id' => 2,
+                    'customer_name' => 'Anna Bianchi',
+                    'status' => 'pending',
+                    'participants' => 4,
+                    'tooltip' => 'Cooking Class - Anna Bianchi (4 partecipanti) - In Attesa'
+                ]
+            ]
+        ];
+        
+        // Filter events by date range if provided
+        if ($start && $end) {
+            $start_timestamp = strtotime($start);
+            $end_timestamp = strtotime($end);
+            
+            $sample_events = array_filter($sample_events, function($event) use ($start_timestamp, $end_timestamp) {
+                $event_timestamp = strtotime($event['start']);
+                return $event_timestamp >= $start_timestamp && $event_timestamp <= $end_timestamp;
+            });
+        }
+        
+        return array_values($sample_events);
     }
 }
