@@ -15,6 +15,11 @@ CONTRIBUTING.md
 DEVELOPMENT.md
 API.md
 
+# Source assets (built versions are included)
+assets/js
+assets/css
+!assets/dist
+
 # Build and development files
 webpack.config.js
 package.json

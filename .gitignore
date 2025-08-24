@@ -76,4 +76,4 @@ test_wcefp_admin.php
 # Build / Distribuzione
 /dist/
 node_modules/
-docs/
+# Note: docs/ should be included for the comprehensive documentation
