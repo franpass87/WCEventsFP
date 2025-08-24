@@ -1,145 +1,42 @@
-# Italian Translation for WCEventsFP
-# Copyright (C) 2024 WCEventsFP Team
-# This file is distributed under the same license as the WCEventsFP package.
-# Italian Translation Team, 2024.
-#
+# WCEventsFP Italian Translation
+# Copyright (C) 2024 WCEventsFP
 msgid ""
 msgstr ""
 "Project-Id-Version: WCEventsFP 2.1.4\n"
 "Report-Msgid-Bugs-To: https://github.com/franpass87/WCEventsFP/issues\n"
-"POT-Creation-Date: 2024-01-01 12:00+0000\n"
-"PO-Revision-Date: 2024-01-01 12:00+0100\n"
-"Last-Translator: WCEventsFP Team\n"
-"Language-Team: Italian\n"
+"POT-Creation-Date: 2024-12-27 12:00+0000\n"
+"PO-Revision-Date: 2024-12-27 12:00+0000\n"
+"Last-Translator: Francesco Passeri <francesco@example.com>\n"
+"Language-Team: Italian <francesco@example.com>\n"
 "Language: it_IT\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: WCEventsFP Translation\n"
+"X-Generator: WCEventsFP I18n Module\n"
 
 # Plugin Information
 msgid "WCEventsFP - Enterprise Booking Platform"
-msgstr "WCEventsFP - Piattaforma di Prenotazioni Enterprise"
+msgstr "WCEventsFP - Piattaforma di Prenotazione Enterprise"
 
 msgid "Complete WordPress/WooCommerce booking platform for events and experiences with enterprise-level functionality."
-msgstr "Piattaforma completa per prenotazioni WordPress/WooCommerce per eventi ed esperienze con funzionalità di livello enterprise."
+msgstr "Piattaforma completa di prenotazione WordPress/WooCommerce per eventi ed esperienze con funzionalità di livello enterprise."
 
-# General Terms
-msgid "Event"
-msgstr "Evento"
+# Booking Terms
+msgid "Book Now"
+msgstr "Prenota Ora"
 
-msgid "Events"
-msgstr "Eventi"
+msgid "Check Availability"
+msgstr "Verifica Disponibilità"
 
-msgid "Booking"
-msgstr "Prenotazione"
+msgid "Select Date"
+msgstr "Seleziona Data"
 
-msgid "Bookings"
-msgstr "Prenotazioni"
-
-msgid "Customer"
-msgstr "Cliente"
-
-msgid "Customers"
-msgstr "Clienti"
-
-msgid "Participant"
-msgstr "Partecipante"
+msgid "Select Time"
+msgstr "Seleziona Orario"
 
 msgid "Participants"
 msgstr "Partecipanti"
-
-msgid "Voucher"
-msgstr "Voucher"
-
-msgid "Vouchers"
-msgstr "Voucher"
-
-# Status Terms
-msgid "Confirmed"
-msgstr "Confermato"
-
-msgid "Pending"
-msgstr "In attesa"
-
-msgid "Cancelled"
-msgstr "Annullato"
-
-msgid "Completed"
-msgstr "Completato"
-
-msgid "Active"
-msgstr "Attivo"
-
-msgid "Inactive"
-msgstr "Inattivo"
-
-# Actions
-msgid "Add New"
-msgstr "Aggiungi Nuovo"
-
-msgid "Edit"
-msgstr "Modifica"
-
-msgid "Delete"
-msgstr "Elimina"
-
-msgid "Save"
-msgstr "Salva"
-
-msgid "Cancel"
-msgstr "Annulla"
-
-msgid "Submit"
-msgstr "Invia"
-
-msgid "Search"
-msgstr "Cerca"
-
-msgid "Filter"
-msgstr "Filtra"
-
-msgid "Export"
-msgstr "Esporta"
-
-msgid "Import"
-msgstr "Importa"
-
-# Admin Menu Items
-msgid "Bookings"
-msgstr "Prenotazioni"
-
-msgid "Vouchers"
-msgstr "Voucher"
-
-msgid "Closures"
-msgstr "Chiusure"
-
-msgid "Settings"
-msgstr "Impostazioni"
-
-msgid "Meeting Points"
-msgstr "Punti di Incontro"
-
-msgid "Extras"
-msgstr "Extra"
-
-# Form Labels
-msgid "Name"
-msgstr "Nome"
-
-msgid "Email"
-msgstr "Email"
-
-msgid "Phone"
-msgstr "Telefono"
-
-msgid "Date"
-msgstr "Data"
-
-msgid "Time"
-msgstr "Ora"
 
 msgid "Adults"
 msgstr "Adulti"
@@ -147,193 +44,359 @@ msgstr "Adulti"
 msgid "Children"
 msgstr "Bambini"
 
-msgid "Total"
-msgstr "Totale"
+msgid "Total Price"
+msgstr "Prezzo Totale"
 
-msgid "Price"
-msgstr "Prezzo"
+msgid "Confirm Booking"
+msgstr "Conferma Prenotazione"
 
-msgid "Capacity"
-msgstr "Capacità"
+msgid "Booking Confirmed!"
+msgstr "Prenotazione Confermata!"
 
-msgid "Duration"
-msgstr "Durata"
-
-msgid "Location"
-msgstr "Località"
-
-msgid "Description"
-msgstr "Descrizione"
-
-msgid "Notes"
-msgstr "Note"
-
-msgid "Special Requests"
-msgstr "Richieste Speciali"
-
-# Error Messages
-msgid "An error occurred. Please try again."
-msgstr "Si è verificato un errore. Riprova."
-
-msgid "Invalid email address."
-msgstr "Indirizzo email non valido."
-
-msgid "Required field."
-msgstr "Campo obbligatorio."
-
-msgid "Invalid date format."
-msgstr "Formato data non valido."
-
-msgid "Booking not found."
-msgstr "Prenotazione non trovata."
-
-msgid "Event not found."
-msgstr "Evento non trovato."
-
-msgid "Insufficient permissions."
-msgstr "Permessi insufficienti."
-
-# Success Messages
-msgid "Booking created successfully."
-msgstr "Prenotazione creata con successo."
-
-msgid "Booking updated successfully."
-msgstr "Prenotazione aggiornata con successo."
-
-msgid "Settings saved successfully."
-msgstr "Impostazioni salvate con successo."
-
-msgid "Export completed successfully."
-msgstr "Esportazione completata con successo."
-
-# Accessibility Labels
-msgid "Main navigation"
-msgstr "Navigazione principale"
-
-msgid "Skip to content"
-msgstr "Vai al contenuto"
-
-msgid "Close dialog"
-msgstr "Chiudi finestra"
-
-msgid "Open calendar"
-msgstr "Apri calendario"
-
-msgid "Select date"
-msgstr "Seleziona data"
-
-msgid "Previous month"
-msgstr "Mese precedente"
-
-msgid "Next month"
-msgstr "Mese successivo"
-
-msgid "Sort ascending"
-msgstr "Ordina crescente"
-
-msgid "Sort descending"
-msgstr "Ordina decrescente"
+msgid "Cancel Booking"
+msgstr "Cancella Prenotazione"
 
 msgid "Loading..."
 msgstr "Caricamento..."
 
-# REST API Messages
-msgid "Invalid API request."
-msgstr "Richiesta API non valida."
+msgid "Please wait..."
+msgstr "Attendere prego..."
 
-msgid "Authentication required."
-msgstr "Autenticazione richiesta."
+# Experience Terms
+msgid "Duration"
+msgstr "Durata"
 
-msgid "Resource not found."
-msgstr "Risorsa non trovata."
+msgid "Meeting Point"
+msgstr "Punto di Incontro"
 
-msgid "Internal server error."
-msgstr "Errore interno del server."
+msgid "What's Included"
+msgstr "Cosa è Incluso"
 
-# Settings Section Titles
+msgid "Requirements"
+msgstr "Requisiti"
+
+msgid "Reviews"
+msgstr "Recensioni"
+
+msgid "Gallery"
+msgstr "Galleria"
+
+msgid "Description"
+msgstr "Descrizione"
+
+msgid "Highlights"
+msgstr "Punti Salienti"
+
+# Calendar Terms
+msgid "Previous Month"
+msgstr "Mese Precedente"
+
+msgid "Next Month"
+msgstr "Mese Successivo"
+
+msgid "Available"
+msgstr "Disponibile"
+
+msgid "Fully Booked"
+msgstr "Al Completo"
+
+msgid "Closed"
+msgstr "Chiuso"
+
+msgid "Please select a date first"
+msgstr "Seleziona prima una data"
+
+# Error Messages
+msgid "A system error occurred. Please try again."
+msgstr "Si è verificato un errore di sistema. Riprova."
+
+msgid "Sorry, this experience is fully booked."
+msgstr "Spiacenti, questa esperienza è al completo."
+
+msgid "Please select a valid date."
+msgstr "Seleziona una data valida."
+
+msgid "Please specify number of participants."
+msgstr "Specifica il numero di partecipanti."
+
+msgid "Payment information is required."
+msgstr "Le informazioni di pagamento sono richieste."
+
+msgid "Network error. Please check your connection."
+msgstr "Errore di rete. Controlla la tua connessione."
+
+# Accessibility
+msgid "Skip to main content"
+msgstr "Salta al contenuto principale"
+
+msgid "Skip to booking form"
+msgstr "Salta al modulo di prenotazione"
+
+msgid "Use arrow keys to navigate calendar"
+msgstr "Usa le frecce per navigare il calendario"
+
+msgid "Booking form"
+msgstr "Modulo di prenotazione"
+
+msgid "Required field"
+msgstr "Campo obbligatorio"
+
+msgid "Optional field"
+msgstr "Campo opzionale"
+
+# Admin Terms
+msgid "Save Changes"
+msgstr "Salva Modifiche"
+
+msgid "Success"
+msgstr "Successo"
+
+msgid "Error"
+msgstr "Errore"
+
+msgid "Are you sure you want to delete this?"
+msgstr "Sei sicuro di voler eliminare questo?"
+
+msgid "No results found"
+msgstr "Nessun risultato trovato"
+
+# Booking Management
+msgid "Booking Details"
+msgstr "Dettagli Prenotazione"
+
+msgid "Customer Information"
+msgstr "Informazioni Cliente"
+
+msgid "Event Information"
+msgstr "Informazioni Evento"
+
+msgid "Payment Status"
+msgstr "Stato Pagamento"
+
+msgid "Booking Status"
+msgstr "Stato Prenotazione"
+
+msgid "Actions"
+msgstr "Azioni"
+
+# Settings
 msgid "General Settings"
 msgstr "Impostazioni Generali"
 
-msgid "Email & Notifications"
-msgstr "Email e Notifiche"
+msgid "Email Settings"
+msgstr "Impostazioni Email"
 
 msgid "Feature Flags"
-msgstr "Funzionalità"
+msgstr "Flag Funzionalità"
 
 msgid "Integrations"
 msgstr "Integrazioni"
 
-# Time and Date Formats
-msgid "January"
-msgstr "Gennaio"
+msgid "Language and Localization"
+msgstr "Lingua e Localizzazione"
 
-msgid "February"
-msgstr "Febbraio"
+msgid "Default Language"
+msgstr "Lingua Predefinita"
 
-msgid "March"
-msgstr "Marzo"
+msgid "Auto-detect Language"
+msgstr "Rileva Automaticamente Lingua"
 
-msgid "April"
-msgstr "Aprile"
+msgid "Automatically detect user language from browser settings"
+msgstr "Rileva automaticamente la lingua dell'utente dalle impostazioni del browser"
 
-msgid "May"
-msgstr "Maggio"
+msgid "Translation Tools"
+msgstr "Strumenti di Traduzione"
 
-msgid "June"
-msgstr "Giugno"
+msgid "Generate POT File"
+msgstr "Genera File POT"
 
-msgid "July"
-msgstr "Luglio"
+msgid "Generate translation template for translators."
+msgstr "Genera modello di traduzione per traduttori."
 
-msgid "August"
-msgstr "Agosto"
+msgid "POT file generated successfully!"
+msgstr "File POT generato con successo!"
 
-msgid "September"
-msgstr "Settembre"
+msgid "Error generating POT file."
+msgstr "Errore nella generazione del file POT."
 
-msgid "October"
-msgstr "Ottobre"
+msgid "Translation Status"
+msgstr "Stato Traduzione"
 
-msgid "November"
-msgstr "Novembre"
+msgid "Language"
+msgstr "Lingua"
 
-msgid "December"
-msgstr "Dicembre"
+msgid "Completion"
+msgstr "Completamento"
 
-msgid "Today"
-msgstr "Oggi"
+msgid "Status"
+msgstr "Stato"
 
-msgid "Tomorrow"
-msgstr "Domani"
+msgid "Complete"
+msgstr "Completato"
 
-msgid "Yesterday"
-msgstr "Ieri"
+msgid "Good"
+msgstr "Buono"
 
-# Pluralization Examples
-msgid "%d booking"
-msgid_plural "%d bookings"
-msgstr[0] "%d prenotazione"
-msgstr[1] "%d prenotazioni"
+msgid "Needs Work"
+msgstr "Necessita Lavoro"
 
-msgid "%d participant"
-msgid_plural "%d participants"
-msgstr[0] "%d partecipante"
-msgstr[1] "%d partecipanti"
+msgid "Generating..."
+msgstr "Generazione..."
 
-msgid "%d voucher"
-msgid_plural "%d vouchers"
-msgstr[0] "%d voucher"
-msgstr[1] "%d voucher"
+# Internationalization Settings
+msgid "Internationalization"
+msgstr "Internazionalizzazione"
 
-# Translator Notes
-#. translators: %s is the customer name
-msgid "Booking for %s"
-msgstr "Prenotazione per %s"
+msgid "Default language for frontend booking forms and customer communications."
+msgstr "Lingua predefinita per moduli di prenotazione frontend e comunicazioni clienti."
 
-#. translators: %s is the event title, %d is the capacity
-msgid "Event: %s (Capacity: %d)"
-msgstr "Evento: %s (Capacità: %d)"
+# Meeting Points
+msgid "Meeting Points"
+msgstr "Punti di Incontro"
 
-#. translators: %s is the price with currency
-msgid "Total: %s"
-msgstr "Totale: %s"
+msgid "Add Meeting Point"
+msgstr "Aggiungi Punto di Incontro"
+
+msgid "Edit Meeting Point"
+msgstr "Modifica Punto di Incontro"
+
+msgid "Meeting Point Name"
+msgstr "Nome Punto di Incontro"
+
+msgid "Address"
+msgstr "Indirizzo"
+
+msgid "GPS Coordinates"
+msgstr "Coordinate GPS"
+
+msgid "Contact Information"
+msgstr "Informazioni di Contatto"
+
+msgid "Instructions"
+msgstr "Istruzioni"
+
+# Extras
+msgid "Extras"
+msgstr "Extra"
+
+msgid "Additional Services"
+msgstr "Servizi Aggiuntivi"
+
+msgid "Add Extra"
+msgstr "Aggiungi Extra"
+
+msgid "Extra Name"
+msgstr "Nome Extra"
+
+msgid "Extra Description"
+msgstr "Descrizione Extra"
+
+msgid "Price"
+msgstr "Prezzo"
+
+msgid "Maximum Quantity"
+msgstr "Quantità Massima"
+
+msgid "Required"
+msgstr "Obbligatorio"
+
+msgid "Optional"
+msgstr "Opzionale"
+
+# Vouchers
+msgid "Vouchers"
+msgstr "Voucher"
+
+msgid "Voucher Code"
+msgstr "Codice Voucher"
+
+msgid "Order"
+msgstr "Ordine"
+
+msgid "Recipient"
+msgstr "Destinatario"
+
+msgid "Send Date"
+msgstr "Data Invio"
+
+msgid "Regenerate"
+msgstr "Rigenera"
+
+msgid "Resend"
+msgstr "Reinvia"
+
+msgid "Cancel"
+msgstr "Cancella"
+
+# Closures
+msgid "Closures"
+msgstr "Chiusure"
+
+msgid "Add Closure"
+msgstr "Aggiungi Chiusura"
+
+msgid "Product"
+msgstr "Prodotto"
+
+msgid "All Events/Experiences"
+msgstr "Tutti gli Eventi/Esperienze"
+
+msgid "From"
+msgstr "Dal"
+
+msgid "To"
+msgstr "Al"
+
+msgid "Note"
+msgstr "Nota"
+
+msgid "Delete"
+msgstr "Elimina"
+
+# Statistics
+msgid "Total Bookings"
+msgstr "Prenotazioni Totali"
+
+msgid "This Month"
+msgstr "Questo Mese"
+
+msgid "Revenue"
+msgstr "Ricavi"
+
+msgid "Pending"
+msgstr "In Attesa"
+
+msgid "Confirmed"
+msgstr "Confermato"
+
+msgid "Cancelled"
+msgstr "Cancellato"
+
+# Export
+msgid "Export CSV"
+msgstr "Esporta CSV"
+
+msgid "Export Calendar"
+msgstr "Esporta Calendario"
+
+msgid "Export Data"
+msgstr "Esporta Dati"
+
+# Shortcodes
+msgid "Events"
+msgstr "Eventi"
+
+msgid "Event"
+msgstr "Evento"
+
+msgid "Search"
+msgstr "Cerca"
+
+msgid "Calendar"
+msgstr "Calendario"
+
+msgid "User Bookings"
+msgstr "Prenotazioni Utente"
+
+msgid "Price Calculator"
+msgstr "Calcolatore Prezzo"

@@ -27,6 +27,7 @@ class ModulesServiceProvider extends ServiceProvider {
      * @var array
      */
     private $modules = [
+        'i18n' => I18nModule::class,
         'bookings' => BookingsModule::class,
         'vouchers' => VouchersModule::class,
         'closures' => ClosuresModule::class,

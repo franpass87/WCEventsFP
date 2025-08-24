@@ -1,424 +1,540 @@
-/**
- * WCEventsFP Accessibility Styles
- * WCAG 2.1 AA compliant styling for accessibility features
+/*
+ * WCEventsFP Accessibility Enhancements
+ * WCAG 2.1 AA compliant styles for improved accessibility
  */
 
-/* ===========================
+/* ================================================
+   FOCUS MANAGEMENT
+   ================================================ */
+
+/* Enhanced Focus Indicators */
+.wcefp-booking-form *:focus,
+.wcefp-admin-form *:focus {
+    outline: 2px solid #0073aa;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 1px #ffffff, 0 0 0 3px #0073aa;
+}
+
+/* Specific focus styles for different elements */
+.wcefp-booking-form input:focus,
+.wcefp-booking-form select:focus,
+.wcefp-booking-form textarea:focus {
+    border-color: #0073aa;
+}
+
+.wcefp-booking-form button:focus {
+    background-color: #005177;
+}
+
+/* Focus-visible for modern browsers */
+.wcefp-booking-form *:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+}
+
+.wcefp-booking-form *:focus-visible {
+    outline: 2px solid #0073aa;
+    outline-offset: 2px;
+}
+
+/* ================================================
    SKIP LINKS
-   =========================== */
+   ================================================ */
+
 .wcefp-skip-links {
-	position: fixed;
-	top: -100px;
-	left: 0;
-	width: 100%;
-	z-index: 999999;
-	background: #000;
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    z-index: 999999;
 }
 
 .wcefp-skip-link {
-	position: absolute;
-	left: -9999px;
-	top: -9999px;
-	z-index: 999999;
-	padding: 8px 16px;
-	background: #000 !important;
-	color: #fff !important;
-	text-decoration: none !important;
-	font-size: 14px;
-	font-weight: bold;
-	border-radius: 0 0 4px 4px;
-	transition: all 0.2s ease;
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    background: #21759b;
+    color: #fff;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 3px;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.4;
 }
 
 .wcefp-skip-link:focus {
-	position: static;
-	left: 0;
-	top: 0;
-	clip: auto;
-	z-index: 999999;
+    position: fixed;
+    left: 6px;
+    top: 6px;
+    width: auto;
+    height: auto;
+    z-index: 999999;
 }
 
-/* ===========================
-   ACCESSIBILITY TOOLBAR
-   =========================== */
-.wcefp-a11y-toolbar {
-	position: fixed;
-	top: 0;
-	right: 0;
-	z-index: 999998;
-	background: rgba(0, 0, 0, 0.9);
-	padding: 8px;
-	border-radius: 0 0 0 8px;
-	display: flex;
-	gap: 8px;
-	align-items: center;
-	backdrop-filter: blur(5px);
+/* ================================================
+   SCREEN READER SUPPORT
+   ================================================ */
+
+.wcefp-sr-only,
+.screen-reader-text {
+    clip: rect(1px, 1px, 1px, 1px);
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    word-wrap: normal !important;
 }
 
-.wcefp-a11y-controls {
-	display: flex;
-	gap: 4px;
+.wcefp-sr-only:focus,
+.screen-reader-text:focus {
+    background-color: #f1f1f1;
+    border-radius: 3px;
+    box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.6);
+    clip: auto !important;
+    color: #21759b;
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    height: auto;
+    left: 5px;
+    line-height: normal;
+    padding: 15px 23px 14px;
+    text-decoration: none;
+    top: 5px;
+    width: auto;
+    z-index: 100000;
 }
 
-.wcefp-a11y-btn {
-	background: transparent;
-	border: 2px solid #fff;
-	color: #fff;
-	padding: 6px 10px;
-	border-radius: 4px;
-	cursor: pointer;
-	font-size: 12px;
-	display: flex;
-	align-items: center;
-	gap: 4px;
-	transition: all 0.2s ease;
-	min-height: 36px; /* WCAG minimum touch target */
-	min-width: 36px;
-}
-
-.wcefp-a11y-btn:hover,
-.wcefp-a11y-btn:focus {
-	background: #fff;
-	color: #000;
-	outline: 2px solid #007cba;
-	outline-offset: 2px;
-}
-
-.wcefp-a11y-btn[aria-pressed="true"] {
-	background: #007cba;
-	border-color: #007cba;
-	color: #fff;
-}
-
-.wcefp-a11y-icon {
-	font-size: 14px;
-	line-height: 1;
-}
-
-.wcefp-a11y-text {
-	font-size: 11px;
-	white-space: nowrap;
-}
-
-@media (max-width: 768px) {
-
-	.wcefp-a11y-text {
-		display: none;
-	}
-}
-
-/* ===========================
-   SCREEN READER ONLY TEXT
-   =========================== */
-.wcefp-sr-only {
-	position: absolute !important;
-	width: 1px !important;
-	height: 1px !important;
-	padding: 0 !important;
-	margin: -1px !important;
-	overflow: hidden !important;
-	clip: rect(0, 0, 0, 0) !important;
-	white-space: nowrap !important;
-	border: 0 !important;
-}
-
-/* ===========================
-   HIGH CONTRAST MODE
-   =========================== */
-.wcefp-high-contrast {
-	filter: contrast(200%) saturate(0%);
-}
-
-.wcefp-high-contrast .wcefp-booking-form,
-.wcefp-high-contrast .wcefp-calendar,
-.wcefp-high-contrast .wcefp-card {
-	background: #000 !important;
-	color: #fff !important;
-	border: 2px solid #fff !important;
-}
-
-.wcefp-high-contrast input,
-.wcefp-high-contrast select,
-.wcefp-high-contrast textarea {
-	background: #fff !important;
-	color: #000 !important;
-	border: 2px solid #000 !important;
-}
-
-.wcefp-high-contrast button,
-.wcefp-high-contrast .wcefp-btn {
-	background: #fff !important;
-	color: #000 !important;
-	border: 2px solid #000 !important;
-}
-
-.wcefp-high-contrast button:hover,
-.wcefp-high-contrast .wcefp-btn:hover {
-	background: #000 !important;
-	color: #fff !important;
-	border: 2px solid #fff !important;
-}
-
-.wcefp-high-contrast a {
-	color: #ff0 !important;
-	text-decoration: underline !important;
-}
-
-.wcefp-high-contrast a:visited {
-	color: #f0f !important;
-}
-
-/* ===========================
-   ENHANCED FOCUS INDICATORS
-   =========================== */
-.wcefp-enhanced-focus *:focus {
-	outline: 3px solid #007cba !important;
-	outline-offset: 2px !important;
-	box-shadow: 0 0 0 6px rgba(0, 124, 186, 0.3) !important;
-	border-radius: 4px !important;
-}
-
-.wcefp-enhanced-focus button:focus,
-.wcefp-enhanced-focus .wcefp-btn:focus {
-	outline: 3px solid #fff !important;
-	box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.5) !important;
-}
-
-/* ===========================
+/* ================================================
    FORM ACCESSIBILITY
-   =========================== */
+   ================================================ */
+
+/* Required field indicators */
+.wcefp-required::after {
+    content: " *";
+    color: #d63638;
+    font-weight: 600;
+}
+
+.wcefp-required-text {
+    font-size: 0.875rem;
+    color: #646970;
+    margin-bottom: 1rem;
+}
+
+/* Field descriptions */
+.wcefp-field-description {
+    font-size: 0.875rem;
+    color: #646970;
+    margin-top: 0.25rem;
+}
+
+/* Error states */
+.wcefp-field-error {
+    border-color: #d63638 !important;
+    background-color: #fef7f7;
+}
+
+.wcefp-error-message {
+    color: #d63638;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.wcefp-error-message::before {
+    content: "⚠";
+    font-weight: 600;
+}
+
+/* Success states */
+.wcefp-field-success {
+    border-color: #00a32a !important;
+    background-color: #f7fcf7;
+}
+
+.wcefp-success-message {
+    color: #00a32a;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.wcefp-success-message::before {
+    content: "✓";
+    font-weight: 600;
+}
+
+/* ================================================
+   LABELS AND FIELDSETS
+   ================================================ */
+
 .wcefp-booking-form label {
-	display: block;
-	margin-bottom: 4px;
-	font-weight: 600;
-	color: #333;
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #1d2327;
 }
 
-.wcefp-booking-form .required-indicator {
-	color: #d63384;
-	font-weight: bold;
-	margin-left: 2px;
+.wcefp-booking-form fieldset {
+    border: 1px solid #c3c4c7;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 4px;
 }
 
-.wcefp-booking-form input[aria-invalid="true"],
-.wcefp-booking-form select[aria-invalid="true"],
-.wcefp-booking-form textarea[aria-invalid="true"] {
-	border-color: #d63384 !important;
-	box-shadow: 0 0 0 0.2rem rgba(214, 51, 132, 0.25) !important;
+.wcefp-booking-form legend {
+    font-weight: 600;
+    padding: 0 0.5rem;
+    color: #1d2327;
 }
 
-.wcefp-field-help {
-	font-size: 0.875em;
-	color: #6c757d;
-	margin-top: 4px;
+/* ================================================
+   BUTTON ACCESSIBILITY
+   ================================================ */
+
+.wcefp-booking-form button[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #dcdcde !important;
+    border-color: #dcdcde !important;
+    color: #a7aaad !important;
 }
 
-.wcefp-form-error {
-	color: #d63384;
-	font-size: 0.875em;
-	margin-top: 4px;
-	display: block;
+/* Loading state */
+.wcefp-button-loading {
+    position: relative;
+    color: transparent !important;
 }
 
-/* ===========================
-   CALENDAR ACCESSIBILITY
-   =========================== */
-.wcefp-calendar [role="gridcell"]:focus {
-	outline: 2px solid #007cba;
-	outline-offset: -2px;
-	z-index: 1;
-	position: relative;
+.wcefp-button-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    border-color: #ffffff transparent #ffffff transparent;
+    animation: wcefp-spin 1.2s linear infinite;
 }
 
-.wcefp-calendar-instructions {
-	margin-bottom: 1rem;
-	padding: 0.75rem;
-	background: #f8f9fa;
-	border: 1px solid #dee2e6;
-	border-radius: 0.25rem;
-	font-size: 0.875rem;
+@keyframes wcefp-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-/* ===========================
-   MODAL ACCESSIBILITY
-   =========================== */
-.wcefp-modal[aria-hidden="true"] {
-	display: none !important;
+/* ================================================
+   HIGH CONTRAST MODE
+   ================================================ */
+
+@media (prefers-contrast: high) {
+    .wcefp-booking-form {
+        border: 2px solid #000000;
+    }
+    
+    .wcefp-booking-form input,
+    .wcefp-booking-form select,
+    .wcefp-booking-form textarea {
+        border: 2px solid #000000;
+        background: #ffffff;
+        color: #000000;
+    }
+    
+    .wcefp-booking-form button {
+        border: 2px solid #000000;
+        background: #000000;
+        color: #ffffff;
+    }
+    
+    .wcefp-booking-form button:hover,
+    .wcefp-booking-form button:focus {
+        background: #ffffff;
+        color: #000000;
+    }
 }
 
-.wcefp-modal-backdrop {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: rgba(0, 0, 0, 0.5);
-	z-index: 999997;
+/* ================================================
+   DARK MODE SUPPORT
+   ================================================ */
+
+@media (prefers-color-scheme: dark) {
+    .wcefp-booking-form {
+        background-color: #1e1e1e;
+        color: #ffffff;
+    }
+    
+    .wcefp-booking-form label {
+        color: #ffffff;
+    }
+    
+    .wcefp-booking-form input,
+    .wcefp-booking-form select,
+    .wcefp-booking-form textarea {
+        background-color: #2d2d30;
+        border-color: #3e3e42;
+        color: #ffffff;
+    }
+    
+    .wcefp-booking-form input:focus,
+    .wcefp-booking-form select:focus,
+    .wcefp-booking-form textarea:focus {
+        border-color: #0078d4;
+    }
+    
+    .wcefp-field-description {
+        color: #cccccc;
+    }
+    
+    .wcefp-required-text {
+        color: #cccccc;
+    }
 }
 
-.wcefp-modal {
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	z-index: 999998;
-	background: #fff;
-	border-radius: 8px;
-	padding: 1.5rem;
-	max-width: 90vw;
-	max-height: 90vh;
-	overflow-y: auto;
-}
+/* ================================================
+   REDUCED MOTION SUPPORT
+   ================================================ */
 
-.wcefp-modal:focus {
-	outline: none;
-}
-
-/* ===========================
-   RESPONSIVE ACCESSIBILITY
-   =========================== */
-@media (max-width: 768px) {
-
-	.wcefp-a11y-toolbar {
-		position: relative;
-		top: auto;
-		right: auto;
-		width: 100%;
-		justify-content: center;
-		border-radius: 0;
-		background: #000;
-	}
-
-	.wcefp-a11y-btn {
-		min-width: 44px; /* Mobile touch target */
-		min-height: 44px;
-		padding: 8px;
-	}
-}
-
-/* ===========================
-   TEXT SIZE SCALING
-   =========================== */
-body[style*="font-size: 110%"] .wcefp-component {
-	line-height: 1.5;
-}
-
-body[style*="font-size: 120%"] .wcefp-component {
-	line-height: 1.6;
-}
-
-body[style*="font-size: 130%"] .wcefp-component,
-body[style*="font-size: 140%"] .wcefp-component,
-body[style*="font-size: 150%"] .wcefp-component {
-	line-height: 1.7;
-}
-
-/* ===========================
-   ANIMATION PREFERENCES
-   =========================== */
 @media (prefers-reduced-motion: reduce) {
-
-	.wcefp-component * {
-		animation-duration: 0.01ms !important;
-		animation-iteration-count: 1 !important;
-		transition-duration: 0.01ms !important;
-	}
+    .wcefp-booking-form *,
+    .wcefp-booking-form *::before,
+    .wcefp-booking-form *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    .wcefp-button-loading::after {
+        animation: none;
+        border: 2px solid #ffffff;
+        border-left-color: transparent;
+    }
 }
 
-/* ===========================
-   COLOR CONTRAST IMPROVEMENTS
-   =========================== */
-.wcefp-text-muted {
-	color: #495057 !important; /* Improved contrast ratio */
+/* ================================================
+   KEYBOARD NAVIGATION
+   ================================================ */
+
+/* Tab navigation indicators */
+.wcefp-tab-content:not(.wcefp-tab-active) {
+    display: none;
 }
 
-.wcefp-link {
-	color: #0056b3 !important; /* WCAG AA compliant blue */
-	text-decoration: underline;
+.wcefp-tab[aria-selected="true"] {
+    background-color: #0073aa;
+    color: #ffffff;
 }
 
-.wcefp-link:hover {
-	color: #004085 !important;
+/* Calendar keyboard navigation */
+.wcefp-calendar [tabindex="0"] {
+    background-color: #f0f6fc;
+    border: 2px solid #0073aa;
 }
 
-.wcefp-error-text {
-	color: #721c24 !important; /* High contrast error color */
+.wcefp-calendar .wcefp-date:focus {
+    outline: 2px solid #0073aa;
+    outline-offset: -2px;
+    z-index: 1;
 }
 
-.wcefp-success-text {
-	color: #155724 !important; /* High contrast success color */
+/* ================================================
+   LIVE REGIONS
+   ================================================ */
+
+.wcefp-live-region {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
 }
 
-.wcefp-warning-text {
-	color: #856404 !important; /* High contrast warning color */
+.wcefp-status-message {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+    font-weight: 600;
 }
 
-/* ===========================
-   FOCUS MANAGEMENT
-   =========================== */
-.wcefp-focus-trap {
-	position: relative;
+.wcefp-status-success {
+    background-color: #d1e7dd;
+    border: 1px solid #badbcc;
+    color: #0f5132;
 }
 
-.wcefp-focus-trap::before,
-.wcefp-focus-trap::after {
-	content: "";
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	overflow: hidden;
-	clip: rect(1px, 1px, 1px, 1px);
-	white-space: nowrap;
+.wcefp-status-error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c2c7;
+    color: #842029;
 }
 
-/* ===========================
-   LOADING STATES
-   =========================== */
-.wcefp-loading[aria-busy="true"] {
-	position: relative;
+.wcefp-status-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffecb5;
+    color: #664d03;
 }
 
-.wcefp-loading[aria-busy="true"]::after {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: rgba(255, 255, 255, 0.8);
-	display: flex;
-	align-items: center;
-	justify-content: center;
+.wcefp-status-info {
+    background-color: #d1ecf1;
+    border: 1px solid #b6d4ea;
+    color: #055160;
 }
 
-.wcefp-loading[aria-busy="true"]::before {
-	content: "Loading...";
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	z-index: 1;
-	background: #007cba;
-	color: white;
-	padding: 8px 16px;
-	border-radius: 4px;
-	font-size: 14px;
+/* ================================================
+   TOUCH AND MOBILE ACCESSIBILITY
+   ================================================ */
+
+@media (max-width: 768px) {
+    .wcefp-booking-form input,
+    .wcefp-booking-form select,
+    .wcefp-booking-form textarea,
+    .wcefp-booking-form button {
+        min-height: 44px; /* WCAG 2.1 AA minimum touch target */
+        font-size: 16px; /* Prevent iOS zoom */
+    }
+    
+    .wcefp-booking-form label {
+        font-size: 1rem;
+    }
 }
 
-/* ===========================
-   PRINT STYLES
-   =========================== */
+/* ================================================
+   PRINT ACCESSIBILITY
+   ================================================ */
+
 @media print {
+    .wcefp-skip-links,
+    .wcefp-language-switcher {
+        display: none !important;
+    }
+    
+    .wcefp-booking-form {
+        border: 1px solid #000000;
+        background: #ffffff !important;
+        color: #000000 !important;
+    }
+    
+    .wcefp-required::after {
+        content: " (Required)";
+        font-weight: normal;
+    }
+}
 
-	.wcefp-a11y-toolbar,
-	.wcefp-skip-links,
-	.wcefp-sr-only {
-		display: none !important;
-	}
+/* ================================================
+   ZOOM AND SCALING SUPPORT
+   ================================================ */
 
-	.wcefp-booking-form,
-	.wcefp-calendar {
-		color: #000 !important;
-		background: #fff !important;
-	}
+@media (min-resolution: 192dpi) {
+    .wcefp-booking-form input,
+    .wcefp-booking-form select,
+    .wcefp-booking-form textarea {
+        border-width: 0.5px;
+    }
+}
+
+/* Support for 200% zoom */
+@media (max-width: 640px) and (min-width: 320px) {
+    .wcefp-booking-form {
+        padding: 1rem 0.5rem;
+    }
+    
+    .wcefp-form-row {
+        flex-direction: column;
+    }
+    
+    .wcefp-form-col {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+}
+
+/* ================================================
+   ERROR PREVENTION AND RECOVERY
+   ================================================ */
+
+.wcefp-form-section {
+    margin-bottom: 2rem;
+}
+
+.wcefp-form-section:last-child {
+    margin-bottom: 0;
+}
+
+.wcefp-confirmation-dialog {
+    background: #ffffff;
+    border: 2px solid #0073aa;
+    border-radius: 4px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.wcefp-confirmation-dialog h3 {
+    margin-top: 0;
+    color: #0073aa;
+}
+
+.wcefp-confirmation-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+/* ================================================
+   COMPATIBILITY WITH ASSISTIVE TECHNOLOGIES
+   ================================================ */
+
+/* Ensure compatibility with Dragon NaturallySpeaking */
+.wcefp-booking-form [role="button"] {
+    cursor: pointer;
+}
+
+/* Ensure compatibility with JAWS */
+.wcefp-booking-form table {
+    border-collapse: collapse;
+}
+
+.wcefp-booking-form table th {
+    text-align: left;
+    font-weight: 600;
+}
+
+/* Ensure compatibility with NVDA */
+.wcefp-booking-form [aria-hidden="true"] {
+    display: none !important;
+}
+
+/* ================================================
+   CUSTOM PROPERTIES FOR CONSISTENCY
+   ================================================ */
+
+:root {
+    --wcefp-focus-color: #0073aa;
+    --wcefp-focus-offset: 2px;
+    --wcefp-error-color: #d63638;
+    --wcefp-success-color: #00a32a;
+    --wcefp-warning-color: #dba617;
+    --wcefp-info-color: #72aee6;
+    --wcefp-text-color: #1d2327;
+    --wcefp-border-color: #c3c4c7;
+    --wcefp-background-color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --wcefp-text-color: #ffffff;
+        --wcefp-border-color: #3e3e42;
+        --wcefp-background-color: #1e1e1e;
+    }
 }
