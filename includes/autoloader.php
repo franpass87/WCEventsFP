@@ -35,7 +35,11 @@ class WCEFP_Autoloader {
         'WCEFP_Enhanced_Features' => 'includes/Legacy/class-wcefp-enhanced-features.php',
         'WCEFP_Product_Types' => 'includes/Legacy/class-wcefp-product-types.php',
         'WC_Product_WCEFP_Event' => 'includes/Legacy/class-wcefp-product-types.php',
-        'WC_Product_WCEFP_Experience' => 'includes/Legacy/class-wcefp-product-types.php'
+        'WC_Product_WCEFP_Experience' => 'includes/Legacy/class-wcefp-product-types.php',
+        'WCEFP_Closures' => 'includes/Legacy/class-wcefp-closures.php',
+        'WCEFP_Validator' => 'includes/Legacy/class-wcefp-validator.php',
+        'WCEFP_MeetingPoints_CPT' => 'includes/Legacy/class-wcefp-meeting-points-cpt.php',
+        'WCEFP_Extra_Services' => 'includes/Legacy/class-wcefp-extra-services.php'
     ];
     
     /**

@@ -35,6 +35,7 @@ class WCEFP_Admin {
         add_submenu_page('wcefp', __('Analisi KPI','wceventsfp'), __('Analisi KPI','wceventsfp'), $cap,'wcefp',[__CLASS__,'render_kpi_page']);
         add_submenu_page('wcefp', __('Calendario & Lista','wceventsfp'), __('Calendario & Lista','wceventsfp'), $cap,'wcefp-calendar',[__CLASS__,'render_calendar_page']);
         add_submenu_page('wcefp', __('Chiusure straordinarie','wceventsfp'), __('Chiusure straordinarie','wceventsfp'), $cap,'wcefp-closures',['WCEFP_Closures','render_admin_page']);
+        add_submenu_page('wcefp', __('Performance','wceventsfp'), __('Performance','wceventsfp'), $cap,'wcefp-performance',[__CLASS__,'render_performance_page']);
         add_submenu_page('wcefp', __('Esporta','wceventsfp'), __('Esporta','wceventsfp'), $cap,'wcefp-export',[__CLASS__,'render_export_page']);
         add_submenu_page('wcefp', __('Impostazioni','wceventsfp'), __('Impostazioni','wceventsfp'), $cap,'wcefp-settings',[__CLASS__,'render_new_settings_page']);
     }
@@ -148,91 +149,115 @@ class WCEFP_Admin {
         if (!current_user_can('manage_woocommerce')) return;
 
         $kpi = self::get_kpi(30); // ultimi 30 giorni
+        $recent_bookings = self::get_recent_bookings(7); // ultimi 7 giorni
+        $next_occurrences = self::get_next_occurrences(5); // prossime 5
         ?>
         <div class="wrap">
             <div class="wcefp-page-header">
-                <h1><?php _e('Analisi KPI','wceventsfp'); ?></h1>
+                <h1><?php _e('Dashboard Eventi','wceventsfp'); ?></h1>
                 <p class="wcefp-page-description">
-                    <?php _e('Monitora le performance dei tuoi eventi ed esperienze con metriche dettagliate e indicatori chiave.', 'wceventsfp'); ?>
+                    <?php _e('Panoramica delle performance e attività recenti dei tuoi eventi ed esperienze.', 'wceventsfp'); ?>
                 </p>
-                <div class="wcefp-page-meta">
-                    <span class="wcefp-page-badge">
-                        📊 <?php _e('Dashboard Analitica', 'wceventsfp'); ?>
-                    </span>
-                    <span class="wcefp-page-badge">
-                        📅 <?php _e('Ultimi 30 giorni', 'wceventsfp'); ?>
-                    </span>
-                    <span class="wcefp-page-badge">
-                        🎯 <?php _e('Metriche in Tempo Reale', 'wceventsfp'); ?>
-                    </span>
-                </div>
             </div>
             
-            <div class="wcefp-kpi-grid">
+            <!-- Compact KPI Grid -->
+            <div class="wcefp-kpi-compact">
                 <div class="wcefp-kpi-card">
                     <div class="wcefp-kpi-header">
-                        <h3 class="wcefp-kpi-title"><?php _e('Ordini Totali','wceventsfp'); ?></h3>
+                        <h3><?php _e('Ordini (30gg)','wceventsfp'); ?></h3>
                         <div class="wcefp-kpi-icon">📈</div>
                     </div>
                     <p class="wcefp-kpi-value"><?php echo esc_html($kpi['orders_30']); ?></p>
-                    <div class="wcefp-kpi-change positive">
-                        <span>+12%</span>
-                        <span><?php _e('rispetto al mese precedente', 'wceventsfp'); ?></span>
-                    </div>
                 </div>
                 
                 <div class="wcefp-kpi-card">
                     <div class="wcefp-kpi-header">
-                        <h3 class="wcefp-kpi-title"><?php _e('Ricavi Totali','wceventsfp'); ?></h3>
+                        <h3><?php _e('Ricavi (30gg)','wceventsfp'); ?></h3>
                         <div class="wcefp-kpi-icon">💰</div>
                     </div>
                     <p class="wcefp-kpi-value">€ <?php echo number_format($kpi['revenue_30'],2,',','.'); ?></p>
-                    <div class="wcefp-kpi-change positive">
-                        <span>+18%</span>
-                        <span><?php _e('crescita ricavi', 'wceventsfp'); ?></span>
-                    </div>
                 </div>
                 
                 <div class="wcefp-kpi-card">
                     <div class="wcefp-kpi-header">
-                        <h3 class="wcefp-kpi-title"><?php _e('Tasso di Riempimento','wceventsfp'); ?></h3>
+                        <h3><?php _e('Riempimento','wceventsfp'); ?></h3>
                         <div class="wcefp-kpi-icon">🎯</div>
                     </div>
                     <p class="wcefp-kpi-value"><?php echo esc_html($kpi['fill_rate']); ?>%</p>
-                    <div class="wcefp-kpi-change <?php echo esc_attr(esc_attr($kpi['fill_rate'] >= 70 ? 'positive' : 'negative')); ?>">
-                        <span><?php echo esc_html($kpi['fill_rate'] >= 70 ? '+5%' : '-2%'); ?></span>
-                        <span><?php _e('capacità media', 'wceventsfp'); ?></span>
+                </div>
+            </div>
+            
+            <div class="wcefp-dashboard-grid">
+                <!-- Recent Bookings -->
+                <div class="wcefp-card">
+                    <div class="wcefp-card-header">
+                        <h3><?php _e('Prenotazioni Recenti (7gg)','wceventsfp'); ?></h3>
+                    </div>
+                    <div class="wcefp-card-body">
+                        <?php if (!empty($recent_bookings)): ?>
+                            <table class="wcefp-compact-table">
+                                <?php foreach ($recent_bookings as $booking): ?>
+                                <tr>
+                                    <td>
+                                        <strong><?php echo esc_html($booking['customer_name']); ?></strong><br>
+                                        <small><?php echo esc_html($booking['event_title']); ?></small>
+                                    </td>
+                                    <td>
+                                        <?php echo esc_html($booking['booking_date']); ?><br>
+                                        <small>€ <?php echo number_format($booking['total'], 2, ',', '.'); ?></small>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </table>
+                        <?php else: ?>
+                            <p><?php _e('Nessuna prenotazione negli ultimi 7 giorni.', 'wceventsfp'); ?></p>
+                        <?php endif; ?>
                     </div>
                 </div>
                 
-                <div class="wcefp-kpi-card">
-                    <div class="wcefp-kpi-header">
-                        <h3 class="wcefp-kpi-title"><?php _e('Top Esperienza','wceventsfp'); ?></h3>
-                        <div class="wcefp-kpi-icon">🏆</div>
+                <!-- Next Occurrences -->
+                <div class="wcefp-card">
+                    <div class="wcefp-card-header">
+                        <h3><?php _e('Prossimi Eventi','wceventsfp'); ?></h3>
                     </div>
-                    <p class="wcefp-kpi-value" style="font-size: 1.25rem; line-height: 1.4;">
-                        <?php echo esc_html($kpi['top_product'] ?: __('Nessun dato disponibile', 'wceventsfp')); ?>
-                    </p>
-                    <div class="wcefp-kpi-change positive">
-                        <span><?php _e('Più venduta', 'wceventsfp'); ?></span>
+                    <div class="wcefp-card-body">
+                        <?php if (!empty($next_occurrences)): ?>
+                            <table class="wcefp-compact-table">
+                                <?php foreach ($next_occurrences as $occurrence): ?>
+                                <tr>
+                                    <td>
+                                        <strong><?php echo esc_html($occurrence['event_title']); ?></strong><br>
+                                        <small><?php echo esc_html($occurrence['date_time']); ?></small>
+                                    </td>
+                                    <td>
+                                        <?php echo esc_html($occurrence['booked']); ?>/<?php echo esc_html($occurrence['capacity']); ?><br>
+                                        <small><?php echo esc_html($occurrence['status']); ?></small>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </table>
+                        <?php else: ?>
+                            <p><?php _e('Nessun evento programmato.', 'wceventsfp'); ?></p>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
             
+            <!-- Quick Actions -->
             <div class="wcefp-card">
                 <div class="wcefp-card-header">
-                    <h2 class="wcefp-card-title"><?php _e('Azioni Rapide', 'wceventsfp'); ?></h2>
+                    <h3><?php _e('Azioni Rapide', 'wceventsfp'); ?></h3>
                 </div>
                 <div class="wcefp-card-body">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div class="wcefp-quick-actions">
                         <a href="<?php echo admin_url('admin.php?page=wcefp-calendar'); ?>" class="wcefp-btn wcefp-btn-primary">
-                            📅 <?php _e('Gestisci Calendario', 'wceventsfp'); ?>
+                            📅 <?php _e('Calendario', 'wceventsfp'); ?>
                         </a>
-                        <a href="<?php echo admin_url('edit.php?post_type=product&product_type=evento'); ?>" class="wcefp-btn wcefp-btn-secondary">
-                            🎯 <?php _e('Crea Nuovo Evento', 'wceventsfp'); ?>
+                        <a href="<?php echo admin_url('edit.php?post_type=product'); ?>" class="wcefp-btn wcefp-btn-secondary">
+                            🎯 <?php _e('Nuovo Evento', 'wceventsfp'); ?>
                         </a>
                         <a href="<?php echo admin_url('admin.php?page=wcefp-export'); ?>" class="wcefp-btn wcefp-btn-success">
-                            📊 <?php _e('Esporta Dati', 'wceventsfp'); ?>
+                            📊 <?php _e('Esporta', 'wceventsfp'); ?>
                         </a>
                         <a href="<?php echo admin_url('admin.php?page=wcefp-settings'); ?>" class="wcefp-btn wcefp-btn-warning">
                             ⚙️ <?php _e('Impostazioni', 'wceventsfp'); ?>
@@ -316,6 +341,84 @@ class WCEFP_Admin {
             'fill_rate'  => (int)$fill_rate,
             'top_product'=> $top_product,
         ];
+    }
+
+    /**
+     * Get recent bookings for dashboard
+     *
+     * @param int $days Number of days to look back
+     * @return array Recent bookings
+     */
+    private static function get_recent_bookings($days = 7) {
+        $from = (new DateTime("-{$days} days"))->format('Y-m-d H:i:s');
+
+        $orders = wc_get_orders([
+            'limit'        => 10,
+            'type'         => 'shop_order',
+            'status'       => ['wc-processing','wc-completed','wc-on-hold'],
+            'date_created' => '>=' . $from,
+            'orderby'      => 'date',
+            'order'        => 'DESC',
+            'return'       => 'objects',
+        ]);
+
+        $bookings = [];
+        foreach ($orders as $order) {
+            foreach ($order->get_items() as $item) {
+                $product = $item->get_product();
+                if (!$product) continue;
+
+                $type = $product->get_type();
+                if ($type === 'wcefp_event' || $type === 'wcefp_experience') {
+                    $bookings[] = [
+                        'customer_name' => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+                        'event_title' => $product->get_name(),
+                        'booking_date' => $order->get_date_created()->format('d/m/Y H:i'),
+                        'total' => (float) $item->get_total()
+                    ];
+                }
+            }
+            if (count($bookings) >= 5) break; // Limit to 5 entries
+        }
+
+        return $bookings;
+    }
+
+    /**
+     * Get next occurrences for dashboard
+     *
+     * @param int $limit Number of occurrences to return
+     * @return array Next occurrences
+     */
+    private static function get_next_occurrences($limit = 5) {
+        global $wpdb;
+        $tbl = $wpdb->prefix . 'wcefp_occurrences';
+        
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT o.*, p.post_title as event_title
+                 FROM $tbl o
+                 LEFT JOIN {$wpdb->posts} p ON o.product_id = p.ID
+                 WHERE o.start_datetime >= NOW() AND o.status = 'active'
+                 ORDER BY o.start_datetime ASC
+                 LIMIT %d",
+                $limit
+            ), ARRAY_A
+        );
+
+        $occurrences = [];
+        foreach ($rows as $row) {
+            $datetime = new DateTime($row['start_datetime']);
+            $occurrences[] = [
+                'event_title' => $row['event_title'] ?: 'Unknown Event',
+                'date_time' => $datetime->format('d/m/Y H:i'),
+                'capacity' => (int)$row['capacity'],
+                'booked' => (int)$row['booked_seats'],
+                'status' => ucfirst($row['status'])
+            ];
+        }
+
+        return $occurrences;
     }
 
 
@@ -583,6 +686,192 @@ class WCEFP_Admin {
         // Use the new settings class
         $settings = WCEFP_Admin_Settings::get_instance();
         $settings->render_settings_page();
+    }
+
+    /**
+     * Render the performance monitoring page
+     */
+    public static function render_performance_page() {
+        if (!current_user_can('manage_woocommerce')) {
+            return;
+        }
+
+        $performance_data = self::get_performance_data();
+        ?>
+        <div class="wrap">
+            <div class="wcefp-page-header">
+                <h1><?php _e('Performance & Sistema','wceventsfp'); ?></h1>
+                <p class="wcefp-page-description">
+                    <?php _e('Monitoraggio delle performance del plugin e statistiche del sistema.', 'wceventsfp'); ?>
+                </p>
+            </div>
+            
+            <!-- System Status Grid -->
+            <div class="wcefp-performance-grid">
+                <div class="wcefp-card wcefp-status-card">
+                    <div class="wcefp-card-header">
+                        <h3><?php _e('Stato Sistema','wceventsfp'); ?></h3>
+                        <div class="wcefp-status-indicator <?php echo esc_attr($performance_data['status']); ?>"></div>
+                    </div>
+                    <div class="wcefp-card-body">
+                        <table class="wcefp-status-table">
+                            <tr>
+                                <td><strong><?php _e('PHP Version','wceventsfp'); ?></strong></td>
+                                <td><?php echo esc_html(PHP_VERSION); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><?php _e('WordPress Version','wceventsfp'); ?></strong></td>
+                                <td><?php echo esc_html(get_bloginfo('version')); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><?php _e('WooCommerce Version','wceventsfp'); ?></strong></td>
+                                <td><?php echo esc_html(defined('WC_VERSION') ? WC_VERSION : 'N/A'); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><?php _e('Plugin Version','wceventsfp'); ?></strong></td>
+                                <td><?php echo esc_html(WCEFP_VERSION); ?></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="wcefp-card">
+                    <div class="wcefp-card-header">
+                        <h3><?php _e('Database','wceventsfp'); ?></h3>
+                    </div>
+                    <div class="wcefp-card-body">
+                        <table class="wcefp-status-table">
+                            <tr>
+                                <td><strong><?php _e('Occorrenze Totali','wceventsfp'); ?></strong></td>
+                                <td><?php echo esc_html($performance_data['db']['occurrences']); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><?php _e('Prenotazioni Totali','wceventsfp'); ?></strong></td>
+                                <td><?php echo esc_html($performance_data['db']['bookings']); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><?php _e('Voucher Attivi','wceventsfp'); ?></strong></td>
+                                <td><?php echo esc_html($performance_data['db']['vouchers']); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><?php _e('Chiusure Attive','wceventsfp'); ?></strong></td>
+                                <td><?php echo esc_html($performance_data['db']['closures']); ?></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="wcefp-card">
+                    <div class="wcefp-card-header">
+                        <h3><?php _e('Performance','wceventsfp'); ?></h3>
+                    </div>
+                    <div class="wcefp-card-body">
+                        <table class="wcefp-status-table">
+                            <tr>
+                                <td><strong><?php _e('Memory Limit','wceventsfp'); ?></strong></td>
+                                <td><?php echo esc_html(ini_get('memory_limit')); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><?php _e('Memory Usage','wceventsfp'); ?></strong></td>
+                                <td><?php echo esc_html(size_format(memory_get_usage(true))); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><?php _e('Peak Memory','wceventsfp'); ?></strong></td>
+                                <td><?php echo esc_html(size_format(memory_get_peak_usage(true))); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong><?php _e('PHP Time Limit','wceventsfp'); ?></strong></td>
+                                <td><?php echo esc_html(ini_get('max_execution_time')) . 's'; ?></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Autoload Options Check -->
+            <div class="wcefp-card">
+                <div class="wcefp-card-header">
+                    <h3><?php _e('Opzioni Autoload','wceventsfp'); ?></h3>
+                    <p><?php _e('Opzioni caricate automaticamente ad ogni request. Soglia consigliata: < 1MB','wceventsfp'); ?></p>
+                </div>
+                <div class="wcefp-card-body">
+                    <?php 
+                    $autoload_size = $performance_data['autoload_size'];
+                    $autoload_class = $autoload_size > 1024*1024 ? 'wcefp-status-warning' : 'wcefp-status-good';
+                    ?>
+                    <div class="wcefp-metric-large <?php echo esc_attr($autoload_class); ?>">
+                        <span class="wcefp-metric-value"><?php echo esc_html(size_format($autoload_size)); ?></span>
+                        <span class="wcefp-metric-label"><?php _e('Dimensione Autoload','wceventsfp'); ?></span>
+                    </div>
+                    
+                    <?php if ($autoload_size > 1024*1024): ?>
+                    <div class="wcefp-notice wcefp-notice-warning">
+                        <p><?php _e('⚠️ La dimensione dell\'autoload è superiore alla soglia consigliata. Considera l\'ottimizzazione delle opzioni.','wceventsfp'); ?></p>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            
+            <!-- Cron Jobs Status -->
+            <div class="wcefp-card">
+                <div class="wcefp-card-header">
+                    <h3><?php _e('Cron Jobs','wceventsfp'); ?></h3>
+                </div>
+                <div class="wcefp-card-body">
+                    <?php $cron_status = $performance_data['cron_working'] ? 'good' : 'error'; ?>
+                    <div class="wcefp-status-indicator-inline <?php echo esc_attr($cron_status); ?>">
+                        <?php echo $performance_data['cron_working'] ? 
+                            __('✅ Funzionante','wceventsfp') : 
+                            __('❌ Non funzionante','wceventsfp'); ?>
+                    </div>
+                    
+                    <?php if (!$performance_data['cron_working']): ?>
+                    <div class="wcefp-notice wcefp-notice-error" style="margin-top: 10px;">
+                        <p><?php _e('I cron job di WordPress non funzionano correttamente. Questo potrebbe influenzare le funzionalità automatiche del plugin.','wceventsfp'); ?></p>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            
+        </div>
+        <?php
+    }
+
+    /**
+     * Get performance data for the system
+     * 
+     * @return array Performance metrics
+     */
+    private static function get_performance_data() {
+        global $wpdb;
+        
+        // Get database counts
+        $db_counts = [
+            'occurrences' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wcefp_occurrences"),
+            'bookings' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wcefp_bookings"),
+            'vouchers' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wcefp_vouchers WHERE status != 'used'"),
+            'closures' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wcefp_closures WHERE end_date >= CURDATE()")
+        ];
+        
+        // Get autoload options size
+        $autoload_size = (int) $wpdb->get_var(
+            "SELECT SUM(LENGTH(option_value)) FROM {$wpdb->options} WHERE autoload = 'yes'"
+        );
+        
+        // Check if cron is working
+        $cron_working = !defined('DISABLE_WP_CRON') || !DISABLE_WP_CRON;
+        
+        // Determine overall status
+        $status = 'good';
+        if ($autoload_size > 1024*1024) $status = 'warning';
+        if (!$cron_working) $status = 'error';
+        
+        return [
+            'status' => $status,
+            'db' => $db_counts,
+            'autoload_size' => $autoload_size,
+            'cron_working' => $cron_working
+        ];
     }
 }
 add_action('admin_head', function () { ?>

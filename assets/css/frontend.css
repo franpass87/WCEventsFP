@@ -447,3 +447,135 @@
 		transform: scale(1);
 	}
 }
+
+/* Extra Services Frontend */
+.wcefp-extra-services-wrapper {
+	background: #f8fafc;
+	border-radius: 16px;
+	padding: 24px;
+	margin: 24px 0;
+	border: 1px solid #e2e8f0;
+}
+
+.wcefp-extra-services-wrapper h3 {
+	margin: 0 0 20px 0;
+	color: #1e293b;
+	font-size: 1.25rem;
+	font-weight: 600;
+}
+
+.wcefp-extra-service {
+	background: #fff;
+	border-radius: 12px;
+	padding: 20px;
+	margin-bottom: 16px;
+	border: 1px solid #e2e8f0;
+	transition: all 0.3s ease;
+}
+
+.wcefp-extra-service:hover {
+	border-color: #667eea;
+	box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.wcefp-extra-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 8px;
+}
+
+.wcefp-extra-name {
+	font-weight: 600;
+	color: #1e293b;
+	font-size: 1.1rem;
+}
+
+.wcefp-extra-price {
+	color: #059669;
+	font-weight: 600;
+	font-size: 1.1rem;
+}
+
+.wcefp-extra-description {
+	color: #64748b;
+	margin: 8px 0 16px 0;
+	font-size: 0.9rem;
+	line-height: 1.5;
+}
+
+.wcefp-extra-controls {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.wcefp-extra-checkbox,
+.wcefp-extra-select {
+	border: 2px solid #e2e8f0;
+	border-radius: 8px;
+	padding: 8px 12px;
+	transition: border-color 0.3s ease;
+}
+
+.wcefp-extra-checkbox:checked {
+	accent-color: #667eea;
+}
+
+.wcefp-extra-select:focus {
+	border-color: #667eea;
+	outline: none;
+	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.wcefp-required-badge {
+	background: #fbbf24;
+	color: #92400e;
+	padding: 4px 12px;
+	border-radius: 6px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.wcefp-extra-total {
+	background: #667eea;
+	color: #fff;
+	padding: 16px 20px;
+	border-radius: 12px;
+	text-align: center;
+	margin-top: 20px;
+	font-size: 1.1rem;
+}
+
+.wcefp-extra-total-amount {
+	font-weight: 700;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+	.wcefp-extra-services-wrapper {
+		padding: 16px;
+	}
+	
+	.wcefp-extra-service {
+		padding: 16px;
+	}
+	
+	.wcefp-extra-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+	}
+	
+	.wcefp-extra-controls {
+		flex-direction: column;
+		align-items: flex-start;
+		width: 100%;
+		gap: 8px;
+	}
+	
+	.wcefp-extra-select {
+		width: 100%;
+	}
+}

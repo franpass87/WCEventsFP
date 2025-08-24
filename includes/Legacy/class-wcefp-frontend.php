@@ -6,104 +6,131 @@ class WCEFP_Frontend {
 
     /* ---------- Shortcode [wcefp_booking product_id="123"] ---------- */
     public static function shortcode_booking($atts) {
-        $a = shortcode_atts(['product_id'=>0], $atts);
-        $pid = intval($a['product_id']);
-        if (!$pid) return '<p>'.__('Seleziona un prodotto valido.','wceventsfp').'</p>';
+        try {
+            $a = shortcode_atts(['product_id'=>0], $atts);
+            $pid = intval($a['product_id']);
+            if (!$pid) return '<p>'.__('Seleziona un prodotto valido.','wceventsfp').'</p>';
 
-        $price_adult = floatval(get_post_meta($pid, '_wcefp_price_adult', true));
-        $price_child = floatval(get_post_meta($pid, '_wcefp_price_child', true));
-        $languages   = sanitize_text_field(get_post_meta($pid, '_wcefp_languages', true));
+            // Check if product exists and is valid
+            $product = wc_get_product($pid);
+            if (!$product) {
+                if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                    error_log('WCEFP: Product not found in shortcode_booking: ' . $pid);
+                }
+                return '<p>'.__('Prodotto non trovato.','wceventsfp').'</p>';
+            }
 
-        $uid = 'wcefp-' . uniqid();
+            $price_adult = floatval(get_post_meta($pid, '_wcefp_price_adult', true));
+            $price_child = floatval(get_post_meta($pid, '_wcefp_price_child', true));
+            $languages   = sanitize_text_field(get_post_meta($pid, '_wcefp_languages', true));
 
-        global $wpdb;
-        $tbl = $wpdb->prefix.'wcefp_product_extras';
-        $posts = $wpdb->prefix.'posts';
-        $rows = $wpdb->get_results($wpdb->prepare("SELECT pe.*, p.post_title, p.post_content FROM $tbl pe LEFT JOIN $posts p ON p.ID=pe.extra_id WHERE pe.product_id=%d ORDER BY pe.sort_order ASC", $pid), ARRAY_A);
-        $extras = [];
-        foreach ($rows as $r) {
-            $extras[] = [
-                'id' => intval($r['extra_id']),
-                'name' => $r['post_title'],
-                'desc' => wp_trim_words($r['post_content'], 20),
-                'pricing_type' => $r['pricing_type'],
-                'price' => floatval($r['price']),
-                'required' => intval($r['required']) ? 1 : 0,
-                'max_qty' => intval($r['max_qty']),
-                'stock' => intval($r['stock'])
-            ];
-        }
+            $uid = 'wcefp-' . uniqid();
 
-        // Voucher in sessione: se combacia con il prodotto, prezzo 0
-        $voucherActive = false;
-        if (function_exists('WC')) {
-            $vPid = intval(WC()->session->get('wcefp_voucher_product', 0));
-            $voucherActive = ($vPid === $pid);
-        }
+            global $wpdb;
+            $tbl = $wpdb->prefix.'wcefp_product_extras';
+            $posts = $wpdb->prefix.'posts';
+            $rows = $wpdb->get_results($wpdb->prepare("SELECT pe.*, p.post_title, p.post_content FROM $tbl pe LEFT JOIN $posts p ON p.ID=pe.extra_id WHERE pe.product_id=%d ORDER BY pe.sort_order ASC", $pid), ARRAY_A);
+            $extras = [];
+            if ($rows) {
+                foreach ($rows as $r) {
+                    $extras[] = [
+                        'id' => intval($r['extra_id']),
+                        'name' => $r['post_title'],
+                        'desc' => wp_trim_words($r['post_content'], 20),
+                        'pricing_type' => $r['pricing_type'],
+                        'price' => floatval($r['price']),
+                        'required' => intval($r['required']) ? 1 : 0,
+                        'max_qty' => intval($r['max_qty']),
+                        'stock' => intval($r['stock'])
+                    ];
+                }
+            }
 
-        ob_start(); ?>
-        <div class="wcefp-widget" data-="<?php echo esc_attr(esc_attr($pid)); ?>" data-="<?php echo esc_attr(esc_attr($price_adult)); ?>" data-="<?php echo esc_attr(esc_attr($price_child)); ?>" data-="<?php echo esc_attr($voucherActive?'1':'0'); ?>">
-            <?php if ($voucherActive): ?>
-                <div class="wcefp-voucher-banner"><?php _e('Voucher attivo: questa prenotazione sarà a costo 0€','wceventsfp'); ?></div>
-            <?php endif; ?>
-            <?php if ($languages): ?>
-            <div class="wcefp-languages">
-                <?php foreach (array_filter(array_map('trim', explode(',', strtoupper($languages)))) as $lang): ?>
-                    <span class="wcefp-lang-badge"><?php echo esc_html($lang); ?></span>
-                <?php endforeach; ?>
-            </div>
-            <?php endif; ?>
-            <div class="wcefp-row">
-                <label for="<?php echo esc_attr(esc_attr($uid)); ?>-date"><?php _e('Data','wceventsfp'); ?></label>
-                <input type="date" id="<?php echo esc_attr(esc_attr($uid)); ?>-date" class="wcefp-date" />
-            </div>
-            <div class="wcefp-row">
-                <label for="<?php echo esc_attr(esc_attr($uid)); ?>-slot"><?php _e('Slot','wceventsfp'); ?></label>
-                <select id="<?php echo esc_attr(esc_attr($uid)); ?>-slot" class="wcefp-slot"><option value=""><?php _e('Seleziona orario','wceventsfp'); ?></option></select>
-            </div>
-            <div class="wcefp-row">
-                <label for="<?php echo esc_attr(esc_attr($uid)); ?>-adults"><?php _e('Adulti','wceventsfp'); ?></label>
-                <input type="number" id="<?php echo esc_attr(esc_attr($uid)); ?>-adults" class="wcefp-adults" min="0" value="1" />
-            </div>
-            <div class="wcefp-row">
-                <label for="<?php echo esc_attr(esc_attr($uid)); ?>-children"><?php _e('Bambini','wceventsfp'); ?></label>
-                <input type="number" id="<?php echo esc_attr(esc_attr($uid)); ?>-children" class="wcefp-children" min="0" value="0" />
-            </div>
-            <?php if (!empty($extras)) : ?>
-            <div class="wcefp-row">
-                <label><?php _e('Extra','wceventsfp'); ?></label>
-                <div class="wcefp-extras">
-                    <?php foreach ($extras as $i=>$ex): ?>
-                        <?php $toggle = ($ex['max_qty']==1 && !$ex['required']); ?>
-                        <?php $desc_id = $uid . '-extra-desc-' . $i; ?>
-                        <div class="wcefp-extra-row" data-="<?php echo esc_attr(esc_attr(esc_attr($ex['id']))); ?>" data-="<?php echo esc_attr(esc_attr($ex['name'])); ?>" data-="<?php echo esc_attr(esc_attr($ex['price'])); ?>" data-="<?php echo esc_attr(esc_attr($ex['pricing_type'])); ?>">
-                            <span class="wcefp-extra-label"><?php echo esc_html($ex['name']); ?> (+€<?php echo esc_html($ex['price']); ?>)</span>
-                            <?php if($toggle): ?>
-                                <input type="checkbox" class="wcefp-extra-toggle" aria-describedby="<?php echo esc_html($desc_id); ?>" />
-                            <?php else: ?>
-                                <input type="number" class="wcefp-extra-qty" min="<?php echo $ex['required']?1:0; ?>" value="<?php echo $ex['required']?1:0; ?>" <?php if($ex['required']) echo 'readonly'; ?> <?php if($ex['max_qty']>0) echo 'max="'.esc_attr($ex['max_qty']).'"'; ?> aria-describedby="<?php echo esc_html($desc_id); ?>" />
-                            <?php endif; ?>
-                            <?php if($ex['desc']) echo '<small class="wcefp-extra-desc" id="'.$desc_id.'">'.esc_html($ex['desc']).'</small>'; ?>
-                        </div>
+            // Voucher in sessione: se combacia con il prodotto, prezzo 0
+            $voucherActive = false;
+            if (function_exists('WC') && WC()->session) {
+                $vPid = intval(WC()->session->get('wcefp_voucher_product', 0));
+                $voucherActive = ($vPid === $pid);
+            }
+
+            ob_start(); ?>
+            <div class="wcefp-widget" data-product-id="<?php echo esc_attr($pid); ?>" data-price-adult="<?php echo esc_attr($price_adult); ?>" data-price-child="<?php echo esc_attr($price_child); ?>" data-voucher="<?php echo esc_attr($voucherActive?'1':'0'); ?>">
+                <?php if ($voucherActive): ?>
+                    <div class="wcefp-voucher-banner"><?php _e('Voucher attivo: questa prenotazione sarà a costo 0€','wceventsfp'); ?></div>
+                <?php endif; ?>
+                <?php if ($languages): ?>
+                <div class="wcefp-languages">
+                    <?php foreach (array_filter(array_map('trim', explode(',', strtoupper($languages)))) as $lang): ?>
+                        <span class="wcefp-lang-badge"><?php echo esc_html($lang); ?></span>
                     <?php endforeach; ?>
                 </div>
-            </div>
-            <?php endif; ?>
+                <?php endif; ?>
+                <div class="wcefp-row">
+                    <label for="<?php echo esc_attr($uid); ?>-date"><?php _e('Data','wceventsfp'); ?></label>
+                    <input type="date" id="<?php echo esc_attr($uid); ?>-date" class="wcefp-date" />
+                </div>
+                <div class="wcefp-row">
+                    <label for="<?php echo esc_attr($uid); ?>-slot"><?php _e('Slot','wceventsfp'); ?></label>
+                    <select id="<?php echo esc_attr($uid); ?>-slot" class="wcefp-slot"><option value=""><?php _e('Seleziona orario','wceventsfp'); ?></option></select>
+                </div>
+                <div class="wcefp-row">
+                    <label for="<?php echo esc_attr($uid); ?>-adults"><?php _e('Adulti','wceventsfp'); ?></label>
+                    <input type="number" id="<?php echo esc_attr($uid); ?>-adults" class="wcefp-adults" min="0" value="1" />
+                </div>
+                <div class="wcefp-row">
+                    <label for="<?php echo esc_attr($uid); ?>-children"><?php _e('Bambini','wceventsfp'); ?></label>
+                    <input type="number" id="<?php echo esc_attr($uid); ?>-children" class="wcefp-children" min="0" value="0" />
+                </div>
+                <?php if (!empty($extras)) : ?>
+                <div class="wcefp-row">
+                    <label><?php _e('Extra','wceventsfp'); ?></label>
+                    <div class="wcefp-extras">
+                        <?php foreach ($extras as $i=>$ex): ?>
+                            <?php $toggle = ($ex['max_qty']==1 && !$ex['required']); ?>
+                            <?php $desc_id = $uid . '-extra-desc-' . $i; ?>
+                            <div class="wcefp-extra-row" data-id="<?php echo esc_attr($ex['id']); ?>" data-name="<?php echo esc_attr($ex['name']); ?>" data-price="<?php echo esc_attr($ex['price']); ?>" data-pricing="<?php echo esc_attr($ex['pricing_type']); ?>">
+                                <span class="wcefp-extra-label"><?php echo esc_html($ex['name']); ?> (+€<?php echo esc_html($ex['price']); ?>)</span>
+                                <?php if($toggle): ?>
+                                    <input type="checkbox" class="wcefp-extra-toggle" aria-describedby="<?php echo esc_attr($desc_id); ?>" />
+                                <?php else: ?>
+                                    <input type="number" class="wcefp-extra-qty" min="<?php echo $ex['required']?1:0; ?>" value="<?php echo $ex['required']?1:0; ?>" <?php if($ex['required']) echo 'readonly'; ?> <?php if($ex['max_qty']>0) echo 'max="'.esc_attr($ex['max_qty']).'"'; ?> aria-describedby="<?php echo esc_attr($desc_id); ?>" />
+                                <?php endif; ?>
+                                <?php if($ex['desc']) echo '<small class="wcefp-extra-desc" id="'.esc_attr($desc_id).'">'.esc_html($ex['desc']).'</small>'; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
 
-            <div class="wcefp-row wcefp-total-row">
-                <strong><?php _e('Totale stimato','wceventsfp'); ?>:</strong>
-                <span class="wcefp-total">€ 0,00</span>
-            </div>
+                <div class="wcefp-row wcefp-total-row">
+                    <strong><?php _e('Totale stimato','wceventsfp'); ?>:</strong>
+                    <span class="wcefp-total">€ 0,00</span>
+                </div>
 
-            <?php $fb_id = $uid . '-feedback'; ?>
-            <div class="wcefp-row">
-                <button class="wcefp-add button" aria-describedby="<?php echo esc_attr($fb_id); ?>"><?php _e('Aggiungi al carrello','wceventsfp'); ?></button>
-                <span class="wcefp-feedback" id="<?php echo esc_attr(esc_attr($fb_id)); ?>" role="status" style="margin-left:8px;"></span>
+                <?php $fb_id = $uid . '-feedback'; ?>
+                <div class="wcefp-row">
+                    <button class="wcefp-add button" aria-describedby="<?php echo esc_attr($fb_id); ?>"><?php _e('Aggiungi al carrello','wceventsfp'); ?></button>
+                <span class="wcefp-feedback" id="<?php echo esc_attr($fb_id); ?>" role="status" style="margin-left:8px;"></span>
             </div>
         </div>
         <script>window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'view_item',ecommerce:{items:[{item_id:'<?php echo esc_js($pid); ?>',item_name:'<?php echo esc_js(get_the_title($pid)); ?>',item_category:'event'}]}});</script>
         <?php
         return ob_get_clean();
+        
+        } catch (\Throwable $e) {
+            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                error_log('WCEFP: Error in shortcode_booking: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            }
+            
+            // Return user-friendly error message
+            if (!current_user_can('manage_options') || (!defined('WP_DEBUG') || !WP_DEBUG)) {
+                return '<p>' . __('Booking system temporarily unavailable. Please contact us directly.', 'wceventsfp') . '</p>';
+            } else {
+                return '<div class="wcefp-debug-error notice notice-error" style="padding: 10px; border: 1px solid #dc3232;">' .
+                       '<strong>WCEFP Debug Error:</strong> ' . esc_html($e->getMessage()) . 
+                       '</div>';
+            }
+        }
     }
 
     /* ---------- Render automatico su pagina prodotto ---------- */
@@ -111,12 +138,29 @@ class WCEFP_Frontend {
         try {
             global $product;
             if (!$product || !in_array($product->get_type(), ['wcefp_event','wcefp_experience'], true)) return;
-            echo self::shortcode_booking(['product_id' => $product->get_id()]);
+            
+            // Use safe renderer to prevent WSOD
+            if (class_exists('\WCEFP\Utils\SafeRenderer')) {
+                echo \WCEFP\Utils\SafeRenderer::safe_booking_widget($product->get_id());
+            } else {
+                // Fallback to direct call with basic error handling
+                echo self::shortcode_booking(['product_id' => $product->get_id()]);
+            }
             self::render_gift_form();
-        } catch (Error $e) {
-            error_log('WCEFP: Fatal error in render_booking_widget_auto: ' . $e->getMessage());
-        } catch (Exception $e) {
-            error_log('WCEFP: Exception in render_booking_widget_auto: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                error_log('WCEFP: Error in render_booking_widget_auto: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            }
+            
+            // User-friendly fallback for frontend
+            if (!current_user_can('manage_options') || (!defined('WP_DEBUG') || !WP_DEBUG)) {
+                echo '<!-- WCEFP Error: Booking widget failed to load -->';
+            } else {
+                echo '<div class="wcefp-debug-error notice notice-error" style="padding: 15px; margin: 20px 0; border: 1px solid #dc3232;">';
+                echo '<p><strong>WCEFP Debug Error:</strong> ' . esc_html($e->getMessage()) . '</p>';
+                echo '<p><small>File: ' . esc_html($e->getFile()) . ' Line: ' . $e->getLine() . '</small></p>';
+                echo '</div>';
+            }
         }
     }
 
@@ -658,7 +702,65 @@ class WCEFP_Frontend {
         return $data;
     }
 }
+
+/* ---------- Safe initialization and hooks ---------- */
+// Initialize the class and hooks safely
+if (!function_exists('wcefp_init_frontend_safely')) {
+    function wcefp_init_frontend_safely() {
+        try {
+            // Load SafeRenderer utility
+            if (file_exists(WCEFP_PLUGIN_DIR . 'includes/Utils/SafeRenderer.php')) {
+                require_once WCEFP_PLUGIN_DIR . 'includes/Utils/SafeRenderer.php';
+            }
+            
+            // Add WooCommerce single product hook with error protection
+            add_action('woocommerce_single_product_summary', function() {
+                try {
+                    if (class_exists('WCEFP_Frontend')) {
+                        WCEFP_Frontend::render_booking_widget_auto();
+                    }
+                } catch (\Throwable $e) {
+                    if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                        error_log('WCEFP: Error in single product hook: ' . $e->getMessage());
+                    }
+                    echo '<!-- WCEFP Error: Booking widget failed to load -->';
+                }
+            }, 25); // After price, before add to cart
+            
+            // Safe frontend asset enqueuing
+            add_action('wp_enqueue_scripts', function() {
+                try {
+                    if (class_exists('\WCEFP\Utils\SafeRenderer')) {
+                        \WCEFP\Utils\SafeRenderer::safe_enqueue_frontend_assets();
+                    }
+                } catch (\Throwable $e) {
+                    if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                        error_log('WCEFP: Error enqueuing frontend assets: ' . $e->getMessage());
+                    }
+                }
+            });
+            
+        } catch (\Throwable $e) {
+            if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+                error_log('WCEFP: Error in frontend initialization: ' . $e->getMessage());
+            }
+        }
+    }
+    
+    // Hook the safe initialization
+    add_action('init', 'wcefp_init_frontend_safely', 20);
+}
+
+/* ---------- Legacy hooks with error protection ---------- */
 WCEFP_Gift_PDF::init();
-add_filter('woocommerce_add_cart_item_data', ['WCEFP_Frontend','capture_gift_cart'], 10, 3);
-add_filter('woocommerce_get_item_data', ['WCEFP_Frontend','display_gift_item'], 10, 2);
-add_action('woocommerce_thankyou', ['WCEFP_Frontend','thankyou_gift_links'], 40);
+
+// Wrap legacy hooks with error handling
+try {
+    add_filter('woocommerce_add_cart_item_data', ['WCEFP_Frontend','capture_gift_cart'], 10, 3);
+    add_filter('woocommerce_get_item_data', ['WCEFP_Frontend','display_gift_item'], 10, 2);
+    add_action('woocommerce_thankyou', ['WCEFP_Frontend','thankyou_gift_links'], 40);
+} catch (\Throwable $e) {
+    if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+        error_log('WCEFP: Error registering legacy hooks: ' . $e->getMessage());
+    }
+}

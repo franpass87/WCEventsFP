@@ -268,10 +268,14 @@ class BookingsListTable extends \WP_List_Table {
         
         $actions = [];
         
-        // View/Edit action
-        $actions['edit'] = sprintf(
+        // View action with proper nonce
+        $view_url = wp_nonce_url(
+            admin_url('admin.php?page=wcefp-booking-view&booking_id=' . $booking_id),
+            'wcefp_view_booking'
+        );
+        $actions['view'] = sprintf(
             '<a href="%s" class="button button-small" title="%s" aria-label="%s">%s</a>',
-            admin_url('admin.php?page=wcefp-bookings&action=edit&booking=' . $booking_id),
+            $view_url,
             esc_attr__('View booking details', 'wceventsfp'),
             esc_attr__('View booking details', 'wceventsfp'),
             __('View', 'wceventsfp')

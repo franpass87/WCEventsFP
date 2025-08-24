@@ -95,6 +95,24 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
         if (class_exists('WCEFP_Recurring')) {
             add_action('wp_ajax_wcefp_generate_occurrences', ['WCEFP_Recurring', 'ajax_generate_occurrences']);
         }
+        
+        // AJAX handlers for closures management
+        if (class_exists('WCEFP_Closures')) {
+            add_action('wp_ajax_wcefp_add_closure', ['WCEFP_Closures', 'ajax_add_closure']);
+            add_action('wp_ajax_wcefp_delete_closure', ['WCEFP_Closures', 'ajax_delete_closure']);
+            add_action('wp_ajax_wcefp_list_closures', ['WCEFP_Closures', 'ajax_list_closures']);
+        }
+        
+        // AJAX handlers for meeting points
+        if (class_exists('WCEFP_MeetingPoints_CPT')) {
+            add_action('wp_ajax_wcefp_get_meeting_points', ['WCEFP_MeetingPoints_CPT', 'ajax_get_meeting_points']);
+        }
+        
+        // AJAX handlers for extra services
+        if (class_exists('WCEFP_Extra_Services')) {
+            add_action('wp_ajax_wcefp_update_extra_services_price', ['WCEFP_Extra_Services', 'ajax_update_price']);
+            add_action('wp_ajax_nopriv_wcefp_update_extra_services_price', ['WCEFP_Extra_Services', 'ajax_update_price']);
+        }
     }
 
 }

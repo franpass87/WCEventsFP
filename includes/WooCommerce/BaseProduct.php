@@ -35,7 +35,7 @@ abstract class BaseProduct extends \WC_Product {
             'duration' => get_post_meta($product_id, '_wcefp_duration', true),
             'max_participants' => get_post_meta($product_id, '_wcefp_max_participants', true),
             'location' => get_post_meta($product_id, '_wcefp_location', true),
-            'meeting_point' => get_post_meta($product_id, '_wcefp_meeting_point', true),
+            'meeting_point' => $this->get_meeting_point_text(),
             'included_services' => get_post_meta($product_id, '_wcefp_included_services', true),
             'excluded_services' => get_post_meta($product_id, '_wcefp_excluded_services', true),
             'requirements' => get_post_meta($product_id, '_wcefp_requirements', true),
@@ -188,6 +188,40 @@ abstract class BaseProduct extends \WC_Product {
      */
     public function needs_shipping() {
         return false;
+    }
+    
+    /**
+     * Get meeting point text for display
+     * 
+     * @return string Meeting point text
+     */
+    public function get_meeting_point_text() {
+        $product_id = $this->get_id();
+        
+        // Check for custom override first
+        $custom_meeting_point = get_post_meta($product_id, '_wcefp_meeting_point_custom', true);
+        if ($custom_meeting_point) {
+            return $custom_meeting_point;
+        }
+        
+        // Check for selected meeting point ID
+        $meeting_point_id = get_post_meta($product_id, '_wcefp_meeting_point_id', true);
+        if ($meeting_point_id && class_exists('WCEFP_MeetingPoints_CPT')) {
+            $mp_data = WCEFP_MeetingPoints_CPT::get_meeting_point_data($meeting_point_id);
+            if ($mp_data) {
+                $text = $mp_data['title'];
+                if ($mp_data['address'] || $mp_data['city']) {
+                    $text .= ' - ' . trim($mp_data['address'] . ', ' . $mp_data['city'], ', ');
+                }
+                if ($mp_data['notes']) {
+                    $text .= "\n" . $mp_data['notes'];
+                }
+                return $text;
+            }
+        }
+        
+        // Fallback to old meeting point field
+        return get_post_meta($product_id, '_wcefp_meeting_point', true);
     }
     
     /**
