@@ -9,6 +9,8 @@
 
 namespace WCEFP\Core\Assets;
 
+use WCEFP\Utils\StringHelper;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -183,11 +185,11 @@ class AssetManager {
         ]);
         
         // Enqueue additional assets based on page
-        if (strpos($screen->id, 'wcefp_analytics') !== false) {
+        if (StringHelper::safe_strpos($screen->id, 'wcefp_analytics') !== false) {
             wp_enqueue_script('chart-js', $this->plugin_url . 'assets/js/chart.min.js', [], $this->version);
         }
         
-        if (strpos($screen->id, 'wcefp_calendar') !== false) {
+        if (StringHelper::safe_strpos($screen->id, 'wcefp_calendar') !== false) {
             wp_enqueue_script('fullcalendar', $this->plugin_url . 'assets/js/fullcalendar.min.js', [], $this->version);
         }
     }
@@ -309,7 +311,7 @@ class AssetManager {
         }
         
         // WCEFP admin pages
-        if (strpos($screen->id, 'wcefp') !== false) {
+        if (StringHelper::safe_strpos($screen->id, 'wcefp') !== false) {
             return true;
         }
         

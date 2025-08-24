@@ -14,6 +14,7 @@ namespace WCEFP\Features\ApiDeveloperExperience;
 use WCEFP\API\RestApiManager;
 use WCEFP\Admin\RolesCapabilities;
 use WCEFP\Utils\DiagnosticLogger;
+use WCEFP\Utils\StringHelper;
 use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -213,8 +214,8 @@ class EnhancedRestApiManager extends RestApiManager {
         
         // Check Authorization header
         if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
-            $auth_header = $_SERVER['HTTP_AUTHORIZATION'];
-            if (strpos($auth_header, 'ApiKey ') === 0) {
+            $auth_header = sanitize_text_field($_SERVER['HTTP_AUTHORIZATION']);
+            if (StringHelper::safe_strpos($auth_header, 'ApiKey ') === 0) {
                 return sanitize_text_field(substr($auth_header, 7));
             }
         }
@@ -239,8 +240,8 @@ class EnhancedRestApiManager extends RestApiManager {
      */
     private function get_bearer_token() {
         if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
-            $auth_header = $_SERVER['HTTP_AUTHORIZATION'];
-            if (strpos($auth_header, 'Bearer ') === 0) {
+            $auth_header = sanitize_text_field($_SERVER['HTTP_AUTHORIZATION']);
+            if (StringHelper::safe_strpos($auth_header, 'Bearer ') === 0) {
                 return sanitize_text_field(substr($auth_header, 7));
             }
         }
@@ -390,7 +391,7 @@ class EnhancedRestApiManager extends RestApiManager {
     public function enhanced_request_validation($response, $handler, $request) {
         // Validate request size
         $max_request_size = apply_filters('wcefp_api_max_request_size', 1024 * 1024); // 1MB default
-        $request_size = strlen($request->get_body());
+        $request_size = StringHelper::safe_strlen($request->get_body());
         
         if ($request_size > $max_request_size) {
             return new WP_Error(
@@ -423,9 +424,9 @@ class EnhancedRestApiManager extends RestApiManager {
      */
     public function setup_api_logging() {
         add_action('rest_api_init', function() {
-            $request = $GLOBALS['wp']->query_vars['rest_route'] ?? '';
+            $request = sanitize_text_field($GLOBALS['wp']->query_vars['rest_route'] ?? '');
             
-            if (strpos($request, '/wcefp/') === 0) {
+            if (StringHelper::safe_strpos($request, '/wcefp/') === 0) {
                 DiagnosticLogger::instance()->debug('API request started', [
                     'route' => $request,
                     'method' => $_SERVER['REQUEST_METHOD'] ?? 'GET',
@@ -442,9 +443,9 @@ class EnhancedRestApiManager extends RestApiManager {
     public function log_api_response($response, $server, $request) {
         $route = $request->get_route();
         
-        if (strpos($route, '/wcefp/') === 0) {
+        if (StringHelper::safe_strpos($route, '/wcefp/') === 0) {
             $status = $response instanceof WP_REST_Response ? $response->get_status() : 200;
-            $data_size = $response instanceof WP_REST_Response ? strlen(wp_json_encode($response->get_data())) : 0;
+            $data_size = $response instanceof WP_REST_Response ? StringHelper::safe_strlen(wp_json_encode($response->get_data())) : 0;
             
             DiagnosticLogger::instance()->debug('API response sent', [
                 'route' => $route,

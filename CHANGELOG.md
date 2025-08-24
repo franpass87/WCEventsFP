@@ -7,6 +7,19 @@ e questo progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 
 ---
 
+## [Unreleased] - PHP 8.1+ Compatibility & Security Hardening
+
+### 🔧 Bug Fixes
+- **Fix: PHP 8.1+ deprecations su funzioni stringa (hardening input)** - Added safe string helper utilities to prevent deprecation warnings when null or non-string values are passed to string functions like `strlen()`, `strpos()`, `trim()`, `preg_match()`, etc.
+- Created `wcefp_safe_str()` and `wcefp_safe_strlen()` helper functions for backward compatibility
+- Enhanced input sanitization for REST API, $_GET, $_POST, and meta data processing
+- Fixed critical deprecation in `EnhancedRestApiManager.php` line 393 where `strlen()` received potential null from request body
+
+### ⚡ Performance
+- Added StringHelper utility class with optimized safe string operations
+
+---
+
 ## QA Validation - 2024-08-24
 
 **🚀 Comprehensive Quality Assurance Pipeline Implemented:**
