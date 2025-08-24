@@ -102,6 +102,11 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
             add_action('wp_ajax_wcefp_delete_closure', ['WCEFP_Closures', 'ajax_delete_closure']);
             add_action('wp_ajax_wcefp_list_closures', ['WCEFP_Closures', 'ajax_list_closures']);
         }
+        
+        // AJAX handlers for meeting points
+        if (class_exists('WCEFP_MeetingPoints_CPT')) {
+            add_action('wp_ajax_wcefp_get_meeting_points', ['WCEFP_MeetingPoints_CPT', 'ajax_get_meeting_points']);
+        }
     }
 
 }

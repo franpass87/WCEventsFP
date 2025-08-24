@@ -270,14 +270,57 @@ class ProductAdmin {
             'wrapper_class' => 'form-field wcefp-field-full'
         ]);
         
-        woocommerce_wp_text_input([
-            'id' => '_wcefp_meeting_point',
-            'label' => '📍 ' . __('Punto di ritrovo', 'wceventsfp'),
-            'desc_tip' => true,
-            'description' => __('Indirizzo o descrizione del punto di ritrovo per l\'esperienza', 'wceventsfp'),
-            'placeholder' => 'Via Roma 123, Milano',
-            'wrapper_class' => 'form-field wcefp-field-full'
-        ]);
+        // Meeting Point Selection - Enhanced with CPT
+        echo '<div class="wcefp-meeting-point-container">';
+        echo '<div class="wcefp-field-row">';
+        
+        // Meeting Point Selector
+        if (class_exists('WCEFP_MeetingPoints_CPT')) {
+            $meeting_points = WCEFP_MeetingPoints_CPT::get_meeting_points_options();
+            $selected_mp = get_post_meta($product_id, '_wcefp_meeting_point_id', true);
+            
+            woocommerce_wp_select([
+                'id' => '_wcefp_meeting_point_id',
+                'label' => '📍 ' . __('Punto di ritrovo', 'wceventsfp'),
+                'options' => $meeting_points,
+                'value' => $selected_mp,
+                'desc_tip' => true,
+                'description' => __('Seleziona un punto di ritrovo riutilizzabile oppure crea un override personalizzato', 'wceventsfp'),
+                'wrapper_class' => 'form-field wcefp-field-half'
+            ]);
+            
+            // Link to add new meeting point
+            echo '<div class="wcefp-field-half" style="padding-top: 20px;">';
+            echo '<a href="' . admin_url('post-new.php?post_type=wcefp_meeting_point') . '" target="_blank" class="button">';
+            echo __('➕ Nuovo Meeting Point', 'wceventsfp');
+            echo '</a>';
+            echo '</div>';
+            echo '</div>'; // End field-row
+            
+            // Custom override field
+            woocommerce_wp_textarea_input([
+                'id' => '_wcefp_meeting_point_custom',
+                'label' => '📝 ' . __('Override personalizzato', 'wceventsfp'),
+                'desc_tip' => true,
+                'description' => __('Testo personalizzato che sovrascrive il meeting point selezionato (opzionale)', 'wceventsfp'),
+                'placeholder' => 'Es. Ritrovo eccezionale in Via Speciale 456...',
+                'rows' => 2,
+                'wrapper_class' => 'form-field wcefp-field-full'
+            ]);
+            
+        } else {
+            // Fallback to old text field if CPT class is not available
+            woocommerce_wp_text_input([
+                'id' => '_wcefp_meeting_point',
+                'label' => '📍 ' . __('Punto di ritrovo', 'wceventsfp'),
+                'desc_tip' => true,
+                'description' => __('Indirizzo o descrizione del punto di ritrovo per l\'esperienza', 'wceventsfp'),
+                'placeholder' => 'Via Roma 123, Milano',
+                'wrapper_class' => 'form-field wcefp-field-full'
+            ]);
+        }
+        
+        echo '</div>'; // End meeting-point-container
         
         echo '</div>'; // End options_group
         
@@ -343,6 +386,8 @@ class ProductAdmin {
             '_wcefp_duration',
             '_wcefp_languages',
             '_wcefp_meeting_point',
+            '_wcefp_meeting_point_id',
+            '_wcefp_meeting_point_custom',
             '_wcefp_included',
             '_wcefp_excluded',
             '_wcefp_cancellation',
@@ -352,7 +397,7 @@ class ProductAdmin {
         foreach ($fields as $field) {
             if (isset($_POST[$field])) {
                 $value = sanitize_text_field($_POST[$field]);
-                if (in_array($field, ['_wcefp_included', '_wcefp_excluded', '_wcefp_cancellation'])) {
+                if (in_array($field, ['_wcefp_included', '_wcefp_excluded', '_wcefp_cancellation', '_wcefp_meeting_point_custom'])) {
                     $value = sanitize_textarea_field($_POST[$field]);
                 }
                 $product->update_meta_data($field, $value);

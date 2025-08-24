@@ -775,9 +775,35 @@ class ShortcodeManager {
             $details[] = ['label' => __('Location', 'wceventsfp'), 'value' => $location];
         }
         
-        $meeting_point = get_post_meta($event_id, '_wcefp_meeting_point', true);
-        if ($meeting_point) {
-            $details[] = ['label' => __('Meeting Point', 'wceventsfp'), 'value' => $meeting_point];
+        // Meeting Point - Enhanced with CPT support
+        $meeting_point_text = '';
+        
+        // Check for custom override first
+        $custom_meeting_point = get_post_meta($event_id, '_wcefp_meeting_point_custom', true);
+        if ($custom_meeting_point) {
+            $meeting_point_text = $custom_meeting_point;
+        } else {
+            // Check for selected meeting point ID
+            $meeting_point_id = get_post_meta($event_id, '_wcefp_meeting_point_id', true);
+            if ($meeting_point_id && class_exists('WCEFP_MeetingPoints_CPT')) {
+                $mp_data = WCEFP_MeetingPoints_CPT::get_meeting_point_data($meeting_point_id);
+                if ($mp_data) {
+                    $meeting_point_text = $mp_data['title'];
+                    if ($mp_data['address'] || $mp_data['city']) {
+                        $meeting_point_text .= ' - ' . trim($mp_data['address'] . ', ' . $mp_data['city'], ', ');
+                    }
+                    if ($mp_data['notes']) {
+                        $meeting_point_text .= "\n" . $mp_data['notes'];
+                    }
+                }
+            } else {
+                // Fallback to old meeting point field
+                $meeting_point_text = get_post_meta($event_id, '_wcefp_meeting_point', true);
+            }
+        }
+        
+        if ($meeting_point_text) {
+            $details[] = ['label' => __('Meeting Point', 'wceventsfp'), 'value' => nl2br(esc_html($meeting_point_text))];
         }
         
         if (empty($details)) {

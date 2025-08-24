@@ -37,7 +37,8 @@ class WCEFP_Autoloader {
         'WC_Product_WCEFP_Event' => 'includes/Legacy/class-wcefp-product-types.php',
         'WC_Product_WCEFP_Experience' => 'includes/Legacy/class-wcefp-product-types.php',
         'WCEFP_Closures' => 'includes/Legacy/class-wcefp-closures.php',
-        'WCEFP_Validator' => 'includes/Legacy/class-wcefp-validator.php'
+        'WCEFP_Validator' => 'includes/Legacy/class-wcefp-validator.php',
+        'WCEFP_MeetingPoints_CPT' => 'includes/Legacy/class-wcefp-meeting-points-cpt.php'
     ];
     
     /**
