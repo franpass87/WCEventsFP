@@ -1,5 +1,7 @@
 # WCEventsFP (v2.1.4) - Enterprise Booking Platform<!-- x-release-please-version -->
 
+![QA Status](https://img.shields.io/badge/QA-Testing-yellow)
+
 > **📦 PLUGIN DOWNLOAD** - Get the latest stable release from [GitHub Releases](https://github.com/franpass87/WCEventsFP/releases)  
 > **⚠️ DON'T use "Code → Download ZIP"** - Use official releases for proper plugin packaging
 

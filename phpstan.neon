@@ -13,7 +13,7 @@ parameters:
         - assets
         - templates
         - tests
-    level: 1
+    level: 1  # CI will test level 7, but this is our baseline
     stubFiles:
         - tests/stubs/plugin-stubs.php
         - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php

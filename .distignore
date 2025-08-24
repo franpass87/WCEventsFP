@@ -2,6 +2,7 @@
 # Files and directories excluded from distribution packages
 
 # Development directories
+.git
 /.github
 /docs
 /tests
