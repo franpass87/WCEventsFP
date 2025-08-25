@@ -547,8 +547,8 @@ class MenuManager {
                     $page_links = paginate_links([
                         'base' => add_query_arg('paged', '%#%'),
                         'format' => '',
-                        'prev_text' => __('&laquo;'),
-                        'next_text' => __('&raquo;'),
+                        'prev_text' => __('&laquo;', 'wceventsfp'),
+                        'next_text' => __('&raquo;', 'wceventsfp'),
                         'total' => ceil($total_items / $per_page),
                         'current' => $current_page,
                     ]);

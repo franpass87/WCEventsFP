@@ -72,12 +72,18 @@ class AssetManager {
         // Check if we have WCEFP shortcodes or blocks on current page
         $has_wcefp_content = $this->has_wcefp_content();
         
-        // Always enqueue base frontend assets
+        // Only enqueue base assets if WCEFP content is present (performance optimization)
+        if (!$has_wcefp_content) {
+            return;
+        }
+        
+        // Enqueue optimized base frontend assets
         wp_enqueue_style(
             'wcefp-frontend',
             $this->plugin_url . 'assets/css/frontend.css',
             [],
-            $this->version
+            $this->version,
+            'all'
         );
         
         wp_enqueue_script(

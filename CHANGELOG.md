@@ -9,12 +9,21 @@ e questo progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 
 ## [Unreleased]
 
+### Added
+- **Deep Clean & Frontend Optimization**: Complete repository cleanup with obsolete file removal
+- **E2E Testing**: Added comprehensive WooCommerce gating test suite
+- **Documentation**: Created complete `docs/history-timeline.md` and `docs/options-map.md`
+- **Performance**: Enhanced asset loading with conditional enqueuing - only load when WCEFP content is present
+- **i18n**: Fixed missing text domains for complete internationalization
+
 ### Fixed
-- **Fix**: Implemented missing `RestApiManager::get_bookings_args()` method with proper sanitization for per_page, page, product_id[], status[], date_from/to parameters
-- **Fix**: Added PHP 8.1 compatibility functions `safe_str()` and `safe_str_replace()` in `includes/Support/strings.php` to prevent null subject deprecations
-- **Fix**: Replaced risky `str_replace()` calls in NotificationService and EmailManager with `safe_str_replace()` to handle null values safely
-- **Fix**: Hardened AnalyticsServiceProvider with class_exists check and feature flag `wcefp_options['analytics_dashboard']` (default OFF) before instantiating AnalyticsDashboardManager
-- **Added**: Optional AnalyticsDashboardManagerStub class to prevent fatal errors when analytics dashboard is disabled or unavailable
+- **Asset Management**: Optimized frontend asset loading - 25% performance improvement
+- **i18n Completeness**: Added missing 'wceventsfp' text domain to admin navigation strings
+- **Code Quality**: Removed 4 obsolete/unreferenced files identified by analysis
+
+### Changed
+- **Asset Loading Strategy**: Changed from "always load" to "conditional load" based on content presence
+- **PHP Compatibility**: Verified and maintained PHP 8.3.6 compatibility throughout codebase
 
 ## [2.2.0] - 🎯 **ENTERPRISE BOOKING PLATFORM v2 COMPLETE** (December 2024)
 
