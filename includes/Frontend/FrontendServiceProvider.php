@@ -31,6 +31,9 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
+        // T-06: Load shortcode classes
+        require_once __DIR__ . '/Shortcodes/ExperiencesCatalog.php';
+        
         // Register booking widget
         $this->container->singleton('frontend.booking_widget', function($container) {
             return new BookingWidget($container);

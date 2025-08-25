@@ -36,7 +36,16 @@ class ShortcodeManager {
     public function register_shortcodes() {
         // Main shortcodes
         add_shortcode('wcefp_events', [$this, 'events_list_shortcode']);
-        add_shortcode('wcefp_experiences', [$this, 'experiences_catalog_shortcode']);
+        
+        // T-06: Use dedicated ExperiencesCatalog class for better implementation
+        // Initialize the dedicated experiences catalog shortcode
+        if (class_exists('\WCEFP\Frontend\Shortcodes\ExperiencesCatalog')) {
+            \WCEFP\Frontend\Shortcodes\ExperiencesCatalog::init();
+        } else {
+            // Fallback to local implementation if dedicated class not available
+            add_shortcode('wcefp_experiences', [$this, 'experiences_catalog_shortcode']);
+        }
+        
         add_shortcode('wcefp_event', [$this, 'single_event_shortcode']);
         add_shortcode('wcefp_booking_form', [$this, 'booking_form_shortcode']);
         add_shortcode('wcefp_search', [$this, 'search_events_shortcode']);
