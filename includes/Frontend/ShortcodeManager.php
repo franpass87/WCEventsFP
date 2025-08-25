@@ -36,6 +36,7 @@ class ShortcodeManager {
     public function register_shortcodes() {
         // Main shortcodes
         add_shortcode('wcefp_events', [$this, 'events_list_shortcode']);
+        add_shortcode('wcefp_experiences', [$this, 'experiences_catalog_shortcode']);
         add_shortcode('wcefp_event', [$this, 'single_event_shortcode']);
         add_shortcode('wcefp_booking_form', [$this, 'booking_form_shortcode']);
         add_shortcode('wcefp_search', [$this, 'search_events_shortcode']);
@@ -219,6 +220,138 @@ class ShortcodeManager {
             ], DiagnosticLogger::CHANNEL_GENERAL);
             
             return '<div class="wcefp-error">' . esc_html__('Unable to load events.', 'wceventsfp') . '</div>';
+        }
+    }
+    
+    /**
+     * Experiences catalog shortcode for marketplace-style display
+     * 
+     * Usage: [wcefp_experiences limit="12" category="tours" show_filters="yes" show_map="no" layout="grid"]
+     */
+    public function experiences_catalog_shortcode($atts) {
+        $atts = shortcode_atts([
+            'limit' => 12,
+            'category' => '',
+            'show_filters' => 'yes',
+            'show_map' => 'no',
+            'layout' => 'grid', // grid, list, masonry
+            'columns' => 3,
+            'order' => 'date',
+            'order_dir' => 'DESC',
+            'show_price' => 'yes',
+            'show_rating' => 'yes',
+            'show_duration' => 'yes',
+            'show_location' => 'yes',
+            'class' => ''
+        ], $atts, 'wcefp_experiences');
+
+        try {
+            // Query experiences/events with proper WooCommerce integration
+            $args = [
+                'post_type' => 'product',
+                'post_status' => 'publish',
+                'posts_per_page' => intval($atts['limit']),
+                'orderby' => sanitize_text_field($atts['order']),
+                'order' => sanitize_text_field($atts['order_dir']),
+                'meta_query' => [
+                    'relation' => 'OR',
+                    [
+                        'key' => '_wcefp_is_experience',
+                        'value' => '1',
+                        'compare' => '='
+                    ],
+                    [
+                        'key' => '_wcefp_product_type',
+                        'value' => ['evento', 'esperienza'],
+                        'compare' => 'IN'
+                    ]
+                ]
+            ];
+
+            // Add category filter if specified
+            if (!empty($atts['category'])) {
+                $args['tax_query'] = [
+                    [
+                        'taxonomy' => 'product_cat',
+                        'field'    => 'slug',
+                        'terms'    => sanitize_text_field($atts['category'])
+                    ]
+                ];
+            }
+
+            $experiences = get_posts($args);
+
+            if (empty($experiences)) {
+                return '<div class="wcefp-experiences-empty">' . esc_html__('Nessuna esperienza trovata.', 'wceventsfp') . '</div>';
+            }
+
+            $css_class = 'wcefp-experiences-catalog wcefp-layout-' . sanitize_html_class($atts['layout']);
+            $css_class .= ' wcefp-columns-' . intval($atts['columns']);
+            if (!empty($atts['class'])) {
+                $css_class .= ' ' . sanitize_html_class($atts['class']);
+            }
+
+            ob_start();
+            ?>
+            <div class="<?php echo esc_attr($css_class); ?>" data-layout="<?php echo esc_attr($atts['layout']); ?>">
+                
+                <?php if ($atts['show_filters'] === 'yes'): ?>
+                <div class="wcefp-experiences-filters">
+                    <div class="wcefp-filter-row">
+                        <div class="wcefp-search-field">
+                            <span class="wcefp-search-icon">🔍</span>
+                            <input type="text" class="wcefp-search-input" placeholder="<?php esc_attr_e('Cerca esperienze...', 'wceventsfp'); ?>">
+                        </div>
+                        <select class="wcefp-filter-select wcefp-filter-category">
+                            <option value=""><?php esc_html_e('Tutte le categorie', 'wceventsfp'); ?></option>
+                            <?php 
+                            $categories = get_terms(['taxonomy' => 'product_cat', 'hide_empty' => true]);
+                            foreach ($categories as $cat) {
+                                echo '<option value="' . esc_attr($cat->slug) . '">' . esc_html($cat->name) . '</option>';
+                            }
+                            ?>
+                        </select>
+                        <select class="wcefp-filter-select wcefp-filter-price">
+                            <option value=""><?php esc_html_e('Tutti i prezzi', 'wceventsfp'); ?></option>
+                            <option value="0-50">€0 - €50</option>
+                            <option value="50-100">€50 - €100</option>
+                            <option value="100-200">€100 - €200</option>
+                            <option value="200+">€200+</option>
+                        </select>
+                        <button class="wcefp-clear-filters"><?php esc_html_e('Cancella filtri', 'wceventsfp'); ?></button>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <?php if ($atts['show_map'] === 'yes'): ?>
+                <div class="wcefp-experiences-map" id="wcefp-map-<?php echo esc_attr(uniqid()); ?>">
+                    <div class="wcefp-map-placeholder">
+                        <p><?php esc_html_e('Mappa delle esperienze (richiede Google Maps API)', 'wceventsfp'); ?></p>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <div class="wcefp-experiences-grid">
+                    <?php foreach ($experiences as $experience): ?>
+                        <?php echo $this->render_experience_card($experience, $atts); ?>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="wcefp-experiences-pagination">
+                    <!-- Pagination will be handled by JavaScript for AJAX loading -->
+                </div>
+            </div>
+            <?php
+
+            return ob_get_clean();
+
+        } catch (\Exception $e) {
+            DiagnosticLogger::instance()->error('Shortcode error: wcefp_experiences', [
+                'error' => $e->getMessage(),
+                'atts' => $atts
+            ], DiagnosticLogger::CHANNEL_GENERAL);
+
+            return '<div class="wcefp-error">' . esc_html__('Impossibile caricare le esperienze.', 'wceventsfp') . '</div>';
         }
     }
     
@@ -680,6 +813,7 @@ class ShortcodeManager {
     
     private function has_wcefp_shortcodes($content) {
         return has_shortcode($content, 'wcefp_events') ||
+               has_shortcode($content, 'wcefp_experiences') ||
                has_shortcode($content, 'wcefp_event') ||
                has_shortcode($content, 'wcefp_booking_form') ||
                has_shortcode($content, 'wcefp_search') ||
@@ -940,4 +1074,157 @@ class ShortcodeManager {
     
     // Additional shortcode methods would continue here...
     // Including featured_events_shortcode, upcoming_events_shortcode, user_bookings_shortcode, etc.
+    
+    /**
+     * Render individual experience card for catalog
+     * 
+     * @param WP_Post $experience Experience post object
+     * @param array $atts Shortcode attributes
+     * @return string HTML output for experience card
+     */
+    private function render_experience_card($experience, $atts) {
+        $product = wc_get_product($experience->ID);
+        if (!$product) {
+            return '';
+        }
+
+        $card_classes = 'wcefp-experience-card';
+        $card_classes .= ' wcefp-product-type-' . sanitize_html_class($product->get_type());
+
+        // Get experience data
+        $permalink = get_permalink($experience->ID);
+        $title = get_the_title($experience->ID);
+        $excerpt = wp_trim_words(get_the_excerpt($experience->ID), 20, '...');
+        $thumbnail = get_the_post_thumbnail($experience->ID, 'medium', ['class' => 'wcefp-card-image']);
+        $price_html = $atts['show_price'] === 'yes' ? $product->get_price_html() : '';
+
+        // Get rating data if enabled
+        $rating_html = '';
+        if ($atts['show_rating'] === 'yes') {
+            $average_rating = $product->get_average_rating();
+            $review_count = $product->get_review_count();
+            if ($average_rating > 0) {
+                $rating_html = $this->get_star_rating_html($average_rating) . ' <span class="wcefp-review-count">(' . $review_count . ')</span>';
+            }
+        }
+
+        // Get duration if available
+        $duration_html = '';
+        if ($atts['show_duration'] === 'yes') {
+            $duration = get_post_meta($experience->ID, '_wcefp_duration', true);
+            if ($duration) {
+                $duration_html = '<span class="wcefp-duration">⏱ ' . esc_html($duration) . '</span>';
+            }
+        }
+
+        // Get location if available  
+        $location_html = '';
+        if ($atts['show_location'] === 'yes') {
+            $location = get_post_meta($experience->ID, '_wcefp_meeting_point_address', true);
+            if ($location) {
+                $location_html = '<span class="wcefp-location">📍 ' . esc_html($location) . '</span>';
+            }
+        }
+
+        // Trust badges and availability
+        $trust_badges = $this->get_experience_trust_badges($experience->ID);
+
+        ob_start();
+        ?>
+        <article class="<?php echo esc_attr($card_classes); ?>" data-experience-id="<?php echo esc_attr($experience->ID); ?>">
+            <div class="wcefp-card-inner">
+                
+                <!-- Hero Image with Trust Badges -->
+                <div class="wcefp-card-media">
+                    <a href="<?php echo esc_url($permalink); ?>" class="wcefp-card-image-link">
+                        <?php echo $thumbnail; ?>
+                    </a>
+                    
+                    <?php if (!empty($trust_badges)): ?>
+                    <div class="wcefp-card-badges">
+                        <?php echo $trust_badges; ?>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($price_html): ?>
+                    <div class="wcefp-card-price">
+                        <?php echo $price_html; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Content Section -->
+                <div class="wcefp-card-content">
+                    <header class="wcefp-card-header">
+                        <h3 class="wcefp-card-title">
+                            <a href="<?php echo esc_url($permalink); ?>"><?php echo esc_html($title); ?></a>
+                        </h3>
+                        
+                        <?php if ($rating_html): ?>
+                        <div class="wcefp-card-rating">
+                            <?php echo $rating_html; ?>
+                        </div>
+                        <?php endif; ?>
+                    </header>
+
+                    <div class="wcefp-card-meta">
+                        <?php echo $duration_html; ?>
+                        <?php echo $location_html; ?>
+                    </div>
+
+                    <?php if ($excerpt): ?>
+                    <div class="wcefp-card-excerpt">
+                        <p><?php echo esc_html($excerpt); ?></p>
+                    </div>
+                    <?php endif; ?>
+
+                    <footer class="wcefp-card-actions">
+                        <a href="<?php echo esc_url($permalink); ?>" class="wcefp-btn wcefp-btn-primary">
+                            <?php esc_html_e('Scopri di più', 'wceventsfp'); ?>
+                        </a>
+                    </footer>
+                </div>
+            </div>
+        </article>
+        <?php
+
+        return ob_get_clean();
+    }
+
+    /**
+     * Get trust badges for experience
+     * 
+     * @param int $experience_id Experience post ID
+     * @return string HTML trust badges
+     */
+    private function get_experience_trust_badges($experience_id) {
+        $badges = [];
+        
+        // Best seller badge
+        $is_best_seller = get_post_meta($experience_id, '_wcefp_is_best_seller', true);
+        if ($is_best_seller) {
+            $badges[] = '<span class="wcefp-badge wcefp-badge-bestseller">🏆 ' . esc_html__('Best Seller', 'wceventsfp') . '</span>';
+        }
+
+        // Free cancellation
+        $free_cancellation = get_post_meta($experience_id, '_wcefp_free_cancellation', true);
+        if ($free_cancellation) {
+            $badges[] = '<span class="wcefp-badge wcefp-badge-cancellation">✅ ' . esc_html__('Cancellazione gratuita', 'wceventsfp') . '</span>';
+        }
+
+        // Instant confirmation
+        $instant_confirmation = get_post_meta($experience_id, '_wcefp_instant_confirmation', true);
+        if ($instant_confirmation) {
+            $badges[] = '<span class="wcefp-badge wcefp-badge-confirmation">⚡ ' . esc_html__('Conferma immediata', 'wceventsfp') . '</span>';
+        }
+
+        // Limited availability
+        $stock_status = get_post_meta($experience_id, '_stock_status', true);
+        $stock_quantity = get_post_meta($experience_id, '_stock', true);
+        if ($stock_status === 'instock' && $stock_quantity && $stock_quantity < 5) {
+            $badges[] = '<span class="wcefp-badge wcefp-badge-limited">🔥 ' . sprintf(esc_html__('Solo %d posti rimasti', 'wceventsfp'), $stock_quantity) . '</span>';
+        }
+
+        return implode('', $badges);
+    }
 }

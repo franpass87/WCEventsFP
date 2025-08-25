@@ -1,0 +1,562 @@
+/**
+ * WCEventsFP Experiences Catalog Styles
+ * GYG/Regiondo-style marketplace layout with modern design
+ *
+ * @package WCEFP
+ * @since 2.2.0
+ */
+
+/* ==========================================================================
+   Experiences Catalog Container
+   ========================================================================== */
+
+.wcefp-experiences-catalog {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 20px;
+}
+
+/* ==========================================================================
+   Filter Bar
+   ========================================================================== */
+
+.wcefp-experiences-filters {
+	background: #fff;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	border-radius: 16px;
+	padding: 24px;
+	margin-bottom: 32px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.wcefp-filter-row {
+	display: flex;
+	gap: 16px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.wcefp-search-field {
+	position: relative;
+	flex: 1;
+	min-width: 280px;
+}
+
+.wcefp-search-input {
+	width: 100%;
+	padding: 12px 16px 12px 48px;
+	border: 2px solid #e5e7eb;
+	border-radius: 12px;
+	font-size: 16px;
+	background: #f9fafb;
+	transition: all 0.2s;
+}
+
+.wcefp-search-input:focus {
+	outline: none;
+	border-color: #667eea;
+	background: #fff;
+	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.wcefp-search-icon {
+	position: absolute;
+	left: 16px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 18px;
+	opacity: 0.6;
+}
+
+.wcefp-filter-select {
+	padding: 12px 16px;
+	border: 2px solid #e5e7eb;
+	border-radius: 12px;
+	background: #f9fafb;
+	font-size: 14px;
+	min-width: 160px;
+	transition: all 0.2s;
+}
+
+.wcefp-filter-select:focus {
+	outline: none;
+	border-color: #667eea;
+	background: #fff;
+}
+
+.wcefp-clear-filters {
+	padding: 12px 20px;
+	background: #f3f4f6;
+	border: none;
+	border-radius: 12px;
+	color: #6b7280;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.wcefp-clear-filters:hover {
+	background: #e5e7eb;
+	color: #374151;
+}
+
+/* ==========================================================================
+   Map Integration
+   ========================================================================== */
+
+.wcefp-experiences-map {
+	height: 400px;
+	border-radius: 16px;
+	overflow: hidden;
+	margin-bottom: 32px;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.wcefp-map-placeholder {
+	height: 100%;
+	background: #f3f4f6;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #6b7280;
+	font-style: italic;
+}
+
+/* ==========================================================================
+   Experiences Grid
+   ========================================================================== */
+
+.wcefp-experiences-grid {
+	display: grid;
+	gap: 24px;
+	margin-bottom: 32px;
+}
+
+/* Grid Layout Variations */
+.wcefp-layout-grid.wcefp-columns-1 .wcefp-experiences-grid {
+	grid-template-columns: 1fr;
+}
+
+.wcefp-layout-grid.wcefp-columns-2 .wcefp-experiences-grid {
+	grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
+
+.wcefp-layout-grid.wcefp-columns-3 .wcefp-experiences-grid {
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.wcefp-layout-grid.wcefp-columns-4 .wcefp-experiences-grid {
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.wcefp-layout-list .wcefp-experiences-grid {
+	grid-template-columns: 1fr;
+	gap: 16px;
+}
+
+.wcefp-layout-masonry .wcefp-experiences-grid {
+	column-count: 3;
+	column-gap: 24px;
+}
+
+/* ==========================================================================
+   Experience Card
+   ========================================================================== */
+
+.wcefp-experience-card {
+	background: #fff;
+	border-radius: 16px;
+	overflow: hidden;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	position: relative;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.wcefp-experience-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 
+		0 0 0 1px rgba(102, 126, 234, 0.1),
+		0 8px 24px rgba(0, 0, 0, 0.08),
+		0 16px 40px rgba(0, 0, 0, 0.04);
+	border-color: rgba(102, 126, 234, 0.2);
+}
+
+.wcefp-card-inner {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+/* ==========================================================================
+   Card Media Section
+   ========================================================================== */
+
+.wcefp-card-media {
+	position: relative;
+	aspect-ratio: 16/10;
+	overflow: hidden;
+}
+
+.wcefp-card-image-link {
+	display: block;
+	height: 100%;
+}
+
+.wcefp-card-image-link img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 0.3s;
+}
+
+.wcefp-experience-card:hover .wcefp-card-image-link img {
+	transform: scale(1.02);
+}
+
+.wcefp-card-badges {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	right: 12px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	z-index: 10;
+}
+
+.wcefp-badge {
+	padding: 4px 8px;
+	border-radius: 6px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	backdrop-filter: blur(8px);
+	color: #fff;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.wcefp-badge-bestseller {
+	background: rgba(255, 193, 7, 0.9);
+}
+
+.wcefp-badge-cancellation {
+	background: rgba(34, 197, 94, 0.9);
+}
+
+.wcefp-badge-confirmation {
+	background: rgba(59, 130, 246, 0.9);
+}
+
+.wcefp-badge-limited {
+	background: rgba(239, 68, 68, 0.9);
+	animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+	0%, 100% { opacity: 0.9; }
+	50% { opacity: 0.6; }
+}
+
+.wcefp-card-price {
+	position: absolute;
+	bottom: 12px;
+	right: 12px;
+	background: rgba(255, 255, 255, 0.95);
+	backdrop-filter: blur(8px);
+	padding: 8px 12px;
+	border-radius: 8px;
+	font-weight: 700;
+	color: #1f2937;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================================================
+   Card Content Section
+   ========================================================================== */
+
+.wcefp-card-content {
+	padding: 20px;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.wcefp-card-header {
+	margin-bottom: 12px;
+}
+
+.wcefp-card-title {
+	margin: 0 0 8px 0;
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 1.3;
+	color: #111827;
+}
+
+.wcefp-card-title a {
+	color: inherit;
+	text-decoration: none;
+	transition: color 0.2s;
+}
+
+.wcefp-card-title a:hover {
+	color: #667eea;
+}
+
+.wcefp-card-rating {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	color: #6b7280;
+}
+
+.wcefp-stars {
+	color: #fbbf24;
+}
+
+.wcefp-review-count {
+	font-size: 13px;
+}
+
+.wcefp-card-meta {
+	display: flex;
+	gap: 16px;
+	margin-bottom: 12px;
+	font-size: 13px;
+	color: #6b7280;
+}
+
+.wcefp-duration,
+.wcefp-location {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.wcefp-card-excerpt {
+	flex: 1;
+	margin-bottom: 16px;
+}
+
+.wcefp-card-excerpt p {
+	margin: 0;
+	color: #6b7280;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.wcefp-card-actions {
+	margin-top: auto;
+}
+
+.wcefp-btn {
+	display: inline-block;
+	padding: 10px 20px;
+	border: none;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	text-align: center;
+	cursor: pointer;
+	transition: all 0.2s;
+	min-width: 140px;
+}
+
+.wcefp-btn-primary {
+	background: #667eea;
+	color: #fff;
+}
+
+.wcefp-btn-primary:hover {
+	background: #5a67d8;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* ==========================================================================
+   List Layout Adaptations
+   ========================================================================== */
+
+.wcefp-layout-list .wcefp-experience-card {
+	border-radius: 12px;
+}
+
+.wcefp-layout-list .wcefp-card-inner {
+	flex-direction: row;
+	align-items: stretch;
+}
+
+.wcefp-layout-list .wcefp-card-media {
+	flex: 0 0 300px;
+	aspect-ratio: 4/3;
+}
+
+.wcefp-layout-list .wcefp-card-content {
+	flex: 1;
+	padding: 24px;
+}
+
+/* ==========================================================================
+   Masonry Layout Adaptations
+   ========================================================================== */
+
+.wcefp-layout-masonry .wcefp-experience-card {
+	break-inside: avoid;
+	margin-bottom: 24px;
+}
+
+.wcefp-layout-masonry .wcefp-card-media {
+	aspect-ratio: 16/12;
+}
+
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
+
+.wcefp-experiences-empty {
+	text-align: center;
+	padding: 80px 20px;
+	color: #6b7280;
+	font-size: 16px;
+	background: #f9fafb;
+	border-radius: 16px;
+	border: 2px dashed #d1d5db;
+}
+
+/* ==========================================================================
+   Pagination
+   ========================================================================== */
+
+.wcefp-experiences-pagination {
+	display: flex;
+	justify-content: center;
+	margin-top: 32px;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+	.wcefp-layout-masonry .wcefp-experiences-grid {
+		column-count: 2;
+	}
+	
+	.wcefp-layout-grid.wcefp-columns-4 .wcefp-experiences-grid {
+		grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	}
+}
+
+@media (max-width: 768px) {
+	.wcefp-experiences-catalog {
+		padding: 0 16px;
+	}
+	
+	.wcefp-filter-row {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 12px;
+	}
+	
+	.wcefp-search-field {
+		min-width: auto;
+	}
+	
+	.wcefp-filter-select {
+		min-width: auto;
+	}
+	
+	.wcefp-layout-masonry .wcefp-experiences-grid {
+		column-count: 1;
+	}
+	
+	.wcefp-layout-list .wcefp-card-inner {
+		flex-direction: column;
+	}
+	
+	.wcefp-layout-list .wcefp-card-media {
+		flex: none;
+		aspect-ratio: 16/10;
+	}
+	
+	.wcefp-experiences-grid {
+		gap: 20px;
+	}
+}
+
+@media (max-width: 480px) {
+	.wcefp-experiences-filters {
+		padding: 20px;
+		margin-bottom: 24px;
+	}
+	
+	.wcefp-experiences-map {
+		height: 300px;
+		margin-bottom: 24px;
+	}
+	
+	.wcefp-card-content {
+		padding: 16px;
+	}
+	
+	.wcefp-card-title {
+		font-size: 16px;
+	}
+	
+	.wcefp-card-meta {
+		flex-direction: column;
+		gap: 8px;
+	}
+}
+
+/* ==========================================================================
+   Accessibility Enhancements
+   ========================================================================== */
+
+.wcefp-btn:focus {
+	outline: 2px solid #667eea;
+	outline-offset: 2px;
+}
+
+.wcefp-search-input:focus,
+.wcefp-filter-select:focus {
+	outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wcefp-experience-card,
+	.wcefp-card-image-link img,
+	.wcefp-btn {
+		transition: none;
+	}
+	
+	.wcefp-badge-limited {
+		animation: none;
+	}
+}
+
+/* ==========================================================================
+   High Contrast Mode
+   ========================================================================== */
+
+@media (prefers-contrast: high) {
+	.wcefp-experience-card {
+		border: 2px solid #000;
+	}
+	
+	.wcefp-btn-primary {
+		background: #000;
+		color: #fff;
+		border: 2px solid #000;
+	}
+	
+	.wcefp-btn-primary:hover {
+		background: #fff;
+		color: #000;
+	}
+}
