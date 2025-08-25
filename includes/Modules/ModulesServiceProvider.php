@@ -44,9 +44,20 @@ class ModulesServiceProvider extends ServiceProvider {
     public function register(): void {
         foreach ($this->modules as $module_key => $module_class) {
             if (class_exists($module_class)) {
-                $this->container->singleton("modules.{$module_key}", function() use ($module_class) {
-                    return new $module_class($this->container);
-                });
+                if ($module_key === 'i18n') {
+                    // Fix DI for I18nModule - pass actual dependencies instead of container
+                    $this->container->singleton("modules.{$module_key}", function($container) use ($module_class) {
+                        return new $module_class(
+                            $container->get('security'),     // SecurityManager instance
+                            $container->get('performance')   // PerformanceManager instance
+                        );
+                    });
+                } else {
+                    // Other modules still use container-based initialization
+                    $this->container->singleton("modules.{$module_key}", function($container) use ($module_class) {
+                        return new $module_class($container);
+                    });
+                }
             }
         }
         
@@ -84,7 +95,7 @@ class ModulesServiceProvider extends ServiceProvider {
                     
                     Logger::info("Module {$module_key} booted successfully");
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 Logger::error("Failed to boot module {$module_key}: " . $e->getMessage());
                 
                 // Add admin notice for debugging but continue with other modules

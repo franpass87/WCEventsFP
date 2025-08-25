@@ -2,8 +2,8 @@
 namespace WCEFP\Modules;
 
 use WCEFP\Contracts\ModuleInterface;
-use WCEFP\Core\Security\SecurityManager;
-use WCEFP\Core\Performance\PerformanceManager;
+use WCEFP\Core\SecurityManager;
+use WCEFP\Core\PerformanceManager;
 
 if (!defined('ABSPATH')) {
     exit;

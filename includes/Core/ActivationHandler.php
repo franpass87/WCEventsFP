@@ -49,7 +49,7 @@ class ActivationHandler {
             
             Logger::info('WCEventsFP plugin activated successfully');
             
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             // Restore error handler
             restore_error_handler();
             
@@ -121,7 +121,7 @@ class ActivationHandler {
             
             Logger::info('WCEventsFP plugin deactivated successfully');
             
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Logger::error('Plugin deactivation error: ' . $e->getMessage());
         }
     }
@@ -298,7 +298,7 @@ class ActivationHandler {
                         $wpdb->last_error = ''; // Clear error for next table
                     }
                     
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     $table_errors[] = "Table '{$table_name}': " . $e->getMessage();
                     Logger::error("Failed to create table '{$table_name}': " . $e->getMessage());
                 }
@@ -310,7 +310,7 @@ class ActivationHandler {
                 // Don't throw exception - allow plugin to activate with partial database setup
             }
             
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Logger::error('Database table creation failed: ' . $e->getMessage());
             // Don't re-throw - let the plugin activate with minimal database setup
             // The plugin can still function with the existing WordPress tables

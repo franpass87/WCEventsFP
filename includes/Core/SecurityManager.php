@@ -140,6 +140,16 @@ class SecurityManager {
     }
     
     /**
+     * Alias for current_user_can for backward compatibility
+     * 
+     * @param string $capability
+     * @return bool
+     */
+    public static function can_user(string $capability): bool {
+        return self::current_user_can($capability);
+    }
+    
+    /**
      * Validate nonce for WCEFP actions
      * 
      * @param string $nonce
