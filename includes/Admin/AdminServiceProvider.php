@@ -56,6 +56,18 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
         $this->container->singleton('admin.features', function($container) {
             return new FeatureManager($container);
         });
+        
+        $this->container->singleton('admin.diagnostics', function($container) {
+            return new DiagnosticsPage();
+        });
+        
+        $this->container->singleton('admin.advanced_analytics', function($container) {
+            return new AdvancedAnalyticsPage();
+        });
+        
+        $this->container->singleton('admin.health_monitoring', function($container) {
+            return new HealthMonitoringSystem();
+        });
     }
     
     /**
@@ -84,6 +96,18 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
         
         if (class_exists('\WCEFP\Admin\FeatureManager')) {
             $this->container->get('admin.features');
+        }
+        
+        if (class_exists('\WCEFP\Admin\DiagnosticsPage')) {
+            $this->container->get('admin.diagnostics');
+        }
+        
+        if (class_exists('\WCEFP\Admin\AdvancedAnalyticsPage')) {
+            $this->container->get('admin.advanced_analytics');
+        }
+        
+        if (class_exists('\WCEFP\Admin\HealthMonitoringSystem')) {
+            $this->container->get('admin.health_monitoring');
         }
         
         // Register AJAX handlers for legacy classes

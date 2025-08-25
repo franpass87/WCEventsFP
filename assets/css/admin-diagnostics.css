@@ -1,0 +1,460 @@
+/**
+ * WCEFP Diagnostics Admin Page Styles
+ * 
+ * @package WCEFP
+ * @since 2.2.0
+ */
+
+/* Main diagnostics wrapper */
+.wcefp-diagnostics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.wcefp-header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.wcefp-last-updated {
+    color: #666;
+    font-size: 13px;
+}
+
+/* Performance Cards */
+.wcefp-performance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.wcefp-performance-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.wcefp-performance-card h4 {
+    margin: 0 0 10px 0;
+    color: #23282d;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #0073aa;
+    margin-bottom: 8px;
+}
+
+.metric-label {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
+
+/* Database Summary */
+.wcefp-database-summary {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e1e4e8;
+}
+
+.summary-stat {
+    text-align: center;
+    flex: 1;
+}
+
+.stat-number {
+    display: block;
+    font-size: 20px;
+    font-weight: bold;
+    color: #0073aa;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Security Overview */
+.wcefp-security-overview {
+    margin-bottom: 20px;
+}
+
+.security-summary {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e1e4e8;
+}
+
+.summary-item {
+    text-align: center;
+    flex: 1;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.summary-item.status-good {
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.summary-item.status-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.summary-item.status-critical {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.summary-item .count {
+    display: block;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.summary-item.status-good .count {
+    color: #28a745;
+}
+
+.summary-item.status-warning .count {
+    color: #ffc107;
+}
+
+.summary-item.status-critical .count {
+    color: #dc3545;
+}
+
+.summary-item .label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+}
+
+/* Enhanced Status Indicators */
+.status-indicator {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-indicator.status-good {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-indicator.status-warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #856404;
+    border: 1px solid rgba(255, 193, 7, 0.4);
+}
+
+.status-indicator.status-critical {
+    background: rgba(220, 53, 69, 0.1);
+    color: #721c24;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+/* Tab navigation */
+.wcefp-diagnostics-tabs {
+    margin-top: 20px;
+}
+
+.wcefp-diagnostics-tabs .nav-tab-wrapper {
+    border-bottom: 1px solid #ccd0d4;
+    margin-bottom: 20px;
+}
+
+.wcefp-diagnostics-tabs .nav-tab {
+    position: relative;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 20px;
+    margin: 0 5px -1px 0;
+    color: #50575e;
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: transparent;
+}
+
+.wcefp-diagnostics-tabs .nav-tab:hover {
+    color: #135e96;
+}
+
+.wcefp-diagnostics-tabs .nav-tab.nav-tab-active {
+    background: #fff;
+    border-color: #ccd0d4;
+    border-bottom-color: #fff;
+    color: #000;
+}
+
+/* Tab content */
+.tab-content {
+    min-height: 400px;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Section styling */
+.wcefp-section {
+    margin-bottom: 30px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.wcefp-section h3 {
+    margin: 0;
+    padding: 15px 20px;
+    background: #f6f7f7;
+    border-bottom: 1px solid #ccd0d4;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.wcefp-section h3 .count {
+    color: #666;
+    font-weight: normal;
+    font-size: 14px;
+}
+
+/* Table styling */
+.wcefp-section .wp-list-table {
+    border: none;
+    border-radius: 0;
+}
+
+.wcefp-section .wp-list-table th,
+.wcefp-section .wp-list-table td {
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+.wcefp-section .wp-list-table th {
+    font-weight: 600;
+    background: #f9f9f9;
+}
+
+.wcefp-section .wp-list-table code {
+    padding: 2px 5px;
+    background: #f1f1f1;
+    border-radius: 3px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    color: #d14;
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    line-height: 1.4;
+}
+
+.status-active {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-inactive {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-public {
+    background: #cce5ff;
+    color: #004085;
+    border: 1px solid #b8daff;
+}
+
+.status-private {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+/* Button styling */
+.test-shortcode,
+.test-ajax {
+    font-size: 11px;
+    padding: 4px 8px;
+    height: auto;
+    line-height: 1.4;
+}
+
+.test-shortcode:hover,
+.test-ajax:hover {
+    background: #0073aa;
+    color: #fff;
+}
+
+/* Refresh button */
+#wcefp-refresh-diagnostics {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#wcefp-refresh-diagnostics:before {
+    content: '\f463';
+    font-family: dashicons;
+    font-size: 16px;
+    line-height: 1;
+}
+
+#wcefp-refresh-diagnostics.loading:before {
+    content: '\f469';
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Test result areas */
+.test-result {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f0f0f1;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    display: none;
+}
+
+.test-result.success {
+    background: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.test-result.error {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+/* Loading states */
+.loading-overlay {
+    position: relative;
+}
+
+.loading-overlay:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7);
+    z-index: 10;
+}
+
+.loading-overlay:after {
+    content: '\f469';
+    font-family: dashicons;
+    font-size: 20px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: spin 1s linear infinite;
+    z-index: 11;
+}
+
+/* Responsive design */
+@media (max-width: 782px) {
+    .wcefp-diagnostics-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .wcefp-section .wp-list-table th,
+    .wcefp-section .wp-list-table td {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+    
+    .wcefp-diagnostics-tabs .nav-tab {
+        font-size: 13px;
+        padding: 10px 15px;
+        margin-right: 2px;
+    }
+}
+
+/* System info specific styling */
+.wcefp-section tbody th {
+    width: 200px;
+    font-weight: 600;
+    background: #f9f9f9;
+}
+
+/* Empty state styling */
+.wp-list-table tbody tr td[colspan] {
+    text-align: center;
+    font-style: italic;
+    color: #666;
+    padding: 30px;
+}
+
+/* Callback display for complex callbacks */
+.wcefp-section .wp-list-table td div {
+    margin: 2px 0;
+}
+
+.wcefp-section .wp-list-table td div:first-child {
+    margin-top: 0;
+}
+
+.wcefp-section .wp-list-table td div:last-child {
+    margin-bottom: 0;
+}

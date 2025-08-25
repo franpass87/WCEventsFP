@@ -1,855 +1,860 @@
 /**
- * WCEventsFP Advanced Analytics Dashboard
- * Enhanced KPI visualizations with predictive analytics and real-time monitoring
+ * WCEFP Advanced Analytics Dashboard JavaScript
+ * Handles interactive charts, real-time data updates, and optimization tools
+ * @since 2.2.2
  */
 
-class WCEFPAdvancedAnalytics {
-	constructor() {
-		this.apiEndpoint = window.wcefp_ajax?.url || '/wp-admin/admin-ajax.php';
-		this.nonce = window.wcefp_ajax?.nonce || '';
-		this.charts = {};
-		this.realTimeInterval = null;
-		this.predictiveModels = {};
-		this.init();
-	}
+(function($) {
+    'use strict';
 
-	init() {
-		this.createDashboard();
-		this.loadAnalyticsData();
-		this.setupRealTimeUpdates();
-		this.initializeCharts();
-		this.bindEvents();
-	}
+    // Global variables
+    let chartInstances = {};
+    let refreshInterval = null;
+    let currentTimeframe = '7d';
 
-	createDashboard() {
-		const existingDashboard = document.querySelector(
-			'.wcefp-advanced-analytics'
-		);
-		if ( existingDashboard ) return;
+    /**
+     * Initialize Advanced Analytics Dashboard
+     */
+    function initAdvancedAnalytics() {
+        // Initialize tabs
+        initTabs();
+        
+        // Initialize controls
+        initControls();
+        
+        // Load initial data
+        loadAnalyticsData();
+        
+        // Initialize charts
+        initCharts();
+        
+        // Setup auto-refresh
+        setupAutoRefresh();
+        
+        // Initialize optimization tools
+        initOptimizationTools();
+        
+        console.log('WCEFP Advanced Analytics Dashboard initialized');
+    }
 
-		const dashboard = document.createElement( 'div' );
-		dashboard.className = 'wcefp-advanced-analytics';
-		dashboard.innerHTML = this.getDashboardHTML();
+    /**
+     * Initialize tab navigation
+     */
+    function initTabs() {
+        $('.wcefp-analytics-tabs .nav-tab').on('click', function(e) {
+            e.preventDefault();
+            
+            const targetTab = $(this).attr('href').substring(1);
+            
+            // Update active states
+            $('.nav-tab').removeClass('nav-tab-active');
+            $(this).addClass('nav-tab-active');
+            
+            $('.wcefp-tab-content').removeClass('tab-active');
+            $('#' + targetTab).addClass('tab-active');
+            
+            // Load tab-specific data
+            loadTabData(targetTab);
+        });
+    }
 
-		// Insert after existing KPI dashboard or at the beginning of content
-		const kpiDashboard = document.querySelector( '.wcefp-kpi-dashboard' );
-		const insertTarget = kpiDashboard || document.querySelector( '.wrap' );
+    /**
+     * Initialize dashboard controls
+     */
+    function initControls() {
+        // Refresh data button
+        $('#wcefp-refresh-analytics').on('click', function() {
+            $(this).find('.dashicons').addClass('spin');
+            loadAnalyticsData().always(() => {
+                $(this).find('.dashicons').removeClass('spin');
+            });
+        });
 
-		if ( insertTarget ) {
-			insertTarget.parentNode.insertBefore(
-				dashboard,
-				kpiDashboard
-					? kpiDashboard.nextSibling
-					: insertTarget.firstChild
-			);
-		}
-	}
+        // Performance optimization button
+        $('#wcefp-optimize-performance').on('click', function() {
+            optimizePerformance();
+        });
 
-	getDashboardHTML() {
-		return `
-            <div class="wcefp-analytics-header">
-                <h2>📊 Analytics Avanzate</h2>
-                <div class="wcefp-analytics-controls">
-                    <select class="wcefp-time-range" id="wcefp-time-range">
-                        <option value="7">Ultimi 7 giorni</option>
-                        <option value="30" selected>Ultimi 30 giorni</option>
-                        <option value="90">Ultimi 3 mesi</option>
-                        <option value="365">Ultimo anno</option>
-                    </select>
-                    <button class="wcefp-refresh-btn" id="wcefp-refresh-analytics">
-                        🔄 Aggiorna
-                    </button>
-                    <button class="wcefp-export-btn" id="wcefp-export-analytics">
-                        📊 Esporta
-                    </button>
+        // Timeframe selector
+        $('#wcefp-analytics-timeframe').on('change', function() {
+            currentTimeframe = $(this).val();
+            loadAnalyticsData();
+            updateAllCharts();
+        });
+
+        // Export functionality
+        $(document).on('click', '.export-btn', function() {
+            const format = $(this).data('format');
+            exportAnalyticsData(format);
+        });
+    }
+
+    /**
+     * Load analytics data from server
+     */
+    function loadAnalyticsData() {
+        return $.ajax({
+            url: wcefpAnalytics.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'wcefp_get_analytics_data',
+                nonce: wcefpAnalytics.nonce,
+                timeframe: currentTimeframe
+            },
+            success: function(response) {
+                if (response.success && response.data) {
+                    updateOverviewCards(response.data.overview);
+                    updatePerformanceTrends(response.data.trends);
+                    updateShortcodeAnalytics(response.data.shortcode_analytics);
+                    updateApiMonitoring(response.data.api_monitoring);
+                    updateHealthAlerts(response.data.health_alerts);
+                    updatePredictiveInsights(response.data.predictive_insights);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Failed to load analytics data:', error);
+                showNotification('Error loading analytics data', 'error');
+            }
+        });
+    }
+
+    /**
+     * Update overview metric cards
+     */
+    function updateOverviewCards(overviewData) {
+        if (!overviewData) return;
+
+        // Update metric values
+        $('[data-metric="performance_score"]').text(overviewData.performance_score || '--');
+        $('[data-metric="avg_response_time"]').text((overviewData.avg_response_time || '--') + 'ms');
+        $('[data-metric="memory_efficiency"]').text((overviewData.memory_efficiency || '--') + '%');
+        $('[data-metric="error_rate"]').text((overviewData.error_rate || '--') + '%');
+
+        // Update change indicators
+        if (overviewData.changes) {
+            Object.keys(overviewData.changes).forEach(metric => {
+                const change = overviewData.changes[metric];
+                const changeEl = $('[data-change="' + metric + '"]');
+                
+                if (change > 0) {
+                    changeEl.text('+' + change + '%').removeClass('negative neutral').addClass('positive');
+                } else if (change < 0) {
+                    changeEl.text(change + '%').removeClass('positive neutral').addClass('negative');
+                } else {
+                    changeEl.text('No change').removeClass('positive negative').addClass('neutral');
+                }
+            });
+        }
+    }
+
+    /**
+     * Initialize Chart.js charts
+     */
+    function initCharts() {
+        // Response Time Chart
+        const responseTimeCtx = document.getElementById('response-time-chart');
+        if (responseTimeCtx) {
+            chartInstances.responseTime = new Chart(responseTimeCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Response Time (ms)',
+                        data: [],
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: getChartOptions('Response Time (ms)')
+            });
+        }
+
+        // Memory Usage Chart
+        const memoryUsageCtx = document.getElementById('memory-usage-chart');
+        if (memoryUsageCtx) {
+            chartInstances.memoryUsage = new Chart(memoryUsageCtx, {
+                type: 'area',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Memory Usage (%)',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: getChartOptions('Memory Usage (%)', 0, 100)
+            });
+        }
+
+        // Database Performance Chart
+        const databaseCtx = document.getElementById('database-performance-chart');
+        if (databaseCtx) {
+            chartInstances.databasePerformance = new Chart(databaseCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Query Time (ms)',
+                        data: [],
+                        backgroundColor: '#f59e0b',
+                        borderColor: '#d97706',
+                        borderWidth: 1
+                    }]
+                },
+                options: getChartOptions('Query Time (ms)')
+            });
+        }
+
+        // Error Rate Chart
+        const errorRateCtx = document.getElementById('error-rate-chart');
+        if (errorRateCtx) {
+            chartInstances.errorRate = new Chart(errorRateCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Error Rate (%)',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: getChartOptions('Error Rate (%)', 0, 20)
+            });
+        }
+
+        // Shortcode Usage Chart
+        const shortcodeUsageCtx = document.getElementById('shortcode-usage-chart');
+        if (shortcodeUsageCtx) {
+            chartInstances.shortcodeUsage = new Chart(shortcodeUsageCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // API Response Chart
+        const apiResponseCtx = document.getElementById('api-response-chart');
+        if (apiResponseCtx) {
+            chartInstances.apiResponse = new Chart(apiResponseCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Google Places API',
+                            data: [],
+                            borderColor: '#4285f4',
+                            backgroundColor: 'rgba(66, 133, 244, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Google Reviews API',
+                            data: [],
+                            borderColor: '#ea4335',
+                            backgroundColor: 'rgba(234, 67, 53, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: getChartOptions('Response Time (ms)')
+            });
+        }
+    }
+
+    /**
+     * Get default chart options
+     */
+    function getChartOptions(yAxisLabel, yMin = null, yMax = null) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#4f46e5',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        maxTicksLimit: 10
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    min: yMin,
+                    max: yMax,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value + (yAxisLabel.includes('%') ? '%' : '');
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: yAxisLabel
+                    }
+                }
+            },
+            elements: {
+                point: {
+                    radius: 3,
+                    hoverRadius: 6
+                }
+            }
+        };
+    }
+
+    /**
+     * Update performance trends charts
+     */
+    function updatePerformanceTrends(trendsData) {
+        if (!trendsData) return;
+
+        // Update Response Time Chart
+        if (chartInstances.responseTime && trendsData.response_time) {
+            chartInstances.responseTime.data.labels = trendsData.timestamps || [];
+            chartInstances.responseTime.data.datasets[0].data = trendsData.response_time;
+            chartInstances.responseTime.update('none');
+        }
+
+        // Update Memory Usage Chart
+        if (chartInstances.memoryUsage && trendsData.memory_usage) {
+            chartInstances.memoryUsage.data.labels = trendsData.timestamps || [];
+            chartInstances.memoryUsage.data.datasets[0].data = trendsData.memory_usage;
+            chartInstances.memoryUsage.update('none');
+        }
+
+        // Update Error Rate Chart
+        if (chartInstances.errorRate && trendsData.error_rate) {
+            chartInstances.errorRate.data.labels = trendsData.timestamps || [];
+            chartInstances.errorRate.data.datasets[0].data = trendsData.error_rate;
+            chartInstances.errorRate.update('none');
+        }
+    }
+
+    /**
+     * Update shortcode analytics data
+     */
+    function updateShortcodeAnalytics(shortcodeData) {
+        if (!shortcodeData) return;
+
+        // Update popular shortcodes list
+        if (shortcodeData.popular_shortcodes) {
+            const popularList = $('#popular-shortcodes');
+            popularList.empty();
+            
+            shortcodeData.popular_shortcodes.forEach(shortcode => {
+                popularList.append(`
+                    <div class="shortcode-item">
+                        <span class="shortcode-name">[${shortcode.name}]</span>
+                        <span class="shortcode-metric">${shortcode.usage_count} uses</span>
+                    </div>
+                `);
+            });
+        }
+
+        // Update slow shortcodes list
+        if (shortcodeData.slow_shortcodes) {
+            const slowList = $('#slow-shortcodes');
+            slowList.empty();
+            
+            shortcodeData.slow_shortcodes.forEach(shortcode => {
+                slowList.append(`
+                    <div class="shortcode-item">
+                        <span class="shortcode-name">[${shortcode.name}]</span>
+                        <span class="shortcode-metric slow">${shortcode.avg_render_time}ms</span>
+                    </div>
+                `);
+            });
+        }
+
+        // Update error shortcodes list
+        if (shortcodeData.error_shortcodes) {
+            const errorList = $('#error-shortcodes');
+            errorList.empty();
+            
+            shortcodeData.error_shortcodes.forEach(shortcode => {
+                errorList.append(`
+                    <div class="shortcode-item">
+                        <span class="shortcode-name">[${shortcode.name}]</span>
+                        <span class="shortcode-metric error">${shortcode.error_rate}% errors</span>
+                    </div>
+                `);
+            });
+        }
+
+        // Update shortcode usage chart
+        if (chartInstances.shortcodeUsage && shortcodeData.usage_trends) {
+            chartInstances.shortcodeUsage.data.labels = shortcodeData.usage_trends.labels || [];
+            chartInstances.shortcodeUsage.data.datasets[0].data = shortcodeData.usage_trends.data || [];
+            chartInstances.shortcodeUsage.update('none');
+        }
+    }
+
+    /**
+     * Update API monitoring data
+     */
+    function updateApiMonitoring(apiData) {
+        if (!apiData) return;
+
+        // Update Google Places API status
+        if (apiData.google_places) {
+            const placesCard = $('[data-api="google-places"]');
+            const placesStatus = apiData.google_places.status;
+            
+            placesCard.find('[data-status]').attr('data-status', placesStatus);
+            placesCard.find('[data-metric="response_time"]').text(apiData.google_places.response_time + 'ms');
+            placesCard.find('[data-metric="success_rate"]').text(apiData.google_places.success_rate + '%');
+            placesCard.find('[data-metric="daily_requests"]').text(apiData.google_places.daily_requests.toLocaleString());
+        }
+
+        // Update Google Reviews API status
+        if (apiData.google_reviews) {
+            const reviewsCard = $('[data-api="google-reviews"]');
+            const reviewsStatus = apiData.google_reviews.status;
+            
+            reviewsCard.find('[data-status]').attr('data-status', reviewsStatus);
+            reviewsCard.find('[data-metric="response_time"]').text(apiData.google_reviews.response_time + 'ms');
+            reviewsCard.find('[data-metric="success_rate"]').text(apiData.google_reviews.success_rate + '%');
+            reviewsCard.find('[data-metric="cache_hit_rate"]').text(apiData.google_reviews.cache_hit_rate + '%');
+        }
+
+        // Update API response chart
+        if (chartInstances.apiResponse && apiData.response_trends) {
+            chartInstances.apiResponse.data.labels = apiData.response_trends.timestamps || [];
+            chartInstances.apiResponse.data.datasets[0].data = apiData.response_trends.google_places || [];
+            chartInstances.apiResponse.data.datasets[1].data = apiData.response_trends.google_reviews || [];
+            chartInstances.apiResponse.update('none');
+        }
+    }
+
+    /**
+     * Update health alerts
+     */
+    function updateHealthAlerts(alertsData) {
+        if (!alertsData || !Array.isArray(alertsData)) return;
+
+        const alertsList = $('#recent-alerts-list');
+        alertsList.empty();
+
+        if (alertsData.length === 0) {
+            alertsList.append('<p>No recent alerts</p>');
+            return;
+        }
+
+        alertsData.forEach(alert => {
+            const alertClass = `alert-${alert.type}`;
+            const alertIcon = getAlertIcon(alert.type);
+            
+            alertsList.append(`
+                <div class="alert-item ${alertClass}">
+                    <div class="alert-icon">${alertIcon}</div>
+                    <div class="alert-content">
+                        <p class="alert-message">${alert.message}</p>
+                        <p class="alert-timestamp">${alert.timestamp}</p>
+                    </div>
                 </div>
+            `);
+        });
+
+        // Update health summary
+        const summary = calculateHealthSummary(alertsData);
+        updateHealthSummary(summary);
+    }
+
+    /**
+     * Get alert icon based on type
+     */
+    function getAlertIcon(type) {
+        const icons = {
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️',
+            memory: '💾',
+            performance: '🚀'
+        };
+        return icons[type] || 'ℹ️';
+    }
+
+    /**
+     * Calculate health summary from alerts
+     */
+    function calculateHealthSummary(alerts) {
+        const summary = {
+            good: 0,
+            warning: 0,
+            critical: 0
+        };
+
+        alerts.forEach(alert => {
+            if (alert.type === 'error') {
+                summary.critical++;
+            } else if (alert.type === 'warning' || alert.type === 'memory' || alert.type === 'performance') {
+                summary.warning++;
+            } else {
+                summary.good++;
+            }
+        });
+
+        return summary;
+    }
+
+    /**
+     * Update health summary display
+     */
+    function updateHealthSummary(summary) {
+        const summaryGrid = $('#health-summary');
+        summaryGrid.empty();
+
+        summaryGrid.append(`
+            <div class="health-summary-item status-good">
+                <div class="summary-value">${summary.good}</div>
+                <div class="summary-label">Good</div>
             </div>
-
-            <!-- Real-time metrics -->
-            <div class="wcefp-realtime-metrics">
-                <h3>📈 Metriche in Tempo Reale</h3>
-                <div class="wcefp-metrics-grid">
-                    <div class="wcefp-metric-card wcefp-realtime-visitors">
-                        <div class="wcefp-metric-icon">👥</div>
-                        <div class="wcefp-metric-content">
-                            <div class="wcefp-metric-value" id="realtime-visitors">--</div>
-                            <div class="wcefp-metric-label">Visitatori Attivi</div>
-                            <div class="wcefp-metric-trend" id="visitors-trend"></div>
-                        </div>
-                    </div>
-                    <div class="wcefp-metric-card wcefp-realtime-bookings">
-                        <div class="wcefp-metric-icon">🎯</div>
-                        <div class="wcefp-metric-content">
-                            <div class="wcefp-metric-value" id="realtime-bookings">--</div>
-                            <div class="wcefp-metric-label">Prenotazioni Oggi</div>
-                            <div class="wcefp-metric-trend" id="bookings-trend"></div>
-                        </div>
-                    </div>
-                    <div class="wcefp-metric-card wcefp-realtime-revenue">
-                        <div class="wcefp-metric-icon">💰</div>
-                        <div class="wcefp-metric-content">
-                            <div class="wcefp-metric-value" id="realtime-revenue">--</div>
-                            <div class="wcefp-metric-label">Ricavi Oggi</div>
-                            <div class="wcefp-metric-trend" id="revenue-trend"></div>
-                        </div>
-                    </div>
-                    <div class="wcefp-metric-card wcefp-realtime-conversion">
-                        <div class="wcefp-metric-icon">🎯</div>
-                        <div class="wcefp-metric-content">
-                            <div class="wcefp-metric-value" id="realtime-conversion">--</div>
-                            <div class="wcefp-metric-label">Tasso Conversione</div>
-                            <div class="wcefp-metric-trend" id="conversion-trend"></div>
-                        </div>
-                    </div>
-                </div>
+            <div class="health-summary-item status-warning">
+                <div class="summary-value">${summary.warning}</div>
+                <div class="summary-label">Warning</div>
             </div>
-
-            <!-- Advanced charts section -->
-            <div class="wcefp-charts-section">
-                <div class="wcefp-charts-grid">
-                    <!-- Revenue prediction chart -->
-                    <div class="wcefp-chart-container">
-                        <div class="wcefp-chart-header">
-                            <h3>📈 Previsione Ricavi</h3>
-                            <div class="wcefp-chart-controls">
-                                <select id="prediction-model">
-                                    <option value="linear">Lineare</option>
-                                    <option value="seasonal">Stagionale</option>
-                                    <option value="trend">Trend</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="wcefp-chart-content">
-                            <canvas id="revenue-prediction-chart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Customer journey funnel -->
-                    <div class="wcefp-chart-container">
-                        <div class="wcefp-chart-header">
-                            <h3>🎯 Customer Journey</h3>
-                        </div>
-                        <div class="wcefp-chart-content">
-                            <canvas id="customer-journey-chart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Booking patterns heatmap -->
-                    <div class="wcefp-chart-container wcefp-heatmap-container">
-                        <div class="wcefp-chart-header">
-                            <h3>🗓️ Pattern di Prenotazione</h3>
-                        </div>
-                        <div class="wcefp-chart-content">
-                            <div id="booking-heatmap"></div>
-                        </div>
-                    </div>
-
-                    <!-- Customer segmentation -->
-                    <div class="wcefp-chart-container">
-                        <div class="wcefp-chart-header">
-                            <h3>👥 Segmentazione Clienti</h3>
-                        </div>
-                        <div class="wcefp-chart-content">
-                            <canvas id="customer-segments-chart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Performance insights -->
-                    <div class="wcefp-chart-container wcefp-insights-container">
-                        <div class="wcefp-chart-header">
-                            <h3>🔍 Insights & Raccomandazioni</h3>
-                        </div>
-                        <div class="wcefp-chart-content">
-                            <div id="performance-insights"></div>
-                        </div>
-                    </div>
-
-                    <!-- A/B Testing results -->
-                    <div class="wcefp-chart-container">
-                        <div class="wcefp-chart-header">
-                            <h3>🧪 A/B Testing</h3>
-                            <button class="wcefp-ab-test-btn" id="create-ab-test">+ Nuovo Test</button>
-                        </div>
-                        <div class="wcefp-chart-content">
-                            <div id="ab-testing-results"></div>
-                        </div>
-                    </div>
-                </div>
+            <div class="health-summary-item status-critical">
+                <div class="summary-value">${summary.critical}</div>
+                <div class="summary-label">Critical</div>
             </div>
+        `);
+    }
 
-            <!-- Alerts and notifications -->
-            <div class="wcefp-alerts-section" id="wcefp-analytics-alerts"></div>
-        `;
-	}
+    /**
+     * Update predictive insights
+     */
+    function updatePredictiveInsights(insightsData) {
+        if (!insightsData) return;
 
-	async loadAnalyticsData( timeRange = 30 ) {
-		try {
-			const response = await fetch( this.apiEndpoint, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				},
-				body: new URLSearchParams( {
-					action: 'wcefp_get_advanced_analytics',
-					nonce: this.nonce,
-					time_range: timeRange,
-					include_predictions: true,
-					include_segments: true,
-				} ),
-			} );
+        // Update performance prediction
+        if (insightsData.performance_prediction) {
+            $('#performance-prediction').text(insightsData.performance_prediction);
+        }
 
-			const data = await response.json();
-			if ( data.success ) {
-				this.updateDashboard( data.data );
-				this.generatePredictions( data.data );
-				this.analyzePerformance( data.data );
-			}
-		} catch ( error ) {
-			console.error( 'Failed to load analytics data:', error );
-			this.showError( 'Impossibile caricare i dati di analytics' );
-		}
-	}
+        // Update capacity analysis
+        if (insightsData.capacity_analysis) {
+            $('#capacity-analysis').text(insightsData.capacity_analysis);
+        }
 
-	updateDashboard( data ) {
-		this.updateRealTimeMetrics( data.realtime || {} );
-		this.updateCharts( data );
-		this.updateInsights( data.insights || [] );
-		this.updateAlerts( data.alerts || [] );
-	}
+        // Update recommendations
+        if (insightsData.recommendations && Array.isArray(insightsData.recommendations)) {
+            const recommendationsList = $('#optimization-recommendations');
+            recommendationsList.empty();
+            
+            insightsData.recommendations.forEach(recommendation => {
+                recommendationsList.append(`
+                    <div class="recommendation-item">${recommendation}</div>
+                `);
+            });
+        }
+    }
 
-	updateRealTimeMetrics( realtime ) {
-		const updates = {
-			'realtime-visitors': realtime.active_visitors || 0,
-			'realtime-bookings': realtime.bookings_today || 0,
-			'realtime-revenue': `€${ this.formatNumber(
-				realtime.revenue_today || 0
-			) }`,
-			'realtime-conversion': `${ (
-				realtime.conversion_rate || 0
-			).toFixed( 1 ) }%`,
-		};
+    /**
+     * Initialize optimization tools
+     */
+    function initOptimizationTools() {
+        $(document).on('click', '[data-action]', function() {
+            const action = $(this).data('action');
+            const button = $(this);
+            
+            button.prop('disabled', true).text('Processing...');
+            
+            runOptimizationAction(action).always(() => {
+                button.prop('disabled', false);
+                // Reset button text based on action
+                const buttonTexts = {
+                    'clear-cache': 'Clear All Cache',
+                    'optimize-cache': 'Optimize Cache',
+                    'preload-cache': 'Preload Cache',
+                    'optimize-tables': 'Optimize Tables',
+                    'clean-expired': 'Clean Expired Data',
+                    'rebuild-indexes': 'Rebuild Indexes',
+                    'minify-assets': 'Minify Assets',
+                    'combine-css': 'Combine CSS',
+                    'optimize-images': 'Optimize Images'
+                };
+                button.text(buttonTexts[action] || 'Process');
+            });
+        });
+    }
 
-		Object.entries( updates ).forEach( ( [ id, value ] ) => {
-			const element = document.getElementById( id );
-			if ( element ) {
-				this.animateCounter( element, value );
-			}
-		} );
+    /**
+     * Run optimization action
+     */
+    function runOptimizationAction(action) {
+        return $.ajax({
+            url: wcefpAnalytics.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'wcefp_optimize_performance',
+                nonce: wcefpAnalytics.nonce,
+                optimization_type: action
+            },
+            success: function(response) {
+                if (response.success && response.data) {
+                    showNotification(`${action} completed successfully! ${response.data.performance_gain} improvement`, 'success');
+                    loadAnalyticsData(); // Refresh data
+                } else {
+                    showNotification('Optimization failed', 'error');
+                }
+            },
+            error: function() {
+                showNotification('Optimization failed', 'error');
+            }
+        });
+    }
 
-		// Update trend indicators
-		this.updateTrendIndicators( realtime.trends || {} );
-	}
+    /**
+     * Optimize performance (general)
+     */
+    function optimizePerformance() {
+        const button = $('#wcefp-optimize-performance');
+        button.prop('disabled', true).text('Optimizing...');
+        
+        $.ajax({
+            url: wcefpAnalytics.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'wcefp_optimize_performance',
+                nonce: wcefpAnalytics.nonce,
+                optimization_type: 'general'
+            },
+            success: function(response) {
+                if (response.success && response.data) {
+                    showNotification(wcefpAnalytics.strings.optimized + ' ' + response.data.performance_gain + ' improvement', 'success');
+                    loadAnalyticsData();
+                } else {
+                    showNotification('Optimization failed', 'error');
+                }
+            },
+            error: function() {
+                showNotification('Optimization failed', 'error');
+            },
+            complete: function() {
+                button.prop('disabled', false).html('<span class="dashicons dashicons-performance"></span> Optimize Performance');
+            }
+        });
+    }
 
-	animateCounter( element, newValue ) {
-		const currentValue = element.textContent;
-		const isNumeric = ! isNaN( parseFloat( currentValue ) );
+    /**
+     * Load tab-specific data
+     */
+    function loadTabData(tabId) {
+        switch(tabId) {
+            case 'performance-trends':
+                updateAllCharts();
+                break;
+            case 'shortcode-analytics':
+                // Already loaded with main data
+                break;
+            case 'api-monitoring':
+                // Already loaded with main data
+                break;
+            case 'health-alerts':
+                // Already loaded with main data
+                break;
+            case 'optimization-tools':
+                updateToolStatuses();
+                break;
+            case 'predictive-insights':
+                // Already loaded with main data
+                break;
+        }
+    }
 
-		if ( isNumeric && ! isNaN( parseFloat( newValue ) ) ) {
-			const start = parseFloat( currentValue ) || 0;
-			const end = parseFloat( newValue );
-			const duration = 1000;
-			const startTime = performance.now();
+    /**
+     * Update all charts
+     */
+    function updateAllCharts() {
+        $.ajax({
+            url: wcefpAnalytics.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'wcefp_get_performance_trends',
+                nonce: wcefpAnalytics.nonce,
+                timeframe: currentTimeframe
+            },
+            success: function(response) {
+                if (response.success && response.data) {
+                    updatePerformanceTrends(response.data);
+                }
+            }
+        });
+    }
 
-			const animate = ( currentTime ) => {
-				const elapsed = currentTime - startTime;
-				const progress = Math.min( elapsed / duration, 1 );
+    /**
+     * Update optimization tool statuses
+     */
+    function updateToolStatuses() {
+        $('[data-tool="cache"]').text('Active');
+        $('[data-tool="database"]').text('Healthy');
+        $('[data-tool="assets"]').text('Optimized');
+    }
 
-				const current =
-					start + ( end - start ) * this.easeOutCubic( progress );
-				element.textContent = Math.round( current );
+    /**
+     * Setup auto-refresh functionality
+     */
+    function setupAutoRefresh() {
+        // Auto-refresh every 5 minutes
+        refreshInterval = setInterval(() => {
+            loadAnalyticsData();
+        }, 5 * 60 * 1000);
+    }
 
-				if ( progress < 1 ) {
-					requestAnimationFrame( animate );
-				}
-			};
+    /**
+     * Export analytics data
+     */
+    function exportAnalyticsData(format) {
+        const exportData = {
+            action: 'wcefp_export_diagnostics',
+            nonce: wcefpAnalytics.nonce,
+            format: format,
+            source: 'analytics'
+        };
 
-			requestAnimationFrame( animate );
-		} else {
-			element.textContent = newValue;
-		}
-	}
+        // Create temporary form for file download
+        const form = $('<form>', {
+            method: 'POST',
+            action: wcefpAnalytics.ajax_url,
+            style: 'display: none;'
+        });
 
-	easeOutCubic( x ) {
-		return 1 - Math.pow( 1 - x, 3 );
-	}
+        Object.keys(exportData).forEach(key => {
+            form.append($('<input>', {
+                type: 'hidden',
+                name: key,
+                value: exportData[key]
+            }));
+        });
 
-	updateTrendIndicators( trends ) {
-		const trendElements = {
-			'visitors-trend': trends.visitors || 0,
-			'bookings-trend': trends.bookings || 0,
-			'revenue-trend': trends.revenue || 0,
-			'conversion-trend': trends.conversion || 0,
-		};
+        $('body').append(form);
+        form.submit();
+        form.remove();
 
-		Object.entries( trendElements ).forEach( ( [ id, trend ] ) => {
-			const element = document.getElementById( id );
-			if ( element ) {
-				const isPositive = trend > 0;
-				const arrow = isPositive ? '↗️' : trend < 0 ? '↘️' : '➡️';
-				const color = isPositive
-					? '#10b981'
-					: trend < 0
-					? '#ef4444'
-					: '#64748b';
+        showNotification(`Analytics data exported as ${format.toUpperCase()}`, 'success');
+    }
 
-				element.innerHTML = `
-                    <span style="color: ${ color }">
-                        ${ arrow } ${ Math.abs( trend ).toFixed( 1 ) }%
-                    </span>
-                `;
-			}
-		} );
-	}
-
-	initializeCharts() {
-		// Revenue prediction chart
-		const revenueCtx = document.getElementById(
-			'revenue-prediction-chart'
-		);
-		if ( revenueCtx ) {
-			this.charts.revenuePrediction = new Chart( revenueCtx, {
-				type: 'line',
-				data: {
-					labels: [],
-					datasets: [
-						{
-							label: 'Ricavi Storici',
-							data: [],
-							borderColor: 'rgb(79, 70, 229)',
-							backgroundColor: 'rgba(79, 70, 229, 0.1)',
-							tension: 0.4,
-						},
-						{
-							label: 'Previsione',
-							data: [],
-							borderColor: 'rgb(245, 158, 11)',
-							backgroundColor: 'rgba(245, 158, 11, 0.1)',
-							borderDash: [ 5, 5 ],
-							tension: 0.4,
-						},
-					],
-				},
-				options: this.getChartOptions( 'Revenue (€)' ),
-			} );
-		}
-
-		// Customer journey funnel
-		const journeyCtx = document.getElementById( 'customer-journey-chart' );
-		if ( journeyCtx ) {
-			this.charts.customerJourney = new Chart( journeyCtx, {
-				type: 'bar',
-				data: {
-					labels: [
-						'Visitatori',
-						'Interessati',
-						'Carrello',
-						'Checkout',
-						'Acquisto',
-					],
-					datasets: [
-						{
-							label: 'Utenti',
-							data: [],
-							backgroundColor: [
-								'rgba(79, 70, 229, 0.8)',
-								'rgba(99, 102, 241, 0.8)',
-								'rgba(245, 158, 11, 0.8)',
-								'rgba(239, 68, 68, 0.8)',
-								'rgba(16, 185, 129, 0.8)',
-							],
-						},
-					],
-				},
-				options: this.getChartOptions( 'Utenti' ),
-			} );
-		}
-
-		// Customer segments
-		const segmentsCtx = document.getElementById(
-			'customer-segments-chart'
-		);
-		if ( segmentsCtx ) {
-			this.charts.customerSegments = new Chart( segmentsCtx, {
-				type: 'doughnut',
-				data: {
-					labels: [],
-					datasets: [
-						{
-							data: [],
-							backgroundColor: [
-								'#4f46e5',
-								'#06b6d4',
-								'#10b981',
-								'#f59e0b',
-								'#ef4444',
-							],
-						},
-					],
-				},
-				options: {
-					responsive: true,
-					maintainAspectRatio: false,
-					plugins: {
-						legend: {
-							position: 'bottom',
-						},
-					},
-				},
-			} );
-		}
-	}
-
-	getChartOptions( yAxisLabel ) {
-		return {
-			responsive: true,
-			maintainAspectRatio: false,
-			plugins: {
-				legend: {
-					display: true,
-				},
-			},
-			scales: {
-				y: {
-					beginAtZero: true,
-					title: {
-						display: true,
-						text: yAxisLabel,
-					},
-				},
-			},
-			interaction: {
-				intersect: false,
-				mode: 'index',
-			},
-		};
-	}
-
-	updateCharts( data ) {
-		// Update revenue prediction chart
-		if ( this.charts.revenuePrediction && data.revenue_data ) {
-			this.charts.revenuePrediction.data.labels =
-				data.revenue_data.labels;
-			this.charts.revenuePrediction.data.datasets[ 0 ].data =
-				data.revenue_data.historical;
-			this.charts.revenuePrediction.data.datasets[ 1 ].data =
-				data.revenue_data.prediction;
-			this.charts.revenuePrediction.update();
-		}
-
-		// Update customer journey
-		if ( this.charts.customerJourney && data.journey_data ) {
-			this.charts.customerJourney.data.datasets[ 0 ].data =
-				data.journey_data.values;
-			this.charts.customerJourney.update();
-		}
-
-		// Update customer segments
-		if ( this.charts.customerSegments && data.segments_data ) {
-			this.charts.customerSegments.data.labels =
-				data.segments_data.labels;
-			this.charts.customerSegments.data.datasets[ 0 ].data =
-				data.segments_data.values;
-			this.charts.customerSegments.update();
-		}
-
-		// Update booking heatmap
-		this.updateBookingHeatmap( data.booking_patterns || {} );
-	}
-
-	updateBookingHeatmap( patterns ) {
-		const heatmapContainer = document.getElementById( 'booking-heatmap' );
-		if ( ! heatmapContainer || ! patterns.data ) return;
-
-		const days = [ 'Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab' ];
-		const hours = Array.from( { length: 24 }, ( _, i ) => i );
-
-		let html = '<div class="wcefp-heatmap-grid">';
-
-		// Header row
-		html += '<div class="wcefp-heatmap-row">';
-		html += '<div class="wcefp-heatmap-cell wcefp-heatmap-header"></div>';
-		hours.forEach( ( hour ) => {
-			html += `<div class="wcefp-heatmap-cell wcefp-heatmap-header">${ hour }</div>`;
-		} );
-		html += '</div>';
-
-		// Data rows
-		days.forEach( ( day, dayIndex ) => {
-			html += '<div class="wcefp-heatmap-row">';
-			html += `<div class="wcefp-heatmap-cell wcefp-heatmap-header">${ day }</div>`;
-
-			hours.forEach( ( hour ) => {
-				const value = patterns.data[ dayIndex ]?.[ hour ] || 0;
-				const intensity = Math.min(
-					( value / patterns.max ) * 100,
-					100
-				);
-				const color = this.getHeatmapColor( intensity );
-
-				html += `
-                    <div class="wcefp-heatmap-cell wcefp-heatmap-data" 
-                         style="background-color: ${ color }"
-                         title="${ day } ${ hour }:00 - ${ value } prenotazioni">
-                        ${ value > 0 ? value : '' }
-                    </div>
-                `;
-			} );
-			html += '</div>';
-		} );
-
-		html += '</div>';
-		heatmapContainer.innerHTML = html;
-	}
-
-	getHeatmapColor( intensity ) {
-		if ( intensity === 0 ) return 'transparent';
-		const alpha = Math.max( intensity / 100, 0.1 );
-		return `rgba(79, 70, 229, ${ alpha })`;
-	}
-
-	generatePredictions( data ) {
-		const model =
-			document.getElementById( 'prediction-model' )?.value || 'linear';
-
-		// Simple linear regression for demo
-		if ( data.revenue_data?.historical ) {
-			const historical = data.revenue_data.historical;
-			const predictions = this.predictWithLinearRegression(
-				historical,
-				7
-			);
-
-			// Update prediction data in chart
-			if ( this.charts.revenuePrediction ) {
-				const currentLabels = [
-					...this.charts.revenuePrediction.data.labels,
-				];
-				const predictionLabels = this.generateFutureDates(
-					currentLabels.length,
-					7
-				);
-
-				this.charts.revenuePrediction.data.labels = [
-					...currentLabels,
-					...predictionLabels,
-				];
-				this.charts.revenuePrediction.data.datasets[ 1 ].data = [
-					...Array( currentLabels.length ).fill( null ),
-					...predictions,
-				];
-				this.charts.revenuePrediction.update();
-			}
-		}
-	}
-
-	predictWithLinearRegression( data, periods ) {
-		const n = data.length;
-		const x = data.map( ( _, i ) => i );
-		const y = data;
-
-		const sumX = x.reduce( ( a, b ) => a + b, 0 );
-		const sumY = y.reduce( ( a, b ) => a + b, 0 );
-		const sumXY = x.reduce( ( sum, xi, i ) => sum + xi * y[ i ], 0 );
-		const sumXX = x.reduce( ( sum, xi ) => sum + xi * xi, 0 );
-
-		const slope = ( n * sumXY - sumX * sumY ) / ( n * sumXX - sumX * sumX );
-		const intercept = ( sumY - slope * sumX ) / n;
-
-		const predictions = [];
-		for ( let i = 0; i < periods; i++ ) {
-			const x_pred = n + i;
-			predictions.push( Math.max( 0, slope * x_pred + intercept ) );
-		}
-
-		return predictions;
-	}
-
-	generateFutureDates( currentLength, periods ) {
-		const dates = [];
-		const today = new Date();
-
-		for ( let i = 1; i <= periods; i++ ) {
-			const futureDate = new Date( today );
-			futureDate.setDate( today.getDate() + i );
-			dates.push( futureDate.toLocaleDateString() );
-		}
-
-		return dates;
-	}
-
-	updateInsights( insights ) {
-		const container = document.getElementById( 'performance-insights' );
-		if ( ! container ) return;
-
-		const html = insights
-			.map(
-				( insight ) => `
-            <div class="wcefp-insight-card ${ insight.type }">
-                <div class="wcefp-insight-icon">${ this.getInsightIcon(
-					insight.type
-				) }</div>
-                <div class="wcefp-insight-content">
-                    <h4>${ insight.title }</h4>
-                    <p>${ insight.description }</p>
-                    ${
-						insight.action
-							? `<button class="wcefp-insight-action" data-action="${ insight.action }">${ insight.actionText }</button>`
-							: ''
-					}
-                </div>
-                <div class="wcefp-insight-impact">${ insight.impact }</div>
+    /**
+     * Show notification
+     */
+    function showNotification(message, type = 'info') {
+        const notificationClass = type === 'error' ? 'notice-error' : 
+                                 type === 'success' ? 'notice-success' : 'notice-info';
+        
+        const notification = $(`
+            <div class="notice ${notificationClass} is-dismissible">
+                <p>${message}</p>
+                <button type="button" class="notice-dismiss">
+                    <span class="screen-reader-text">Dismiss this notice.</span>
+                </button>
             </div>
-        `
-			)
-			.join( '' );
+        `);
+        
+        $('.wcefp-analytics-wrap').prepend(notification);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            notification.fadeOut(() => notification.remove());
+        }, 5000);
+        
+        // Manual dismiss
+        notification.find('.notice-dismiss').on('click', function() {
+            notification.fadeOut(() => notification.remove());
+        });
+    }
 
-		container.innerHTML =
-			html || '<p>Nessun insight disponibile al momento</p>';
+    /**
+     * Add CSS animations
+     */
+    function addAnimationStyles() {
+        $('<style>').text(`
+            .spin {
+                animation: wcefp-spin 1s linear infinite !important;
+            }
+            @keyframes wcefp-spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `).appendTo('head');
+    }
 
-		// Bind insight action buttons
-		container
-			.querySelectorAll( '.wcefp-insight-action' )
-			.forEach( ( btn ) => {
-				btn.addEventListener( 'click', ( e ) => {
-					const action = e.target.dataset.action;
-					this.executeInsightAction( action );
-				} );
-			} );
-	}
+    /**
+     * Cleanup function
+     */
+    function cleanup() {
+        // Clear refresh interval
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+        }
+        
+        // Destroy chart instances
+        Object.values(chartInstances).forEach(chart => {
+            if (chart && typeof chart.destroy === 'function') {
+                chart.destroy();
+            }
+        });
+        chartInstances = {};
+    }
 
-	getInsightIcon( type ) {
-		const icons = {
-			opportunity: '🎯',
-			warning: '⚠️',
-			success: '✅',
-			recommendation: '💡',
-			trend: '📈',
-		};
-		return icons[ type ] || '📊';
-	}
+    // Initialize when document is ready
+    $(document).ready(function() {
+        if ($('.wcefp-analytics-wrap').length) {
+            addAnimationStyles();
+            initAdvancedAnalytics();
+        }
+    });
 
-	executeInsightAction( action ) {
-		// Handle different insight actions
-		switch ( action ) {
-			case 'optimize_pricing':
-				this.showPricingOptimizationModal();
-				break;
-			case 'improve_conversion':
-				this.showConversionOptimizationModal();
-				break;
-			case 'schedule_promotion':
-				this.showPromotionScheduler();
-				break;
-			default:
-				console.log( 'Unknown insight action:', action );
-		}
-	}
+    // Cleanup when page is unloaded
+    $(window).on('beforeunload', cleanup);
 
-	updateAlerts( alerts ) {
-		const container = document.getElementById( 'wcefp-analytics-alerts' );
-		if ( ! container ) return;
-
-		if ( alerts.length === 0 ) {
-			container.innerHTML = '';
-			return;
-		}
-
-		const html = `
-            <h3>🚨 Alerts</h3>
-            <div class="wcefp-alerts-list">
-                ${ alerts
-					.map(
-						( alert ) => `
-                    <div class="wcefp-alert ${ alert.severity }">
-                        <div class="wcefp-alert-icon">${ this.getAlertIcon(
-							alert.severity
-						) }</div>
-                        <div class="wcefp-alert-content">
-                            <strong>${ alert.title }</strong>
-                            <p>${ alert.message }</p>
-                            <small>${ this.formatDate(
-								alert.timestamp
-							) }</small>
-                        </div>
-                        <button class="wcefp-alert-dismiss" data-alert-id="${
-							alert.id
-						}">✕</button>
-                    </div>
-                `
-					)
-					.join( '' ) }
-            </div>
-        `;
-
-		container.innerHTML = html;
-
-		// Bind dismiss buttons
-		container
-			.querySelectorAll( '.wcefp-alert-dismiss' )
-			.forEach( ( btn ) => {
-				btn.addEventListener( 'click', ( e ) => {
-					const alertId = e.target.dataset.alertId;
-					this.dismissAlert( alertId );
-				} );
-			} );
-	}
-
-	getAlertIcon( severity ) {
-		const icons = {
-			critical: '🔴',
-			warning: '🟡',
-			info: '🔵',
-		};
-		return icons[ severity ] || '🔵';
-	}
-
-	setupRealTimeUpdates() {
-		// Update real-time metrics every 30 seconds
-		this.realTimeInterval = setInterval( () => {
-			this.fetchRealTimeMetrics();
-		}, 30000 );
-
-		// Update full dashboard every 5 minutes
-		setInterval( () => {
-			const timeRange =
-				document.getElementById( 'wcefp-time-range' )?.value || 30;
-			this.loadAnalyticsData( parseInt( timeRange ) );
-		}, 300000 );
-	}
-
-	async fetchRealTimeMetrics() {
-		try {
-			const response = await fetch( this.apiEndpoint, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				},
-				body: new URLSearchParams( {
-					action: 'wcefp_get_realtime_metrics',
-					nonce: this.nonce,
-				} ),
-			} );
-
-			const data = await response.json();
-			if ( data.success ) {
-				this.updateRealTimeMetrics( data.data );
-			}
-		} catch ( error ) {
-			console.error( 'Failed to update real-time metrics:', error );
-		}
-	}
-
-	bindEvents() {
-		// Time range selector
-		const timeRangeSelect = document.getElementById( 'wcefp-time-range' );
-		if ( timeRangeSelect ) {
-			timeRangeSelect.addEventListener( 'change', ( e ) => {
-				const timeRange = parseInt( e.target.value );
-				this.loadAnalyticsData( timeRange );
-			} );
-		}
-
-		// Refresh button
-		const refreshBtn = document.getElementById( 'wcefp-refresh-analytics' );
-		if ( refreshBtn ) {
-			refreshBtn.addEventListener( 'click', () => {
-				const timeRange =
-					document.getElementById( 'wcefp-time-range' )?.value || 30;
-				this.loadAnalyticsData( parseInt( timeRange ) );
-			} );
-		}
-
-		// Export button
-		const exportBtn = document.getElementById( 'wcefp-export-analytics' );
-		if ( exportBtn ) {
-			exportBtn.addEventListener( 'click', () => {
-				this.exportAnalytics();
-			} );
-		}
-	}
-
-	formatNumber( num ) {
-		return new Intl.NumberFormat( 'it-IT', {
-			minimumFractionDigits: 0,
-			maximumFractionDigits: 2,
-		} ).format( num );
-	}
-
-	formatDate( timestamp ) {
-		return new Date( timestamp ).toLocaleString( 'it-IT' );
-	}
-
-	showError( message ) {
-		const notification = document.createElement( 'div' );
-		notification.className = 'wcefp-notification wcefp-notification-error';
-		notification.textContent = message;
-		document.body.appendChild( notification );
-
-		setTimeout( () => {
-			notification.remove();
-		}, 5000 );
-	}
-
-	async exportAnalytics() {
-		try {
-			const timeRange =
-				document.getElementById( 'wcefp-time-range' )?.value || 30;
-
-			const response = await fetch( this.apiEndpoint, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				},
-				body: new URLSearchParams( {
-					action: 'wcefp_export_analytics',
-					nonce: this.nonce,
-					time_range: timeRange,
-					format: 'csv',
-				} ),
-			} );
-
-			const blob = await response.blob();
-			const url = window.URL.createObjectURL( blob );
-			const a = document.createElement( 'a' );
-			a.style.display = 'none';
-			a.href = url;
-			a.download = `wcefp-analytics-${
-				new Date().toISOString().split( 'T' )[ 0 ]
-			}.csv`;
-			document.body.appendChild( a );
-			a.click();
-			window.URL.revokeObjectURL( url );
-		} catch ( error ) {
-			console.error( 'Failed to export analytics:', error );
-			this.showError( "Errore durante l'esportazione dei dati" );
-		}
-	}
-
-	destroy() {
-		if ( this.realTimeInterval ) {
-			clearInterval( this.realTimeInterval );
-		}
-
-		Object.values( this.charts ).forEach( ( chart ) => {
-			if ( chart && chart.destroy ) {
-				chart.destroy();
-			}
-		} );
-	}
-}
-
-// Initialize analytics dashboard
-if ( document.readyState === 'loading' ) {
-	document.addEventListener( 'DOMContentLoaded', () => {
-		if ( typeof Chart !== 'undefined' ) {
-			window.wcefpAdvancedAnalytics = new WCEFPAdvancedAnalytics();
-		}
-	} );
-} else if ( typeof Chart !== 'undefined' ) {
-	window.wcefpAdvancedAnalytics = new WCEFPAdvancedAnalytics();
-}
-
-// Export for module systems
-if ( typeof module !== 'undefined' && module.exports ) {
-	module.exports = WCEFPAdvancedAnalytics;
-}
+})(jQuery);
