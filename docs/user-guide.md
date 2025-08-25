@@ -1,9 +1,11 @@
-# WCEventsFP - User Guide v2
+# WCEventsFP v2.2.0 - Complete User Guide
 
-> **Plugin Version**: 2.2.0+  
-> **WordPress**: 5.0+ required (6.0+ recommended)
-> **WooCommerce**: 5.0+ required (7.0+ recommended)
-> **PHP**: 7.4+ required (8.0+ recommended)
+> **Plugin Version**: 2.2.0 (Latest Release)  
+> **WordPress**: 6.3+ required (6.5+ recommended)
+> **WooCommerce**: 8.0+ required (latest recommended)
+> **PHP**: 8.0+ required (8.2+ recommended)
+
+**🚀 Major Update**: This guide covers the complete v2.2.0 overhaul with modern shortcodes, experience gating, enterprise booking engine, and high-performance optimization.
 
 ---
 

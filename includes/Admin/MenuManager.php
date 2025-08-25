@@ -1445,6 +1445,14 @@ class MenuManager {
             $output['accent_color'] = sanitize_hex_color($input['accent_color']) ?: '#0073aa';
         }
         
+        // T-05: Experience Gating setting
+        if (isset($input['hide_experiences_from_woo'])) {
+            $output['hide_experiences_from_woo'] = !empty($input['hide_experiences_from_woo']) ? 1 : 0;
+        } else {
+            // Default: ON (hide experiences from WooCommerce loops)
+            $output['hide_experiences_from_woo'] = 1;
+        }
+        
         return $output;
     }
     

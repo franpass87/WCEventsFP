@@ -31,6 +31,13 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
             return;
         }
         
+        // T-06: Load shortcode classes
+        require_once __DIR__ . '/Shortcodes/ExperiencesCatalog.php';
+        
+        // T-07: Load template and shortcode classes
+        require_once __DIR__ . '/Templates/ExperienceSingle.php';
+        require_once __DIR__ . '/Shortcodes/ExperienceSingleShortcode.php';
+        
         // Register booking widget
         $this->container->singleton('frontend.booking_widget', function($container) {
             return new BookingWidget($container);
@@ -90,6 +97,16 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
         // Initialize shortcode manager if it exists
         if (class_exists('\WCEFP\Frontend\ShortcodeManager')) {
             $this->container->get('frontend.shortcodes');
+        }
+        
+        // T-07: Initialize single experience template system
+        if (class_exists('\WCEFP\Frontend\Templates\ExperienceSingle')) {
+            \WCEFP\Frontend\Templates\ExperienceSingle::init();
+        }
+        
+        // T-07: Initialize single experience shortcode
+        if (class_exists('\WCEFP\Frontend\Shortcodes\ExperienceSingleShortcode')) {
+            \WCEFP\Frontend\Shortcodes\ExperienceSingleShortcode::init();
         }
     }
 }

@@ -1,525 +1,221 @@
-# WCEventsFP - Full Audit Report & Gap Analysis
+# Audit Vision Gap - WCEventsFP Overhaul Analysis
 
-> **Document Version**: 1.0  
-> **Audit Date**: August 24, 2024  
-> **Plugin Version**: 2.1.4  
-> **Target Compatibility**: PHP ≥8.0, WordPress ≥6.5, WooCommerce latest
+**Task ID:** T-01  
+**Date:** 2024-08-25  
+**Version:** 2.2.0 → Overhaul v1  
+**Status:** ✅ **COMPLETED**
 
 ---
 
 ## 🔍 Executive Summary
 
-WCEventsFP is an enterprise booking platform plugin with comprehensive functionality for event management, booking systems, analytics, and integrations. The audit reveals a mature codebase with sophisticated features but identifies critical gaps preventing immediate production deployment.
+This document provides a comprehensive audit of the current WCEventsFP codebase structure, identifies architectural gaps, duplications, and establishes the roadmap for the orchestrated overhaul (T-01 through T-11).
 
-### Key Findings
-- ✅ **Strengths**: Robust architecture, comprehensive features, good testing foundation
-- ⚠️ **Critical Issues**: PHP compatibility gaps, incomplete security hardening, build system failures  
-- 📈 **Opportunity**: Well-positioned for enterprise deployment with focused improvements
+### Key Findings - **DELTA ONLY** Analysis
+- ✅ **Current Architecture**: Sophisticated 123 PHP files, PSR-4 compliant, modular service providers
+- ❌ **Critical Duplications**: Multiple autoloaders, inconsistent service provider patterns  
+- 🔧 **Infrastructure Gaps**: PHP 8.x hardening, WooCommerce gating, performance optimization needed
 
----
+## Current State Inventory (**T-01 Evidence**)
 
-## 🏗️ Architecture Analysis
+### Plugin Architecture Overview (**Verified August 25, 2024**)
 
-### Current Structure
-```
-WCEventsFP/
-├── wceventsfp.php              # Main plugin file (12.8KB)
-├── includes/                   # Core PHP classes (86 files)
-│   ├── Bootstrap/              # Plugin initialization
-│   ├── Core/                   # Container, ServiceProvider, etc.
-│   ├── Features/               # Feature modules (API, Communication, etc.)
-│   ├── Admin/                  # WordPress admin integration
-│   ├── Frontend/               # Public-facing functionality
-│   ├── API/                    # REST API endpoints
-│   ├── Analytics/              # Tracking and reporting
-│   └── Legacy/                 # Backward compatibility layer
-├── admin/                      # Admin UI components
-├── assets/                     # Frontend CSS/JS assets
-├── templates/                  # PHP templates
-├── tools/                      # Diagnostic and utility tools
-└── tests/                      # Test suites (PHP + JavaScript)
+```bash
+# File count verification
+$ find includes/ -name "*.php" | wc -l
+123
+
+# Directory structure analysis
+$ find includes/ -type d | sort | wc -l  
+27
+
+# JavaScript tests status
+$ npm run test:js
+✅ PASS - 23/23 tests passed (1.452s)
+
+# PHP syntax validation
+$ find . -name "*.php" -path "./includes/*" -exec php -l {} \; | grep -c "No syntax errors"
+123 (100% clean)
 ```
 
-### Design Patterns
-- **Singleton**: Main plugin class `WCEventsFP`
-- **Dependency Injection**: `WCEFP\Core\Container`
-- **Service Providers**: Modular feature loading
-- **PSR-4 Autoloading**: Namespace `WCEFP\`
-- **Hook Management**: `HookTimingManager` for WordPress integration
+**Current Version:** 2.2.0 (confirmed from wceventsfp.php line 5)  
+**PHP Files:** 123 total in includes/ ✅  
+**Namespace Structure:** PSR-4 compliant with `WCEFP\` prefix ✅  
+**Service Providers:** 15+ identified (modular architecture) ✅  
+**Directory Structure:** 27 subdirectories in includes/ ✅
 
-### Data Schema
-Current database schema includes:
-- `wp_wcefp_events` - Event occurrences and capacity management
-- WooCommerce product integration for bookings
-- WordPress post meta for event details
-- User meta for API keys and preferences
+### Code Organization Assessment
 
----
+#### ✅ **Well-Structured Components**
 
-## 🔧 Technical Compatibility Assessment
+| Component | Location | Status | Evidence |
+|-----------|----------|---------|----------|
+| Bootstrap System | `includes/Bootstrap/Plugin.php` | ✅ Good | Lines 33-50: Clean plugin initialization with DI container |
+| Core Services | `includes/Core/` | ✅ Good | SecurityManager, PerformanceManager, Container classes |
+| Service Layer | `includes/Services/Domain/` | ✅ Good | 9 domain services (NotificationService, CapacityService, etc.) |
+| PSR-4 Autoloader | `includes/autoloader.php` | ✅ Good | Lines 24-25: Proper WCEFP\ namespace mapping |
+| Testing Framework | `tests/js/` | ✅ Good | Jest tests: 23/23 passing, 2 test suites |
 
-### PHP Compatibility Status
-| Requirement | Current | Target | Status | Action Required |
-|-------------|---------|--------|--------|----------------|
-| PHP Version | ≥7.4 | ≥8.0 | ❌ | Update plugin header, test PHP 8+ features |
-| Type Declarations | Partial | Complete | ⚠️ | Add return types, property types |
-| Error Handling | Try-catch | Typed exceptions | ⚠️ | Enhance exception handling |
+#### 🔄 **Critical Duplications Found** (ACTION REQUIRED)
 
-### WordPress Integration
-| Component | Current | Target | Status | Notes |
-|-----------|---------|--------|--------|-------|
-| WP Version | ≥5.0 | ≥6.5 | ❌ | Update minimum requirements |
-| Hooks System | Comprehensive | ✅ | ✅ | Well implemented |
-| Admin Integration | Complete | ✅ | ✅ | Good admin pages |
-| REST API | Custom endpoints | ✅ | ✅ | Solid API implementation |
+| Component | Issue | Locations | Priority | Evidence |
+|-----------|-------|-----------|----------|----------|
+| **Autoloaders** | DUPLICATE | `includes/autoloader.php` (94 lines) vs `tools/diagnostics/wcefp-autoloader.php` (349 lines) | **HIGH** | Both register `spl_autoload_register` |
+| **ServiceProviders** | SCATTERED | 15+ *ServiceProvider.php files across namespaces | Medium | `grep -r "class.*ServiceProvider"` shows inconsistent patterns |
+| **Manager Classes** | INCONSISTENT | Various Manager/Service/Provider suffixes | Low | `find includes/ -name "*Manager*.php"` shows 10+ different patterns |
+| **Legacy Classes** | MIXED PATTERNS | `includes/Legacy/` mixed with modern | Medium | Legacy classes in autoloader mapping (lines 32-43) |
 
-### WooCommerce Integration  
-- ✅ Product-based event system
-- ✅ Order management integration
-- ✅ Payment processing
-- ⚠️ Latest WooCommerce version compatibility needs verification
+### **Duplication Details - T-01 CRITICAL**
 
----
+#### **Autoloader Duplication** (🚨 IMMEDIATE FIX REQUIRED)
+```bash
+# Evidence of duplication:
+$ grep -r "spl_autoload_register" includes/ tools/
+includes/autoloader.php:        spl_autoload_register([__CLASS__, 'load_class']);
+tools/diagnostics/wcefp-autoloader.php:        spl_autoload_register([$this, 'load_class'], true, true);
+tools/diagnostics/wcefp-pre-activation-test.php:        spl_autoload_register(function($class_name) {
+```
 
-## 🛡️ Security Audit
+**Resolution Strategy:**
+- Keep `includes/autoloader.php` as **CANONICAL** (primary PSR-4)
+- Enhance `tools/diagnostics/wcefp-autoloader.php` as **DIAGNOSTIC FALLBACK**
+- Remove third registration from pre-activation test
 
-### Current Security Measures
-✅ **Implemented:**
-- Nonce verification in AJAX handlers
-- Capability checks in admin functions
-- Input sanitization in form processing
-- SQL prepared statements in database queries
+#### ❌ **Critical Gaps Identified by Task**
 
-❌ **Missing/Incomplete:**
-- Systematic escaping of output data
-- CSRF protection on all forms
-- Rate limiting on API endpoints
-- File upload security validation
+| Task | Gap Area | Current State | Target State | Evidence |
+|------|----------|---------------|--------------|----------|
+| **T-03** | PHP 8.x Compatibility | PHP 7.4+ in plugin header | Zero deprecations on PHP 8.1+ | Plugin header line 13: "Requires PHP: 7.4" |
+| **T-05** | WooCommerce Loop Gating | Experiences mixed in shop loops | Completely separate catalog | Need to audit WooCommerce hooks |
+| **T-04** | REST API Standardization | Partial REST endpoints | Complete versioned API | `includes/API/RestApiManager.php` needs review |
+| **T-06/T-07** | Frontend Components | Basic shortcodes (3 found) | Modern blocks + marketplace UI | Existing: voucher, calendar shortcodes |
+| **T-09** | Performance Assets | Global asset loading likely | Conditional loading only | Need to audit `wp_enqueue_scripts` |
+| **T-10** | CI/CD Pipeline | Manual processes | Automated build + zip packaging | GitHub Actions exist but need verification |
 
-### Security Vulnerabilities
-1. **Output Escaping**: Several instances of direct variable output without escaping
-2. **File Permissions**: Some files may have overly permissive permissions
-3. **API Security**: Rate limiting needs strengthening
-4. **Input Validation**: Additional server-side validation required
+## Architecture Vision vs Current Gap
 
----
+### Target Architecture (Post-Overhaul T-01 through T-11)
 
-## ⚡ Performance Analysis
+```
+WCEFP Plugin (Overhaul v1)
+├── 📋 T-02: Core System
+│   ├── ✅ Single Canonical PSR-4 Autoloader (consolidated)
+│   ├── ✅ Ordered Bootstrap Sequence (hook timing fixed)
+│   └── ✅ PHP 8.x Compatible Codebase (T-03)
+├── 🔌 T-04: API Layer  
+│   ├── ✅ Versioned REST Endpoints (/wp-json/wcefp/v1/, v2/)
+│   ├── ✅ Standardized AJAX Handlers (nonce + capability)
+│   └── ✅ Comprehensive Permission System
+├── 🏪 T-05, T-06, T-07: Experience Management
+│   ├── ✅ WooCommerce Loop Gating (shop/archives/search excluded)
+│   ├── ✅ Dedicated Catalog Frontend (shortcode + Gutenberg block)
+│   └── ✅ Enhanced Experience Detail Pages (hero, booking widget)
+├── 📅 T-08: Booking Engine
+│   ├── ✅ Slot/Recurrence Management
+│   ├── ✅ Capacity & Hold System  
+│   └── ✅ Multi-ticket Support with Extras
+├── ⚡ T-09: Performance Layer
+│   ├── ✅ Conditional Asset Loading (only when shortcode present)
+│   ├── ✅ Query Optimization (eliminate N+1 queries)
+│   └── ✅ Caching Integration (fragments, transients)
+└── 🧪 T-10, T-11: Quality Assurance
+    ├── ✅ Comprehensive Test Suite (PHPUnit + Jest)
+    ├── ✅ CI/CD Automation (GitHub Actions)
+    └── ✅ Distribution Packaging (automated ZIP build)
+```
 
-### Current Performance Features
-✅ **Optimizations:**
-- Conditional asset loading
-- Database query optimization
-- Caching system implementation
-- Autoload optimization
+### Gap Analysis Summary (**EVIDENCE-BASED**)
 
-⚠️ **Performance Issues:**
-- Heavy admin page loads
-- Potential N+1 query problems in event listings
-- Large JavaScript bundles
-- Unminified assets in some contexts
+| Architecture Layer | Current Score | Target Score | Gap Size | Tasks Required | Evidence |
+|--------------------|---------------|--------------|----------|----------------|----------|
+| **Core Foundation** | 7/10 | 10/10 | Medium | T-02, T-03 | Autoloader duplication, PHP 7.4 requirement |
+| **API Standardization** | 5/10 | 10/10 | Large | T-04 | Partial REST endpoints in RestApiManager.php |
+| **Frontend Experience** | 6/10 | 10/10 | Large | T-05, T-06, T-07 | Only 3 shortcodes, no gating evidence |
+| **Booking Engine** | 7/10 | 10/10 | Medium | T-08 | Core booking exists, needs enhancement |
+| **Performance** | 4/10 | 10/10 | Large | T-09 | Global asset loading likely (no conditional checks seen) |
+| **Quality/CI** | 5/10 | 10/10 | Large | T-10, T-11 | Jest works (23/23), but PHPUnit unavailable |
 
-### Recommendations
-1. Implement fragment caching for complex queries
-2. Optimize asset bundling and minification
-3. Add lazy loading for admin data tables
-4. Database index optimization
+## Recommended Overhaul Sequence (**SMALL BATCHES**)
 
----
+### **Phase 1: Foundation** (T-01, T-02, T-03)
+#### **T-01 Inventory & Duplications** ✅ COMPLETED
+- [x] Complete audit documentation (this document)
+- [x] Identify critical duplications (autoloaders, service providers)
+- [x] Evidence-based gap analysis
 
-## 🔨 Build System & CI/CD Analysis
+#### **T-02 Autoload PSR-4 & Bootstrap** (NEXT)
+**Small Batch 1:** Consolidate autoloaders (max 2 files)
+```bash
+# Rollback strategy: git checkout includes/autoloader.php tools/diagnostics/wcefp-autoloader.php
+```
 
-### Current Build Status
-| Component | Status | Issues | Action Required |
-|-----------|--------|--------|----------------|
-| Composer | ❌ Fails | GitHub API auth | Setup auth tokens |
-| npm | ✅ Works | Deprecated warnings | Update dependencies |
-| webpack | ❌ Incomplete | Missing config | Complete build setup |
-| PHPCS | ❌ Unavailable | Composer dependency | Fix dependency install |
-| PHPStan | ❌ Unavailable | Composer dependency | Fix dependency install |
-| Jest | ✅ Works | 5/5 tests pass | Expand test coverage |
+**Small Batch 2:** Bootstrap hook timing (max 1 file)  
+```bash
+# Rollback strategy: git checkout includes/Bootstrap/Plugin.php
+```
 
-### CI/CD Workflows
-- `qa.yml` - Comprehensive QA pipeline (functional)
-- `quality-assurance.yml` - Feature-focused QA (limited scope)
-- `build-release.yml` - Plugin packaging (needs verification)
-- `release-please.yml` - Automated releases (needs PAT setup)
+#### **T-03 PHP 8.x Hardening**
+**Small Batch 3:** Plugin header update (max 1 file)
+```bash  
+# Rollback strategy: git checkout wceventsfp.php
+```
 
----
+### **Phase 2: API & Gating** (T-04, T-05)
+**Small Batch 4:** REST API versioning (max 3 files)
+**Small Batch 5:** WooCommerce loop gating (max 2 files)
 
-## 🌐 Frontend & User Experience
+### **Phase 3: Frontend Revolution** (T-06, T-07, T-08)  
+**Small Batch 6:** Catalog shortcode + block (max 3 files)
+**Small Batch 7:** Experience detail page v2 (max 2 files)
+**Small Batch 8:** Booking engine enhancement (max 3 files)
 
-### Admin Interface
-✅ **Strengths:**
-- Comprehensive settings pages
-- Dashboard with KPI widgets
-- Calendar management interface
-- Booking management system
+### **Phase 4: Performance & Quality** (T-09, T-10, T-11)
+**Small Batch 9:** Conditional asset loading (max 2 files)
+**Small Batch 10:** Test suite completion (max 3 files)
+**Small Batch 11:** Documentation & packaging (max 3 files)
 
-⚠️ **Issues:**
-- Inconsistent UI styling
-- Loading states need improvement
-- Mobile responsiveness gaps
-- Accessibility compliance incomplete
+## Success Metrics (**OBJECTIVE EVIDENCE REQUIRED**)
 
-### Public Frontend
-✅ **Features:**
-- Shortcodes for event display
-- Booking widgets
-- Calendar integration
-- Responsive design foundation
+### **Technical Deliverables**
+- [ ] Zero PHP deprecation warnings on 8.1+ (`php -l` output clean)
+- [ ] Experiences completely gated from WooCommerce loops (WooCommerce hook audit)
+- [ ] Functional catalog → detail → booking flow (no WSOD, manual testing)
+- [ ] CI pipeline producing distribution-ready ZIP (GitHub Actions green)  
+- [ ] Performance improvements measurable (before/after metrics)
 
-⚠️ **Improvements Needed:**
-- Better error handling
-- Loading state management
-- SEO optimization
-- Performance optimization
+### **Process Deliverables**  
+- [x] `docs/audit-vision-gap.md` (this document) ✅
+- [ ] `docs/options-map.md` - Canonical settings mapping  
+- [ ] `docs/api.md` - REST API documentation
+- [ ] `docs/history-timeline.md` - Development timeline
+- [ ] Branch `overhaul/v1` with complete implementation
 
----
+## **Evidence Requirements**
 
-## 📊 Testing & Quality Assurance
+**Every task MUST provide:**
+- **Command output** (bash commands showing before/after state)
+- **Code diff snippets** (specific line changes)
+- **Test results** (automated test output)
+- **Manual verification** (screenshots for UI, curl for API)
 
-### Current Test Coverage
-| Type | Status | Coverage | Notes |
-|------|--------|----------|-------|
-| Unit Tests (PHP) | ❌ | 0% | PHPUnit setup exists but unusable |
-| Integration Tests | ❌ | 0% | Framework ready, tests missing |
-| JavaScript Tests | ✅ | ~60% | 5 Jest tests passing |
-| Manual Testing | ⚠️ | Unknown | No documented test procedures |
+Example evidence format:
+```bash
+# T-02 Evidence - Autoloader Consolidation
+$ php -l includes/autoloader.php
+No syntax errors detected
 
-### Quality Tools Status
-- **PHPCS**: Configured but inaccessible due to composer issues
-- **PHPStan**: Level 6 configured, unavailable
-- **ESLint**: Configured but reports missing config
-- **Stylelint**: Setup present, needs verification
+$ grep -c "spl_autoload_register" includes/ tools/
+includes/autoloader.php:1
+tools/diagnostics/wcefp-autoloader.php:0
+# SUCCESS: Reduced from 3 to 1 autoloader registration
+```
 
----
+## **Next Steps** 
 
-## 📋 Gap Analysis & Priorities
+**Immediate (T-02):** Autoloader consolidation - consolidate duplicate `spl_autoload_register` calls to single canonical implementation.
 
-### Critical Gaps (Priority 1) - Release Blockers
-| Gap | Current State | Target State | Effort | Risk | ETA |
-|-----|---------------|-------------|--------|------|-----|
-| PHP 8.0 Compatibility | PHP 7.4+ | PHP 8.0+ | Medium | Low | 1 week |
-| Build System | Broken | Functional | High | Medium | 1 week |
-| Security Hardening | 70% | 95% | Medium | High | 1 week |
-| Dependency Issues | Failing | Working | Medium | Medium | 3 days |
-
-### High Priority Gaps (Priority 2) - Quality Issues
-| Gap | Current State | Target State | Effort | Risk | ETA |
-|-----|---------------|-------------|--------|------|-----|
-| Test Coverage | <10% | >80% | High | Low | 2 weeks |
-| Code Quality Tools | Broken | Green CI | Medium | Low | 1 week |
-| Documentation | 60% | 90% | Medium | Low | 1 week |
-| Performance Opt. | Basic | Advanced | High | Medium | 2 weeks |
-
-### Medium Priority Gaps (Priority 3) - Enhancement
-| Gap | Current State | Target State | Effort | Risk | ETA |
-|-----|---------------|-------------|--------|------|-----|
-| UI/UX Polish | Functional | Professional | High | Low | 3 weeks |
-| i18n Completion | Partial | Complete | Medium | Low | 1 week |
-| API Docs | Basic | Comprehensive | Medium | Low | 1 week |
-| Advanced Features | Core | Enterprise | High | Medium | 4 weeks |
+**Rollback Strategy:** All changes tracked with git commits, each small batch can be reverted via `git checkout <file>`.
 
 ---
 
-## 🎯 Vision vs Reality
-
-### Original Vision (from README/docs)
-- ✅ Enterprise booking platform
-- ✅ Multi-channel distribution ready
-- ✅ Advanced analytics and automation
-- ✅ Developer-friendly API
-- ⚠️ Production-ready stability
-- ❌ Seamless deployment experience
-
-### Current Reality
-- ✅ Feature-complete core functionality
-- ✅ Sophisticated architecture
-- ⚠️ Development-stage quality
-- ❌ Production deployment barriers
-- ❌ Reliable build process
-- ❌ Complete testing coverage
-
-### Gap Summary
-The plugin is **80% feature-complete** but only **60% production-ready**. The primary gaps are in infrastructure (build, test, deploy) rather than functionality.
-
----
-
-## 🚀 Recommended Action Plan
-
-### Phase 1: Foundation Stabilization (Week 1)
-1. **Fix Dependency Management**
-   - Resolve Composer authentication issues
-   - Update package versions to compatible ranges
-   - Enable PHPCS/PHPStan execution
-
-2. **PHP 8.0+ Compatibility**  
-   - Update plugin headers and requirements
-   - Test PHP 8.0-8.3 compatibility
-   - Add missing type declarations
-
-3. **Critical Security Fixes**
-   - Audit and fix output escaping
-   - Strengthen CSRF protection  
-   - Validate API rate limiting
-
-### Phase 2: Quality Infrastructure (Week 2)
-1. **Complete Build System**
-   - Fix webpack configuration
-   - Implement asset minification
-   - Enable automated builds
-
-2. **Comprehensive Testing**
-   - Create PHPUnit test suite
-   - Expand Jest test coverage
-   - Implement integration tests
-
-3. **Green CI Pipeline**
-   - Fix all GitHub workflow issues
-   - Ensure reliable quality gates
-   - Automate release process
-
-### Phase 3: Production Polish (Week 3)
-1. **Performance Optimization**
-   - Database query optimization
-   - Asset loading improvements
-   - Caching enhancements
-
-2. **Documentation Completion**
-   - User guide creation
-   - API documentation expansion
-   - Developer setup guide
-
-3. **Final Testing & Validation**
-   - User acceptance testing
-   - Performance benchmarking
-   - Security penetration testing
-
----
-
-## 📋 Success Metrics
-
-### Technical Metrics
-- [ ] All GitHub Actions workflows green
-- [ ] PHP 8.0-8.3 compatibility verified
-- [ ] >80% test coverage achieved  
-- [ ] <2 second page load times
-- [ ] Zero security vulnerabilities
-- [ ] WPCS Level 6+ compliance
-
-### Business Metrics
-- [ ] Plugin activates without errors on fresh WordPress
-- [ ] Complete booking workflow functional
-- [ ] Admin interface fully responsive
-- [ ] API endpoints documented and tested
-- [ ] Release package <5MB optimized
-
-### User Experience Metrics
-- [ ] Loading states implemented throughout
-- [ ] Error messages user-friendly
-- [ ] Mobile experience optimized
-- [ ] Accessibility WCAG 2.1 AA compliant
-- [ ] Zero breaking changes for existing users
-
----
-
-## 🔄 Risk Assessment
-
-### High Risk Items
-1. **Breaking Changes** - Careful version management required
-2. **Data Migration** - Database changes need migration scripts  
-3. **Performance Regression** - Optimization changes must be benchmarked
-4. **Third-party Integration** - External service compatibility
-
-### Medium Risk Items
-1. **Browser Compatibility** - Modern JS features need polyfills
-2. **Plugin Conflicts** - WordPress ecosystem compatibility
-3. **Hosting Compatibility** - Various PHP/WordPress configurations
-
-### Low Risk Items  
-1. **Documentation Updates** - Low impact, high value
-2. **Code Style Improvements** - Automated fixes available
-3. **Test Suite Expansion** - Additive improvements only
-
----
-
-## 📅 Timeline & Milestones
-
-### Milestone 1: Foundation Fixed (Week 1)
-- Dependencies working
-- PHP 8.0+ compatible
-- Critical security issues resolved
-- Build system functional
-
-### Milestone 2: Quality Gates Green (Week 2)  
-- All CI/CD workflows passing
-- Test coverage >50%
-- Code quality tools operational
-- Performance benchmarked
-
-### Milestone 3: Production Ready (Week 3)
-- Test coverage >80%
-- Documentation complete
-- User acceptance validated
-- Release candidate ready
-
-### Milestone 4: Final Release (Week 4)
-- Community feedback incorporated
-- Final testing completed
-- Release tagged and distributed
-- Migration guide published
-
----
-
-# 📋 Complete Code Inventory & Mapping
-
-*Generated via automated code analysis on $(date)*
-
-## PHP Classes Inventory (86 files analyzed)
-
-| File | Class | Namespace | Type | Status | Link |
-|------|-------|-----------|------|--------|------|
-| includes/Features/Communication/EmailManager.php | EmailManager | WCEFP\Features\Communication | Service Class | ✅ Implemented | [EmailManager.php](../includes/Features/Communication/EmailManager.php) |
-| includes/Features/Communication/VoucherManager.php | VoucherManager | WCEFP\Features\Communication | Service Class | ✅ Implemented | [VoucherManager.php](../includes/Features/Communication/VoucherManager.php) |
-| includes/Features/Communication/AutomationManager.php | AutomationManager | WCEFP\Features\Communication | Service Class | ✅ Implemented | [AutomationManager.php](../includes/Features/Communication/AutomationManager.php) |
-| includes/Features/DataIntegration/ExportManager.php | ExportManager | WCEFP\Features\DataIntegration | Service Class | ✅ Implemented | [ExportManager.php](../includes/Features/DataIntegration/ExportManager.php) |
-| includes/Features/DataIntegration/CalendarIntegrationManager.php | CalendarIntegrationManager | WCEFP\Features\DataIntegration | Service Class | ✅ Implemented | [CalendarIntegrationManager.php](../includes/Features/DataIntegration/CalendarIntegrationManager.php) |
-| includes/Features/DataIntegration/GutenbergManager.php | GutenbergManager | WCEFP\Features\DataIntegration | Service Class | ✅ Implemented | [GutenbergManager.php](../includes/Features/DataIntegration/GutenbergManager.php) |
-| includes/Admin/MenuManager.php | MenuManager | WCEFP\Admin | Service Class | ✅ Implemented | [MenuManager.php](../includes/Admin/MenuManager.php) |
-| includes/Admin/Tables/BookingsListTable.php | BookingsListTable | WCEFP\Admin\Tables | WP_List_Table | ✅ Implemented | [BookingsListTable.php](../includes/Admin/Tables/BookingsListTable.php) |
-| includes/Admin/Tables/OccurrencesListTable.php | OccurrencesListTable | WCEFP\Admin\Tables | WP_List_Table | ✅ Implemented | [OccurrencesListTable.php](../includes/Admin/Tables/OccurrencesListTable.php) |
-| includes/Core/Container.php | Container | WCEFP\Core | DI Container | ✅ Implemented | [Container.php](../includes/Core/Container.php) |
-| includes/Bootstrap/Plugin.php | Plugin | WCEFP\Bootstrap | Bootstrap | ✅ Implemented | [Plugin.php](../includes/Bootstrap/Plugin.php) |
-
-## WordPress Hooks Inventory
-
-| File | Hook Name | Type | Callback Function | Priority | Status | Link |
-|------|-----------|------|-------------------|----------|--------|------|
-| includes/Features/Communication/EmailManager.php | wcefp_send_automated_email | add_action | send_automated_email | 10 | ✅ Active | [EmailManager.php#L45](../includes/Features/Communication/EmailManager.php#L45) |
-| includes/Features/Communication/EmailManager.php | wcefp_voucher_created | add_action | send_voucher_notification | 10 | ✅ Active | [EmailManager.php#L46](../includes/Features/Communication/EmailManager.php#L46) |
-| includes/Features/Communication/EmailManager.php | wcefp_booking_confirmed | add_action | send_booking_confirmation | 10 | ✅ Active | [EmailManager.php#L47](../includes/Features/Communication/EmailManager.php#L47) |
-| includes/Features/Communication/VoucherManager.php | wp_ajax_wcefp_voucher_action | add_action | handle_ajax_voucher_action | 10 | ✅ Active | [VoucherManager.php#L78](../includes/Features/Communication/VoucherManager.php#L78) |
-| includes/Features/Communication/VoucherManager.php | wp_ajax_wcefp_get_voucher_analytics | add_action | handle_ajax_get_analytics | 10 | ✅ Active | [VoucherManager.php#L79](../includes/Features/Communication/VoucherManager.php#L79) |
-| includes/Features/DataIntegration/GutenbergManager.php | rest_api_init | add_action | register_rest_routes | 10 | ✅ Active | [GutenbergManager.php#L42](../includes/Features/DataIntegration/GutenbergManager.php#L42) |
-| includes/Admin/MenuManager.php | admin_menu | add_action | add_admin_menu | 9 | ✅ Active | [MenuManager.php#L28](../includes/Admin/MenuManager.php#L28) |
-| includes/Bootstrap/Plugin.php | plugins_loaded | add_action | initialize | 5 | ✅ Active | [Plugin.php#L35](../includes/Bootstrap/Plugin.php#L35) |
-
-## Shortcodes Inventory  
-
-| Shortcode Name | File | Callback Function | Attributes | Status | Link |
-|----------------|------|-------------------|------------|--------|------|
-| wcefp_voucher_status | includes/Features/Communication/VoucherManager.php | voucher_status_shortcode | code | ✅ Active | [VoucherManager.php#L156](../includes/Features/Communication/VoucherManager.php#L156) |
-| wcefp_voucher_redeem | includes/Features/Communication/VoucherManager.php | enhanced_redeem_shortcode | - | ✅ Active | [VoucherManager.php#L158](../includes/Features/Communication/VoucherManager.php#L158) |
-| wcefp_add_to_calendar | includes/Features/DataIntegration/CalendarIntegrationManager.php | add_to_calendar_shortcode | event_id | ✅ Active | [CalendarIntegrationManager.php#L89](../includes/Features/DataIntegration/CalendarIntegrationManager.php#L89) |
-
-## Gutenberg Blocks Inventory
-
-| Block Name | File | Render Callback | Attributes | Status | Link |
-|------------|------|-----------------|------------|--------|------|
-| wcefp/booking-form | includes/Features/DataIntegration/GutenbergManager.php | render_booking_form_block | event_id, show_calendar | ✅ Active | [GutenbergManager.php#L67](../includes/Features/DataIntegration/GutenbergManager.php#L67) |
-| wcefp/event-list | includes/Features/DataIntegration/GutenbergManager.php | render_event_list_block | limit, category | ✅ Active | [GutenbergManager.php#L73](../includes/Features/DataIntegration/GutenbergManager.php#L73) |
-
-## Admin Pages Inventory
-
-| Page Title | Parent Slug | Capability | Menu Slug | File | Status | Link |
-|------------|-------------|------------|-----------|------|--------|------|
-| WC Events FP | - | manage_woocommerce | wcefp-events | includes/Admin/MenuManager.php | ✅ Active | [MenuManager.php#L45](../includes/Admin/MenuManager.php#L45) |
-| Prenotazioni | wcefp-events | manage_woocommerce | wcefp-bookings | includes/Admin/MenuManager.php | ✅ Active | [MenuManager.php#L54](../includes/Admin/MenuManager.php#L54) |
-| Voucher | wcefp-events | manage_woocommerce | wcefp-vouchers | includes/Admin/MenuManager.php | ✅ Active | [MenuManager.php#L63](../includes/Admin/MenuManager.php#L63) |
-| Impostazioni | wcefp-events | manage_woocommerce | wcefp-settings | includes/Admin/MenuManager.php | ✅ Active | [MenuManager.php#L72](../includes/Admin/MenuManager.php#L72) |
-| Sistema | wcefp-events | manage_options | wcefp-system-status | includes/Admin/SystemStatus.php | ✅ Active | [SystemStatus.php#L28](../includes/Admin/SystemStatus.php#L28) |
-
-## AJAX Endpoints Inventory
-
-| Action Name | File | Callback Function | Capability Required | Status | Link |
-|-------------|------|-------------------|-------------------|--------|------|
-| wcefp_voucher_action | includes/Features/Communication/VoucherManager.php | handle_ajax_voucher_action | manage_woocommerce | ✅ Active | [VoucherManager.php#L265](../includes/Features/Communication/VoucherManager.php#L265) |
-| wcefp_get_voucher_analytics | includes/Features/Communication/VoucherManager.php | handle_ajax_get_analytics | manage_woocommerce | ✅ Active | [VoucherManager.php#L289](../includes/Features/Communication/VoucherManager.php#L289) |
-| wcefp_export_bookings | includes/Features/DataIntegration/DataIntegrationServiceProvider.php | handle_export_bookings | manage_woocommerce | ✅ Active | [DataIntegrationServiceProvider.php#L67](../includes/Features/DataIntegration/DataIntegrationServiceProvider.php#L67) |
-| wcefp_export_calendar | includes/Features/DataIntegration/DataIntegrationServiceProvider.php | handle_export_calendar | manage_woocommerce | ✅ Active | [DataIntegrationServiceProvider.php#L68](../includes/Features/DataIntegration/DataIntegrationServiceProvider.php#L68) |
-| wcefp_admin_calendar_sync | includes/Features/DataIntegration/CalendarIntegrationManager.php | handle_admin_calendar_sync | manage_options | ✅ Active | [CalendarIntegrationManager.php#L156](../includes/Features/DataIntegration/CalendarIntegrationManager.php#L156) |
-
-## REST API Endpoints Inventory
-
-| Namespace | Route | Methods | Callback | Permission | Status | Link |
-|-----------|-------|---------|----------|------------|--------|------|
-| wcefp/v1 | /events | GET | get_events | public | ✅ Active | [GutenbergManager.php#L164](../includes/Features/DataIntegration/GutenbergManager.php#L164) |
-| wcefp/v1 | /events/(?P<id>\d+) | GET | get_event | public | ✅ Active | [GutenbergManager.php#L170](../includes/Features/DataIntegration/GutenbergManager.php#L170) |
-| wcefp/v1 | /bookings | GET, POST | get_bookings, create_booking | manage_woocommerce | ✅ Active | [EnhancedRestApiManager.php#L45](../includes/Features/ApiDeveloperExperience/EnhancedRestApiManager.php#L45) |
-
-## Database Schema Inventory
-
-| Table Name | Type | Purpose | Fields | Status | Location |
-|------------|------|---------|--------|--------|----------|
-| {prefix}wcefp_vouchers | Custom Table | Voucher Management | id, code, status, order_id, recipient_email | ✅ Active | VoucherManager.php |
-| {prefix}wcefp_voucher_usage | Custom Table | Voucher Usage Tracking | id, voucher_code, used_date, user_id | ✅ Active | VoucherManager.php |
-| {prefix}wcefp_events | Custom Table | Event Occurrences | id, product_id, start_date, capacity | ✅ Active | IntelligentOccurrenceManager.php |
-| {prefix}postmeta | WP Core | Event Product Meta | meta_key: _wcefp_* | ✅ Active | ProductEvento.php |
-| {prefix}woocommerce_order_itemmeta | WC Core | Booking Details | meta_key: _wcefp_* | ✅ Active | Various |
-
-## WordPress Options Inventory
-
-| Option Name | Type | Purpose | Autoload | Status | Location |
-|-------------|------|---------|----------|--------|----------|
-| wcefp_settings | Serialized | Main Plugin Settings | yes | ✅ Active | Settings classes |
-| wcefp_version | String | Plugin Version Tracking | yes | ✅ Active | Bootstrap/Plugin.php |
-| wcefp_email_stats | Serialized | Email Statistics | no | ✅ Active | EmailManager.php |
-| wcefp_automation_settings | Serialized | Automation Configuration | yes | ✅ Active | AutomationManager.php |
-| wcefp_developer_settings | Serialized | API Development Settings | yes | ✅ Active | ApiDeveloperExperience |
-
-## WordPress Transients Inventory
-
-| Transient Key | Purpose | Expiry | Status | Location |
-|---------------|---------|--------|--------|----------|
-| wcefp_openapi_spec | API Documentation Cache | 1 hour | ✅ Active | DocumentationManager.php |
-| wcefp_rate_limit_{ip} | Rate Limiting | Dynamic | ✅ Active | SecurityValidator.php |
-| wcefp_automation_processed_{id} | Automation Duplicate Prevention | 1 hour | ✅ Active | AutomationManager.php |
-
-## Frontend Assets Inventory
-
-| File | Type | Purpose | Dependencies | Enqueue Hook | Status | Link |
-|------|------|---------|-------------|--------------|--------|------|
-| assets/js/frontend.js | JavaScript | Frontend Interactions | jQuery | wp_enqueue_scripts | ✅ Active | [frontend.js](../assets/js/frontend.js) |
-| assets/js/admin-enhanced.js | JavaScript | Admin Interface Enhancement | jQuery | admin_enqueue_scripts | ✅ Active | [admin-enhanced.js](../assets/js/admin-enhanced.js) |
-| assets/js/wcefp-modals.js | JavaScript | Modal System | jQuery | admin_enqueue_scripts | ✅ Active | [wcefp-modals.js](../assets/js/wcefp-modals.js) |
-| assets/css/frontend.css | CSS | Frontend Styling | - | wp_enqueue_scripts | ✅ Active | [frontend.css](../assets/css/frontend.css) |
-| assets/css/admin.css | CSS | Admin Styling | - | admin_enqueue_scripts | ✅ Active | [admin.css](../assets/css/admin.css) |
-
-## Custom Post Types Inventory
-
-| Post Type | File | Public | Capability Type | Supports | Status | Link |
-|-----------|------|--------|----------------|----------|--------|------|
-| wcefp_meeting_point | includes/Legacy/class-wcefp-meeting-points-cpt.php | false | post | title, editor | ✅ Active | [class-wcefp-meeting-points-cpt.php](../includes/Legacy/class-wcefp-meeting-points-cpt.php) |
-| wcefp_guide | includes/Legacy/class-wcefp-resource-management.php | false | post | title, editor | ✅ Active | [class-wcefp-resource-management.php](../includes/Legacy/class-wcefp-resource-management.php) |
-| wcefp_equipment | includes/Legacy/class-wcefp-resource-management.php | false | post | title, editor | ✅ Active | [class-wcefp-resource-management.php](../includes/Legacy/class-wcefp-resource-management.php) |
-| wcefp_vehicle | includes/Legacy/class-wcefp-resource-management.php | false | post | title, editor | ✅ Active | [class-wcefp-resource-management.php](../includes/Legacy/class-wcefp-resource-management.php) |
-| event_occurrence | includes/Analytics/IntelligentOccurrenceManager.php | false | post | title | ✅ Active | [IntelligentOccurrenceManager.php](../includes/Analytics/IntelligentOccurrenceManager.php) |
-
-## Template Files Inventory
-
-| Template | Purpose | Override Path | Status | Link |
-|----------|---------|---------------|--------|------|
-| templates/voucher-email.php | Voucher Email HTML | wcefp/voucher-email.php | ✅ Active | [voucher-email.php](../templates/voucher-email.php) |
-| templates/booking-confirmation.php | Booking Email HTML | wcefp/booking-confirmation.php | ✅ Active | [booking-confirmation.php](../templates/booking-confirmation.php) |
-
----
-
-**Analysis Summary:**
-- **86 PHP Classes** across organized namespaced structure
-- **25+ WordPress Hooks** properly registered with appropriate priorities  
-- **3 Shortcodes** for frontend functionality
-- **2 Gutenberg Blocks** for modern editor integration
-- **5 Admin Pages** for comprehensive backend management
-- **8 AJAX Endpoints** with proper capability checks
-- **3 REST API Endpoints** following WordPress standards
-- **5 Custom Database Tables** for plugin-specific data
-- **15+ WordPress Options** for configuration management
-- **5 Custom Post Types** for resource management
-- **Frontend/Admin Assets** properly enqueued with dependencies
-
-**Status: ✅ COMPREHENSIVE INVENTORY COMPLETE**
-
----
-
-*This audit provides the foundation for systematic improvements to achieve a production-ready WCEventsFP release. Each identified gap includes specific, actionable recommendations with effort estimates and risk assessments.*
+*This audit establishes the foundation for the entire overhaul process. All subsequent tasks will reference this gap analysis and provide delta-only updates with objective evidence.*

@@ -474,8 +474,8 @@ class SystemStatus {
             $issues[] = __('WooCommerce is not active', 'wceventsfp');
         }
         
-        if (version_compare($diagnostics['server']['php_version'], '7.4.0', '<')) {
-            $issues[] = __('PHP version is below minimum requirement (7.4)', 'wceventsfp');
+        if (version_compare($diagnostics['server']['php_version'], '8.0.0', '<')) {
+            $issues[] = __('PHP version is below minimum requirement (8.0)', 'wceventsfp');
         }
         
         if (!$diagnostics['plugin_settings']['log_directory_writable']) {
@@ -527,10 +527,10 @@ class SystemStatus {
         return [
             'php_version' => [
                 'title' => __('PHP Version', 'wceventsfp'),
-                'status' => version_compare($diagnostics['server']['php_version'], '7.4.0', '>=') ? 'pass' : 'fail',
-                'message' => sprintf(__('Current: %s, Required: 7.4+', 'wceventsfp'), $diagnostics['server']['php_version']),
-                'recommendation' => version_compare($diagnostics['server']['php_version'], '7.4.0', '<') 
-                    ? __('Please upgrade to PHP 7.4 or higher for optimal performance and security.', 'wceventsfp') : ''
+                'status' => version_compare($diagnostics['server']['php_version'], '8.0.0', '>=') ? 'pass' : 'fail',
+                'message' => sprintf(__('Current: %s, Required: 8.0+', 'wceventsfp'), $diagnostics['server']['php_version']),
+                'recommendation' => version_compare($diagnostics['server']['php_version'], '8.0.0', '<') 
+                    ? __('Please upgrade to PHP 8.0 or higher for optimal performance and security.', 'wceventsfp') : ''
             ],
             'woocommerce_active' => [
                 'title' => __('WooCommerce', 'wceventsfp'),

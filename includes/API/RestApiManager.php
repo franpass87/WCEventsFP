@@ -13,6 +13,7 @@ namespace WCEFP\API;
 
 use WCEFP\Admin\RolesCapabilities;
 use WCEFP\Utils\DiagnosticLogger;
+use WCEFP\API\ApiVersionManager; // T-04: Centralized version management
 use WP_REST_Server;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -28,11 +29,18 @@ if (!defined('ABSPATH')) {
 class RestApiManager {
     
     /**
-     * API namespace
+     * API namespace (T-04: Now uses centralized version management)
      * 
      * @var string
      */
-    const NAMESPACE = 'wcefp/v1';
+    const NAMESPACE = 'wcefp/v2'; // T-04: Updated to use current version
+    
+    /**
+     * Legacy namespace for backward compatibility
+     * 
+     * @var string
+     */
+    const LEGACY_NAMESPACE = 'wcefp/v1'; // T-04: Explicit legacy support
     
     /**
      * Initialize REST API
@@ -44,9 +52,19 @@ class RestApiManager {
     }
     
     /**
-     * Register REST API routes
+     * Register REST API routes (T-04: Enhanced with version management)
      */
     public function register_routes() {
+        
+        // T-04: Register both current (v2) and legacy (v1) endpoints
+        $this->register_current_routes();
+        $this->register_legacy_routes();
+    }
+    
+    /**
+     * Register current version (v2) routes
+     */
+    private function register_current_routes() {
         // Bookings endpoints
         register_rest_route(self::NAMESPACE, '/bookings', [
             [
@@ -247,6 +265,31 @@ class RestApiManager {
                     'required' => true,
                     'validate_callback' => function($param) { return is_numeric($param); }
                 ]
+            ]
+        ]);
+    }
+    
+    /**
+     * Register legacy version (v1) routes for backward compatibility (T-04)
+     */
+    private function register_legacy_routes() {
+        // T-04: Register key legacy endpoints with deprecation headers
+        
+        // Legacy bookings endpoint
+        register_rest_route(self::LEGACY_NAMESPACE, '/bookings', [
+            [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => [$this, 'get_bookings_legacy'],
+                'permission_callback' => [$this, 'check_booking_permission']
+            ]
+        ]);
+        
+        // Legacy events endpoint  
+        register_rest_route(self::LEGACY_NAMESPACE, '/events', [
+            [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => [$this, 'get_events_legacy'],
+                'permission_callback' => [$this, 'check_events_permission']
             ]
         ]);
     }
@@ -1857,6 +1900,44 @@ class RestApiManager {
     private function validate_date_format($date) {
         $d = \DateTime::createFromFormat('Y-m-d', $date);
         return $d && $d->format('Y-m-d') === $date;
+    }
+    
+    // T-04: Legacy endpoint implementations with deprecation headers
+    
+    /**
+     * Get bookings (legacy v1 endpoint)
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function get_bookings_legacy(WP_REST_Request $request) {
+        // Add deprecation headers
+        $response = $this->get_bookings($request);
+        
+        if ($response instanceof WP_REST_Response) {
+            $response->header('X-WP-Deprecated', 'This API version is deprecated. Please use v2.');
+            $response->header('X-WP-Deprecated-New', rest_url('wcefp/v2/bookings'));
+        }
+        
+        return $response;
+    }
+    
+    /**
+     * Get events (legacy v1 endpoint)  
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function get_events_legacy(WP_REST_Request $request) {
+        // Add deprecation headers
+        $response = $this->get_events($request);
+        
+        if ($response instanceof WP_REST_Response) {
+            $response->header('X-WP-Deprecated', 'This API version is deprecated. Please use v2.');
+            $response->header('X-WP-Deprecated-New', rest_url('wcefp/v2/events'));
+        }
+        
+        return $response;
     }
     
     /**
