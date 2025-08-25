@@ -94,7 +94,7 @@ try {
         }
     }
     
-    // Test autoloader
+    // Test autoloader (T-02: Use canonical autoloader)
     if (file_exists(WCEFP_PLUGIN_DIR . 'vendor/autoload.php')) {
         require_once WCEFP_PLUGIN_DIR . 'vendor/autoload.php';
         echo "   ✅ Composer autoloader loaded\n";
@@ -103,12 +103,13 @@ try {
         echo "   ⚠️  Composer autoloader not found\n";
     }
     
-    // Load our improved manual autoloader
-    if (file_exists(WCEFP_PLUGIN_DIR . 'wcefp-autoloader.php')) {
-        require_once WCEFP_PLUGIN_DIR . 'wcefp-autoloader.php';
-        echo "   ✅ Manual autoloader configured\n";
+    // Load canonical autoloader (T-02)
+    if (file_exists(WCEFP_PLUGIN_DIR . 'includes/autoloader.php')) {
+        require_once WCEFP_PLUGIN_DIR . 'includes/autoloader.php';
+        echo "   ✅ Canonical autoloader loaded (T-02)\n";
     } else {
-        // Fallback to basic autoloader
+        // Only use fallback if canonical is missing
+        echo "   ⚠️  Canonical autoloader not found, using fallback\n";
         spl_autoload_register(function($class_name) {
             if (strpos($class_name, 'WCEFP\\') !== 0) {
                 return;
