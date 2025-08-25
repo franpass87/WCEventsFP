@@ -274,7 +274,7 @@ class EmailManager {
                 break;
         }
         
-        return str_replace('{{EMAIL_CONTENT}}', $content, $base_template);
+        return \WCEFP\Support\safe_str_replace('{{EMAIL_CONTENT}}', $content, $base_template);
     }
     
     /**

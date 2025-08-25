@@ -32,8 +32,8 @@ class AnalyticsServiceProvider {
      * Initialize Analytics & Automation features
      */
     public function initialize() {
-        // Initialize core managers
-        $this->dashboard_manager = new AnalyticsDashboardManager();
+        // Initialize core managers with safety checks
+        $this->initialize_dashboard_manager();
         $this->occurrence_manager = new IntelligentOccurrenceManager();
         
         // Register custom post types and statuses
@@ -50,6 +50,32 @@ class AnalyticsServiceProvider {
         
         // Performance optimizations
         $this->optimize_performance();
+    }
+    
+    /**
+     * Initialize dashboard manager with safety checks
+     * 
+     * Checks if the class exists and if the feature is enabled before instantiating
+     */
+    private function initialize_dashboard_manager() {
+        // Check if the class exists
+        if (!class_exists('WCEFP\\Analytics\\AnalyticsDashboardManager')) {
+            // Class not found, use stub
+            $this->dashboard_manager = new AnalyticsDashboardManagerStub();
+            return;
+        }
+        
+        // Check feature flag from wcefp_options
+        $options = get_option('wcefp_options', []);
+        $analytics_dashboard_enabled = isset($options['analytics_dashboard']) ? 
+            (bool) $options['analytics_dashboard'] : false; // Default OFF
+        
+        if ($analytics_dashboard_enabled) {
+            $this->dashboard_manager = new AnalyticsDashboardManager();
+        } else {
+            // Feature disabled, use stub
+            $this->dashboard_manager = new AnalyticsDashboardManagerStub();
+        }
     }
     
     /**
@@ -499,4 +525,38 @@ class AnalyticsServiceProvider {
     public function optimize_frontend_loading() { /* Implementation */ }
     public function send_occurrence_notification($occurrence_id, $event_id, $date) { /* Implementation */ }
     public function log_slow_query($query, $execution_time) { /* Implementation */ }
+}
+
+/**
+ * Stub class for AnalyticsDashboardManager
+ * 
+ * Used when the analytics dashboard feature is disabled or the class is not available
+ * Prevents fatal errors while maintaining a compatible interface
+ */
+class AnalyticsDashboardManagerStub {
+    
+    /**
+     * Empty register method to maintain compatibility
+     */
+    public function register() {
+        // Stub - does nothing
+    }
+    
+    /**
+     * Invalidate analytics cache (stub)
+     */
+    public function invalidate_analytics_cache() {
+        // Stub - does nothing
+    }
+    
+    /**
+     * Handle missing method calls gracefully
+     */
+    public function __call($method, $args) {
+        // Stub - log if debugging is enabled
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("WCEFP Analytics: Called method {$method} on disabled dashboard manager stub");
+        }
+        return null;
+    }
 }

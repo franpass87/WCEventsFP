@@ -7,6 +7,15 @@ e questo progetto segue il [Semantic Versioning](https://semver.org/lang/it/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- **Fix**: Implemented missing `RestApiManager::get_bookings_args()` method with proper sanitization for per_page, page, product_id[], status[], date_from/to parameters
+- **Fix**: Added PHP 8.1 compatibility functions `safe_str()` and `safe_str_replace()` in `includes/Support/strings.php` to prevent null subject deprecations
+- **Fix**: Replaced risky `str_replace()` calls in NotificationService and EmailManager with `safe_str_replace()` to handle null values safely
+- **Fix**: Hardened AnalyticsServiceProvider with class_exists check and feature flag `wcefp_options['analytics_dashboard']` (default OFF) before instantiating AnalyticsDashboardManager
+- **Added**: Optional AnalyticsDashboardManagerStub class to prevent fatal errors when analytics dashboard is disabled or unavailable
+
 ## [2.2.0] - 🎯 **ENTERPRISE BOOKING PLATFORM v2 COMPLETE** (December 2024)
 
 ### 🚀 **MAJOR: Complete Event/Experience Product Editor v2 with Advanced Enterprise Features**

@@ -1858,4 +1858,92 @@ class RestApiManager {
         $d = \DateTime::createFromFormat('Y-m-d', $date);
         return $d && $d->format('Y-m-d') === $date;
     }
+    
+    /**
+     * Get bookings endpoint arguments with sanitization
+     * 
+     * @return array REST API arguments for bookings endpoint
+     */
+    protected function get_bookings_args() {
+        return [
+            'per_page' => [
+                'description' => __('Number of bookings to return per page', 'wceventsfp'),
+                'type' => 'integer',
+                'default' => 10,
+                'minimum' => 1,
+                'maximum' => 100,
+                'sanitize_callback' => 'absint'
+            ],
+            'page' => [
+                'description' => __('Page number for pagination', 'wceventsfp'),
+                'type' => 'integer',
+                'default' => 1,
+                'minimum' => 1,
+                'sanitize_callback' => 'absint'
+            ],
+            'product_id' => [
+                'description' => __('Filter by product/event IDs', 'wceventsfp'),
+                'type' => 'array',
+                'items' => [
+                    'type' => 'integer'
+                ],
+                'sanitize_callback' => [$this, 'sanitize_product_ids']
+            ],
+            'status' => [
+                'description' => __('Filter by booking status', 'wceventsfp'),
+                'type' => 'array',
+                'items' => [
+                    'type' => 'string',
+                    'enum' => ['pending', 'confirmed', 'cancelled', 'completed']
+                ],
+                'sanitize_callback' => [$this, 'sanitize_status_array']
+            ],
+            'date_from' => [
+                'description' => __('Filter bookings from this date (Y-m-d format)', 'wceventsfp'),
+                'type' => 'string',
+                'format' => 'date',
+                'validate_callback' => [$this, 'validate_date_format']
+            ],
+            'date_to' => [
+                'description' => __('Filter bookings up to this date (Y-m-d format)', 'wceventsfp'),
+                'type' => 'string', 
+                'format' => 'date',
+                'validate_callback' => [$this, 'validate_date_format']
+            ]
+        ];
+    }
+    
+    /**
+     * Sanitize product IDs array
+     * 
+     * @param mixed $product_ids Product IDs to sanitize
+     * @return array Sanitized product IDs
+     */
+    private function sanitize_product_ids($product_ids) {
+        if (!is_array($product_ids)) {
+            $product_ids = array($product_ids);
+        }
+        
+        return array_map('absint', array_filter($product_ids, function($id) {
+            return is_numeric($id) && $id > 0;
+        }));
+    }
+    
+    /**
+     * Sanitize status array
+     * 
+     * @param mixed $statuses Statuses to sanitize
+     * @return array Sanitized statuses
+     */
+    private function sanitize_status_array($statuses) {
+        $allowed_statuses = ['pending', 'confirmed', 'cancelled', 'completed'];
+        
+        if (!is_array($statuses)) {
+            $statuses = array($statuses);
+        }
+        
+        return array_filter(array_map('sanitize_text_field', $statuses), function($status) use ($allowed_statuses) {
+            return in_array($status, $allowed_statuses);
+        });
+    }
 }
