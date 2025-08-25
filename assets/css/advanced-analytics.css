@@ -1,53 +1,324 @@
 /**
- * Advanced Analytics Dashboard Styles
- * Modern dashboard with glassmorphism effects and smooth animations
+ * WCEFP Advanced Analytics Dashboard Styles
+ * Professional analytics interface with charts, metrics, and responsive design
+ * @since 2.2.2
  */
 
-.wcefp-advanced-analytics {
-	margin: 20px 0;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+/* Analytics Wrapper */
+.wcefp-analytics-wrap {
+    max-width: 1400px;
+    margin: 20px 0;
 }
 
-/* Header */
-.wcefp-analytics-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 30px;
-	padding: 20px;
-	background: linear-gradient(135deg, var(--wcefp-bg-secondary, #f8fafc), var(--wcefp-bg-tertiary, #f1f5f9));
-	border-radius: 16px;
-	border: 1px solid var(--wcefp-border-light, #e2e8f0);
+.wcefp-analytics-wrap .wp-heading-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
-.wcefp-analytics-header h2 {
-	margin: 0;
-	color: var(--wcefp-text-primary, #0f172a);
-	font-size: 1.75rem;
-	font-weight: 700;
+.wcefp-analytics-wrap .wcefp-icon {
+    font-size: 28px;
 }
 
+/* Analytics Controls */
 .wcefp-analytics-controls {
-	display: flex;
-	gap: 12px;
-	align-items: center;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 15px 20px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.wcefp-time-range,
-.wcefp-refresh-btn,
-.wcefp-export-btn {
-	padding: 8px 16px;
-	border: 1px solid var(--wcefp-border-medium, #cbd5e1);
-	border-radius: 8px;
-	background: var(--wcefp-bg-primary, white);
-	color: var(--wcefp-text-primary, #0f172a);
-	font-size: 0.875rem;
-	transition: all 0.3s ease;
+.wcefp-analytics-controls .button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
 }
 
-.wcefp-refresh-btn,
-.wcefp-export-btn {
-	cursor: pointer;
+.wcefp-analytics-controls .button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.wcefp-analytics-controls select {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccd0d4;
+    min-width: 150px;
+}
+
+/* Performance Overview Cards */
+.wcefp-analytics-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.wcefp-metric-card {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border: 1px solid #e1e5e9;
+    border-radius: 12px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.wcefp-metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.wcefp-metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: #4f46e5;
+}
+
+.wcefp-metric-card:hover::before {
+    opacity: 1;
+}
+
+.wcefp-metric-card .metric-icon {
+    font-size: 36px;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: rgba(79, 70, 229, 0.1);
+    border-radius: 50%;
+}
+
+.wcefp-metric-card .metric-content {
+    flex: 1;
+}
+
+.wcefp-metric-card .metric-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 5px;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.wcefp-metric-card .metric-label {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.wcefp-metric-card .metric-change {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.wcefp-metric-card .metric-change.positive {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+.wcefp-metric-card .metric-change.negative {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.wcefp-metric-card .metric-change.neutral {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+}
+
+/* Specific metric card styles */
+#performance-score .metric-icon { background: rgba(34, 197, 94, 0.1); }
+#avg-response-time .metric-icon { background: rgba(245, 158, 11, 0.1); }
+#memory-efficiency .metric-icon { background: rgba(59, 130, 246, 0.1); }
+#error-rate .metric-icon { background: rgba(239, 68, 68, 0.1); }
+
+/* Analytics Tabs */
+.wcefp-analytics-tabs {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.wcefp-analytics-tabs .nav-tab-wrapper {
+    border-bottom: 1px solid #ccd0d4;
+    margin: 0;
+    background: #f8f9fa;
+}
+
+.wcefp-analytics-tabs .nav-tab {
+    border: none;
+    border-right: 1px solid #ddd;
+    background: transparent;
+    padding: 16px 24px;
+    margin: 0;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.wcefp-analytics-tabs .nav-tab:hover {
+    background: rgba(79, 70, 229, 0.05);
+    color: #4f46e5;
+}
+
+.wcefp-analytics-tabs .nav-tab-active {
+    background: #fff;
+    color: #4f46e5;
+    font-weight: 600;
+}
+
+.wcefp-analytics-tabs .nav-tab-active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #4f46e5;
+}
+
+.wcefp-tab-content {
+    display: none;
+    padding: 30px;
+    min-height: 500px;
+}
+
+.wcefp-tab-content.tab-active {
+    display: block;
+}
+
+/* Charts Grid */
+.wcefp-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.chart-container {
+    background: #fff;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: box-shadow 0.2s ease;
+}
+
+.chart-container:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.chart-container.full-width {
+    grid-column: 1 / -1;
+    max-width: 100%;
+}
+
+.chart-container h3,
+.chart-container h4 {
+    margin: 0 0 15px 0;
+    color: #1e293b;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.chart-container canvas {
+    max-height: 300px;
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Analytics Header */
+.analytics-header {
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e1e5e9;
+}
+
+.analytics-header h3 {
+    margin: 0 0 8px 0;
+    color: #1e293b;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.analytics-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .wcefp-analytics-overview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .wcefp-charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .wcefp-analytics-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .wcefp-analytics-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .wcefp-analytics-tabs .nav-tab {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    .wcefp-tab-content {
+        padding: 20px;
+    }
+    
+    .wcefp-metric-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .wcefp-metric-card .metric-icon {
+        align-self: center;
+    }
+}
 	font-weight: 500;
 }
 
