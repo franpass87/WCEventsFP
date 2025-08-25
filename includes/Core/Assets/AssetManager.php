@@ -106,11 +106,33 @@ class AssetManager {
             );
         }
         
+        // Conditionally enqueue experiences catalog assets
+        if ($this->has_experiences_catalog()) {
+            wp_enqueue_style(
+                'wcefp-experiences-catalog',
+                $this->plugin_url . 'assets/css/experiences-catalog.css',
+                ['wcefp-frontend'],
+                $this->version
+            );
+            
+            wp_enqueue_script(
+                'wcefp-experiences-catalog',
+                $this->plugin_url . 'assets/js/experiences-catalog.js',
+                ['jquery', 'wcefp-frontend'],
+                $this->version,
+                true
+            );
+        }
+        
         // Localize script with data
         wp_localize_script('wcefp-frontend', 'WCEFPData', [
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('wcefp_frontend'),
             'has_widgets' => $has_wcefp_content,
+            'disable_analytics' => !get_option('wcefp_ga4_enable', true),
+            'debug_mode' => defined('WP_DEBUG') && WP_DEBUG,
+            'ga4_id' => get_option('wcefp_ga4_id', ''),
+            'gtm_id' => get_option('wcefp_gtm_id', ''),
             'strings' => [
                 'loading' => __('Loading...', 'wceventsfp'),
                 'error' => __('An error occurred. Please try again.', 'wceventsfp'),
@@ -283,7 +305,14 @@ class AssetManager {
         
         // Check for WCEFP shortcodes
         if ($post) {
-            $shortcodes = ['wcefp_booking_form', 'wcefp_event_calendar', 'wcefp_event_list'];
+            $shortcodes = [
+                'wcefp_booking_form', 
+                'wcefp_event_calendar', 
+                'wcefp_event_list',
+                'wcefp_experiences',
+                'wcefp_events',
+                'wcefp_search'
+            ];
             foreach ($shortcodes as $shortcode) {
                 if (has_shortcode($post->post_content, $shortcode)) {
                     return true;
@@ -293,7 +322,12 @@ class AssetManager {
         
         // Check for Gutenberg blocks
         if ($post && function_exists('has_block')) {
-            $blocks = ['wcefp/booking-form', 'wcefp/event-calendar', 'wcefp/event-list'];
+            $blocks = [
+                'wcefp/booking-form', 
+                'wcefp/event-calendar', 
+                'wcefp/event-list',
+                'wcefp/experiences-catalog'
+            ];
             foreach ($blocks as $block) {
                 if (has_block($block, $post)) {
                     return true;
@@ -362,5 +396,28 @@ class AssetManager {
             $screen->id === 'product' || 
             $screen->post_type === 'product'
         );
+    }
+    
+    /**
+     * Check if current page has experiences catalog content
+     * 
+     * @return bool
+     */
+    private function has_experiences_catalog() {
+        global $post;
+        
+        if (!$post) return false;
+        
+        // Check for experiences catalog shortcode
+        if (has_shortcode($post->post_content, 'wcefp_experiences')) {
+            return true;
+        }
+        
+        // Check for Gutenberg experiences catalog block
+        if (function_exists('has_block') && has_block('wcefp/experiences-catalog', $post)) {
+            return true;
+        }
+        
+        return false;
     }
 }

@@ -107,6 +107,68 @@ class GutenbergManager {
                 ],
             ],
         ]);
+        
+        // Register experiences catalog block (NEW)
+        register_block_type('wcefp/experiences-catalog', [
+            'editor_script' => 'wcefp-block-editor',
+            'editor_style' => 'wcefp-block-editor',
+            'style' => 'wcefp-experiences-catalog',
+            'render_callback' => [$this, 'render_experiences_catalog_block'],
+            'attributes' => [
+                'limit' => [
+                    'type' => 'number',
+                    'default' => 12,
+                ],
+                'category' => [
+                    'type' => 'string',
+                    'default' => '',
+                ],
+                'showFilters' => [
+                    'type' => 'boolean',
+                    'default' => true,
+                ],
+                'showMap' => [
+                    'type' => 'boolean',
+                    'default' => false,
+                ],
+                'layout' => [
+                    'type' => 'string',
+                    'default' => 'grid',
+                ],
+                'columns' => [
+                    'type' => 'number',
+                    'default' => 3,
+                ],
+                'orderBy' => [
+                    'type' => 'string',
+                    'default' => 'date',
+                ],
+                'orderDir' => [
+                    'type' => 'string',
+                    'default' => 'DESC',
+                ],
+                'showPrice' => [
+                    'type' => 'boolean',
+                    'default' => true,
+                ],
+                'showRating' => [
+                    'type' => 'boolean',
+                    'default' => true,
+                ],
+                'showDuration' => [
+                    'type' => 'boolean',
+                    'default' => true,
+                ],
+                'showLocation' => [
+                    'type' => 'boolean',
+                    'default' => true,
+                ],
+                'className' => [
+                    'type' => 'string',
+                    'default' => '',
+                ],
+            ],
+        ]);
     }
     
     /**
@@ -202,6 +264,13 @@ class GutenbergManager {
             'callback' => [$this, 'get_event_for_block'],
             'permission_callback' => [$this, 'check_block_permissions'],
         ]);
+        
+        // Add experiences endpoint for the catalog block
+        register_rest_route('wcefp/v1', '/experiences', [
+            'methods' => 'GET',
+            'callback' => [$this, 'get_experiences_for_block'],
+            'permission_callback' => [$this, 'check_block_permissions'],
+        ]);
     }
     
     /**
@@ -274,6 +343,52 @@ class GutenbergManager {
                 'max_participants' => get_post_meta($event->ID, '_wcefp_max_participants', true),
             ],
         ]);
+    }
+    
+    /**
+     * Get experiences for block editor
+     */
+    public function get_experiences_for_block($request) {
+        $args = [
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => 50,
+            'meta_query' => [
+                'relation' => 'OR',
+                [
+                    'key' => '_wcefp_is_experience',
+                    'value' => '1',
+                    'compare' => '='
+                ],
+                [
+                    'key' => '_wcefp_product_type',
+                    'value' => ['evento', 'esperienza'],
+                    'compare' => 'IN'
+                ]
+            ]
+        ];
+        
+        $experiences = get_posts($args);
+        $formatted_experiences = [];
+        
+        foreach ($experiences as $experience) {
+            $product = wc_get_product($experience->ID);
+            if (!$product) continue;
+            
+            $formatted_experiences[] = [
+                'id' => $experience->ID,
+                'title' => $experience->post_title,
+                'excerpt' => wp_trim_words($experience->post_excerpt ?: $experience->post_content, 20),
+                'price' => $product->get_price(),
+                'currency' => get_woocommerce_currency_symbol(),
+                'featured_image' => get_the_post_thumbnail_url($experience->ID, 'medium'),
+                'categories' => wp_get_post_terms($experience->ID, 'product_cat', ['fields' => 'names']),
+                'rating' => $product->get_average_rating(),
+                'review_count' => $product->get_review_count(),
+            ];
+        }
+        
+        return rest_ensure_response($formatted_experiences);
     }
     
     /**
@@ -483,5 +598,31 @@ class GutenbergManager {
         }
         
         return $images;
+    }
+    
+    /**
+     * Render experiences catalog block
+     */
+    public function render_experiences_catalog_block($attributes, $content) {
+        // Convert block attributes to shortcode attributes
+        $shortcode_atts = [
+            'limit' => intval($attributes['limit'] ?? 12),
+            'category' => sanitize_text_field($attributes['category'] ?? ''),
+            'show_filters' => ($attributes['showFilters'] ?? true) ? 'yes' : 'no',
+            'show_map' => ($attributes['showMap'] ?? false) ? 'yes' : 'no',
+            'layout' => sanitize_text_field($attributes['layout'] ?? 'grid'),
+            'columns' => intval($attributes['columns'] ?? 3),
+            'order' => sanitize_text_field($attributes['orderBy'] ?? 'date'),
+            'order_dir' => sanitize_text_field($attributes['orderDir'] ?? 'DESC'),
+            'show_price' => ($attributes['showPrice'] ?? true) ? 'yes' : 'no',
+            'show_rating' => ($attributes['showRating'] ?? true) ? 'yes' : 'no',
+            'show_duration' => ($attributes['showDuration'] ?? true) ? 'yes' : 'no',
+            'show_location' => ($attributes['showLocation'] ?? true) ? 'yes' : 'no',
+            'class' => sanitize_html_class($attributes['className'] ?? ''),
+        ];
+        
+        // Use the existing shortcode manager to render the catalog
+        $shortcode_manager = new \WCEFP\Frontend\ShortcodeManager();
+        return $shortcode_manager->experiences_catalog_shortcode($shortcode_atts);
     }
 }

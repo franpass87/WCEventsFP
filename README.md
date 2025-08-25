@@ -519,6 +519,23 @@ La pagina **Eventi & Degustazioni → Impostazioni** è ora organizzata in tab p
 
 ## Shortcode disponibili
 
+### 🚀 Frontend v2 - Marketplace Shortcodes (NEW)
+- **`[wcefp_experiences]`** — Catalogo esperienze con filtri avanzati (stile GetYourGuide)
+- **`[wcefp_experience_page_v2]`** — Pagina esperienza completa GYG-style
+- **Gutenberg Block "Catalogo Esperienze"** — Block editor con preview live
+
+#### Esempi Avanzati Frontend v2
+```html
+<!-- Catalogo completo con tutti i filtri -->
+[wcefp_experiences filters="location,duration,price,rating,date,category" view="grid" columns="3" limit="12" show_map="no"]
+
+<!-- Catalogo specifico per categoria -->
+[wcefp_experiences category="tours" filters="price,rating" layout="list" show_filters="yes"]
+
+<!-- Pagina esperienza completa (usare su single product) -->
+[wcefp_experience_page_v2 show_hero="yes" show_booking_widget="yes" show_reviews="yes" show_faq="yes" show_schema="yes"]
+```
+
 ### Shortcode Base
 - `[wcefp_event_card id="123"]` — Card evento singolo
 - `[wcefp_event_grid]` — Griglia eventi/esperienze
@@ -531,6 +548,24 @@ La pagina **Eventi & Degustazioni → Impostazioni** è ora organizzata in tab p
 - `[wcefp_testimonials limit="3" style="carousel"]` — Testimonial slider
 - `[wcefp_countdown id="123"]` — Timer countdown per eventi
 - `[wcefp_featured_events limit="3"]` — Eventi in evidenza
+
+### Parametri Catalogo Esperienze
+| Parametro | Valori | Default | Descrizione |
+|-----------|---------|---------|-------------|
+| `filters` | `location,duration,price,rating,date,category` | `location,duration,price,rating,category` | Filtri disponibili |
+| `view`/`layout` | `grid`, `list`, `masonry` | `grid` | Layout visualizzazione |
+| `columns` | `1-4` | `3` | Numero colonne (solo grid) |
+| `limit`/`per_page` | numerico | `12` | Esperienze per pagina |
+| `show_filters` | `yes`, `no` | `yes` | Mostra barra filtri |
+| `show_map` / `map` | `yes`/`on`, `no`/`off` | `no` | Mostra mappa (richiede Google Maps API) |
+| `orderby` | `date`, `popularity`, `rating`, `price`, `title` | `date` | Ordinamento default |
+| `order` | `ASC`, `DESC` | `DESC` | Direzione ordinamento |
+| `show_price` | `yes`, `no` | `yes` | Mostra prezzo |
+| `show_rating` | `yes`, `no` | `yes` | Mostra stelle recensioni |
+| `show_duration` | `yes`, `no` | `yes` | Mostra durata |
+| `show_location` | `yes`, `no` | `yes` | Mostra posizione |
+| `ajax` | `yes`, `no` | `yes` | Abilita paginazione AJAX |
+| `skeleton` | `yes`, `no` | `yes` | Mostra skeleton loading |
 
 ### Esempi d'Uso
 ```html
@@ -551,7 +586,47 @@ La pagina **Eventi & Degustazioni → Impostazioni** è ora organizzata in tab p
 
 ---
 
-## Tracking (GA4 / GTM)
+## 🎯 Tracking & Analytics (GA4 Enhanced Ecommerce)
+
+### Frontend v2 Analytics Implementation
+Eventi **GA4 Enhanced Ecommerce** pushati automaticamente:
+
+#### Catalogo Esperienze
+- **`view_item_list`** — Visualizzazione catalogo con item array
+- **`select_item`** — Click su esperienza con posizione e dettagli
+- **`experience_search`** — Ricerca con termine
+- **`experience_filter_*`** — Filtri applicati (categoria, prezzo, durata, etc.)
+
+#### Pagina Esperienza & Booking
+- **`view_item`** — Caricamento pagina/widget con item details
+- **`add_to_cart`** — Click prenotazione con currency, value, items
+- **`begin_checkout`** — Redirect a checkout con ecommerce data
+- **`select_content`** — Selezioni date/quantità
+
+#### Parametri GA4 Standard
+```javascript
+// Esempio evento add_to_cart
+gtag('event', 'add_to_cart', {
+  currency: 'EUR',
+  value: 150.00,
+  items: [{
+    item_id: '123',
+    item_name: 'Tour delle Cinque Terre',
+    item_category: 'experience',
+    quantity: 2,
+    price: 75.00
+  }]
+});
+```
+
+### Configurazione Analytics
+- **Admin Panel**: WCEventsFP → Impostazioni → Avanzate
+- **GA4 Toggle**: Abilita/disabilita tracking eventi
+- **GTM Support**: DataLayer push automatico
+- **Consent Mode**: Compatible con GDPR/privacy plugins
+- **Debug Mode**: Console logging in sviluppo
+
+### Tracking (GA4 / GTM)
 Eventi pushati in **dataLayer**:
 - `view_item` (su widget prodotto)
 - `add_to_cart` (salvato in session e pushato lato carrello Woo)

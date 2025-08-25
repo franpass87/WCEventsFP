@@ -47,6 +47,15 @@ class WooCommerceArchiveFilter {
         // Hide from search results
         add_action('pre_get_posts', [$this, 'filter_search_results'], 20);
         
+        // Hide from feeds
+        add_action('pre_get_posts', [$this, 'filter_feeds'], 20);
+        
+        // Hide from sitemaps 
+        add_filter('wp_sitemaps_posts_query_args', [$this, 'filter_sitemap_args']);
+        
+        // Filter REST API responses
+        add_filter('rest_product_query', [$this, 'filter_rest_api_query'], 10, 2);
+        
         // Optional redirect for single product pages
         add_action('template_redirect', [$this, 'maybe_redirect_single_product']);
         
@@ -136,6 +145,100 @@ class WooCommerceArchiveFilter {
         ];
         
         $query->set('meta_query', $meta_query);
+    }
+    
+    /**
+     * Filter feed queries to exclude experience products
+     * 
+     * @param \WP_Query $query Query object
+     * @return void
+     */
+    public function filter_feeds($query) {
+        // Skip if not main query or not a feed
+        if (!$query->is_main_query() || !$query->is_feed()) {
+            return;
+        }
+        
+        // Skip if setting is disabled
+        if (!$this->is_feed_filtering_enabled()) {
+            return;
+        }
+        
+        // Only filter if products are included
+        if ($query->is_post_type_archive('product') || in_array('product', (array) $query->get('post_type'))) {
+            $this->exclude_event_products($query);
+        }
+    }
+    
+    /**
+     * Filter sitemap queries to exclude experience products
+     * 
+     * @param array $args Query arguments
+     * @return array Modified query arguments
+     */
+    public function filter_sitemap_args($args) {
+        // Skip if setting is disabled
+        if (!$this->is_sitemap_filtering_enabled()) {
+            return $args;
+        }
+        
+        // Only filter product sitemaps
+        if (isset($args['post_type']) && $args['post_type'] === 'product') {
+            $meta_query = $args['meta_query'] ?? [];
+            
+            // Ensure relation is set to AND if we have existing meta queries
+            if (!empty($meta_query)) {
+                $meta_query['relation'] = 'AND';
+            }
+            
+            // Add meta query to exclude experience products
+            $meta_query[] = [
+                'key' => '_wcefp_is_experience',
+                'value' => '1',
+                'compare' => '!=',
+                'type' => 'CHAR'
+            ];
+            
+            $args['meta_query'] = $meta_query;
+        }
+        
+        return $args;
+    }
+    
+    /**
+     * Filter REST API queries to exclude experience products
+     * 
+     * @param array $args Query arguments
+     * @param \WP_REST_Request $request REST request object
+     * @return array Modified query arguments
+     */
+    public function filter_rest_api_query($args, $request) {
+        // Skip if setting is disabled
+        if (!$this->is_rest_api_filtering_enabled()) {
+            return $args;
+        }
+        
+        // Only filter if no specific product ID is requested (i.e., listing endpoints)
+        if (!$request->get_param('id') && !$request->get_param('slug')) {
+            $meta_query = $args['meta_query'] ?? [];
+            
+            // Ensure relation is set to AND if we have existing meta queries
+            if (!empty($meta_query)) {
+                $meta_query['relation'] = 'AND';
+            }
+            
+            // Add meta query to exclude experience products
+            $meta_query[] = [
+                'key' => '_wcefp_is_experience',
+                'value' => '1',
+                'compare' => '!=',
+                'type' => 'CHAR'
+            ];
+            
+            $args['meta_query'] = $meta_query;
+        }
+        
+        return $args;
     }
     
     /**
@@ -264,6 +367,33 @@ class WooCommerceArchiveFilter {
     }
     
     /**
+     * Check if feed filtering is enabled
+     * 
+     * @return bool
+     */
+    private function is_feed_filtering_enabled() {
+        return get_option('wcefp_hide_from_feeds', true);
+    }
+    
+    /**
+     * Check if sitemap filtering is enabled
+     * 
+     * @return bool
+     */
+    private function is_sitemap_filtering_enabled() {
+        return get_option('wcefp_hide_from_sitemaps', true);
+    }
+    
+    /**
+     * Check if REST API filtering is enabled
+     * 
+     * @return bool
+     */
+    private function is_rest_api_filtering_enabled() {
+        return get_option('wcefp_hide_from_rest_api', true);
+    }
+    
+    /**
      * Get landing page ID for a product
      * 
      * @param int $product_id Product ID
@@ -325,6 +455,48 @@ class WooCommerceArchiveFilter {
             ]
         );
         
+        // Hide from feeds setting
+        add_settings_field(
+            'wcefp_hide_from_feeds',
+            __('Hide from Feeds', 'wceventsfp'),
+            [$this, 'render_checkbox_field'],
+            'wcefp_settings',
+            'wcefp_archive_filtering',
+            [
+                'option_name' => 'wcefp_hide_from_feeds',
+                'description' => __('Hide event/experience products from RSS and other feeds', 'wceventsfp'),
+                'default' => true
+            ]
+        );
+        
+        // Hide from sitemaps setting
+        add_settings_field(
+            'wcefp_hide_from_sitemaps',
+            __('Hide from Sitemaps', 'wceventsfp'),
+            [$this, 'render_checkbox_field'],
+            'wcefp_settings',
+            'wcefp_archive_filtering',
+            [
+                'option_name' => 'wcefp_hide_from_sitemaps',
+                'description' => __('Hide event/experience products from XML sitemaps', 'wceventsfp'),
+                'default' => true
+            ]
+        );
+        
+        // Hide from REST API setting  
+        add_settings_field(
+            'wcefp_hide_from_rest_api',
+            __('Hide from REST API', 'wceventsfp'),
+            [$this, 'render_checkbox_field'],
+            'wcefp_settings',
+            'wcefp_archive_filtering',
+            [
+                'option_name' => 'wcefp_hide_from_rest_api',
+                'description' => __('Hide event/experience products from WooCommerce REST API product listings', 'wceventsfp'),
+                'default' => true
+            ]
+        );
+        
         // Redirect single products setting
         add_settings_field(
             'wcefp_redirect_single_products',
@@ -355,6 +527,24 @@ class WooCommerceArchiveFilter {
         register_setting('wcefp_settings', 'wcefp_redirect_single_products', [
             'type' => 'boolean',
             'default' => false,
+            'sanitize_callback' => 'rest_sanitize_boolean'
+        ]);
+        
+        register_setting('wcefp_settings', 'wcefp_hide_from_feeds', [
+            'type' => 'boolean',
+            'default' => true,
+            'sanitize_callback' => 'rest_sanitize_boolean'
+        ]);
+        
+        register_setting('wcefp_settings', 'wcefp_hide_from_sitemaps', [
+            'type' => 'boolean',
+            'default' => true,
+            'sanitize_callback' => 'rest_sanitize_boolean'
+        ]);
+        
+        register_setting('wcefp_settings', 'wcefp_hide_from_rest_api', [
+            'type' => 'boolean',
+            'default' => true,
             'sanitize_callback' => 'rest_sanitize_boolean'
         ]);
     }
