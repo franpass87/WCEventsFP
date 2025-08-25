@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 class SchedulingService {
     
     /**
-     * Get available time slots for a product on a specific date
+     * Get available time slots for a product on a specific date with caching
      * 
      * @param int $product_id Product ID
      * @param string $date Date in Y-m-d format
@@ -32,6 +32,25 @@ class SchedulingService {
         if (!SecurityManager::can_user('manage_wcefp_events')) {
             return [];
         }
+        
+        // Use cache for expensive slot queries
+        return \WCEFP\Core\Performance\QueryCacheManager::cache_availability_query(
+            $product_id,
+            $date,
+            function() use ($product_id, $date) {
+                return $this->get_available_slots_uncached($product_id, $date);
+            }
+        );
+    }
+    
+    /**
+     * Get available time slots without caching (internal method)
+     * 
+     * @param int $product_id Product ID
+     * @param string $date Date in Y-m-d format
+     * @return array Available time slots with capacity info
+     */
+    private function get_available_slots_uncached($product_id, $date) {
         
         $product = wc_get_product($product_id);
         if (!$product || !in_array($product->get_type(), ['evento', 'esperienza'])) {
@@ -280,7 +299,7 @@ class SchedulingService {
     }
     
     /**
-     * Get occurrences for a product from database
+     * Get occurrences for a product from database with caching
      * 
      * @param int $product_id Product ID
      * @param string $from_date Start date  
@@ -289,6 +308,29 @@ class SchedulingService {
      * @return array Occurrences
      */
     public function get_occurrences($product_id, $from_date, $to_date, $limit = 30) {
+        // Use cache for occurrence queries
+        $cache_key = "occurrences_{$product_id}_{$from_date}_{$to_date}_{$limit}";
+        
+        return \WCEFP\Core\Performance\QueryCacheManager::get_cached(
+            $cache_key,
+            \WCEFP\Core\Performance\QueryCacheManager::CACHE_GROUP_AVAILABILITY,
+            function() use ($product_id, $from_date, $to_date, $limit) {
+                return $this->get_occurrences_uncached($product_id, $from_date, $to_date, $limit);
+            },
+            \WCEFP\Core\Performance\QueryCacheManager::CACHE_DURATION_SHORT
+        );
+    }
+    
+    /**
+     * Get occurrences for a product from database without caching
+     * 
+     * @param int $product_id Product ID
+     * @param string $from_date Start date  
+     * @param string $to_date End date
+     * @param int $limit Result limit
+     * @return array Occurrences
+     */
+    private function get_occurrences_uncached($product_id, $from_date, $to_date, $limit = 30) {
         global $wpdb;
         
         $occurrences_table = $wpdb->prefix . 'wcefp_occurrences';

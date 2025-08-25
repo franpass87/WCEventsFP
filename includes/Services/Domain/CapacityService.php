@@ -144,13 +144,30 @@ class CapacityService {
     }
     
     /**
-     * Get capacity utilization for a product
+     * Get capacity utilization for a product with caching
      * 
      * @param int $product_id Product ID
      * @param string|null $date_filter Optional date filter (Y-m-d)
      * @return array Utilization data
      */
     public function get_capacity_utilization($product_id, $date_filter = null) {
+        return \WCEFP\Core\Performance\QueryCacheManager::cache_capacity_query(
+            $product_id,
+            $date_filter,
+            function() use ($product_id, $date_filter) {
+                return $this->get_capacity_utilization_uncached($product_id, $date_filter);
+            }
+        );
+    }
+    
+    /**
+     * Get capacity utilization for a product without caching
+     * 
+     * @param int $product_id Product ID
+     * @param string|null $date_filter Optional date filter (Y-m-d)
+     * @return array Utilization data
+     */
+    private function get_capacity_utilization_uncached($product_id, $date_filter = null) {
         $capacity_config = $product = wc_get_product($product_id);
         if (!$product) {
             return [];

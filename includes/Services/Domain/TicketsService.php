@@ -750,7 +750,7 @@ class TicketsService {
     }
     
     /**
-     * Calculate total price for selected tickets with enhanced pricing
+     * Calculate total price for selected tickets with enhanced pricing and caching
      * 
      * @param int $product_id Product ID
      * @param array $selected_tickets Array of ticket type => quantity
@@ -758,6 +758,24 @@ class TicketsService {
      * @return array Price breakdown
      */
     public function calculate_ticket_prices($product_id, $selected_tickets, $context = []) {
+        return \WCEFP\Core\Performance\QueryCacheManager::cache_pricing_query(
+            $product_id,
+            array_merge($context, ['tickets' => $selected_tickets]),
+            function() use ($product_id, $selected_tickets, $context) {
+                return $this->calculate_ticket_prices_uncached($product_id, $selected_tickets, $context);
+            }
+        );
+    }
+    
+    /**
+     * Calculate total price for selected tickets without caching
+     * 
+     * @param int $product_id Product ID
+     * @param array $selected_tickets Array of ticket type => quantity
+     * @param array $context Additional context (date, extras, etc.)
+     * @return array Price breakdown
+     */
+    private function calculate_ticket_prices_uncached($product_id, $selected_tickets, $context = []) {
         $ticket_types = $this->get_ticket_types($product_id);
         $price_breakdown = [
             'subtotal' => 0,
