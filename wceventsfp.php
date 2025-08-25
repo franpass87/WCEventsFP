@@ -99,8 +99,8 @@ class WCEventsFP {
         // Initialize plugin on WordPress init
         add_action('plugins_loaded', [$this, 'plugins_loaded'], 10);
         
-        // Activation and deactivation hooks
-        register_activation_hook(__FILE__, [$this, 'activate']);
+        // Activation and deactivation hooks - unified under ActivationHandler
+        register_activation_hook(__FILE__, ['WCEFP\\Core\\ActivationHandler', 'activate']);
         register_deactivation_hook(__FILE__, [$this, 'deactivate']);
     }
     
@@ -128,7 +128,7 @@ class WCEventsFP {
             
             return true;
             
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             $this->handle_error('Failed to load dependencies: ' . $e->getMessage());
             return false;
         }
@@ -176,10 +176,11 @@ class WCEventsFP {
                 $this->load_all_features();
                 
             } else {
-                throw new Exception('Bootstrap Plugin class not found');
+                throw new \Exception('Bootstrap Plugin class not found');
             }
             
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            error_log('[WCEFP] Bootstrap error: ' . $e->getMessage());
             $this->handle_error('Plugin initialization failed: ' . $e->getMessage());
         }
     }
@@ -215,31 +216,15 @@ class WCEventsFP {
     /**
      * Plugin activation
      * 
+     * @deprecated 2.2.0 Use WCEFP\Core\ActivationHandler::activate() instead
      * @return void
      */
     public function activate() {
-        try {
-            // Check dependencies on activation
-            if (!$this->check_dependencies()) {
-                wp_die('WCEventsFP cannot be activated due to missing dependencies.');
-            }
-            
-            // Run activation tasks directly
-            $this->create_database_tables();
-            $this->set_default_options();
-            
-            // Clean up any old installation system options
-            $this->cleanup_installation_options();
-            
-            // Flush rewrite rules for calendar feeds (Phase 3: Data & Integration)
-            flush_rewrite_rules();
-            
-            // Clear any cached data
-            wp_cache_flush();
-            
-        } catch (Exception $e) {
-            wp_die('WCEventsFP activation failed: ' . $e->getMessage());
-        }
+        // This method is deprecated and no longer used
+        // All activation logic has been moved to WCEFP\Core\ActivationHandler::activate()
+        // This method is kept for backward compatibility but should not be called
+        
+        error_log('WCEventsFP: Deprecated activate() method called. Use ActivationHandler::activate() instead.');
     }
     
     /**
@@ -256,7 +241,7 @@ class WCEventsFP {
             // Clear cache
             wp_cache_flush();
             
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             error_log('WCEventsFP deactivation error: ' . $e->getMessage());
         }
     }
@@ -264,79 +249,34 @@ class WCEventsFP {
     /**
      * Create database tables
      * 
+     * @deprecated 2.2.0 Use WCEFP\Core\ActivationHandler::create_database_tables() instead
      * @return void
      */
     private function create_database_tables() {
-        global $wpdb;
-        
-        $charset_collate = $wpdb->get_charset_collate();
-        
-        // Events table
-        $table_name = $wpdb->prefix . 'wcefp_events';
-        $sql = "CREATE TABLE $table_name (
-            id mediumint(9) NOT NULL AUTO_INCREMENT,
-            post_id bigint(20) NOT NULL,
-            event_date datetime DEFAULT NULL,
-            capacity int(11) DEFAULT 0,
-            booked int(11) DEFAULT 0,
-            status varchar(20) DEFAULT 'active',
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY post_id (post_id),
-            KEY event_date (event_date),
-            KEY status (status)
-        ) $charset_collate;";
-        
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql);
+        error_log('WCEventsFP: Deprecated create_database_tables() method called. Use ActivationHandler instead.');
+        // Method kept for backward compatibility but functionality moved to ActivationHandler
     }
     
     /**
      * Set default plugin options
      * 
+     * @deprecated 2.2.0 Use WCEFP\Core\ActivationHandler::set_default_options() instead
      * @return void
      */
     private function set_default_options() {
-        $defaults = [
-            'wcefp_version' => WCEFP_VERSION,
-            'wcefp_installed' => time(),
-            'wcefp_enable_logging' => 'yes',
-            'wcefp_log_level' => 'info',
-            'wcefp_full_activation' => 'yes' // Mark as fully activated without installation steps
-        ];
-        
-        foreach ($defaults as $option => $value) {
-            if (get_option($option) === false) {
-                add_option($option, $value);
-            }
-        }
+        error_log('WCEventsFP: Deprecated set_default_options() method called. Use ActivationHandler instead.');
+        // Method kept for backward compatibility but functionality moved to ActivationHandler
     }
     
     /**
      * Clean up old installation system options
      * 
+     * @deprecated 2.2.0 Use WCEFP\Core\ActivationHandler::cleanup_installation_options() instead
      * @return void
      */
     private function cleanup_installation_options() {
-        // Remove old installation system options
-        $old_options = [
-            'wcefp_installation_status',
-            'wcefp_installation_mode', 
-            'wcefp_performance_settings',
-            'wcefp_selected_features',
-            'wcefp_installed_features',
-            'wcefp_core_installed',
-            'wcefp_redirect_to_wizard',
-            'wcefp_setup_wizard_complete'
-        ];
-        
-        foreach ($old_options as $option) {
-            delete_option($option);
-        }
-        
-        // Clear any scheduled installation events
-        wp_clear_scheduled_hook('wcefp_continue_installation');
+        error_log('WCEventsFP: Deprecated cleanup_installation_options() method called. Use ActivationHandler instead.');
+        // Method kept for backward compatibility but functionality moved to ActivationHandler
     }
     
     /**
@@ -435,7 +375,7 @@ class WCEventsFP {
                 }
             }
 
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             error_log('WCEventsFP: Feature loading failed: ' . $e->getMessage());
         }
     }
