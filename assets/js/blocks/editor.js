@@ -494,4 +494,324 @@
 			return null;
 		},
 	} );
+	
+	/**
+	 * Experiences Catalog Block
+	 */
+	registerBlockType( 'wcefp/experiences-catalog', {
+		title: __( 'Catalogo Esperienze', 'wceventsfp' ),
+		description: __(
+			'Display a filterable catalog of experiences in marketplace style',
+			'wceventsfp'
+		),
+		icon: 'grid-view',
+		category: 'wcefp',
+		keywords: [
+			__( 'experiences', 'wceventsfp' ),
+			__( 'catalog', 'wceventsfp' ),
+			__( 'marketplace', 'wceventsfp' ),
+			__( 'esperienze', 'wceventsfp' ),
+		],
+		supports: {
+			align: [ 'wide', 'full' ],
+			className: true,
+		},
+		attributes: {
+			limit: {
+				type: 'number',
+				default: 12,
+			},
+			category: {
+				type: 'string',
+				default: '',
+			},
+			showFilters: {
+				type: 'boolean',
+				default: true,
+			},
+			showMap: {
+				type: 'boolean',
+				default: false,
+			},
+			layout: {
+				type: 'string',
+				default: 'grid',
+			},
+			columns: {
+				type: 'number',
+				default: 3,
+			},
+			orderBy: {
+				type: 'string',
+				default: 'date',
+			},
+			orderDir: {
+				type: 'string',
+				default: 'DESC',
+			},
+			showPrice: {
+				type: 'boolean',
+				default: true,
+			},
+			showRating: {
+				type: 'boolean',
+				default: true,
+			},
+			showDuration: {
+				type: 'boolean',
+				default: true,
+			},
+			showLocation: {
+				type: 'boolean',
+				default: true,
+			},
+		},
+
+		edit( { attributes, setAttributes, className } ) {
+			const {
+				limit,
+				category,
+				showFilters,
+				showMap,
+				layout,
+				columns,
+				orderBy,
+				orderDir,
+				showPrice,
+				showRating,
+				showDuration,
+				showLocation,
+			} = attributes;
+
+			const [ experiences, setExperiences ] = useState( [] );
+			const [ isLoading, setIsLoading ] = useState( true );
+			const [ categories, setCategories ] = useState( [] );
+
+			// Fetch experiences and categories
+			useEffect( () => {
+				setIsLoading( true );
+
+				// Fetch experiences
+				apiFetch( {
+					path: '/wcefp/v1/experiences',
+					method: 'GET',
+				} )
+					.then( ( data ) => {
+						setExperiences( data );
+						setIsLoading( false );
+					} )
+					.catch( () => {
+						setIsLoading( false );
+					} );
+
+				// Fetch categories
+				apiFetch( {
+					path: '/wp/v2/product_cat?per_page=50',
+					method: 'GET',
+				} )
+					.then( ( data ) => {
+						setCategories( data );
+					} )
+					.catch( () => {
+						setCategories( [] );
+					} );
+			}, [] );
+
+			return (
+				<div className={ className }>
+					<InspectorControls>
+						<PanelBody
+							title={ __( 'Catalog Settings', 'wceventsfp' ) }
+							initialOpen={ true }
+						>
+							<RangeControl
+								label={ __( 'Number of experiences', 'wceventsfp' ) }
+								value={ limit }
+								onChange={ ( value ) => setAttributes( { limit: value } ) }
+								min={ 1 }
+								max={ 50 }
+							/>
+
+							<SelectControl
+								label={ __( 'Category', 'wceventsfp' ) }
+								value={ category }
+								options={ [
+									{ label: __( 'All Categories', 'wceventsfp' ), value: '' },
+									...categories.map( ( cat ) => ( {
+										label: cat.name,
+										value: cat.slug,
+									} ) ),
+								] }
+								onChange={ ( value ) => setAttributes( { category: value } ) }
+							/>
+
+							<SelectControl
+								label={ __( 'Layout', 'wceventsfp' ) }
+								value={ layout }
+								options={ [
+									{ label: __( 'Grid', 'wceventsfp' ), value: 'grid' },
+									{ label: __( 'List', 'wceventsfp' ), value: 'list' },
+									{ label: __( 'Masonry', 'wceventsfp' ), value: 'masonry' },
+								] }
+								onChange={ ( value ) => setAttributes( { layout: value } ) }
+							/>
+
+							{ layout === 'grid' && (
+								<RangeControl
+									label={ __( 'Columns', 'wceventsfp' ) }
+									value={ columns }
+									onChange={ ( value ) => setAttributes( { columns: value } ) }
+									min={ 1 }
+									max={ 4 }
+								/>
+							) }
+
+							<SelectControl
+								label={ __( 'Order by', 'wceventsfp' ) }
+								value={ orderBy }
+								options={ [
+									{ label: __( 'Date', 'wceventsfp' ), value: 'date' },
+									{ label: __( 'Title', 'wceventsfp' ), value: 'title' },
+									{ label: __( 'Price', 'wceventsfp' ), value: 'price' },
+									{ label: __( 'Popularity', 'wceventsfp' ), value: 'popularity' },
+								] }
+								onChange={ ( value ) => setAttributes( { orderBy: value } ) }
+							/>
+
+							<SelectControl
+								label={ __( 'Order direction', 'wceventsfp' ) }
+								value={ orderDir }
+								options={ [
+									{ label: __( 'Descending', 'wceventsfp' ), value: 'DESC' },
+									{ label: __( 'Ascending', 'wceventsfp' ), value: 'ASC' },
+								] }
+								onChange={ ( value ) => setAttributes( { orderDir: value } ) }
+							/>
+						</PanelBody>
+
+						<PanelBody
+							title={ __( 'Display Options', 'wceventsfp' ) }
+							initialOpen={ false }
+						>
+							<ToggleControl
+								label={ __( 'Show filters', 'wceventsfp' ) }
+								checked={ showFilters }
+								onChange={ ( value ) => setAttributes( { showFilters: value } ) }
+							/>
+
+							<ToggleControl
+								label={ __( 'Show map', 'wceventsfp' ) }
+								checked={ showMap }
+								onChange={ ( value ) => setAttributes( { showMap: value } ) }
+							/>
+
+							<ToggleControl
+								label={ __( 'Show price', 'wceventsfp' ) }
+								checked={ showPrice }
+								onChange={ ( value ) => setAttributes( { showPrice: value } ) }
+							/>
+
+							<ToggleControl
+								label={ __( 'Show rating', 'wceventsfp' ) }
+								checked={ showRating }
+								onChange={ ( value ) => setAttributes( { showRating: value } ) }
+							/>
+
+							<ToggleControl
+								label={ __( 'Show duration', 'wceventsfp' ) }
+								checked={ showDuration }
+								onChange={ ( value ) => setAttributes( { showDuration: value } ) }
+							/>
+
+							<ToggleControl
+								label={ __( 'Show location', 'wceventsfp' ) }
+								checked={ showLocation }
+								onChange={ ( value ) => setAttributes( { showLocation: value } ) }
+							/>
+						</PanelBody>
+					</InspectorControls>
+
+					<div className="wcefp-block-preview">
+						<h3 className="wcefp-block-title">
+							{ __( '🏛️ Catalogo Esperienze', 'wceventsfp' ) }
+						</h3>
+
+						<div className="wcefp-block-settings-summary">
+							<p>
+								<strong>{ __( 'Layout:', 'wceventsfp' ) }</strong> { layout } 
+								{ layout === 'grid' && ` (${columns} ${__( 'columns', 'wceventsfp' )})` }
+							</p>
+							<p>
+								<strong>{ __( 'Showing:', 'wceventsfp' ) }</strong> { limit } { __( 'experiences', 'wceventsfp' ) }
+								{ category && ` ${__( 'from category', 'wceventsfp' )} "${category}"` }
+							</p>
+							<p>
+								<strong>{ __( 'Features:', 'wceventsfp' ) }</strong>
+								{ showFilters && ' ' + __( 'Filters', 'wceventsfp' ) }
+								{ showMap && ' | ' + __( 'Map', 'wceventsfp' ) }
+								{ showPrice && ' | ' + __( 'Price', 'wceventsfp' ) }
+								{ showRating && ' | ' + __( 'Rating', 'wceventsfp' ) }
+							</p>
+						</div>
+
+						{ isLoading ? (
+							<div className="wcefp-block-loading">
+								<Spinner />
+								<p>{ __( 'Loading experiences...', 'wceventsfp' ) }</p>
+							</div>
+						) : (
+							<div className="wcefp-experiences-preview">
+								<p className="wcefp-preview-note">
+									{ __( '✨ Preview: The actual catalog will display here on the frontend with interactive filters and marketplace-style cards.', 'wceventsfp' ) }
+								</p>
+								{ experiences.length > 0 ? (
+									<div className={ `wcefp-preview-grid wcefp-layout-${layout}` }>
+										{ experiences.slice( 0, Math.min( limit, 6 ) ).map( ( experience ) => (
+											<div key={ experience.id } className="wcefp-preview-card">
+												<div className="wcefp-preview-image">
+													{ experience.featured_image ? (
+														<img src={ experience.featured_image } alt={ experience.title } />
+													) : (
+														<div className="wcefp-preview-placeholder">🎯</div>
+													) }
+												</div>
+												<div className="wcefp-preview-content">
+													<h4>{ experience.title }</h4>
+													{ showPrice && experience.price && (
+														<div className="wcefp-preview-price">
+															{ experience.currency }{ experience.price }
+														</div>
+													) }
+													{ showRating && (
+														<div className="wcefp-preview-rating">⭐ 4.8 (124)</div>
+													) }
+													{ showDuration && (
+														<div className="wcefp-preview-meta">⏱ 2 hours</div>
+													) }
+													{ showLocation && (
+														<div className="wcefp-preview-meta">📍 Rome</div>
+													) }
+												</div>
+											</div>
+										) ) }
+									</div>
+								) : (
+									<Placeholder
+										icon="grid-view"
+										label={ __( 'No experiences found', 'wceventsfp' ) }
+										instructions={ __( 'Create some experience products to see them here.', 'wceventsfp' ) }
+									/>
+								) }
+							</div>
+						) }
+					</div>
+				</div>
+			);
+		},
+
+		save() {
+			// Server-side rendering
+			return null;
+		},
+	} );
 } )();
