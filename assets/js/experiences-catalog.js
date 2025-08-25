@@ -24,9 +24,17 @@
             this.currentFilters = {
                 search: '',
                 category: '',
-                price: ''
+                location: '',
+                duration: '',
+                price: '',
+                rating: '',
+                date: '',
+                sortBy: 'date',
+                sortDir: 'desc'
             };
             this.debounceTimer = null;
+            this.currentPage = 1;
+            this.isLoading = false;
             
             this.init();
         }
@@ -64,7 +72,12 @@
         bindFilterEvents() {
             const $searchInput = this.$filters.find('.wcefp-search-input');
             const $categorySelect = this.$filters.find('.wcefp-filter-category');
+            const $locationSelect = this.$filters.find('.wcefp-filter-location');
+            const $durationSelect = this.$filters.find('.wcefp-filter-duration');
             const $priceSelect = this.$filters.find('.wcefp-filter-price');
+            const $ratingSelect = this.$filters.find('.wcefp-filter-rating');
+            const $dateInput = this.$filters.find('.wcefp-filter-date');
+            const $sortSelect = this.$filters.find('.wcefp-sort-select');
             const $clearButton = this.$filters.find('.wcefp-clear-filters');
 
             // Search input with debouncing
@@ -73,6 +86,7 @@
                 this.debounceTimer = setTimeout(() => {
                     this.currentFilters.search = $(e.target).val().toLowerCase();
                     this.applyFilters();
+                    this.trackEvent('experience_search', { search_term: this.currentFilters.search });
                 }, 300);
             });
 
@@ -80,18 +94,66 @@
             $categorySelect.on('change', (e) => {
                 this.currentFilters.category = $(e.target).val();
                 this.applyFilters();
+                this.trackEvent('experience_filter_category', { category: this.currentFilters.category });
+            });
+
+            // Location filter
+            $locationSelect.on('change', (e) => {
+                this.currentFilters.location = $(e.target).val();
+                this.applyFilters();
+                this.trackEvent('experience_filter_location', { location: this.currentFilters.location });
+            });
+
+            // Duration filter
+            $durationSelect.on('change', (e) => {
+                this.currentFilters.duration = $(e.target).val();
+                this.applyFilters();
+                this.trackEvent('experience_filter_duration', { duration: this.currentFilters.duration });
             });
 
             // Price filter
             $priceSelect.on('change', (e) => {
                 this.currentFilters.price = $(e.target).val();
                 this.applyFilters();
+                this.trackEvent('experience_filter_price', { price_range: this.currentFilters.price });
+            });
+
+            // Rating filter
+            $ratingSelect.on('change', (e) => {
+                this.currentFilters.rating = $(e.target).val();
+                this.applyFilters();
+                this.trackEvent('experience_filter_rating', { rating: this.currentFilters.rating });
+            });
+
+            // Date filter
+            $dateInput.on('change', (e) => {
+                this.currentFilters.date = $(e.target).val();
+                this.applyFilters();
+                this.trackEvent('experience_filter_date', { date: this.currentFilters.date });
+            });
+
+            // Sort control
+            $sortSelect.on('change', (e) => {
+                const sortValue = $(e.target).val();
+                const [sortBy, sortDir] = sortValue.split('-');
+                this.currentFilters.sortBy = sortBy;
+                this.currentFilters.sortDir = sortDir;
+                this.applySorting();
+                this.trackEvent('experience_sort', { sort_by: sortBy, sort_direction: sortDir });
             });
 
             // Clear filters
             $clearButton.on('click', (e) => {
                 e.preventDefault();
                 this.clearAllFilters();
+                this.trackEvent('experience_filters_cleared');
+            });
+
+            // AJAX Load More
+            const $loadMore = this.$container.find('.wcefp-load-more');
+            $loadMore.on('click', (e) => {
+                e.preventDefault();
+                this.loadMoreExperiences();
             });
         }
 
@@ -281,13 +343,24 @@
             this.currentFilters = {
                 search: '',
                 category: '',
-                price: ''
+                location: '',
+                duration: '',
+                price: '',
+                rating: '',
+                date: '',
+                sortBy: 'date',
+                sortDir: 'desc'
             };
             
             // Reset form inputs
             this.$filters.find('.wcefp-search-input').val('');
             this.$filters.find('.wcefp-filter-category').val('');
+            this.$filters.find('.wcefp-filter-location').val('');
+            this.$filters.find('.wcefp-filter-duration').val('');
             this.$filters.find('.wcefp-filter-price').val('');
+            this.$filters.find('.wcefp-filter-rating').val('');
+            this.$filters.find('.wcefp-filter-date').val('');
+            this.$filters.find('.wcefp-sort-select').val('date-desc');
             
             // Show all cards
             this.filteredCards = [...this.originalCards];
@@ -361,6 +434,120 @@
             if (window.console && typeof console.log === 'function') {
                 console.log('WCEventsFP Event:', eventName, data);
             }
+        }
+
+        applySorting() {
+            const { sortBy, sortDir } = this.currentFilters;
+            
+            this.filteredCards.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch (sortBy) {
+                    case 'price':
+                        aValue = a.price || 0;
+                        bValue = b.price || 0;
+                        break;
+                    case 'rating':
+                        aValue = a.rating || 0;
+                        bValue = b.rating || 0;
+                        break;
+                    case 'popularity':
+                        aValue = a.popularity || 0;
+                        bValue = b.popularity || 0;
+                        break;
+                    case 'title':
+                        aValue = a.title || '';
+                        bValue = b.title || '';
+                        break;
+                    case 'date':
+                    default:
+                        aValue = a.date || 0;
+                        bValue = b.date || 0;
+                        break;
+                }
+                
+                if (typeof aValue === 'string') {
+                    return sortDir === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+                } else {
+                    return sortDir === 'asc' ? aValue - bValue : bValue - aValue;
+                }
+            });
+            
+            this.renderFilteredCards();
+        }
+
+        loadMoreExperiences() {
+            if (this.isLoading) return;
+            
+            const $loadMore = this.$container.find('.wcefp-load-more');
+            const $spinner = $loadMore.find('.wcefp-load-spinner');
+            const $text = $loadMore.find('.wcefp-load-text');
+            
+            this.isLoading = true;
+            $loadMore.prop('disabled', true);
+            $spinner.show();
+            $text.text('Caricamento...');
+            
+            this.currentPage++;
+            
+            // AJAX request to load more experiences
+            if (typeof wcefp_ajax !== 'undefined') {
+                $.ajax({
+                    url: wcefp_ajax.ajax_url,
+                    method: 'POST',
+                    data: {
+                        action: 'wcefp_load_more_experiences',
+                        nonce: wcefp_ajax.nonce,
+                        page: this.currentPage,
+                        filters: this.currentFilters,
+                        per_page: this.$container.data('per-page') || 12
+                    },
+                    success: (response) => {
+                        if (response.success && response.data.experiences) {
+                            const $grid = this.$container.find('.wcefp-experiences-items');
+                            $grid.append(response.data.experiences);
+                            
+                            // Update pagination state
+                            if (!response.data.has_more) {
+                                $loadMore.hide();
+                            }
+                            
+                            this.trackEvent('experience_load_more', {
+                                page: this.currentPage,
+                                results_count: response.data.count
+                            });
+                        } else {
+                            console.error('Failed to load more experiences:', response);
+                        }
+                    },
+                    error: (xhr, status, error) => {
+                        console.error('AJAX error loading experiences:', error);
+                        this.currentPage--; // Revert page increment on error
+                    },
+                    complete: () => {
+                        this.isLoading = false;
+                        $loadMore.prop('disabled', false);
+                        $spinner.hide();
+                        $text.text('Carica altre esperienze');
+                    }
+                });
+            }
+        }
+
+        showSkeletonLoader() {
+            const $skeleton = this.$container.find('.wcefp-skeleton-loader');
+            const $items = this.$container.find('.wcefp-experiences-items');
+            
+            $items.hide();
+            $skeleton.show();
+        }
+
+        hideSkeletonLoader() {
+            const $skeleton = this.$container.find('.wcefp-skeleton-loader');
+            const $items = this.$container.find('.wcefp-experiences-items');
+            
+            $skeleton.hide();
+            $items.show();
         }
     }
 
