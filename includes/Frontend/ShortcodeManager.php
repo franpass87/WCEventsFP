@@ -53,6 +53,9 @@ class ShortcodeManager {
         add_shortcode('wcefp_google_reviews', [$this, 'google_reviews_shortcode']);
         add_shortcode('wcefp_conversion_optimizer', [$this, 'conversion_optimizer_shortcode']);
         
+        // Experience-specific shortcodes
+        add_shortcode('wcefp_experience_card', [$this, 'experience_card_shortcode']);
+        
         // Utility shortcodes
         add_shortcode('wcefp_availability', [$this, 'availability_checker_shortcode']);
         add_shortcode('wcefp_price_calculator', [$this, 'price_calculator_shortcode']);
@@ -687,7 +690,9 @@ class ShortcodeManager {
                has_shortcode($content, 'wcefp_upcoming_events') ||
                has_shortcode($content, 'wcefp_event_calendar') ||
                has_shortcode($content, 'wcefp_user_bookings') ||
-               has_shortcode($content, 'wcefp_google_reviews');
+               has_shortcode($content, 'wcefp_google_reviews') ||
+               has_shortcode($content, 'wcefp_experience_card') ||
+               has_shortcode($content, 'wcefp_experiences_archive');
     }
     
     private function get_event_price_html($event_id) {
@@ -936,6 +941,169 @@ class ShortcodeManager {
         $output .= '</div>';
         
         return $output;
+    }
+    
+    /**
+     * Experience card shortcode
+     * 
+     * @param array $atts Shortcode attributes
+     * @return string
+     */
+    public function experience_card_shortcode($atts) {
+        $atts = shortcode_atts([
+            'id' => 0,
+            'show_image' => 'yes',
+            'show_price' => 'yes',
+            'show_excerpt' => 'yes',
+            'show_rating' => 'yes',
+            'show_duration' => 'yes',
+            'show_difficulty' => 'yes',
+            'image_size' => 'woocommerce_thumbnail',
+            'class' => ''
+        ], $atts, 'wcefp_experience_card');
+        
+        $product_id = intval($atts['id']);
+        
+        // Auto-detect product ID on single product pages
+        if (!$product_id && is_product()) {
+            global $post;
+            $product_id = $post->ID;
+        }
+        
+        if (!$product_id) {
+            return '<div class="wcefp-error">' . __('Experience ID is required.', 'wceventsfp') . '</div>';
+        }
+        
+        $product = wc_get_product($product_id);
+        
+        if (!$product || get_post_meta($product_id, '_wcefp_is_experience', true) !== '1') {
+            return '<div class="wcefp-error">' . __('Product is not a valid experience.', 'wceventsfp') . '</div>';
+        }
+        
+        $css_class = 'wcefp-experience-card wcefp-single-card';
+        if (!empty($atts['class'])) {
+            $css_class .= ' ' . sanitize_html_class($atts['class']);
+        }
+        
+        ob_start();
+        ?>
+        <div class="<?php echo esc_attr($css_class); ?>" data-product-id="<?php echo esc_attr($product_id); ?>">
+            <?php if ($atts['show_image'] === 'yes'): ?>
+                <div class="wcefp-card-image">
+                    <a href="<?php echo esc_url(get_permalink($product_id)); ?>" 
+                       aria-label="<?php printf(__('View %s', 'wceventsfp'), get_the_title($product_id)); ?>">
+                        <?php
+                        if (has_post_thumbnail($product_id)) {
+                            echo get_the_post_thumbnail($product_id, $atts['image_size'], [
+                                'alt' => get_the_title($product_id),
+                                'loading' => 'lazy'
+                            ]);
+                        } else {
+                            echo '<div class="wcefp-no-image">' . __('No image available', 'wceventsfp') . '</div>';
+                        }
+                        ?>
+                    </a>
+                    
+                    <?php
+                    // Show badges
+                    $badges = [];
+                    
+                    if (get_post_meta($product_id, '_wcefp_is_bestseller', true) === 'yes') {
+                        $badges[] = '<span class="wcefp-badge wcefp-badge-bestseller">' . __('Bestseller', 'wceventsfp') . '</span>';
+                    }
+                    
+                    if ($product->is_on_sale()) {
+                        $badges[] = '<span class="wcefp-badge wcefp-badge-sale">' . __('On Sale', 'wceventsfp') . '</span>';
+                    }
+                    
+                    // New product badge (within 30 days)
+                    $post_date = get_the_date('U', $product_id);
+                    $days_old = (current_time('timestamp') - $post_date) / DAY_IN_SECONDS;
+                    if ($days_old <= 30) {
+                        $badges[] = '<span class="wcefp-badge wcefp-badge-new">' . __('New', 'wceventsfp') . '</span>';
+                    }
+                    
+                    if (!empty($badges)):
+                    ?>
+                        <div class="wcefp-card-badges">
+                            <?php echo implode('', $badges); ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+            
+            <div class="wcefp-card-content">
+                <h3 class="wcefp-card-title">
+                    <a href="<?php echo esc_url(get_permalink($product_id)); ?>">
+                        <?php echo esc_html(get_the_title($product_id)); ?>
+                    </a>
+                </h3>
+                
+                <?php if ($atts['show_excerpt'] === 'yes' && get_the_excerpt($product_id)): ?>
+                    <div class="wcefp-card-excerpt">
+                        <?php echo wp_kses_post(get_the_excerpt($product_id)); ?>
+                    </div>
+                <?php endif; ?>
+                
+                <div class="wcefp-card-meta">
+                    <?php if ($atts['show_price'] === 'yes'): ?>
+                        <div class="wcefp-card-price">
+                            <?php echo $product->get_price_html(); ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($atts['show_duration'] === 'yes'): ?>
+                        <?php 
+                        $duration = get_post_meta($product_id, '_wcefp_duration', true);
+                        if ($duration):
+                        ?>
+                            <div class="wcefp-card-duration">
+                                <span class="wcefp-duration-icon" aria-hidden="true">🕐</span>
+                                <span><?php echo esc_html($duration); ?></span>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    
+                    <?php if ($atts['show_rating'] === 'yes' && $product->get_average_rating()): ?>
+                        <div class="wcefp-card-rating">
+                            <?php echo wc_get_rating_html($product->get_average_rating()); ?>
+                            <span class="wcefp-rating-count">
+                                (<?php echo $product->get_review_count(); ?>)
+                            </span>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($atts['show_difficulty'] === 'yes'): ?>
+                        <?php 
+                        $difficulty = get_post_meta($product_id, '_wcefp_difficulty_level', true);
+                        if ($difficulty):
+                            $difficulty_levels = [
+                                'easy' => __('Easy', 'wceventsfp'),
+                                'moderate' => __('Moderate', 'wceventsfp'),
+                                'hard' => __('Hard', 'wceventsfp'),
+                                'expert' => __('Expert', 'wceventsfp')
+                            ];
+                            $difficulty_label = $difficulty_levels[$difficulty] ?? $difficulty;
+                        ?>
+                            <div class="wcefp-card-difficulty">
+                                <span class="wcefp-difficulty-icon" aria-hidden="true">⭐</span>
+                                <span><?php echo esc_html($difficulty_label); ?></span>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+                
+                <div class="wcefp-card-actions">
+                    <a href="<?php echo esc_url(get_permalink($product_id)); ?>" 
+                       class="wcefp-view-experience-btn">
+                        <?php _e('Learn More', 'wceventsfp'); ?>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <?php
+        
+        return ob_get_clean();
     }
     
     // Additional shortcode methods would continue here...

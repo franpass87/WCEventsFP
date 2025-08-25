@@ -56,6 +56,11 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
             return new TrustNudgesManager();
         });
         
+        // Register experience archive manager
+        $this->container->singleton('frontend.experience_archive', function($container) {
+            return new ExperienceArchiveManager();
+        });
+        
         // Register shortcode manager
         $this->container->singleton('frontend.shortcodes', function($container) {
             return new ShortcodeManager($container);
@@ -86,6 +91,9 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
         
         // Initialize trust nudges manager
         $this->container->get('frontend.trust_nudges');
+        
+        // Initialize experience archive manager
+        $this->container->get('frontend.experience_archive');
         
         // Initialize shortcode manager if it exists
         if (class_exists('\WCEFP\Frontend\ShortcodeManager')) {
