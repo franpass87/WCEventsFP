@@ -130,7 +130,7 @@ class GoogleReviewsManager {
      * @return string
      */
     private function get_place_id($place_id_param = '') {
-        // Priority: shortcode > product meta > global setting
+        // Priority: shortcode > product meeting point > global setting
         if (!empty($place_id_param)) {
             return sanitize_text_field($place_id_param);
         }
@@ -138,9 +138,20 @@ class GoogleReviewsManager {
         // Try to get from current product's meeting point
         if (is_product()) {
             global $post;
-            $meeting_point = get_post_meta($post->ID, '_wcefp_meeting_point', true);
-            if (!empty($meeting_point['place_id'])) {
-                return sanitize_text_field($meeting_point['place_id']);
+            
+            // Check if product has a meeting point assigned
+            $meeting_point_id = get_post_meta($post->ID, '_wcefp_meeting_point_id', true);
+            if ($meeting_point_id) {
+                $place_id = get_post_meta($meeting_point_id, '_wcefp_google_place_id', true);
+                if (!empty($place_id)) {
+                    return sanitize_text_field($place_id);
+                }
+            }
+            
+            // Fallback: check for legacy meeting point meta
+            $meeting_point_meta = get_post_meta($post->ID, '_wcefp_meeting_point', true);
+            if (!empty($meeting_point_meta['place_id'])) {
+                return sanitize_text_field($meeting_point_meta['place_id']);
             }
         }
         

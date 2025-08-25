@@ -123,25 +123,19 @@ class WooCommerceArchiveFilter {
     private function exclude_event_products($query) {
         $meta_query = $query->get('meta_query', []);
         
-        // Add meta query to exclude event/experience product types
+        // Ensure relation is set to AND if we have existing meta queries
+        if (!empty($meta_query)) {
+            $meta_query['relation'] = 'AND';
+        }
+        
+        // Add meta query to exclude experience products using the standardized field
         $meta_query[] = [
-            'key' => '_wcefp_product_type',
-            'value' => ['evento', 'esperienza'],
-            'compare' => 'NOT IN'
-        ];
-        
-        // Alternative approach using tax_query if product types are stored as taxonomy
-        $tax_query = $query->get('tax_query', []);
-        
-        $tax_query[] = [
-            'taxonomy' => 'product_type',
-            'field' => 'slug',
-            'terms' => ['evento', 'esperienza'],
-            'operator' => 'NOT IN'
+            'key' => '_wcefp_is_experience',
+            'value' => '1',
+            'compare' => '!='
         ];
         
         $query->set('meta_query', $meta_query);
-        $query->set('tax_query', $tax_query);
     }
     
     /**
@@ -162,12 +156,18 @@ class WooCommerceArchiveFilter {
         }
         
         // Check if this is an event/experience product
-        if (in_array($product->get_type(), ['evento', 'esperienza'])) {
+        if (get_post_meta($product->get_id(), '_wcefp_is_experience', true) === '1') {
             $landing_page_id = $this->get_product_landing_page($product->get_id());
             
             if ($landing_page_id && $landing_page_id != $post->ID) {
                 wp_safe_redirect(get_permalink($landing_page_id), 301);
                 exit;
+            } else {
+                // If no landing page configured, add noindex and consider soft 404
+                add_filter('wpseo_robots', '__return_false'); // Yoast SEO
+                add_action('wp_head', function() {
+                    echo '<meta name="robots" content="noindex,nofollow">' . "\n";
+                });
             }
         }
     }
@@ -188,9 +188,9 @@ class WooCommerceArchiveFilter {
         }
         
         $args['meta_query'][] = [
-            'key' => '_wcefp_product_type',
-            'value' => ['evento', 'esperienza'],
-            'compare' => 'NOT IN'
+            'key' => '_wcefp_is_experience',
+            'value' => '1',
+            'compare' => '!='
         ];
         
         return $args;
@@ -208,8 +208,7 @@ class WooCommerceArchiveFilter {
         }
         
         return array_filter($crosssell_ids, function($product_id) {
-            $product = wc_get_product($product_id);
-            return $product && !in_array($product->get_type(), ['evento', 'esperienza']);
+            return get_post_meta($product_id, '_wcefp_is_experience', true) !== '1';
         });
     }
     
@@ -229,9 +228,9 @@ class WooCommerceArchiveFilter {
         }
         
         $args['meta_query'][] = [
-            'key' => '_wcefp_product_type',
-            'value' => ['evento', 'esperienza'],
-            'compare' => 'NOT IN'
+            'key' => '_wcefp_is_experience',
+            'value' => '1',
+            'compare' => '!='
         ];
         
         return $args;

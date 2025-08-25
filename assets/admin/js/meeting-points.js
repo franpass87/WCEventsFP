@@ -16,12 +16,16 @@
         bindEvents: function() {
             $('#wcefp-geocode-address').on('click', this.geocodeAddress.bind(this));
             $('#wcefp-locate-me').on('click', this.getCurrentLocation.bind(this));
+            $('#wcefp-test-place-connection').on('click', this.testPlaceConnection.bind(this));
             
             // Update map when coordinates change
             $('#wcefp_latitude, #wcefp_longitude').on('change', this.updateMapPreview.bind(this));
             
             // Auto-update coordinates when address changes
             $('#wcefp_address, #wcefp_city, #wcefp_country').on('blur', this.maybeGeocodeAddress.bind(this));
+            
+            // Validate Google Place ID format
+            $('#wcefp_google_place_id').on('input', this.validatePlaceId.bind(this));
         },
         
         initMap: function() {
@@ -227,6 +231,89 @@
             setTimeout(() => {
                 notice.fadeOut(() => notice.remove());
             }, 3000);
+        },
+        
+        // Test Google Place ID connection
+        testPlaceConnection: function(e) {
+            e.preventDefault();
+            
+            const $button = $(e.currentTarget);
+            const $result = $('#wcefp-place-test-result');
+            const placeId = $('#wcefp_google_place_id').val().trim();
+            
+            if (!placeId) {
+                $result.html('<div class="notice notice-error"><p>Place ID richiesto</p></div>');
+                return;
+            }
+            
+            $button.prop('disabled', true).text('🔍 Testando...');
+            $result.html('<div class="notice notice-info"><p>Testando connessione...</p></div>');
+            
+            $.ajax({
+                url: wcefp_mp_admin.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'wcefp_test_place_connection',
+                    nonce: wcefp_mp_admin.nonce,
+                    place_id: placeId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        let html = '<div class="notice notice-success"><p>' + response.data.message + '</p>';
+                        
+                        if (response.data.place_data) {
+                            const data = response.data.place_data;
+                            html += '<ul style="margin-top: 10px;">';
+                            
+                            if (data.name) {
+                                html += '<li><strong>Nome:</strong> ' + data.name + '</li>';
+                            }
+                            
+                            if (data.address) {
+                                html += '<li><strong>Indirizzo:</strong> ' + data.address + '</li>';
+                            }
+                            
+                            if (data.rating && data.reviews_count) {
+                                html += '<li><strong>Rating:</strong> ' + 
+                                       data.rating + '/5 (' + data.reviews_count + ' recensioni)</li>';
+                            }
+                            
+                            html += '</ul>';
+                        }
+                        
+                        html += '</div>';
+                        $result.html(html);
+                    } else {
+                        $result.html('<div class="notice notice-error"><p>' + 
+                            response.data + '</p></div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $result.html('<div class="notice notice-error"><p>Errore di connessione: ' + 
+                        error + '</p></div>');
+                },
+                complete: function() {
+                    $button.prop('disabled', false).text('🔍 Verifica Connessione');
+                }
+            });
+        },
+        
+        // Validate Google Place ID format
+        validatePlaceId: function() {
+            const placeId = $('#wcefp_google_place_id').val().trim();
+            const $testButton = $('#wcefp-test-place-connection');
+            const $result = $('#wcefp-place-test-result');
+            
+            if (placeId && !placeId.match(/^ChIJ[A-Za-z0-9_-]+$/)) {
+                $result.html('<div class="notice notice-warning"><p>' + 
+                    'Formato Place ID non valido. Dovrebbe iniziare con "ChIJ"</p></div>');
+                $testButton.prop('disabled', true);
+            } else {
+                if (placeId === '') {
+                    $result.empty();
+                }
+                $testButton.prop('disabled', false);
+            }
         }
     };
     
