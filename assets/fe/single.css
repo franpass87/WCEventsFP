@@ -1,0 +1,872 @@
+/**
+ * WCEventsFP Single Experience Page Styles
+ * Modern, clean design for experience detail pages
+ * 
+ * @package WCEFP
+ * @since 2.2.0
+ */
+
+/* Experience Single Page Layout */
+.wcefp-experience-single {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Hero Section */
+.wcefp-experience-hero {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.wcefp-hero-gallery {
+    position: relative;
+    background: #f8f9fa;
+}
+
+.wcefp-gallery-main {
+    position: relative;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+}
+
+.wcefp-hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.wcefp-hero-image:hover {
+    transform: scale(1.02);
+}
+
+.wcefp-gallery-trigger {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s ease;
+}
+
+.wcefp-gallery-trigger:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+.wcefp-gallery-thumbs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    padding: 0.5rem;
+}
+
+.wcefp-thumb {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.wcefp-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+}
+
+.wcefp-thumb:hover img {
+    transform: scale(1.1);
+}
+
+.wcefp-thumb-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.wcefp-hero-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 16/10;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    color: #8e9aaf;
+}
+
+/* Hero Content */
+.wcefp-hero-content {
+    padding: 2rem;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.wcefp-hero-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.wcefp-hero-location {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.wcefp-hero-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.wcefp-rating-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.wcefp-star.filled {
+    color: #ffc107;
+}
+
+.wcefp-star.half {
+    color: #ffc107;
+}
+
+.wcefp-star.empty {
+    color: #e9ecef;
+}
+
+.wcefp-rating-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.wcefp-hero-title {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #212529;
+    margin: 0 0 1.5rem 0;
+}
+
+.wcefp-hero-meta {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.wcefp-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.wcefp-hero-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #059669;
+    margin-top: auto;
+}
+
+/* Main Content Layout */
+.wcefp-experience-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+    align-items: start;
+}
+
+.wcefp-experience-content {
+    min-width: 0; /* Prevent overflow */
+}
+
+/* Content Sections */
+.wcefp-section {
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.wcefp-section h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #212529;
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.wcefp-section h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.wcefp-content {
+    line-height: 1.7;
+    color: #495057;
+}
+
+.wcefp-content p {
+    margin-bottom: 1rem;
+}
+
+/* Highlights */
+.wcefp-highlights-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.wcefp-highlights-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.wcefp-highlights-list li svg {
+    color: #28a745;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+/* What's Included */
+.wcefp-included {
+    display: grid;
+    gap: 2rem;
+}
+
+.wcefp-included-list,
+.wcefp-not-included-list {
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.wcefp-included-list {
+    background: #f8fff8;
+    border: 1px solid #d4edda;
+}
+
+.wcefp-not-included-list {
+    background: #fff8f8;
+    border: 1px solid #f8d7da;
+}
+
+.wcefp-included-list h3 {
+    color: #28a745;
+}
+
+.wcefp-not-included-list h3 {
+    color: #dc3545;
+}
+
+.wcefp-included-list ul,
+.wcefp-not-included-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.wcefp-included-list li,
+.wcefp-not-included-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 14px;
+}
+
+.wcefp-icon-check {
+    color: #28a745;
+}
+
+.wcefp-icon-x {
+    color: #dc3545;
+}
+
+/* Meeting Point */
+.wcefp-meeting-location {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.wcefp-location-icon {
+    flex-shrink: 0;
+}
+
+.wcefp-location-icon svg {
+    color: #007cba;
+}
+
+.wcefp-location-details h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.wcefp-location-details p {
+    margin: 0;
+    color: #495057;
+}
+
+/* Policies */
+.wcefp-policy-item {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+}
+
+.wcefp-policy-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Reviews */
+.wcefp-reviews-summary {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.wcefp-rating-large {
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.wcefp-rating-score {
+    display: block;
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ffc107;
+    margin-bottom: 0.5rem;
+}
+
+.wcefp-rating-large .wcefp-rating-stars {
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.wcefp-rating-large .wcefp-rating-stars .wcefp-star {
+    width: 24px;
+    height: 24px;
+}
+
+.wcefp-rating-count {
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.wcefp-reviews-list {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.wcefp-review-item {
+    padding: 1.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+}
+
+.wcefp-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.wcefp-reviewer-name {
+    font-weight: 600;
+    color: #212529;
+}
+
+.wcefp-review-date {
+    color: #6c757d;
+    font-size: 14px;
+    margin-left: 1rem;
+}
+
+.wcefp-review-rating .wcefp-star {
+    width: 16px;
+    height: 16px;
+}
+
+.wcefp-review-content {
+    line-height: 1.6;
+    color: #495057;
+}
+
+/* Booking Widget */
+.wcefp-booking-widget {
+    position: sticky;
+    top: 2rem;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.wcefp-widget-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.wcefp-price-display {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #059669;
+}
+
+.wcefp-booking-form {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.wcefp-form-group {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.wcefp-form-group label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+}
+
+.wcefp-form-control {
+    padding: 0.875rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background: white;
+}
+
+.wcefp-form-control:focus {
+    outline: none;
+    border-color: #007cba;
+    box-shadow: 0 0 0 3px rgba(0, 124, 186, 0.1);
+}
+
+.wcefp-quantity-selector {
+    display: flex;
+    align-items: center;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.wcefp-qty-minus,
+.wcefp-qty-plus {
+    background: #f8f9fa;
+    border: none;
+    padding: 0.875rem 1rem;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 600;
+    color: #495057;
+    transition: background-color 0.2s ease;
+    min-width: 44px;
+}
+
+.wcefp-qty-minus:hover,
+.wcefp-qty-plus:hover {
+    background: #e9ecef;
+}
+
+.wcefp-quantity-selector input {
+    border: none;
+    text-align: center;
+    flex: 1;
+    padding: 0.875rem 0.5rem;
+    min-width: 60px;
+}
+
+.wcefp-quantity-selector input:focus {
+    box-shadow: none;
+}
+
+/* Buttons */
+.wcefp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 1.5rem;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    gap: 0.5rem;
+}
+
+.wcefp-btn-primary {
+    background: linear-gradient(135deg, #007cba, #0056b3);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 124, 186, 0.2);
+}
+
+.wcefp-btn-primary:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 124, 186, 0.3);
+}
+
+.wcefp-btn-outline {
+    background: transparent;
+    color: #007cba;
+    border: 2px solid #007cba;
+}
+
+.wcefp-btn-outline:hover {
+    background: #007cba;
+    color: white;
+}
+
+.wcefp-btn-block {
+    width: 100%;
+}
+
+.wcefp-btn-sm {
+    padding: 0.625rem 1rem;
+    font-size: 14px;
+}
+
+/* Widget Footer */
+.wcefp-widget-footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f8f9fa;
+}
+
+.wcefp-features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.wcefp-features-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 14px;
+    color: #495057;
+}
+
+.wcefp-features-list svg {
+    color: #28a745;
+    flex-shrink: 0;
+}
+
+/* Shortcode Layouts */
+.wcefp-experience-shortcode {
+    margin: 2rem 0;
+}
+
+.wcefp-experience-shortcode.layout-full {
+    max-width: 1200px;
+    margin: 2rem auto;
+}
+
+.wcefp-experience-shortcode.layout-compact .wcefp-shortcode-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.wcefp-experience-shortcode.layout-card {
+    max-width: 600px;
+    margin: 1rem auto;
+}
+
+.wcefp-shortcode-content {
+    display: grid;
+    gap: 2rem;
+}
+
+/* Experience Card Shortcode */
+.wcefp-experience-card-shortcode {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wcefp-experience-card-shortcode:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.wcefp-experience-card-shortcode .wcefp-card-image {
+    aspect-ratio: 16/10;
+    overflow: hidden;
+}
+
+.wcefp-experience-card-shortcode .wcefp-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.wcefp-experience-card-shortcode:hover .wcefp-card-image img {
+    transform: scale(1.05);
+}
+
+.wcefp-experience-card-shortcode .wcefp-card-content {
+    padding: 1.5rem;
+}
+
+.wcefp-experience-card-shortcode .wcefp-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.wcefp-experience-card-shortcode .wcefp-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem 0;
+}
+
+.wcefp-experience-card-shortcode .wcefp-card-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.wcefp-experience-card-shortcode .wcefp-card-title a:hover {
+    color: #007cba;
+}
+
+.wcefp-experience-card-shortcode .wcefp-card-excerpt {
+    color: #6c757d;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.wcefp-experience-card-shortcode .wcefp-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.wcefp-experience-card-shortcode .wcefp-price {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .wcefp-experience-hero {
+        grid-template-columns: 1fr;
+    }
+    
+    .wcefp-experience-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .wcefp-booking-widget {
+        position: static;
+        margin-top: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .wcefp-experience-single {
+        padding: 1rem;
+    }
+    
+    .wcefp-hero-content {
+        padding: 1.5rem;
+    }
+    
+    .wcefp-hero-title {
+        font-size: 1.5rem;
+    }
+    
+    .wcefp-hero-meta {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .wcefp-section {
+        padding: 1.5rem;
+    }
+    
+    .wcefp-booking-widget {
+        padding: 1.5rem;
+    }
+    
+    .wcefp-gallery-thumbs {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .wcefp-experience-shortcode.layout-compact .wcefp-shortcode-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .wcefp-meeting-location {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .wcefp-reviews-summary {
+        margin-bottom: 1.5rem;
+    }
+    
+    .wcefp-rating-large {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .wcefp-hero-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .wcefp-experience-card-shortcode .wcefp-card-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .wcefp-experience-card-shortcode .wcefp-btn {
+        width: 100%;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .wcefp-booking-widget,
+    .wcefp-gallery-trigger {
+        display: none !important;
+    }
+    
+    .wcefp-experience-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .wcefp-section {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .wcefp-experience-single {
+        background: #1a1a1a;
+        color: #e5e5e5;
+    }
+    
+    .wcefp-section {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+    
+    .wcefp-booking-widget {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+    
+    .wcefp-form-control {
+        background: #1a1a1a;
+        border-color: #404040;
+        color: #e5e5e5;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .wcefp-btn-primary {
+        background: #0000ff;
+        border: 2px solid #0000ff;
+    }
+    
+    .wcefp-btn-primary:hover {
+        background: #000080;
+        border-color: #000080;
+    }
+    
+    .wcefp-section {
+        border: 2px solid #000;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .wcefp-hero-image,
+    .wcefp-btn,
+    .wcefp-experience-card-shortcode {
+        transition: none;
+    }
+    
+    .wcefp-experience-card-shortcode:hover {
+        transform: none;
+    }
+}
