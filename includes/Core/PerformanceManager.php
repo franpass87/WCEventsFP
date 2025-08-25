@@ -345,6 +345,11 @@ class PerformanceManager {
     private function page_needs_wcefp_assets(): bool {
         global $post;
         
+        // Check for new v2 shortcodes
+        if ($post && has_shortcode($post->post_content, 'wcefp_booking')) {
+            return true;
+        }
+        
         // Check for WCEFP shortcodes
         if ($post && has_shortcode($post->post_content, 'wcefp_events')) {
             return true;
@@ -354,8 +359,12 @@ class PerformanceManager {
             return true;
         }
         
-        // Check for WCEFP blocks
+        // Check for WCEFP blocks (including new v2 blocks)
         if ($post && has_block('wcefp/booking-form', $post)) {
+            return true;
+        }
+        
+        if ($post && has_block('wcefp/booking-widget-v2', $post)) {
             return true;
         }
         
@@ -366,7 +375,35 @@ class PerformanceManager {
         // Check if it's a WooCommerce product page with events
         if (is_product()) {
             $product_id = get_queried_object_id();
-            if (get_post_meta($product_id, '_wcefp_is_event', true)) {
+            $product = wc_get_product($product_id);
+            if ($product && in_array($product->get_type(), ['evento', 'esperienza'])) {
+                return true;
+            }
+        }
+        
+        // Check for cart/checkout pages with event products
+        if (is_cart() || is_checkout()) {
+            if ($this->cart_has_event_products()) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Check if cart contains event products
+     * 
+     * @return bool
+     */
+    private function cart_has_event_products(): bool {
+        if (!function_exists('WC') || !WC()->cart) {
+            return false;
+        }
+        
+        foreach (WC()->cart->get_cart() as $cart_item) {
+            $product = $cart_item['data'];
+            if ($product && in_array($product->get_type(), ['evento', 'esperienza'])) {
                 return true;
             }
         }

@@ -2,16 +2,16 @@
 /**
  * Plugin Name: WCEventsFP
  * Description: Plugin di prenotazione eventi & esperienze avanzato per WooCommerce. Sistema enterprise per competere con RegionDo/Bokun: gestione risorse (guide, attrezzature, veicoli), distribuzione multi-canale (Booking.com, Expedia, GetYourGuide), sistema commissioni/reseller, Google Reviews, tracking avanzato GA4/Meta, automazioni Brevo, AI recommendations, analytics real-time.
- * Version:     2.1.4 // x-release-please-version
+ * Version:     2.2.0 // x-release-please-version
  * Author:      Francesco Passeri
  * Author URI:  https://github.com/franpass87
  * Plugin URI:  https://github.com/franpass87/WCEventsFP
  * Text Domain: wceventsfp
  * Domain Path: /languages
- * Requires at least: 6.5
+ * Requires at least: 5.0
  * Tested up to: 6.7.1
- * Requires PHP: 8.0
- * WC requires at least: 8.0
+ * Requires PHP: 7.4
+ * WC requires at least: 5.0
  * WC tested up to: 9.4
  * Network: false
  * License: GPLv3 or later

@@ -1,9 +1,9 @@
-# WCEventsFP - User Guide
+# WCEventsFP - User Guide v2
 
-> **Plugin Version**: 2.1.4+  
-> **WordPress**: 6.5+ required  
-> **WooCommerce**: Latest stable required  
-> **PHP**: 8.0+ required
+> **Plugin Version**: 2.2.0+  
+> **WordPress**: 5.0+ required (6.0+ recommended)
+> **WooCommerce**: 5.0+ required (7.0+ recommended)
+> **PHP**: 7.4+ required (8.0+ recommended)
 
 ---
 
@@ -12,42 +12,54 @@
 1. [Quick Start](#-quick-start)
 2. [Installation](#-installation)
 3. [Initial Setup](#-initial-setup)
-4. [Creating Events](#-creating-events)
-5. [Managing Bookings](#-managing-bookings)
-6. [Analytics & Reports](#-analytics--reports)
-7. [Integrations](#-integrations)
-8. [Troubleshooting](#-troubleshooting)
-9. [FAQ](#-frequently-asked-questions)
+4. [Event/Experience Product Editor v2](#-evenexperience-product-editor-v2)
+5. [Advanced Scheduling System](#-advanced-scheduling-system)
+6. [Dynamic Pricing & Tickets](#-dynamic-pricing--tickets)
+7. [Capacity Management](#-capacity-management)
+8. [Extras & Add-ons](#-extras--add-ons)
+9. [Meeting Points System](#-meeting-points-system)
+10. [Policies & Notifications](#-policies--notifications)
+11. [Frontend Booking Widget v2](#-frontend-booking-widget-v2)
+12. [Managing Bookings](#-managing-bookings)
+13. [Analytics & Reports](#-analytics--reports)
+14. [Integrations & Compatibility](#-integrations--compatibility)
+15. [Performance & Optimization](#-performance--optimization)
+16. [Troubleshooting](#-troubleshooting)
+17. [FAQ](#-frequently-asked-questions)
 
 ---
 
 ## 🚀 Quick Start
 
-### What is WCEventsFP?
-WCEventsFP is an enterprise-grade booking platform for WordPress and WooCommerce. It transforms your online store into a powerful booking system for events, experiences, tours, and services.
+### What is WCEventsFP v2?
+WCEventsFP v2 is a complete reimplementation that transforms your WordPress site into an enterprise-level booking platform. It provides advanced scheduling, dynamic pricing, and professional customer experience features that compete directly with industry leaders like Bokun, RegionDo, and GetYourGuide.
 
-### Key Features
-- **Event Management** - Create and manage recurring events with capacity control
-- **Booking System** - Complete booking workflow with payment processing
-- **Analytics Dashboard** - KPI tracking and performance metrics
-- **Multi-channel Distribution** - Integration ready for Booking.com, Expedia, GetYourGuide
-- **Advanced Features** - Vouchers, calendar integration, email automation
-- **Developer-Friendly** - Comprehensive API and customization hooks
+### New v2 Features
+- **🎯 Enterprise Product Editor** - Tabbed interface with dedicated sections for each aspect
+- **📅 Advanced Scheduling** - Multiple recurrence patterns, timezone support, exception handling  
+- **🎫 Dynamic Pricing** - Early-bird, seasonal, demand-based pricing with visual badges
+- **👥 Capacity Management** - TTL-based stock holds with race condition protection
+- **🎁 Flexible Extras** - Product-specific and reusable add-ons with stock management
+- **📍 Meeting Points** - Geographic location management with geocoding
+- **📧 Email Automation** - Professional templates with scheduled reminders
+- **🏪 Professional Booking Widget** - Complete customer interface with real-time interactions
+- **🚀 Performance Optimizations** - Conditional asset loading and advanced caching
 
-### 5-Minute Setup
-1. Install and activate WCEventsFP plugin
-2. Complete the setup wizard
-3. Create your first event
-4. Configure payment methods
-5. Start accepting bookings!
+### 5-Minute Setup v2
+1. Install/update WCEventsFP to v2.2.0+
+2. Run the database migration (automatic)
+3. Create your first Event/Experience product using the new tabbed editor
+4. Configure scheduling patterns and pricing rules
+5. Add the booking widget to pages using `[wcefp_booking]` shortcode
+6. Start accepting bookings with the professional customer experience!
 
 ---
 
 ## 💾 Installation
 
-### System Requirements
-- **WordPress**: 6.5 or higher
-- **WooCommerce**: Latest stable version
+### System Requirements v2
+- **WordPress**: 5.0+ (6.0+ recommended)
+- **WooCommerce**: 5.0+ (7.0+ recommended)
 - **PHP**: 8.0 or higher (8.2+ recommended)
 - **MySQL**: 5.7+ or MariaDB 10.3+
 - **Memory**: 256MB minimum (512MB recommended)
