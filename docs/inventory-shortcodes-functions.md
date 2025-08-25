@@ -1,12 +1,14 @@
 # WCEventsFP - Complete Inventory of Shortcodes, Functions and Features
 
+# WCEventsFP - Complete Inventory of Shortcodes, Functions and Features
+
 **Version**: 2.2.0  
 **Generated**: December 25, 2024  
 **Scan Type**: Static + Runtime Analysis
 
 ## Executive Summary
 
-This document provides a comprehensive inventory of all shortcodes, Gutenberg blocks, functions, classes, hooks, and features implemented in the WCEventsFP plugin. The analysis is based on static code scanning of all PHP files (excluding vendor/) and includes runtime detection capabilities.
+This document provides a comprehensive inventory of all shortcodes, Gutenberg blocks, functions, classes, hooks, and features implemented in the WCEventsFP plugin. The analysis is based on static code scanning of all PHP files (excluding vendor/) and includes runtime detection capabilities through the integrated **Diagnostics Tool**.
 
 ### Key Findings
 
@@ -18,6 +20,20 @@ This document provides a comprehensive inventory of all shortcodes, Gutenberg bl
 - **15+ REST API Endpoints** for external integrations
 - **50+ WCEFP Classes** in PSR-4 namespace structure
 - **100+ Options/Meta Keys** for configuration and data storage
+
+### 🔧 Runtime Diagnostics Tool
+
+A comprehensive **admin diagnostics page** has been added at **Tools → WCEFP Diagnostics** featuring:
+
+- **Real-time shortcode detection** and testing capabilities
+- **Active hooks verification** with callback information  
+- **AJAX/REST endpoint testing** interface with response monitoring
+- **Plugin options verification** dashboard with status indicators
+- **System information** and compatibility checks
+- **Live refresh functionality** for up-to-date diagnostics
+- **Interactive testing tools** for debugging and verification
+
+The diagnostics tool provides administrators with a powerful interface to verify plugin functionality, test shortcode rendering, and debug integration issues in real-time.
 
 ---
 
