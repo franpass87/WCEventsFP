@@ -40,6 +40,10 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
             return new ProductAdmin($container);
         });
         
+        $this->container->singleton('admin.meeting_points', function($container) {
+            return new MeetingPointsManager();
+        });
+        
         // Additional admin services
         $this->container->singleton('admin.settings', function($container) {
             return new SettingsManager($container);
@@ -67,6 +71,7 @@ class AdminServiceProvider extends \WCEFP\Core\ServiceProvider {
         // Initialize admin services (conditionally)
         $this->container->get('admin.menu');
         $this->container->get('admin.product');
+        $this->container->get('admin.meeting_points');
         
         // Initialize additional services if classes exist
         if (class_exists('\WCEFP\Admin\SettingsManager')) {

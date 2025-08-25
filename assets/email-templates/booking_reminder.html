@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="{{SITE_LANGUAGE}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{SITE_NAME}} - Event Reminder</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .reminder-badge {
+            background: #ff6b35;
+            color: white;
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .event-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .event-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .event-details {
+            display: table;
+            width: 100%;
+        }
+        .detail-row {
+            display: table-row;
+        }
+        .detail-label {
+            display: table-cell;
+            padding: 8px 0;
+            font-weight: bold;
+            color: #666;
+            width: 120px;
+        }
+        .detail-value {
+            display: table-cell;
+            padding: 8px 0;
+            color: #333;
+        }
+        .action-button {
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .meeting-point {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .meeting-point-title {
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .event-details {
+                display: block;
+            }
+            .detail-row {
+                display: block;
+                margin-bottom: 10px;
+            }
+            .detail-label,
+            .detail-value {
+                display: block;
+                width: auto;
+                padding: 2px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Event Reminder</h1>
+            <p>Don't forget about your upcoming experience!</p>
+        </div>
+        
+        <div class="content">
+            <div class="reminder-badge">
+                {{REMINDER_TYPE}} Reminder
+            </div>
+            
+            <p>Hello {{CUSTOMER_NAME}},</p>
+            
+            <p>We hope you're as excited as we are! This is a friendly reminder about your upcoming booking:</p>
+            
+            <div class="event-card">
+                <div class="event-title">{{EVENT_TITLE}}</div>
+                
+                <div class="event-details">
+                    <div class="detail-row">
+                        <div class="detail-label">📅 Date:</div>
+                        <div class="detail-value">{{EVENT_DATE}}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">⏰ Time:</div>
+                        <div class="detail-value">{{EVENT_TIME}}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">👥 Participants:</div>
+                        <div class="detail-value">{{PARTICIPANT_COUNT}}</div>
+                    </div>
+                    {{#BOOKING_REFERENCE}}
+                    <div class="detail-row">
+                        <div class="detail-label">🎫 Reference:</div>
+                        <div class="detail-value">{{BOOKING_REFERENCE}}</div>
+                    </div>
+                    {{/BOOKING_REFERENCE}}
+                </div>
+            </div>
+            
+            {{#MEETING_POINT}}
+            <div class="meeting-point">
+                <div class="meeting-point-title">📍 Meeting Point</div>
+                <p>{{MEETING_POINT_NAME}}<br>
+                {{MEETING_POINT_ADDRESS}}</p>
+                {{#MEETING_POINT_NOTES}}
+                <p><strong>Important Notes:</strong> {{MEETING_POINT_NOTES}}</p>
+                {{/MEETING_POINT_NOTES}}
+            </div>
+            {{/MEETING_POINT}}
+            
+            {{#PREPARATION_NOTES}}
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 15px; margin: 15px 0;">
+                <h3 style="margin-top: 0; color: #856404;">💡 What to Bring / Preparation</h3>
+                <p>{{PREPARATION_NOTES}}</p>
+            </div>
+            {{/PREPARATION_NOTES}}
+            
+            {{#WEATHER_DEPENDENT}}
+            <div style="background: #e8f5e8; border: 1px solid #c3e6c3; border-radius: 6px; padding: 15px; margin: 15px 0;">
+                <h3 style="margin-top: 0; color: #155724;">🌤️ Weather Notice</h3>
+                <p>This event is weather-dependent. Please check the forecast and dress appropriately. We'll contact you if weather conditions require any changes.</p>
+            </div>
+            {{/WEATHER_DEPENDENT}}
+            
+            <center>
+                <a href="{{VIEW_BOOKING_URL}}" class="action-button">View Full Booking Details</a>
+            </center>
+            
+            <p>If you need to make any changes or have questions, please don't hesitate to contact us.</p>
+            
+            <p>Looking forward to seeing you there!</p>
+            <p><strong>The {{SITE_NAME}} Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>{{SITE_NAME}} | {{SITE_URL}}</p>
+            {{#CONTACT_INFO}}
+            <p>📞 {{CONTACT_PHONE}} | ✉️ {{CONTACT_EMAIL}}</p>
+            {{/CONTACT_INFO}}
+            <p><a href="{{UNSUBSCRIBE_URL}}" style="color: #999;">Unsubscribe from reminders</a></p>
+        </div>
+    </div>
+</body>
+</html>

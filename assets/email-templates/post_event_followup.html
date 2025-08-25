@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="{{SITE_LANGUAGE}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{SITE_NAME}} - Thank You & Feedback</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .thank-you-badge {
+            background: #28a745;
+            color: white;
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .event-summary {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        .rating-section {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .rating-stars {
+            font-size: 32px;
+            margin: 15px 0;
+        }
+        .rating-star {
+            color: #ddd;
+            cursor: pointer;
+            text-decoration: none;
+            margin: 0 2px;
+        }
+        .action-button {
+            background: #007bff;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            margin: 20px 10px;
+            text-align: center;
+        }
+        .social-share {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .social-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+        }
+        .facebook { background: #3b5998; }
+        .twitter { background: #1da1f2; }
+        .instagram { background: #e1306c; }
+        .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .action-button {
+                display: block;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🙏 Thank You!</h1>
+            <p>We hope you had an amazing experience</p>
+        </div>
+        
+        <div class="content">
+            <div class="thank-you-badge">
+                Event Completed
+            </div>
+            
+            <p>Hello {{CUSTOMER_NAME}},</p>
+            
+            <p>We hope you had a fantastic time during your recent experience with us!</p>
+            
+            <div class="event-summary">
+                <h3 style="margin-top: 0;">✨ Your Experience</h3>
+                <p><strong>{{EVENT_TITLE}}</strong></p>
+                <p>📅 {{EVENT_DATE}} at {{EVENT_TIME}}</p>
+                {{#PARTICIPANT_COUNT}}
+                <p>👥 {{PARTICIPANT_COUNT}} participants</p>
+                {{/PARTICIPANT_COUNT}}
+            </div>
+            
+            <div class="rating-section">
+                <h3 style="margin-top: 0; color: #1976d2;">⭐ How was your experience?</h3>
+                <p>Your feedback helps us improve and helps other customers discover great experiences.</p>
+                
+                <div class="rating-stars">
+                    <a href="{{REVIEW_URL}}&rating=1" class="rating-star">⭐</a>
+                    <a href="{{REVIEW_URL}}&rating=2" class="rating-star">⭐</a>
+                    <a href="{{REVIEW_URL}}&rating=3" class="rating-star">⭐</a>
+                    <a href="{{REVIEW_URL}}&rating=4" class="rating-star">⭐</a>
+                    <a href="{{REVIEW_URL}}&rating=5" class="rating-star">⭐</a>
+                </div>
+                
+                <center>
+                    <a href="{{REVIEW_URL}}" class="action-button">📝 Leave a Review</a>
+                </center>
+            </div>
+            
+            {{#PHOTOS_AVAILABLE}}
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 20px; margin: 20px 0; text-align: center;">
+                <h3 style="margin-top: 0; color: #856404;">📸 Your Photos Are Ready!</h3>
+                <p>We've captured some great moments from your experience. Download them while they're still available.</p>
+                <a href="{{PHOTOS_DOWNLOAD_URL}}" class="action-button" style="background: #ffc107; color: #212529;">Download Photos</a>
+            </div>
+            {{/PHOTOS_AVAILABLE}}
+            
+            <div class="social-share">
+                <h3 style="margin-top: 0;">📢 Share Your Experience</h3>
+                <p>Loved it? Share the joy with your friends!</p>
+                <a href="{{FACEBOOK_SHARE_URL}}" class="social-button facebook">Share on Facebook</a>
+                <a href="{{TWITTER_SHARE_URL}}" class="social-button twitter">Tweet about it</a>
+                <a href="{{INSTAGRAM_SHARE_URL}}" class="social-button instagram">Instagram Story</a>
+            </div>
+            
+            {{#RELATED_EXPERIENCES}}
+            <div style="background: #e8f5e8; border: 1px solid #c3e6c3; border-radius: 6px; padding: 20px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #155724;">🌟 You Might Also Like</h3>
+                <p>Based on your experience, here are some other adventures we think you'd enjoy:</p>
+                {{#EXPERIENCES}}
+                <p>• <a href="{{EXPERIENCE_URL}}" style="color: #155724; text-decoration: none;">{{EXPERIENCE_TITLE}}</a></p>
+                {{/EXPERIENCES}}
+            </div>
+            {{/RELATED_EXPERIENCES}}
+            
+            {{#LOYALTY_PROGRAM}}
+            <div style="background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 6px; padding: 20px; margin: 20px 0; text-align: center;">
+                <h3 style="margin-top: 0; color: #1976d2;">🎁 Loyalty Rewards</h3>
+                <p>You've earned <strong>{{POINTS_EARNED}} points</strong> for this booking!</p>
+                <p>Total balance: <strong>{{TOTAL_POINTS}} points</strong></p>
+                <a href="{{LOYALTY_URL}}" class="action-button">View Rewards</a>
+            </div>
+            {{/LOYALTY_PROGRAM}}
+            
+            <center>
+                <a href="{{BOOKING_HISTORY_URL}}" class="action-button">View Your Bookings</a>
+                <a href="{{BROWSE_EXPERIENCES_URL}}" class="action-button" style="background: #28a745;">Book Another Experience</a>
+            </center>
+            
+            <p>Thank you for choosing {{SITE_NAME}}. We look forward to creating more memorable experiences with you!</p>
+            
+            <p><strong>The {{SITE_NAME}} Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>{{SITE_NAME}} | {{SITE_URL}}</p>
+            {{#CONTACT_INFO}}
+            <p>📞 {{CONTACT_PHONE}} | ✉️ {{CONTACT_EMAIL}}</p>
+            {{/CONTACT_INFO}}
+            <p><a href="{{UNSUBSCRIBE_URL}}" style="color: #999;">Manage email preferences</a></p>
+        </div>
+    </div>
+</body>
+</html>

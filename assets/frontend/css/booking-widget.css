@@ -1,0 +1,661 @@
+/* WCEventsFP Frontend Booking Widget Styles */
+
+.wcefp-booking-widget {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-family: inherit;
+}
+
+.wcefp-booking-widget * {
+    box-sizing: border-box;
+}
+
+/* Section Styling */
+.wcefp-section {
+    margin-bottom: 30px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.wcefp-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.wcefp-section h3 {
+    margin: 0 0 20px 0;
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Date Selection */
+.wcefp-date-picker {
+    margin-bottom: 20px;
+}
+
+.wcefp-date-input {
+    width: 100%;
+    max-width: 300px;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    background: #fff;
+    transition: border-color 0.3s ease;
+}
+
+.wcefp-date-input:focus {
+    outline: none;
+    border-color: #007cba;
+    box-shadow: 0 0 0 2px rgba(0, 124, 186, 0.1);
+}
+
+/* Time Slots */
+.wcefp-time-slots {
+    margin-top: 20px;
+}
+
+.wcefp-time-slots .wcefp-placeholder {
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 6px;
+}
+
+.wcefp-time-slot {
+    display: inline-block;
+    margin: 8px 8px 8px 0;
+    padding: 12px 18px;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.wcefp-time-slot:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.wcefp-time-slot.selected {
+    background: #007cba;
+    border-color: #007cba;
+    color: #fff;
+}
+
+.wcefp-time-slot.full {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.wcefp-time-slot .wcefp-slot-info {
+    display: block;
+    font-size: 0.9em;
+}
+
+.wcefp-time-slot .wcefp-capacity {
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+/* Ticket Selection */
+.wcefp-ticket-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #f8f9fa;
+    transition: background-color 0.3s ease;
+}
+
+.wcefp-ticket-row:hover {
+    background: #e9ecef;
+}
+
+.wcefp-ticket-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-right: 20px;
+}
+
+.wcefp-ticket-label strong {
+    font-size: 1.1em;
+    color: #333;
+}
+
+.wcefp-ticket-description {
+    margin: 5px 0 0 0;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.wcefp-ticket-price {
+    font-weight: 600;
+    color: #007cba;
+    font-size: 1.1em;
+}
+
+/* Quantity Controls */
+.wcefp-quantity-controls {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.wcefp-qty-minus,
+.wcefp-qty-plus {
+    background: #f8f9fa;
+    border: none;
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+    transition: background-color 0.3s ease;
+}
+
+.wcefp-qty-minus:hover,
+.wcefp-qty-plus:hover {
+    background: #e9ecef;
+}
+
+.wcefp-qty-minus:disabled,
+.wcefp-qty-plus:disabled {
+    background: #f8f9fa;
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.wcefp-ticket-qty,
+.wcefp-extra-qty {
+    width: 60px;
+    height: 35px;
+    border: none;
+    text-align: center;
+    font-weight: 500;
+    font-size: 14px;
+    background: #fff;
+}
+
+.wcefp-ticket-qty:focus,
+.wcefp-extra-qty:focus {
+    outline: none;
+}
+
+/* Extras Selection */
+.wcefp-extra-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #fff7e6;
+    transition: background-color 0.3s ease;
+}
+
+.wcefp-extra-row:hover {
+    background: #fff0d6;
+}
+
+.wcefp-extra-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-right: 20px;
+}
+
+.wcefp-extra-label strong {
+    font-size: 1.1em;
+    color: #333;
+}
+
+.wcefp-required {
+    color: #dc3545;
+    font-size: 0.85em;
+    font-weight: normal;
+}
+
+.wcefp-extra-description {
+    margin: 5px 0 0 0;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.wcefp-extra-price {
+    font-weight: 600;
+    color: #ff8c00;
+    font-size: 1.1em;
+}
+
+.wcefp-extra-price small {
+    font-weight: normal;
+    color: #666;
+    display: block;
+    margin-top: 2px;
+}
+
+.wcefp-no-extras {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 6px;
+}
+
+/* Meeting Point */
+.wcefp-meeting-point-details h4 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 1.2em;
+}
+
+.wcefp-address {
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.wcefp-address strong {
+    color: #333;
+}
+
+.wcefp-instructions {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #007cba;
+}
+
+.wcefp-instructions strong {
+    color: #333;
+}
+
+.wcefp-instructions p {
+    margin: 8px 0 0 0;
+    color: #555;
+}
+
+.wcefp-accessibility-info {
+    margin: 15px 0;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.wcefp-accessibility-info span {
+    padding: 6px 12px;
+    background: #e9ecef;
+    border-radius: 15px;
+    font-size: 0.9em;
+    color: #333;
+}
+
+.wcefp-map-link {
+    margin-top: 15px;
+}
+
+.wcefp-map-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #28a745;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.wcefp-map-button:hover {
+    background: #218838;
+    color: white;
+    text-decoration: none;
+}
+
+.wcefp-no-meeting-point {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 6px;
+}
+
+/* Booking Summary */
+.wcefp-summary {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.wcefp-summary-empty {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+.wcefp-summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.wcefp-summary-item:last-child {
+    border-bottom: none;
+}
+
+.wcefp-summary-label {
+    font-weight: 500;
+    color: #333;
+}
+
+.wcefp-summary-quantity {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.wcefp-summary-price {
+    font-weight: 600;
+    color: #007cba;
+}
+
+.wcefp-total {
+    padding: 20px;
+    background: linear-gradient(135deg, #007cba, #005a8b);
+    color: white;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.wcefp-total-amount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.3em;
+    font-weight: 600;
+}
+
+.wcefp-total-value {
+    font-size: 1.5em;
+}
+
+/* Action Buttons */
+.wcefp-booking-actions {
+    text-align: center;
+}
+
+.wcefp-add-to-cart-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    font-size: 1.1em;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    min-width: 200px;
+}
+
+.wcefp-add-to-cart-btn:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.wcefp-add-to-cart-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.wcefp-btn-loading {
+    display: none;
+}
+
+.wcefp-add-to-cart-btn.loading .wcefp-btn-text {
+    display: none;
+}
+
+.wcefp-add-to-cart-btn.loading .wcefp-btn-loading {
+    display: inline;
+}
+
+/* Loading State */
+.wcefp-loading {
+    text-align: center;
+    padding: 40px 20px;
+    background: rgba(248, 249, 250, 0.9);
+    border-radius: 8px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.wcefp-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007cba;
+    border-radius: 50%;
+    animation: wcefp-spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes wcefp-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Messages */
+.wcefp-messages {
+    margin-top: 20px;
+}
+
+.wcefp-message {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.wcefp-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.wcefp-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.wcefp-message.warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.wcefp-message.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* Error States */
+.wcefp-error {
+    text-align: center;
+    padding: 30px;
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .wcefp-booking-widget {
+        padding: 20px;
+        margin: 10px;
+        border-radius: 6px;
+    }
+    
+    .wcefp-ticket-row,
+    .wcefp-extra-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+    
+    .wcefp-ticket-info,
+    .wcefp-extra-info {
+        margin-right: 0;
+    }
+    
+    .wcefp-accessibility-info {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .wcefp-accessibility-info span {
+        display: block;
+        text-align: center;
+    }
+    
+    .wcefp-total-amount {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .wcefp-date-input {
+        max-width: 100%;
+    }
+    
+    .wcefp-time-slot {
+        display: block;
+        width: 100%;
+        margin: 8px 0;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .wcefp-booking-widget {
+        padding: 15px;
+        margin: 5px;
+    }
+    
+    .wcefp-section h3 {
+        font-size: 1.2em;
+    }
+    
+    .wcefp-add-to-cart-btn {
+        width: 100%;
+        padding: 12px 20px;
+        font-size: 1em;
+    }
+    
+    .wcefp-quantity-controls {
+        width: 120px;
+    }
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+    .wcefp-time-slot,
+    .wcefp-add-to-cart-btn,
+    .wcefp-map-button,
+    .wcefp-qty-minus,
+    .wcefp-qty-plus {
+        transition: none;
+    }
+    
+    .wcefp-spinner {
+        animation: none;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .wcefp-booking-widget {
+        border: 2px solid #000;
+    }
+    
+    .wcefp-time-slot,
+    .wcefp-ticket-row,
+    .wcefp-extra-row {
+        border: 2px solid #000;
+    }
+    
+    .wcefp-time-slot.selected {
+        background: #000;
+        color: #fff;
+        border-color: #000;
+    }
+}
+
+/* Focus Styles for Better Accessibility */
+.wcefp-date-input:focus,
+.wcefp-time-slot:focus,
+.wcefp-ticket-qty:focus,
+.wcefp-extra-qty:focus,
+.wcefp-add-to-cart-btn:focus,
+.wcefp-map-button:focus,
+.wcefp-qty-minus:focus,
+.wcefp-qty-plus:focus {
+    outline: 2px solid #007cba;
+    outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+    .wcefp-booking-widget {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    .wcefp-add-to-cart-btn,
+    .wcefp-loading {
+        display: none;
+    }
+}
