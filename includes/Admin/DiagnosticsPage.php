@@ -20,6 +20,7 @@ class DiagnosticsPage {
         add_action('admin_menu', [$this, 'add_diagnostics_page']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
         add_action('wp_ajax_wcefp_refresh_diagnostics', [$this, 'ajax_refresh_diagnostics']);
+        add_action('wp_ajax_wcefp_export_diagnostics', [$this, 'ajax_export_diagnostics']);
     }
     
     /**
@@ -75,9 +76,17 @@ class DiagnosticsPage {
             <p><?php _e('Runtime diagnostics and feature verification for WCEventsFP plugin.', 'wceventsfp'); ?></p>
             
             <div class="wcefp-diagnostics-header">
-                <button type="button" class="button button-secondary" id="wcefp-refresh-diagnostics">
-                    <?php _e('Refresh Data', 'wceventsfp'); ?>
-                </button>
+                <div class="wcefp-header-actions">
+                    <button type="button" class="button button-secondary" id="wcefp-refresh-diagnostics">
+                        <?php _e('Refresh Data', 'wceventsfp'); ?>
+                    </button>
+                    <button type="button" class="button button-secondary" id="wcefp-export-diagnostics" data-format="json">
+                        <?php _e('Export JSON', 'wceventsfp'); ?>
+                    </button>
+                    <button type="button" class="button button-secondary" id="wcefp-export-diagnostics-txt" data-format="txt">
+                        <?php _e('Export TXT', 'wceventsfp'); ?>
+                    </button>
+                </div>
                 <span class="wcefp-last-updated">
                     <?php printf(__('Last updated: %s', 'wceventsfp'), current_time('Y-m-d H:i:s')); ?>
                 </span>
@@ -88,6 +97,9 @@ class DiagnosticsPage {
                     <a href="#shortcodes" class="nav-tab nav-tab-active"><?php _e('Shortcodes', 'wceventsfp'); ?></a>
                     <a href="#hooks" class="nav-tab"><?php _e('Hooks', 'wceventsfp'); ?></a>
                     <a href="#endpoints" class="nav-tab"><?php _e('AJAX/REST', 'wceventsfp'); ?></a>
+                    <a href="#performance" class="nav-tab"><?php _e('Performance', 'wceventsfp'); ?></a>
+                    <a href="#database" class="nav-tab"><?php _e('Database', 'wceventsfp'); ?></a>
+                    <a href="#security" class="nav-tab"><?php _e('Security', 'wceventsfp'); ?></a>
                     <a href="#options" class="nav-tab"><?php _e('Options', 'wceventsfp'); ?></a>
                     <a href="#system" class="nav-tab"><?php _e('System Info', 'wceventsfp'); ?></a>
                 </nav>
@@ -103,6 +115,18 @@ class DiagnosticsPage {
                     
                     <div id="endpoints" class="tab-pane">
                         <?php $this->render_endpoints_section(); ?>
+                    </div>
+                    
+                    <div id="performance" class="tab-pane">
+                        <?php $this->render_performance_section(); ?>
+                    </div>
+                    
+                    <div id="database" class="tab-pane">
+                        <?php $this->render_database_section(); ?>
+                    </div>
+                    
+                    <div id="security" class="tab-pane">
+                        <?php $this->render_security_section(); ?>
                     </div>
                     
                     <div id="options" class="tab-pane">
@@ -565,6 +589,522 @@ class DiagnosticsPage {
             'message' => __('Diagnostics data refreshed successfully.', 'wceventsfp'),
             'timestamp' => current_time('Y-m-d H:i:s')
         ]);
+    }
+    
+    /**
+     * AJAX handler for exporting diagnostics report
+     */
+    public function ajax_export_diagnostics() {
+        check_ajax_referer('wcefp_diagnostics_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Permission denied.', 'wceventsfp'));
+        }
+        
+        $format = sanitize_text_field($_POST['format'] ?? 'json');
+        $report = $this->generate_diagnostic_report();
+        
+        if ($format === 'json') {
+            wp_send_json_success([
+                'data' => $report,
+                'filename' => 'wcefp-diagnostics-' . date('Y-m-d-H-i-s') . '.json',
+                'content_type' => 'application/json'
+            ]);
+        } else {
+            // Generate text format
+            $text_report = $this->format_report_as_text($report);
+            wp_send_json_success([
+                'data' => $text_report,
+                'filename' => 'wcefp-diagnostics-' . date('Y-m-d-H-i-s') . '.txt',
+                'content_type' => 'text/plain'
+            ]);
+        }
+    }
+    
+    /**
+     * Format diagnostic report as readable text
+     */
+    private function format_report_as_text($report) {
+        $text = "WCEFP Diagnostics Report\n";
+        $text .= "Generated: " . $report['generated_at'] . "\n";
+        $text .= "Generation Time: " . $report['generation_time'] . "\n";
+        $text .= str_repeat("=", 50) . "\n\n";
+        
+        // Plugin Information
+        $text .= "PLUGIN INFORMATION\n";
+        $text .= str_repeat("-", 20) . "\n";
+        foreach ($report['plugin_info'] as $key => $value) {
+            $text .= ucfirst(str_replace('_', ' ', $key)) . ": " . $value . "\n";
+        }
+        $text .= "\n";
+        
+        // Shortcodes
+        $text .= "SHORTCODES\n";
+        $text .= str_repeat("-", 10) . "\n";
+        $text .= "Total: " . $report['shortcodes']['total_shortcodes'] . "\n";
+        $text .= "Average Execution Time: " . $report['shortcodes']['average_execution'] . "\n\n";
+        
+        // Performance
+        $text .= "PERFORMANCE\n";
+        $text .= str_repeat("-", 11) . "\n";
+        $text .= "Memory Usage: " . $report['performance']['memory_usage']['current'] . 
+                " (Peak: " . $report['performance']['memory_usage']['peak'] . ")\n";
+        $text .= "Database Queries: " . $report['performance']['database']['queries'] . "\n";
+        $text .= "Execution Time: " . $report['performance']['execution_time']['elapsed'] . "\n\n";
+        
+        // Database
+        $text .= "DATABASE\n";
+        $text .= str_repeat("-", 8) . "\n";
+        $text .= "Total Tables: " . $report['database']['total_tables'] . "\n";
+        $text .= "Charset: " . $report['database']['charset'] . "\n";
+        $text .= "Collation: " . $report['database']['collate'] . "\n\n";
+        
+        // Security
+        $text .= "SECURITY CHECKS\n";
+        $text .= str_repeat("-", 15) . "\n";
+        foreach ($report['security'] as $check => $data) {
+            $text .= ucfirst(str_replace('_', ' ', $check)) . ": " . $data['value'] . " (" . $data['status'] . ")\n";
+        }
+        
+        return $text;
+    }
+    
+    /**
+     * Generate comprehensive diagnostic report
+     * 
+     * @return array Diagnostic report data
+     */
+    private function generate_diagnostic_report() {
+        $start_time = microtime(true);
+        
+        $report = [
+            'generated_at' => current_time('c'),
+            'plugin_info' => [
+                'version' => WCEFP_VERSION,
+                'wp_version' => get_bloginfo('version'),
+                'php_version' => PHP_VERSION,
+                'wc_version' => defined('WC_VERSION') ? WC_VERSION : 'Not installed'
+            ],
+            'shortcodes' => $this->get_shortcode_analysis(),
+            'hooks' => $this->get_hooks_analysis(), 
+            'performance' => $this->get_performance_metrics(),
+            'database' => $this->get_database_analysis(),
+            'security' => $this->perform_security_checks(),
+            'compatibility' => $this->check_plugin_compatibility()
+        ];
+        
+        $report['generation_time'] = round((microtime(true) - $start_time) * 1000, 2) . 'ms';
+        
+        return $report;
+    }
+    
+    /**
+     * Get shortcode performance analysis
+     */
+    private function get_shortcode_analysis() {
+        global $shortcode_tags;
+        
+        $wcefp_shortcodes = [];
+        $performance_data = [];
+        
+        foreach ($shortcode_tags as $tag => $callback) {
+            if (strpos($tag, 'wcefp') === 0 || strpos($tag, 'event') === 0) {
+                $wcefp_shortcodes[$tag] = $callback;
+                
+                // Test shortcode performance
+                $start_time = microtime(true);
+                ob_start();
+                do_shortcode("[{$tag}]");
+                ob_get_clean();
+                $execution_time = (microtime(true) - $start_time) * 1000;
+                
+                $performance_data[$tag] = [
+                    'execution_time' => round($execution_time, 2) . 'ms',
+                    'callback' => is_array($callback) ? get_class($callback[0]) . '::' . $callback[1] : (string)$callback,
+                    'status' => $execution_time < 100 ? 'good' : ($execution_time < 500 ? 'warning' : 'critical')
+                ];
+            }
+        }
+        
+        return [
+            'total_shortcodes' => count($wcefp_shortcodes),
+            'performance' => $performance_data,
+            'average_execution' => count($performance_data) ? round(array_sum(array_column($performance_data, 'execution_time')) / count($performance_data), 2) . 'ms' : '0ms'
+        ];
+    }
+    
+    /**
+     * Get hooks analysis with priority information
+     */
+    private function get_hooks_analysis() {
+        global $wp_filter;
+        
+        $wcefp_hooks = [];
+        $hook_count = 0;
+        
+        foreach ($wp_filter as $hook_name => $hook) {
+            if (strpos($hook_name, 'wcefp') !== false || strpos($hook_name, 'wceventsfp') !== false) {
+                $callbacks = [];
+                foreach ($hook->callbacks as $priority => $functions) {
+                    foreach ($functions as $function_name => $function_data) {
+                        $callback_info = is_array($function_data['function']) 
+                            ? get_class($function_data['function'][0]) . '::' . $function_data['function'][1]
+                            : (string)$function_data['function'];
+                        
+                        $callbacks[] = [
+                            'priority' => $priority,
+                            'callback' => $callback_info,
+                            'accepted_args' => $function_data['accepted_args']
+                        ];
+                        $hook_count++;
+                    }
+                }
+                
+                if (!empty($callbacks)) {
+                    $wcefp_hooks[$hook_name] = $callbacks;
+                }
+            }
+        }
+        
+        return [
+            'total_hooks' => count($wcefp_hooks),
+            'total_callbacks' => $hook_count,
+            'hooks' => $wcefp_hooks
+        ];
+    }
+    
+    /**
+     * Get performance metrics
+     */
+    private function get_performance_metrics() {
+        return [
+            'memory_usage' => [
+                'current' => size_format(memory_get_usage(true)),
+                'peak' => size_format(memory_get_peak_usage(true)),
+                'limit' => ini_get('memory_limit')
+            ],
+            'execution_time' => [
+                'script_start' => $_SERVER['REQUEST_TIME_FLOAT'] ?? 0,
+                'current_time' => microtime(true),
+                'elapsed' => round((microtime(true) - ($_SERVER['REQUEST_TIME_FLOAT'] ?? 0)) * 1000, 2) . 'ms'
+            ],
+            'database' => [
+                'queries' => get_num_queries(),
+                'query_time' => function_exists('timer_stop') ? timer_stop() . 's' : 'N/A'
+            ]
+        ];
+    }
+    
+    /**
+     * Analyze database tables
+     */
+    private function get_database_analysis() {
+        global $wpdb;
+        
+        // Get WCEFP tables
+        $tables = $wpdb->get_results("SHOW TABLES LIKE '{$wpdb->prefix}wcefp_%'");
+        $table_analysis = [];
+        
+        foreach ($tables as $table) {
+            $table_name = array_values((array)$table)[0];
+            $status = $wpdb->get_row("SHOW TABLE STATUS LIKE '$table_name'");
+            
+            $table_analysis[$table_name] = [
+                'rows' => number_format($status->Rows ?? 0),
+                'size' => size_format($status->Data_length + $status->Index_length),
+                'engine' => $status->Engine ?? 'Unknown',
+                'collation' => $status->Collation ?? 'Unknown'
+            ];
+        }
+        
+        return [
+            'total_tables' => count($tables),
+            'tables' => $table_analysis,
+            'charset' => $wpdb->charset,
+            'collate' => $wpdb->collate
+        ];
+    }
+    
+    /**
+     * Perform basic security checks
+     */
+    private function perform_security_checks() {
+        $checks = [];
+        
+        // Check if debug mode is enabled
+        $checks['debug_mode'] = [
+            'status' => defined('WP_DEBUG') && WP_DEBUG ? 'warning' : 'good',
+            'value' => defined('WP_DEBUG') && WP_DEBUG ? 'Enabled' : 'Disabled',
+            'description' => 'WordPress debug mode status'
+        ];
+        
+        // Check file permissions
+        $uploads_dir = wp_upload_dir();
+        $checks['uploads_writable'] = [
+            'status' => is_writable($uploads_dir['basedir']) ? 'good' : 'critical',
+            'value' => is_writable($uploads_dir['basedir']) ? 'Writable' : 'Not writable', 
+            'description' => 'Uploads directory permissions'
+        ];
+        
+        // Check SSL
+        $checks['ssl_enabled'] = [
+            'status' => is_ssl() ? 'good' : 'warning',
+            'value' => is_ssl() ? 'Enabled' : 'Disabled',
+            'description' => 'SSL/HTTPS status'
+        ];
+        
+        // Check API keys are not empty but don't reveal them
+        $api_keys = [
+            'google_places' => get_option('wcefp_google_places_api_key', ''),
+            'brevo' => get_option('wcefp_brevo_api_key', '')
+        ];
+        
+        foreach ($api_keys as $key => $value) {
+            $checks["api_key_{$key}"] = [
+                'status' => !empty($value) ? 'good' : 'warning',
+                'value' => !empty($value) ? 'Configured' : 'Not configured',
+                'description' => ucfirst($key) . ' API key status'
+            ];
+        }
+        
+        return $checks;
+    }
+    
+    /**
+     * Check plugin compatibility
+     */
+    private function check_plugin_compatibility() {
+        $active_plugins = get_option('active_plugins', []);
+        $compatibility_issues = [];
+        
+        // Known conflicting plugins
+        $known_conflicts = [
+            'wp-rocket/wp-rocket.php' => 'WP Rocket caching may interfere with dynamic content',
+            'w3-total-cache/w3-total-cache.php' => 'W3 Total Cache may cache shortcode output',
+            'wp-super-cache/wp-super-cache.php' => 'WP Super Cache may affect dynamic content'
+        ];
+        
+        foreach ($known_conflicts as $plugin => $issue) {
+            if (in_array($plugin, $active_plugins)) {
+                $compatibility_issues[] = [
+                    'plugin' => $plugin,
+                    'issue' => $issue,
+                    'severity' => 'warning'
+                ];
+            }
+        }
+        
+        // Check for required plugins
+        $required_plugins = [
+            'woocommerce/woocommerce.php' => 'WooCommerce is required for core functionality'
+        ];
+        
+        foreach ($required_plugins as $plugin => $requirement) {
+            if (!in_array($plugin, $active_plugins)) {
+                $compatibility_issues[] = [
+                    'plugin' => $plugin,
+                    'issue' => $requirement,
+                    'severity' => 'critical'
+                ];
+            }
+        }
+        
+        return [
+            'total_active_plugins' => count($active_plugins),
+            'potential_conflicts' => count($compatibility_issues),
+            'issues' => $compatibility_issues
+        ];
+    }
+    
+    /**
+     * Render performance monitoring section
+     */
+    private function render_performance_section() {
+        $performance_data = $this->get_performance_metrics();
+        $shortcode_analysis = $this->get_shortcode_analysis();
+        
+        ?>
+        <div class="wcefp-section">
+            <h3><?php _e('Performance Metrics', 'wceventsfp'); ?></h3>
+            
+            <div class="wcefp-performance-grid">
+                <div class="wcefp-performance-card">
+                    <h4><?php _e('Memory Usage', 'wceventsfp'); ?></h4>
+                    <div class="metric-value"><?php echo esc_html($performance_data['memory_usage']['current']); ?></div>
+                    <div class="metric-label">
+                        <?php printf(__('Peak: %s | Limit: %s', 'wceventsfp'), 
+                            esc_html($performance_data['memory_usage']['peak']),
+                            esc_html($performance_data['memory_usage']['limit'])
+                        ); ?>
+                    </div>
+                </div>
+                
+                <div class="wcefp-performance-card">
+                    <h4><?php _e('Database Queries', 'wceventsfp'); ?></h4>
+                    <div class="metric-value"><?php echo esc_html($performance_data['database']['queries']); ?></div>
+                    <div class="metric-label"><?php printf(__('Time: %s', 'wceventsfp'), esc_html($performance_data['database']['query_time'])); ?></div>
+                </div>
+                
+                <div class="wcefp-performance-card">
+                    <h4><?php _e('Shortcode Performance', 'wceventsfp'); ?></h4>
+                    <div class="metric-value"><?php echo esc_html($shortcode_analysis['average_execution']); ?></div>
+                    <div class="metric-label"><?php printf(__('Average across %d shortcodes', 'wceventsfp'), $shortcode_analysis['total_shortcodes']); ?></div>
+                </div>
+                
+                <div class="wcefp-performance-card">
+                    <h4><?php _e('Execution Time', 'wceventsfp'); ?></h4>
+                    <div class="metric-value"><?php echo esc_html($performance_data['execution_time']['elapsed']); ?></div>
+                    <div class="metric-label"><?php _e('Since request start', 'wceventsfp'); ?></div>
+                </div>
+            </div>
+            
+            <?php if (!empty($shortcode_analysis['performance'])): ?>
+            <h4><?php _e('Shortcode Performance Details', 'wceventsfp'); ?></h4>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th><?php _e('Shortcode', 'wceventsfp'); ?></th>
+                        <th><?php _e('Execution Time', 'wceventsfp'); ?></th>
+                        <th><?php _e('Status', 'wceventsfp'); ?></th>
+                        <th><?php _e('Callback', 'wceventsfp'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($shortcode_analysis['performance'] as $shortcode => $data): ?>
+                        <tr>
+                            <td><code><?php echo esc_html($shortcode); ?></code></td>
+                            <td><?php echo esc_html($data['execution_time']); ?></td>
+                            <td>
+                                <span class="status-indicator status-<?php echo esc_attr($data['status']); ?>">
+                                    <?php echo esc_html(ucfirst($data['status'])); ?>
+                                </span>
+                            </td>
+                            <td><?php echo esc_html($data['callback']); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+    
+    /**
+     * Render database analysis section
+     */
+    private function render_database_section() {
+        $database_data = $this->get_database_analysis();
+        
+        ?>
+        <div class="wcefp-section">
+            <h3><?php _e('Database Analysis', 'wceventsfp'); ?></h3>
+            
+            <div class="wcefp-database-summary">
+                <div class="summary-stat">
+                    <span class="stat-number"><?php echo esc_html($database_data['total_tables']); ?></span>
+                    <span class="stat-label"><?php _e('WCEFP Tables', 'wceventsfp'); ?></span>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-number"><?php echo esc_html($database_data['charset']); ?></span>
+                    <span class="stat-label"><?php _e('Charset', 'wceventsfp'); ?></span>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-number"><?php echo esc_html($database_data['collate']); ?></span>
+                    <span class="stat-label"><?php _e('Collation', 'wceventsfp'); ?></span>
+                </div>
+            </div>
+            
+            <?php if (!empty($database_data['tables'])): ?>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th><?php _e('Table Name', 'wceventsfp'); ?></th>
+                        <th><?php _e('Rows', 'wceventsfp'); ?></th>
+                        <th><?php _e('Size', 'wceventsfp'); ?></th>
+                        <th><?php _e('Engine', 'wceventsfp'); ?></th>
+                        <th><?php _e('Collation', 'wceventsfp'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($database_data['tables'] as $table_name => $info): ?>
+                        <tr>
+                            <td><code><?php echo esc_html($table_name); ?></code></td>
+                            <td><?php echo esc_html($info['rows']); ?></td>
+                            <td><?php echo esc_html($info['size']); ?></td>
+                            <td><?php echo esc_html($info['engine']); ?></td>
+                            <td><?php echo esc_html($info['collation']); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php else: ?>
+                <div class="wcefp-notice notice-info">
+                    <p><?php _e('No WCEFP database tables found.', 'wceventsfp'); ?></p>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+    
+    /**
+     * Render security audit section
+     */
+    private function render_security_section() {
+        $security_checks = $this->perform_security_checks();
+        
+        ?>
+        <div class="wcefp-section">
+            <h3><?php _e('Security Audit', 'wceventsfp'); ?></h3>
+            
+            <div class="wcefp-security-overview">
+                <?php 
+                $good_count = count(array_filter($security_checks, function($check) { return $check['status'] === 'good'; }));
+                $warning_count = count(array_filter($security_checks, function($check) { return $check['status'] === 'warning'; }));
+                $critical_count = count(array_filter($security_checks, function($check) { return $check['status'] === 'critical'; }));
+                ?>
+                
+                <div class="security-summary">
+                    <div class="summary-item status-good">
+                        <span class="count"><?php echo $good_count; ?></span>
+                        <span class="label"><?php _e('Passed', 'wceventsfp'); ?></span>
+                    </div>
+                    <div class="summary-item status-warning">
+                        <span class="count"><?php echo $warning_count; ?></span>
+                        <span class="label"><?php _e('Warnings', 'wceventsfp'); ?></span>
+                    </div>
+                    <div class="summary-item status-critical">
+                        <span class="count"><?php echo $critical_count; ?></span>
+                        <span class="label"><?php _e('Critical', 'wceventsfp'); ?></span>
+                    </div>
+                </div>
+            </div>
+            
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th><?php _e('Security Check', 'wceventsfp'); ?></th>
+                        <th><?php _e('Status', 'wceventsfp'); ?></th>
+                        <th><?php _e('Value', 'wceventsfp'); ?></th>
+                        <th><?php _e('Description', 'wceventsfp'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($security_checks as $check_name => $check_data): ?>
+                        <tr>
+                            <td><?php echo esc_html(str_replace('_', ' ', ucwords($check_name))); ?></td>
+                            <td>
+                                <span class="status-indicator status-<?php echo esc_attr($check_data['status']); ?>">
+                                    <?php echo esc_html(ucfirst($check_data['status'])); ?>
+                                </span>
+                            </td>
+                            <td><?php echo esc_html($check_data['value']); ?></td>
+                            <td><?php echo esc_html($check_data['description']); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php
     }
 }
 

@@ -26,6 +26,9 @@
                 // Refresh button
                 $('#wcefp-refresh-diagnostics').on('click', this.refreshDiagnostics);
                 
+                // Export buttons
+                $('#wcefp-export-diagnostics, #wcefp-export-diagnostics-txt').on('click', this.exportDiagnostics);
+                
                 // Test shortcode buttons
                 $('.test-shortcode').on('click', this.testShortcode);
                 
@@ -195,6 +198,56 @@
                     },
                     complete: function() {
                         $button.prop('disabled', false).text('Test');
+                    }
+                });
+            },
+            
+            /**
+             * Export diagnostics report
+             */
+            exportDiagnostics: function(e) {
+                e.preventDefault();
+                
+                var $button = $(this);
+                var format = $button.data('format') || 'json';
+                var originalText = $button.text();
+                
+                $button.prop('disabled', true).text('Exporting...');
+                
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'wcefp_export_diagnostics',
+                        format: format,
+                        nonce: wcefpDiagnostics.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Create download link
+                            var blob = new Blob([typeof response.data.data === 'string' ? response.data.data : JSON.stringify(response.data.data, null, 2)], {
+                                type: response.data.content_type
+                            });
+                            
+                            var url = window.URL.createObjectURL(blob);
+                            var a = document.createElement('a');
+                            a.href = url;
+                            a.download = response.data.filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                            
+                            DiagnosticsPage.showNotice('Diagnostics report exported successfully', 'success');
+                        } else {
+                            DiagnosticsPage.showNotice('Export failed: ' + (response.data || 'Unknown error'), 'error');
+                        }
+                    },
+                    error: function() {
+                        DiagnosticsPage.showNotice('Export request failed. Please try again.', 'error');
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false).text(originalText);
                     }
                 });
             },
