@@ -1,12 +1,12 @@
-# WCEventsFP QA Smoke Test Checklist
+# WCEventsFP QA Smoke Test Checklist v2.2.0
 
 ## Overview
-This checklist covers essential functionality that should be tested before any release. All items should pass in a clean WordPress installation with WooCommerce active.
+This checklist covers essential functionality for the v2.2.0 enterprise booking platform release. All items should pass in a clean WordPress installation with WooCommerce active.
 
 **Test Environment:**
 - WordPress: 6.5+ 
 - WooCommerce: 8.0+
-- PHP: 8.0+
+- PHP: 7.4+ (PHP 8.0+ recommended)
 - Browser: Chrome/Firefox/Safari latest versions
 
 ## Pre-Test Setup
@@ -14,17 +14,20 @@ This checklist covers essential functionality that should be tested before any r
 ### Prerequisites
 - [ ] Fresh WordPress installation 
 - [ ] WooCommerce plugin activated
-- [ ] WCEventsFP plugin activated
+- [ ] WCEventsFP plugin v2.2.0 activated
 - [ ] Sample test data available
 - [ ] Admin user account ready
 - [ ] Customer user account ready
+- [ ] Test email account for automation testing
 
-### Initial Configuration
+### Initial Configuration v2.2.0
 - [ ] Plugin activation successful (no fatal errors)
-- [ ] Database tables created (`wcefp_occorrenze`, `wcefp_bookings`, `wcefp_vouchers`, `wcefp_closures`)
+- [ ] Database tables created (wcefp_occurrences, wcefp_tickets, wcefp_booking_items, wcefp_extras, wcefp_stock_holds, wcefp_meeting_points)
 - [ ] Admin menu appears under WooCommerce
 - [ ] No PHP errors in debug.log
 - [ ] Default settings loaded correctly
+- [ ] Email templates loaded successfully
+- [ ] Performance optimizations active
 
 ## Core Plugin Functionality
 
@@ -60,28 +63,82 @@ This checklist covers essential functionality that should be tested before any r
 - [ ] Settings persist after save and page reload
 - [ ] No JavaScript errors in browser console
 
-### 4. Event (Product) Management
+### 4. Enterprise Product Admin Interface v2.2.0
 
-#### Event Creation
-- [ ] Can create new WooCommerce product
-- [ ] "Enable as Event" checkbox appears in product edit
-- [ ] Event-specific fields appear when enabled:
-  - [ ] Capacity
-  - [ ] Duration
-  - [ ] Location
-  - [ ] Meeting Point (if enabled)
-  - [ ] Difficulty Level
-  - [ ] Age Restrictions
-- [ ] Event settings save correctly
-- [ ] Published events appear in events list
+#### Product Editor Tabs (New v2.2.0)
+- [ ] Event/Experience product type available in product selector
+- [ ] Tabbed interface appears with 7 sections:
+  - [ ] 📅 Scheduling tab with recurrence patterns, timezone settings, booking windows
+  - [ ] 🎫 Tickets tab with multi-type configuration, dynamic pricing rules
+  - [ ] 👥 Capacity tab with per-slot capacity, overbooking protection
+  - [ ] 🎁 Extras tab with product-specific and reusable extras
+  - [ ] 📍 Meeting Points tab with geographic management, accessibility
+  - [ ] 📋 Policies tab with cancellation rules, email templates
+  - [ ] ⚙️ Advanced tab with visibility controls, SEO, internal notes
 
-#### Event Configuration
-- [ ] Capacity validation works (minimum 1)
-- [ ] Duration accepts valid time formats
-- [ ] Location field accepts text input
-- [ ] Meeting point dropdown populated (if enabled)
-- [ ] Pricing fields work correctly
-- [ ] Gallery images upload and display
+#### Advanced Scheduling System v2.2.0
+- [ ] Multiple recurrence patterns work: weekly, daily, monthly, seasonal
+- [ ] Timezone support with DST handling
+- [ ] Exception management (closures, holidays, blackouts)
+- [ ] Multi-day event support
+- [ ] Occurrence generation with rolling windows
+- [ ] Advance booking controls and booking windows
+
+#### Dynamic Pricing System v2.2.0
+- [ ] Early-bird discounts with configurable periods
+- [ ] Last-minute deals for inventory optimization
+- [ ] Seasonal pricing with custom date ranges
+- [ ] Weekend/weekday differential pricing
+- [ ] Enhanced multi-tier group discounts
+- [ ] Visual pricing badges display correctly
+
+### 5. Professional Frontend Booking Widget v2.2.0
+
+#### Shortcode & Gutenberg Block
+- [ ] [wcefp_booking] shortcode renders correctly
+- [ ] Native Gutenberg block available and functional
+- [ ] Server-side rendering with live preview
+- [ ] Mobile-first responsive design
+- [ ] Full WCAG accessibility compliance
+
+#### Customer Booking Flow
+- [ ] Date/time selection interface works
+- [ ] Ticket type selection with quantities
+- [ ] Extras selection and pricing updates
+- [ ] Meeting point information displays
+- [ ] Real-time price calculations
+- [ ] Cart integration functions properly
+- [ ] Loading states and error handling work
+
+### 6. Email Automation System v2.2.0
+
+#### Automated Email Templates
+- [ ] Booking confirmation emails send with ICS attachments
+- [ ] 24-hour reminder emails trigger automatically
+- [ ] 2-hour reminder emails with weather alerts
+- [ ] Post-event follow-up emails with review requests
+- [ ] Admin notification emails for new bookings
+- [ ] Email templates render correctly in major clients (Gmail, Outlook, Apple Mail)
+
+#### Template Customization
+- [ ] WYSIWYG email template editor works
+- [ ] Dynamic content variables populate correctly
+- [ ] Template preview functionality
+- [ ] Custom email template saves and loads
+
+### 7. Performance & Compatibility v2.2.0
+
+#### Performance Optimization
+- [ ] Conditional asset loading (booking assets only load where needed)
+- [ ] Multi-layer caching system active
+- [ ] Database queries optimized with proper indexing
+- [ ] Page load time improvements (40-60% on non-booking pages)
+
+#### Compatibility Management
+- [ ] WordPress/WooCommerce version validation
+- [ ] Plugin conflict detection working
+- [ ] Major hosting environment compatibility (WP Engine, Kinsta)
+- [ ] Caching plugin integration with AJAX endpoint exclusions
 
 ### 5. Booking Management
 

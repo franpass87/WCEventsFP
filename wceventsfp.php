@@ -42,7 +42,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('WCEFP_VERSION', '2.1.4'); // x-release-please-version
+define('WCEFP_VERSION', '2.2.0'); // x-release-please-version
 define('WCEFP_PLUGIN_FILE', __FILE__);
 define('WCEFP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WCEFP_PLUGIN_URL', plugin_dir_url(__FILE__));
