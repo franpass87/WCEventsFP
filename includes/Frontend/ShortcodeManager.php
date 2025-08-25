@@ -294,12 +294,26 @@ class ShortcodeManager {
                     ]
                 ];
             }
-
-            $experiences = get_posts($args);
+            
+            // Cache key for query results
+            $cache_key = 'wcefp_experiences_' . md5(serialize($args) . serialize($atts));
+            $cached_results = get_transient($cache_key);
+            
+            if ($cached_results !== false && $atts['ajax'] !== 'yes') {
+                $experiences = $cached_results;
+            } else {
+                $experiences = get_posts($args);
+                
+                // Cache results for 10 minutes
+                set_transient($cache_key, $experiences, 10 * MINUTE_IN_SECONDS);
+            }
 
             if (empty($experiences)) {
                 return '<div class="wcefp-experiences-empty">' . esc_html__('Nessuna esperienza trovata.', 'wceventsfp') . '</div>';
             }
+
+            // Preload experience data to avoid N+1 queries
+            $this->preload_experience_data($experiences);
 
             $css_class = 'wcefp-experiences-catalog wcefp-layout-' . sanitize_html_class($layout);
             $css_class .= ' wcefp-columns-' . intval($atts['columns']);
@@ -318,18 +332,31 @@ class ShortcodeManager {
                  data-per-page="<?php echo esc_attr($limit); ?>">
                 
                 <?php if ($atts['show_filters'] === 'yes'): ?>
-                <div class="wcefp-experiences-filters">
+                <div class="wcefp-experiences-filters" role="search" aria-label="<?php esc_attr_e('Filtri esperienze', 'wceventsfp'); ?>">
                     <div class="wcefp-filter-row">
                         
                         <?php if (in_array('search', $available_filters) || in_array('category', $available_filters)): ?>
                         <div class="wcefp-search-field">
-                            <span class="wcefp-search-icon">🔍</span>
-                            <input type="text" class="wcefp-search-input" placeholder="<?php esc_attr_e('Cerca esperienze...', 'wceventsfp'); ?>">
+                            <label for="wcefp-search-<?php echo esc_attr(uniqid()); ?>" class="screen-reader-text">
+                                <?php esc_html_e('Cerca esperienze', 'wceventsfp'); ?>
+                            </label>
+                            <span class="wcefp-search-icon" aria-hidden="true">🔍</span>
+                            <input type="text" 
+                                   id="wcefp-search-<?php echo esc_attr(uniqid()); ?>"
+                                   class="wcefp-search-input" 
+                                   placeholder="<?php esc_attr_e('Cerca esperienze...', 'wceventsfp'); ?>"
+                                   aria-describedby="wcefp-search-help">
+                            <div id="wcefp-search-help" class="screen-reader-text">
+                                <?php esc_html_e('Digita per cercare nelle esperienze disponibili', 'wceventsfp'); ?>
+                            </div>
                         </div>
                         <?php endif; ?>
                         
                         <?php if (in_array('category', $available_filters)): ?>
-                        <select class="wcefp-filter-select wcefp-filter-category">
+                        <label for="wcefp-category-<?php echo esc_attr(uniqid()); ?>" class="screen-reader-text">
+                            <?php esc_html_e('Filtra per categoria', 'wceventsfp'); ?>
+                        </label>
+                        <select id="wcefp-category-<?php echo esc_attr(uniqid()); ?>" class="wcefp-filter-select wcefp-filter-category">
                             <option value=""><?php esc_html_e('Tutte le categorie', 'wceventsfp'); ?></option>
                             <?php 
                             $categories = get_terms(['taxonomy' => 'product_cat', 'hide_empty' => true]);
@@ -341,14 +368,20 @@ class ShortcodeManager {
                         <?php endif; ?>
                         
                         <?php if (in_array('location', $available_filters)): ?>
-                        <select class="wcefp-filter-select wcefp-filter-location">
+                        <label for="wcefp-location-<?php echo esc_attr(uniqid()); ?>" class="screen-reader-text">
+                            <?php esc_html_e('Filtra per destinazione', 'wceventsfp'); ?>
+                        </label>
+                        <select id="wcefp-location-<?php echo esc_attr(uniqid()); ?>" class="wcefp-filter-select wcefp-filter-location">
                             <option value=""><?php esc_html_e('Tutte le destinazioni', 'wceventsfp'); ?></option>
                             <?php echo $this->get_location_filter_options(); ?>
                         </select>
                         <?php endif; ?>
                         
                         <?php if (in_array('duration', $available_filters)): ?>
-                        <select class="wcefp-filter-select wcefp-filter-duration">
+                        <label for="wcefp-duration-<?php echo esc_attr(uniqid()); ?>" class="screen-reader-text">
+                            <?php esc_html_e('Filtra per durata', 'wceventsfp'); ?>
+                        </label>
+                        <select id="wcefp-duration-<?php echo esc_attr(uniqid()); ?>" class="wcefp-filter-select wcefp-filter-duration">
                             <option value=""><?php esc_html_e('Tutte le durate', 'wceventsfp'); ?></option>
                             <option value="0-2"><?php esc_html_e('Fino a 2 ore', 'wceventsfp'); ?></option>
                             <option value="2-4"><?php esc_html_e('2-4 ore', 'wceventsfp'); ?></option>
@@ -358,30 +391,46 @@ class ShortcodeManager {
                         <?php endif; ?>
                         
                         <?php if (in_array('price', $available_filters)): ?>
-                        <select class="wcefp-filter-select wcefp-filter-price">
+                        <label for="wcefp-price-<?php echo esc_attr(uniqid()); ?>" class="screen-reader-text">
+                            <?php esc_html_e('Filtra per prezzo', 'wceventsfp'); ?>
+                        </label>
+                        <select id="wcefp-price-<?php echo esc_attr(uniqid()); ?>" class="wcefp-filter-select wcefp-filter-price">
                             <option value=""><?php esc_html_e('Tutti i prezzi', 'wceventsfp'); ?></option>
-                            <option value="0-50">€0 - €50</option>
-                            <option value="50-100">€50 - €100</option>
-                            <option value="100-200">€100 - €200</option>
-                            <option value="200+">€200+</option>
+                            <option value="0-50"><?php echo sprintf(esc_html__('%1$s0 - %1$s50', 'wceventsfp'), get_woocommerce_currency_symbol()); ?></option>
+                            <option value="50-100"><?php echo sprintf(esc_html__('%1$s50 - %1$s100', 'wceventsfp'), get_woocommerce_currency_symbol()); ?></option>
+                            <option value="100-200"><?php echo sprintf(esc_html__('%1$s100 - %1$s200', 'wceventsfp'), get_woocommerce_currency_symbol()); ?></option>
+                            <option value="200+"><?php echo sprintf(esc_html__('%1$s200+', 'wceventsfp'), get_woocommerce_currency_symbol()); ?></option>
                         </select>
                         <?php endif; ?>
                         
                         <?php if (in_array('rating', $available_filters)): ?>
-                        <select class="wcefp-filter-select wcefp-filter-rating">
+                        <label for="wcefp-rating-<?php echo esc_attr(uniqid()); ?>" class="screen-reader-text">
+                            <?php esc_html_e('Filtra per recensioni', 'wceventsfp'); ?>
+                        </label>
+                        <select id="wcefp-rating-<?php echo esc_attr(uniqid()); ?>" class="wcefp-filter-select wcefp-filter-rating">
                             <option value=""><?php esc_html_e('Tutte le recensioni', 'wceventsfp'); ?></option>
-                            <option value="4+">4+ ⭐</option>
-                            <option value="3+">3+ ⭐</option>
-                            <option value="2+">2+ ⭐</option>
+                            <option value="4+"><?php printf(esc_html__('%d+ %s', 'wceventsfp'), 4, '⭐'); ?></option>
+                            <option value="3+"><?php printf(esc_html__('%d+ %s', 'wceventsfp'), 3, '⭐'); ?></option>
+                            <option value="2+"><?php printf(esc_html__('%d+ %s', 'wceventsfp'), 2, '⭐'); ?></option>
                         </select>
                         <?php endif; ?>
                         
                         <?php if (in_array('date', $available_filters)): ?>
-                        <input type="date" class="wcefp-filter-date" min="<?php echo esc_attr(date('Y-m-d')); ?>" placeholder="<?php esc_attr_e('Seleziona data', 'wceventsfp'); ?>">
+                        <label for="wcefp-date-<?php echo esc_attr(uniqid()); ?>" class="screen-reader-text">
+                            <?php esc_html_e('Filtra per data', 'wceventsfp'); ?>
+                        </label>
+                        <input type="date" 
+                               id="wcefp-date-<?php echo esc_attr(uniqid()); ?>"
+                               class="wcefp-filter-date" 
+                               min="<?php echo esc_attr(date('Y-m-d')); ?>" 
+                               aria-label="<?php esc_attr_e('Seleziona data esperienza', 'wceventsfp'); ?>">
                         <?php endif; ?>
                         
                         <div class="wcefp-sort-controls">
-                            <select class="wcefp-sort-select">
+                            <label for="wcefp-sort-<?php echo esc_attr(uniqid()); ?>" class="screen-reader-text">
+                                <?php esc_html_e('Ordina esperienze', 'wceventsfp'); ?>
+                            </label>
+                            <select id="wcefp-sort-<?php echo esc_attr(uniqid()); ?>" class="wcefp-sort-select">
                                 <option value="date-desc"><?php esc_html_e('Più recenti', 'wceventsfp'); ?></option>
                                 <option value="popularity-desc"><?php esc_html_e('Più popolari', 'wceventsfp'); ?></option>
                                 <option value="rating-desc"><?php esc_html_e('Migliori recensioni', 'wceventsfp'); ?></option>
@@ -391,7 +440,12 @@ class ShortcodeManager {
                             </select>
                         </div>
                         
-                        <button class="wcefp-clear-filters"><?php esc_html_e('Cancella filtri', 'wceventsfp'); ?></button>
+                        <button type="button" class="wcefp-clear-filters" aria-describedby="wcefp-clear-help">
+                            <?php esc_html_e('Cancella filtri', 'wceventsfp'); ?>
+                        </button>
+                        <div id="wcefp-clear-help" class="screen-reader-text">
+                            <?php esc_html_e('Rimuovi tutti i filtri applicati', 'wceventsfp'); ?>
+                        </div>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -1289,6 +1343,15 @@ class ShortcodeManager {
             </section>
             <?php endif; ?>
 
+            <!-- Trust & Social Proof Bar -->
+            <?php if ($atts['show_trust_badges'] === 'yes'): ?>
+            <section class="wcefp-trust-proof-bar">
+                <div class="wcefp-trust-elements">
+                    <?php echo $this->render_trust_elements($experience_id); ?>
+                </div>
+            </section>
+            <?php endif; ?>
+
             <div class="wcefp-experience-layout">
                 <!-- Main Content -->
                 <div class="wcefp-experience-main">
@@ -1416,7 +1479,11 @@ class ShortcodeManager {
         $permalink = get_permalink($experience->ID);
         $title = get_the_title($experience->ID);
         $excerpt = wp_trim_words(get_the_excerpt($experience->ID), 20, '...');
-        $thumbnail = get_the_post_thumbnail($experience->ID, 'medium', ['class' => 'wcefp-card-image']);
+        $thumbnail = get_the_post_thumbnail($experience->ID, 'medium', [
+            'class' => 'wcefp-card-image',
+            'loading' => 'lazy',
+            'decoding' => 'async'
+        ]);
         $price_html = $atts['show_price'] === 'yes' ? $product->get_price_html() : '';
 
         // Get rating data if enabled
@@ -1672,7 +1739,11 @@ class ShortcodeManager {
         <div class="wcefp-gallery-slider" data-gallery-id="<?php echo esc_attr($experience_id); ?>">
             <div class="wcefp-gallery-main">
                 <?php foreach ($attachment_ids as $index => $attachment_id): ?>
-                    <?php $image = wp_get_attachment_image($attachment_id, 'full', false, ['class' => 'wcefp-gallery-image', 'loading' => 'lazy']); ?>
+                    <?php $image = wp_get_attachment_image($attachment_id, 'full', false, [
+                        'class' => 'wcefp-gallery-image',
+                        'loading' => $index === 0 ? 'eager' : 'lazy', // First image eager, rest lazy
+                        'decoding' => 'async'
+                    ]); ?>
                     <div class="wcefp-gallery-slide <?php echo $index === 0 ? 'active' : ''; ?>">
                         <?php echo $image; ?>
                     </div>
@@ -1922,7 +1993,11 @@ class ShortcodeManager {
                 
                 <!-- Add to Cart / Book Now -->
                 <div class="wcefp-widget-actions">
-                    <button class="wcefp-book-now-btn" disabled>
+                    <button class="wcefp-book-now-btn" 
+                            disabled
+                            data-experience-id="<?php echo esc_attr($experience_id); ?>"
+                            data-experience-name="<?php echo esc_attr($product->get_name()); ?>"
+                            data-price="<?php echo esc_attr($product->get_price()); ?>">
                         <span class="wcefp-btn-text"><?php esc_html_e('Prenota ora', 'wceventsfp'); ?></span>
                         <span class="wcefp-btn-loading" style="display: none;">⏳</span>
                     </button>
@@ -1958,48 +2033,135 @@ class ShortcodeManager {
      */
     private function render_experience_reviews($experience_id) {
         $product = wc_get_product($experience_id);
-        $reviews = get_comments([
+        
+        // Get WooCommerce reviews
+        $wc_reviews = get_comments([
             'post_id' => $experience_id,
             'comment_type' => 'review',
             'status' => 'approve',
-            'number' => 5
+            'number' => 3
         ]);
+        
+        // Get Google Reviews from Meeting Point
+        $meeting_point_id = get_post_meta($experience_id, '_wcefp_meeting_point_id', true);
+        $google_reviews_html = '';
+        $google_rating_data = null;
+        
+        if ($meeting_point_id) {
+            $google_place_id = get_post_meta($meeting_point_id, '_wcefp_google_place_id', true);
+            if ($google_place_id) {
+                // Use the GoogleReviewsService if available
+                if (class_exists('\WCEFP\Services\Integration\GoogleReviewsService')) {
+                    $google_service = new \WCEFP\Services\Integration\GoogleReviewsService();
+                    $google_rating_data = $google_service->get_rating_summary($google_place_id);
+                    $google_reviews_html = $google_service->get_reviews_html($google_place_id, [
+                        'limit' => 3,
+                        'show_photos' => true,
+                        'class' => 'wcefp-google-reviews-experience'
+                    ]);
+                }
+            }
+        }
         
         ob_start();
         ?>
         <div class="wcefp-reviews-container">
+            
+            <!-- Reviews Summary -->
             <div class="wcefp-reviews-summary">
-                <div class="wcefp-rating-overview">
-                    <div class="wcefp-rating-score"><?php echo number_format($product->get_average_rating(), 1); ?></div>
-                    <div class="wcefp-rating-details">
-                        <div class="wcefp-rating-stars"><?php echo $this->get_star_rating_html($product->get_average_rating()); ?></div>
-                        <div class="wcefp-rating-count"><?php printf(esc_html__('%d recensioni', 'wceventsfp'), $product->get_review_count()); ?></div>
+                <div class="wcefp-reviews-tabs">
+                    <?php if (!empty($wc_reviews)): ?>
+                    <button class="wcefp-review-tab wcefp-tab-active" data-tab="woocommerce">
+                        <span class="wcefp-tab-label"><?php esc_html_e('Recensioni Verificate', 'wceventsfp'); ?></span>
+                        <span class="wcefp-tab-count">(<?php echo count($wc_reviews); ?>)</span>
+                    </button>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($google_reviews_html) && $google_rating_data && $google_rating_data['has_data']): ?>
+                    <button class="wcefp-review-tab <?php echo empty($wc_reviews) ? 'wcefp-tab-active' : ''; ?>" data-tab="google">
+                        <span class="wcefp-tab-label"><?php esc_html_e('Google Reviews', 'wceventsfp'); ?></span>
+                        <span class="wcefp-tab-count">(<?php echo $google_rating_data['total_reviews']; ?>)</span>
+                    </button>
+                    <?php endif; ?>
+                </div>
+                
+                <div class="wcefp-overall-rating">
+                    <?php if ($product->get_review_count() > 0): ?>
+                    <div class="wcefp-rating-overview">
+                        <div class="wcefp-rating-score"><?php echo number_format($product->get_average_rating(), 1); ?></div>
+                        <div class="wcefp-rating-details">
+                            <div class="wcefp-rating-stars"><?php echo $this->get_star_rating_html($product->get_average_rating()); ?></div>
+                            <div class="wcefp-rating-count"><?php printf(esc_html__('%d recensioni WooCommerce', 'wceventsfp'), $product->get_review_count()); ?></div>
+                        </div>
                     </div>
+                    <?php elseif ($google_rating_data && $google_rating_data['has_data']): ?>
+                    <div class="wcefp-rating-overview">
+                        <div class="wcefp-rating-score"><?php echo number_format($google_rating_data['rating'], 1); ?></div>
+                        <div class="wcefp-rating-details">
+                            <div class="wcefp-rating-stars"><?php echo $this->get_star_rating_html($google_rating_data['rating']); ?></div>
+                            <div class="wcefp-rating-count"><?php printf(esc_html__('%d recensioni Google', 'wceventsfp'), $google_rating_data['total_reviews']); ?></div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
             
-            <?php if (!empty($reviews)): ?>
-            <div class="wcefp-reviews-list">
-                <?php foreach ($reviews as $review): ?>
-                    <div class="wcefp-review-item">
-                        <div class="wcefp-review-header">
-                            <div class="wcefp-reviewer-name"><?php echo esc_html($review->comment_author); ?></div>
-                            <div class="wcefp-review-date"><?php echo esc_html(date_i18n(get_option('date_format'), strtotime($review->comment_date))); ?></div>
+            <!-- WooCommerce Reviews Tab -->
+            <?php if (!empty($wc_reviews)): ?>
+            <div class="wcefp-reviews-content wcefp-tab-content wcefp-tab-active" data-content="woocommerce">
+                <div class="wcefp-reviews-list">
+                    <?php foreach ($wc_reviews as $review): ?>
+                        <div class="wcefp-review-item">
+                            <div class="wcefp-review-header">
+                                <div class="wcefp-reviewer-name"><?php echo esc_html($review->comment_author); ?></div>
+                                <div class="wcefp-review-date"><?php echo esc_html(date_i18n(get_option('date_format'), strtotime($review->comment_date))); ?></div>
+                                <span class="wcefp-verified-badge"><?php esc_html_e('Acquisto verificato', 'wceventsfp'); ?></span>
+                            </div>
+                            <div class="wcefp-review-rating">
+                                <?php 
+                                $rating = get_comment_meta($review->comment_ID, 'rating', true);
+                                if ($rating) echo $this->get_star_rating_html($rating);
+                                ?>
+                            </div>
+                            <div class="wcefp-review-content">
+                                <?php echo wp_kses_post($review->comment_content); ?>
+                            </div>
                         </div>
-                        <div class="wcefp-review-rating">
-                            <?php 
-                            $rating = get_comment_meta($review->comment_ID, 'rating', true);
-                            if ($rating) echo $this->get_star_rating_html($rating);
-                            ?>
-                        </div>
-                        <div class="wcefp-review-content">
-                            <?php echo wp_kses_post($review->comment_content); ?>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </div>
             </div>
             <?php endif; ?>
+            
+            <!-- Google Reviews Tab -->
+            <?php if (!empty($google_reviews_html)): ?>
+            <div class="wcefp-reviews-content wcefp-tab-content <?php echo empty($wc_reviews) ? 'wcefp-tab-active' : ''; ?>" data-content="google">
+                <?php echo $google_reviews_html; ?>
+            </div>
+            <?php endif; ?>
+            
+            <?php if (empty($wc_reviews) && empty($google_reviews_html)): ?>
+            <div class="wcefp-no-reviews">
+                <p><?php esc_html_e('Nessuna recensione disponibile per questa esperienza.', 'wceventsfp'); ?></p>
+            </div>
+            <?php endif; ?>
+            
         </div>
+        
+        <script>
+        jQuery(document).ready(function($) {
+            $('.wcefp-review-tab').on('click', function() {
+                var tabId = $(this).data('tab');
+                
+                // Update tab active states
+                $('.wcefp-review-tab').removeClass('wcefp-tab-active');
+                $(this).addClass('wcefp-tab-active');
+                
+                // Update content active states
+                $('.wcefp-tab-content').removeClass('wcefp-tab-active');
+                $('.wcefp-tab-content[data-content="' + tabId + '"]').addClass('wcefp-tab-active');
+            });
+        });
+        </script>
         <?php
         
         return ob_get_clean();
@@ -2070,6 +2232,204 @@ class ShortcodeManager {
     }
 
     /**
+     * Render trust elements and social proof (ethical, no dark patterns)
+     * 
+     * @param int $experience_id Experience ID
+     * @return string HTML trust elements
+     */
+    private function render_trust_elements($experience_id) {
+        $product = wc_get_product($experience_id);
+        $trust_settings = get_option('wcefp_trust_settings', []);
+        
+        // Get real data, no fake metrics
+        $bookings_today = $this->get_real_bookings_count($experience_id, 'today');
+        $bookings_yesterday = $this->get_real_bookings_count($experience_id, 'yesterday');
+        $total_bookings = $this->get_real_bookings_count($experience_id, 'all_time');
+        $stock_remaining = $this->get_capacity_remaining($experience_id);
+        
+        ob_start();
+        ?>
+        <div class="wcefp-trust-proof-container">
+            
+            <!-- Social Proof (only if real data exists) -->
+            <?php if ($bookings_yesterday > 0): ?>
+            <div class="wcefp-trust-item wcefp-social-proof">
+                <span class="wcefp-trust-icon">👥</span>
+                <span class="wcefp-trust-text">
+                    <?php printf(esc_html(_n('%d persona ha prenotato ieri', '%d persone hanno prenotato ieri', $bookings_yesterday, 'wceventsfp')), number_format_i18n($bookings_yesterday)); ?>
+                </span>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Scarcity (only if genuinely limited) -->
+            <?php if ($product->managing_stock() && $stock_remaining > 0 && $stock_remaining <= 10): ?>
+            <div class="wcefp-trust-item wcefp-scarcity">
+                <span class="wcefp-trust-icon">🔥</span>
+                <span class="wcefp-trust-text">
+                    <?php printf(esc_html(_n('Rimane solo %d posto disponibile', 'Rimangono solo %d posti disponibili', $stock_remaining, 'wceventsfp')), number_format_i18n($stock_remaining)); ?>
+                </span>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Free Cancellation -->
+            <?php if (get_post_meta($experience_id, '_wcefp_free_cancellation', true) || !empty($trust_settings['free_cancellation'])): ?>
+            <div class="wcefp-trust-item wcefp-guarantee">
+                <span class="wcefp-trust-icon">✅</span>
+                <span class="wcefp-trust-text">
+                    <?php esc_html_e('Cancellazione gratuita fino a 24h prima', 'wceventsfp'); ?>
+                </span>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Instant Confirmation -->
+            <?php if (get_post_meta($experience_id, '_wcefp_instant_confirmation', true) || !empty($trust_settings['instant_confirmation'])): ?>
+            <div class="wcefp-trust-item wcefp-guarantee">
+                <span class="wcefp-trust-icon">⚡</span>
+                <span class="wcefp-trust-text">
+                    <?php esc_html_e('Conferma immediata via email', 'wceventsfp'); ?>
+                </span>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Secure Payment -->
+            <?php if (!empty($trust_settings['secure_payment']) || is_ssl()): ?>
+            <div class="wcefp-trust-item wcefp-security">
+                <span class="wcefp-trust-icon">🔒</span>
+                <span class="wcefp-trust-text">
+                    <?php esc_html_e('Pagamento sicuro e protetto', 'wceventsfp'); ?>
+                </span>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Money Back Guarantee -->
+            <?php if (!empty($trust_settings['money_back_guarantee'])): ?>
+            <div class="wcefp-trust-item wcefp-guarantee">
+                <span class="wcefp-trust-icon">💰</span>
+                <span class="wcefp-trust-text">
+                    <?php esc_html_e('Soddisfatto o rimborsato', 'wceventsfp'); ?>
+                </span>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Local Authority/Certifications -->
+            <?php 
+            $certifications = get_post_meta($experience_id, '_wcefp_certifications', true);
+            if (!empty($certifications) && is_array($certifications)): 
+            ?>
+                <?php foreach ($certifications as $cert): ?>
+                <div class="wcefp-trust-item wcefp-authority">
+                    <span class="wcefp-trust-icon">🏆</span>
+                    <span class="wcefp-trust-text"><?php echo esc_html($cert); ?></span>
+                </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+            
+            <!-- Total Satisfied Customers (only if > 10) -->
+            <?php if ($total_bookings > 10): ?>
+            <div class="wcefp-trust-item wcefp-authority">
+                <span class="wcefp-trust-icon">🎯</span>
+                <span class="wcefp-trust-text">
+                    <?php printf(esc_html(_n('Oltre %d cliente soddisfatto', 'Oltre %d clienti soddisfatti', $total_bookings, 'wceventsfp')), number_format_i18n($total_bookings)); ?>
+                </span>
+            </div>
+            <?php endif; ?>
+            
+        </div>
+        <?php
+        
+        return ob_get_clean();
+    }
+
+    /**
+     * Get real bookings count (no fake data)
+     * 
+     * @param int $experience_id Experience ID
+     * @param string $period Period: 'today', 'yesterday', 'all_time'
+     * @return int Real bookings count
+     */
+    private function get_real_bookings_count($experience_id, $period = 'all_time') {
+        global $wpdb;
+        
+        $date_filter = '';
+        switch ($period) {
+            case 'today':
+                $date_filter = "AND DATE(p.post_date) = CURDATE()";
+                break;
+            case 'yesterday':
+                $date_filter = "AND DATE(p.post_date) = CURDATE() - INTERVAL 1 DAY";
+                break;
+            case 'all_time':
+            default:
+                $date_filter = '';
+                break;
+        }
+        
+        $query = "
+            SELECT COUNT(DISTINCT p.ID) as booking_count
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+            WHERE p.post_type = 'shop_order'
+            AND p.post_status IN ('wc-completed', 'wc-processing')
+            AND pm.meta_key = '_wcefp_experience_id'
+            AND pm.meta_value = %d
+            {$date_filter}
+        ";
+        
+        $count = $wpdb->get_var($wpdb->prepare($query, $experience_id));
+        
+        return intval($count) ?: 0;
+    }
+
+    /**
+     * Preload experience data to avoid N+1 queries
+     * 
+     * @param array $experiences Array of experience post objects
+     */
+    private function preload_experience_data($experiences) {
+        if (empty($experiences)) {
+            return;
+        }
+
+        $experience_ids = wp_list_pluck($experiences, 'ID');
+        
+        // Preload all post meta in a single query
+        global $wpdb;
+        $meta_keys = [
+            '_wcefp_duration',
+            '_wcefp_meeting_point_address', 
+            '_wcefp_is_best_seller',
+            '_wcefp_free_cancellation',
+            '_wcefp_instant_confirmation',
+            '_stock_status',
+            '_stock',
+            '_regular_price'
+        ];
+        
+        $placeholders = implode(',', array_fill(0, count($experience_ids), '%d'));
+        $meta_key_placeholders = implode(',', array_fill(0, count($meta_keys), '%s'));
+        
+        $query = "
+            SELECT post_id, meta_key, meta_value 
+            FROM {$wpdb->postmeta} 
+            WHERE post_id IN ($placeholders) 
+            AND meta_key IN ($meta_key_placeholders)
+        ";
+        
+        $prepare_args = array_merge($experience_ids, $meta_keys);
+        $meta_results = $wpdb->get_results($wpdb->prepare($query, $prepare_args));
+        
+        // Cache meta data in WordPress meta cache
+        foreach ($meta_results as $meta) {
+            wp_cache_set($meta->post_id, [$meta->meta_key => $meta->meta_value], 'post_meta');
+        }
+        
+        // Preload WooCommerce product data
+        foreach ($experience_ids as $id) {
+            wc_get_product($id); // This caches the product object
+        }
+    }
+
+    /**
      * Render Schema.org markup for experience
      * 
      * @param int $experience_id Experience ID
@@ -2093,12 +2453,34 @@ class ShortcodeManager {
             ]
         ];
         
-        // Add rating if available
-        if ($experience_data['rating'] > 0) {
+        // Get Google Reviews rating if available
+        $meeting_point_id = get_post_meta($experience_id, '_wcefp_meeting_point_id', true);
+        $google_rating_data = null;
+        
+        if ($meeting_point_id) {
+            $google_place_id = get_post_meta($meeting_point_id, '_wcefp_google_place_id', true);
+            if ($google_place_id && class_exists('\WCEFP\Services\Integration\GoogleReviewsService')) {
+                $google_service = new \WCEFP\Services\Integration\GoogleReviewsService();
+                $google_rating_data = $google_service->get_rating_summary($google_place_id);
+            }
+        }
+        
+        // Add aggregate rating (prioritize WooCommerce, fallback to Google)
+        if ($experience_data['rating'] > 0 && $experience_data['review_count'] > 0) {
             $schema['aggregateRating'] = [
                 '@type' => 'AggregateRating',
                 'ratingValue' => $experience_data['rating'],
-                'reviewCount' => $experience_data['review_count']
+                'reviewCount' => $experience_data['review_count'],
+                'bestRating' => 5,
+                'worstRating' => 1
+            ];
+        } elseif ($google_rating_data && $google_rating_data['has_data'] && $google_rating_data['rating'] > 0) {
+            $schema['aggregateRating'] = [
+                '@type' => 'AggregateRating',
+                'ratingValue' => $google_rating_data['rating'],
+                'reviewCount' => $google_rating_data['total_reviews'],
+                'bestRating' => 5,
+                'worstRating' => 1
             ];
         }
         
@@ -2107,7 +2489,19 @@ class ShortcodeManager {
         if (!empty($experience_data['location'])) {
             $schema['location'] = [
                 '@type' => 'Place',
-                'address' => $experience_data['location']
+                'name' => $google_rating_data['place_name'] ?? $experience_data['location'],
+                'address' => [
+                    '@type' => 'PostalAddress',
+                    'streetAddress' => $experience_data['location']
+                ]
+            ];
+        }
+        
+        // Add organization if Google Place data available
+        if ($google_rating_data && $google_rating_data['has_data'] && !empty($google_rating_data['place_name'])) {
+            $schema['provider'] = [
+                '@type' => 'Organization',
+                'name' => $google_rating_data['place_name']
             ];
         }
         

@@ -413,26 +413,74 @@
             });
         }
 
-        trackEvent(eventName, data) {
-            // Google Analytics 4 tracking
-            if (typeof gtag !== 'undefined') {
-                gtag('event', eventName, {
-                    event_category: 'wcefp_experiences_catalog',
-                    custom_parameters: data
-                });
+        trackEvent(eventName, data = {}) {
+            // Check if tracking is disabled via admin settings
+            if (typeof WCEFPData !== 'undefined' && WCEFPData.disable_analytics) {
+                return;
             }
             
-            // DataLayer for GTM
+            // Google Analytics 4 enhanced ecommerce events
+            if (typeof gtag !== 'undefined') {
+                // Map custom events to GA4 standard events where possible
+                let ga4EventName = eventName;
+                let ga4Parameters = { ...data };
+                
+                switch (eventName) {
+                    case 'experience_card_click':
+                        ga4EventName = 'select_item';
+                        ga4Parameters = {
+                            item_list_name: 'experiences_catalog',
+                            items: [{
+                                item_id: data.experience_id,
+                                item_name: data.experience_title,
+                                item_category: 'experience',
+                                index: data.position
+                            }]
+                        };
+                        break;
+                        
+                    case 'experience_load_more':
+                        ga4EventName = 'view_item_list';
+                        ga4Parameters = {
+                            item_list_name: 'experiences_catalog',
+                            page: data.page
+                        };
+                        break;
+                        
+                    default:
+                        ga4Parameters.event_category = 'wcefp_experiences';
+                        ga4Parameters.custom_parameters = data;
+                        break;
+                }
+                
+                // Send to GA4
+                gtag('event', ga4EventName, ga4Parameters);
+            }
+            
+            // DataLayer for GTM (enhanced with consent mode support)
             if (window.dataLayer) {
                 window.dataLayer.push({
                     event: eventName,
-                    wcefp_data: data
+                    event_category: 'wcefp_experiences',
+                    wcefp_action: eventName,
+                    wcefp_data: data,
+                    // Add consent mode flags if available
+                    ...(window.gtag_consent_state && { consent_state: window.gtag_consent_state })
                 });
             }
             
-            // Console log for debugging
-            if (window.console && typeof console.log === 'function') {
-                console.log('WCEventsFP Event:', eventName, data);
+            // Facebook Pixel integration (if available and consent given)
+            if (typeof fbq !== 'undefined' && eventName === 'experience_card_click') {
+                fbq('trackCustom', 'ViewExperience', {
+                    experience_id: data.experience_id,
+                    experience_title: data.experience_title
+                });
+            }
+            
+            // Console log for debugging (only in non-production)
+            if (window.console && typeof console.log === 'function' && 
+                (typeof WCEFPData === 'undefined' || WCEFPData.debug_mode)) {
+                console.log('WCEventsFP Analytics:', eventName, data);
             }
         }
 

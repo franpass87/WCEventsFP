@@ -112,6 +112,7 @@ class MeetingPointsModule extends ServiceProvider {
         $address = get_post_meta($post->ID, '_wcefp_address', true);
         $latitude = get_post_meta($post->ID, '_wcefp_latitude', true);
         $longitude = get_post_meta($post->ID, '_wcefp_longitude', true);
+        $google_place_id = get_post_meta($post->ID, '_wcefp_google_place_id', true);
         $contact_name = get_post_meta($post->ID, '_wcefp_contact_name', true);
         $contact_phone = get_post_meta($post->ID, '_wcefp_contact_phone', true);
         $contact_email = get_post_meta($post->ID, '_wcefp_contact_email', true);
@@ -144,6 +145,24 @@ class MeetingPointsModule extends ServiceProvider {
                 <td>
                     <input type="number" step="any" id="wcefp_longitude" name="wcefp_longitude" value="<?php echo esc_attr($longitude); ?>" class="regular-text" />
                     <p class="description"><?php esc_html_e('GPS longitude coordinate (e.g., 9.1900)', 'wceventsfp'); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label for="wcefp_google_place_id"><?php esc_html_e('Google Place ID', 'wceventsfp'); ?></label>
+                </th>
+                <td>
+                    <input type="text" id="wcefp_google_place_id" name="wcefp_google_place_id" value="<?php echo esc_attr($google_place_id); ?>" class="regular-text" />
+                    <p class="description">
+                        <?php esc_html_e('Google Place ID for reviews integration (e.g., ChIJd8BlQ2BZwokRAFUEcm_qrcA)', 'wceventsfp'); ?>
+                        <br><a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank"><?php esc_html_e('How to find Place ID', 'wceventsfp'); ?></a>
+                    </p>
+                    <?php if (!empty($google_place_id)): ?>
+                        <button type="button" id="wcefp-test-place-id" class="button button-secondary" style="margin-top: 10px;">
+                            <?php esc_html_e('Test Place ID', 'wceventsfp'); ?>
+                        </button>
+                        <div id="wcefp-place-test-result" style="margin-top: 10px;"></div>
+                    <?php endif; ?>
                 </td>
             </tr>
             <tr>
@@ -239,6 +258,7 @@ class MeetingPointsModule extends ServiceProvider {
             '_wcefp_address' => 'sanitize_textarea_field',
             '_wcefp_latitude' => 'floatval',
             '_wcefp_longitude' => 'floatval',
+            '_wcefp_google_place_id' => 'sanitize_text_field',
             '_wcefp_contact_name' => 'sanitize_text_field',
             '_wcefp_contact_phone' => 'sanitize_text_field',
             '_wcefp_contact_email' => 'sanitize_email',

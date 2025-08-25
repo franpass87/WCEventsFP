@@ -129,6 +129,10 @@ class AssetManager {
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('wcefp_frontend'),
             'has_widgets' => $has_wcefp_content,
+            'disable_analytics' => !get_option('wcefp_ga4_enable', true),
+            'debug_mode' => defined('WP_DEBUG') && WP_DEBUG,
+            'ga4_id' => get_option('wcefp_ga4_id', ''),
+            'gtm_id' => get_option('wcefp_gtm_id', ''),
             'strings' => [
                 'loading' => __('Loading...', 'wceventsfp'),
                 'error' => __('An error occurred. Please try again.', 'wceventsfp'),
