@@ -1,0 +1,505 @@
+/**
+ * WCEventsFP Trust Nudges Styles
+ * 
+ * Ethical trust elements and nudges styling
+ * Designed to inform, not manipulate
+ */
+
+/* ==========================================================================
+   Base Trust Elements
+   ========================================================================== */
+
+.wcefp-trust-elements {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.5;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.wcefp-trust-element {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.wcefp-trust-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.wcefp-trust-text {
+    flex: 1;
+    font-weight: 500;
+}
+
+.wcefp-trust-subtitle {
+    font-size: 0.8rem;
+    color: #666;
+    margin-left: 0.5rem;
+}
+
+/* ==========================================================================
+   Layout Variations
+   ========================================================================== */
+
+.wcefp-trust-layout-horizontal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.wcefp-trust-layout-horizontal .wcefp-trust-element {
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 200px;
+}
+
+.wcefp-trust-layout-compact .wcefp-trust-element {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.wcefp-trust-layout-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.wcefp-trust-layout-inline .wcefp-trust-element {
+    margin-bottom: 0;
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+}
+
+/* ==========================================================================
+   Trust Level Styling
+   ========================================================================== */
+
+.wcefp-trust-level-minimal .wcefp-trust-element {
+    background: transparent;
+    border: none;
+    padding-left: 0;
+}
+
+.wcefp-trust-level-moderate .wcefp-trust-element {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.wcefp-trust-level-high .wcefp-trust-element {
+    background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
+    border: 1px solid #d4edda;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.wcefp-trust-level-none {
+    display: none;
+}
+
+/* ==========================================================================
+   Availability Indicator
+   ========================================================================== */
+
+.wcefp-availability-indicator {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+}
+
+.wcefp-availability-good {
+    background: #e8f5e8;
+    border-color: #c3e6c3;
+    color: #155724;
+}
+
+.wcefp-availability-limited {
+    background: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+
+.wcefp-availability-low {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+/* ==========================================================================
+   Recent Bookings
+   ========================================================================== */
+
+.wcefp-recent-bookings {
+    background: #e6f3ff;
+    border: 1px solid #b8daff;
+    color: #004085;
+}
+
+.wcefp-recent-bookings .wcefp-trust-icon {
+    animation: wcefp-pulse 2s infinite;
+}
+
+@keyframes wcefp-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ==========================================================================
+   Social Proof
+   ========================================================================== */
+
+.wcefp-social-proof {
+    background: #e8f4f8;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+/* ==========================================================================
+   Best Seller Badge
+   ========================================================================== */
+
+.wcefp-best-seller-badge {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    border: 1px solid #f1c40f;
+    color: #7d6608;
+    font-weight: 600;
+    position: relative;
+    overflow: hidden;
+}
+
+.wcefp-best-seller-badge::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #ffd700, #ff8c00, #ffd700);
+    border-radius: 6px;
+    z-index: -1;
+    opacity: 0.3;
+}
+
+.wcefp-best-seller-badge .wcefp-trust-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+/* ==========================================================================
+   Policy Badges
+   ========================================================================== */
+
+.wcefp-policy-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: none;
+    padding: 0;
+}
+
+.wcefp-policy-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+.wcefp-policy-badge .wcefp-trust-icon {
+    color: #28a745;
+}
+
+/* ==========================================================================
+   Price Transparency
+   ========================================================================== */
+
+.wcefp-price-transparency {
+    background: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.wcefp-transparency-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    font-size: 0.85rem;
+    color: #666;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.wcefp-transparency-item:last-child {
+    border-bottom: none;
+}
+
+.wcefp-transparency-item .wcefp-trust-icon {
+    color: #28a745;
+}
+
+.wcefp-currency-note {
+    font-style: italic;
+    color: #888;
+}
+
+.wcefp-currency-note .wcefp-trust-icon {
+    display: none;
+}
+
+/* ==========================================================================
+   Style Variations
+   ========================================================================== */
+
+.wcefp-trust-style-cards .wcefp-trust-element {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.wcefp-trust-style-minimal .wcefp-trust-element {
+    background: transparent;
+    border: none;
+    padding: 0.5rem 0;
+}
+
+.wcefp-trust-style-badges .wcefp-trust-element {
+    background: #007cba;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.wcefp-trust-style-badges .wcefp-trust-icon {
+    margin-right: 0.25rem;
+}
+
+/* ==========================================================================
+   Integration with Booking Widget
+   ========================================================================== */
+
+.wcefp-booking-widget-v2 .wcefp-trust-elements {
+    margin-bottom: 0;
+}
+
+.wcefp-booking-form-v2 .wcefp-trust-elements {
+    margin: 1rem 0;
+}
+
+.wcefp-booking-summary .wcefp-trust-elements {
+    padding: 1rem 0;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .wcefp-trust-layout-horizontal {
+        flex-direction: column;
+    }
+    
+    .wcefp-trust-layout-inline {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .wcefp-trust-layout-inline .wcefp-trust-element {
+        text-align: left;
+        border-radius: 6px;
+    }
+    
+    .wcefp-policy-badges {
+        gap: 0.25rem;
+    }
+    
+    .wcefp-policy-badge {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .wcefp-trust-element {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .wcefp-trust-icon {
+        font-size: 0.9rem;
+    }
+    
+    .wcefp-best-seller-badge {
+        padding: 0.6rem;
+    }
+    
+    .wcefp-best-seller-badge .wcefp-trust-text {
+        font-size: 0.85rem;
+    }
+    
+    .wcefp-trust-subtitle {
+        font-size: 0.75rem;
+    }
+}
+
+/* ==========================================================================
+   Accessibility Enhancements
+   ========================================================================== */
+
+.wcefp-trust-element:focus-within {
+    outline: 2px solid #007cba;
+    outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .wcefp-trust-element {
+        border-width: 2px;
+    }
+    
+    .wcefp-availability-good {
+        background: #000;
+        color: #0f0;
+        border-color: #0f0;
+    }
+    
+    .wcefp-availability-limited {
+        background: #000;
+        color: #ff0;
+        border-color: #ff0;
+    }
+    
+    .wcefp-availability-low {
+        background: #000;
+        color: #f00;
+        border-color: #f00;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .wcefp-recent-bookings .wcefp-trust-icon {
+        animation: none;
+    }
+    
+    .wcefp-trust-element {
+        transition: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .wcefp-trust-elements {
+        color: #e0e0e0;
+    }
+    
+    .wcefp-trust-element {
+        background: #2c2c2c;
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+    
+    .wcefp-trust-subtitle {
+        color: #b0b0b0;
+    }
+    
+    .wcefp-policy-badge {
+        background: #2c2c2c;
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+    
+    .wcefp-transparency-item {
+        color: #b0b0b0;
+        border-color: #404040;
+    }
+    
+    .wcefp-currency-note {
+        color: #888;
+    }
+}
+
+/* ==========================================================================
+   Animation Enhancements (Subtle)
+   ========================================================================== */
+
+.wcefp-trust-element {
+    position: relative;
+}
+
+.wcefp-trust-element::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: transparent;
+    border-radius: 0 6px 6px 0;
+    transition: background 0.3s ease;
+}
+
+.wcefp-availability-good::before {
+    background: #28a745;
+}
+
+.wcefp-availability-limited::before {
+    background: #ffc107;
+}
+
+.wcefp-availability-low::before {
+    background: #dc3545;
+}
+
+.wcefp-best-seller-badge::before {
+    background: #ff8c00;
+}
+
+.wcefp-recent-bookings::before {
+    background: #007cba;
+}
+
+.wcefp-social-proof::before {
+    background: #17a2b8;
+}
+
+/* Hover effects for interactive elements */
+.wcefp-trust-element[data-interactive="true"] {
+    cursor: pointer;
+}
+
+.wcefp-trust-element[data-interactive="true"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Screen reader improvements */
+.wcefp-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

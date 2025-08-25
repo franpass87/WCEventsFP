@@ -36,6 +36,26 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
             return new BookingWidget($container);
         });
         
+        // Register booking widget v2 (enhanced version)
+        $this->container->singleton('frontend.booking_widget_v2', function($container) {
+            return new BookingWidgetV2($container);
+        });
+        
+        // Register WooCommerce archive filter
+        $this->container->singleton('frontend.archive_filter', function($container) {
+            return new WooCommerceArchiveFilter();
+        });
+        
+        // Register enhanced Google Reviews manager
+        $this->container->singleton('frontend.google_reviews', function($container) {
+            return new GoogleReviewsManager();
+        });
+        
+        // Register trust nudges manager
+        $this->container->singleton('frontend.trust_nudges', function($container) {
+            return new TrustNudgesManager();
+        });
+        
         // Register shortcode manager
         $this->container->singleton('frontend.shortcodes', function($container) {
             return new ShortcodeManager($container);
@@ -54,6 +74,18 @@ class FrontendServiceProvider extends \WCEFP\Core\ServiceProvider {
         
         // Initialize booking widget
         $this->container->get('frontend.booking_widget');
+        
+        // Initialize booking widget v2 (enhanced version)
+        $this->container->get('frontend.booking_widget_v2');
+        
+        // Initialize archive filter
+        $this->container->get('frontend.archive_filter');
+        
+        // Initialize Google Reviews manager
+        $this->container->get('frontend.google_reviews');
+        
+        // Initialize trust nudges manager
+        $this->container->get('frontend.trust_nudges');
         
         // Initialize shortcode manager if it exists
         if (class_exists('\WCEFP\Frontend\ShortcodeManager')) {

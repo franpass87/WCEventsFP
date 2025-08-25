@@ -41,6 +41,9 @@ class MeetingPointsManager {
         // AJAX handlers for frontend
         add_action('wp_ajax_wcefp_get_meeting_points', [$this, 'ajax_get_meeting_points']);
         add_action('wp_ajax_nopriv_wcefp_get_meeting_points', [$this, 'ajax_get_meeting_points']);
+        
+        // AJAX handler for testing Google Place ID
+        add_action('wp_ajax_wcefp_test_place_connection', [$this, 'ajax_test_place_connection']);
     }
     
     /**
@@ -205,8 +208,21 @@ class MeetingPointsManager {
         $latitude = get_post_meta($post->ID, '_wcefp_latitude', true);
         $longitude = get_post_meta($post->ID, '_wcefp_longitude', true);
         $map_zoom = get_post_meta($post->ID, '_wcefp_map_zoom', true) ?: 15;
+        $google_place_id = get_post_meta($post->ID, '_wcefp_google_place_id', true);
         
         echo '<table class="form-table">';
+        
+        // Google Place ID
+        echo '<tr>';
+        echo '<th><label for="wcefp_google_place_id">' . __('Google Place ID', 'wceventsfp') . '</label></th>';
+        echo '<td>';
+        echo '<input type="text" id="wcefp_google_place_id" name="_wcefp_google_place_id" value="' . esc_attr($google_place_id) . '" class="regular-text" placeholder="ChIJ..." />';
+        echo '<button type="button" class="button" id="wcefp-test-place-connection" style="margin-left: 10px;">' . __('🔍 Verifica Connessione', 'wceventsfp') . '</button>';
+        echo '<p class="description">' . __('Place ID di Google per integrazione Reviews e Maps. ', 'wceventsfp');
+        echo '<a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank">' . __('Come trovare un Place ID', 'wceventsfp') . '</a></p>';
+        echo '<div id="wcefp-place-test-result"></div>';
+        echo '</td>';
+        echo '</tr>';
         
         // Latitude
         echo '<tr>';
@@ -320,6 +336,7 @@ class MeetingPointsManager {
             '_wcefp_latitude',
             '_wcefp_longitude',
             '_wcefp_map_zoom',
+            '_wcefp_google_place_id',
             '_wcefp_accessibility_notes'
         ];
         
@@ -361,7 +378,28 @@ class MeetingPointsManager {
                 'i18n' => [
                     'geocoding_error' => __('Errore nella geocodificazione dell\'indirizzo', 'wceventsfp'),
                     'location_error' => __('Impossibile ottenere la posizione', 'wceventsfp'),
-                    'location_success' => __('Posizione aggiornata con successo', 'wceventsfp')
+                    'location_success' => __('Posizione aggiornata con successo', 'wceventsfp'),
+                    'place_id_required' => __('Place ID richiesto', 'wceventsfp'),
+                    'testing' => __('Testando...', 'wceventsfp'),
+                    'testing_connection' => __('Testando connessione...', 'wceventsfp'),
+                    'test_connection' => __('Verifica Connessione', 'wceventsfp'),
+                    'place_name' => __('Nome', 'wceventsfp'),
+                    'address' => __('Indirizzo', 'wceventsfp'),
+                    'rating' => __('Rating', 'wceventsfp'),
+                    'reviews' => __('recensioni', 'wceventsfp'),
+                    'connection_error' => __('Errore di connessione', 'wceventsfp'),
+                    'address_required' => __('Indirizzo richiesto per geocodificazione', 'wceventsfp'),
+                    'geocoding' => __('Geocodificando...', 'wceventsfp'),
+                    'geocode_address' => __('Geocodifica Indirizzo', 'wceventsfp'),
+                    'geocoding_placeholder' => __('Geocodificazione implementata con OpenStreetMap Nominatim', 'wceventsfp'),
+                    'geolocation_not_supported' => __('Geolocalizzazione non supportata dal browser', 'wceventsfp'),
+                    'getting_location' => __('Ottenendo posizione...', 'wceventsfp'),
+                    'use_my_location' => __('Usa la Mia Posizione', 'wceventsfp'),
+                    'location_permission_denied' => __('Permesso negato dall\'utente', 'wceventsfp'),
+                    'location_unavailable' => __('Posizione non disponibile', 'wceventsfp'),
+                    'location_timeout' => __('Timeout nella richiesta di posizione', 'wceventsfp'),
+                    'coordinates_updated' => __('Coordinate aggiornate', 'wceventsfp'),
+                    'invalid_place_id_format' => __('Formato Place ID non valido. Dovrebbe iniziare con "ChIJ"', 'wceventsfp')
                 ]
             ]);
         }
@@ -428,10 +466,92 @@ class MeetingPointsManager {
             'latitude' => get_post_meta($post->ID, '_wcefp_latitude', true),
             'longitude' => get_post_meta($post->ID, '_wcefp_longitude', true),
             'map_zoom' => get_post_meta($post->ID, '_wcefp_map_zoom', true),
+            'google_place_id' => get_post_meta($post->ID, '_wcefp_google_place_id', true),
             'wheelchair_accessible' => get_post_meta($post->ID, '_wcefp_wheelchair_accessible', true),
             'public_transport' => get_post_meta($post->ID, '_wcefp_public_transport', true),
             'parking_available' => get_post_meta($post->ID, '_wcefp_parking_available', true),
             'accessibility_notes' => get_post_meta($post->ID, '_wcefp_accessibility_notes', true)
         ];
+    }
+    
+    /**
+     * AJAX handler to test Google Place ID connection
+     * 
+     * @return void
+     */
+    public function ajax_test_place_connection() {
+        check_ajax_referer('wcefp_meeting_points_nonce', 'nonce');
+        
+        if (!current_user_can('manage_woocommerce')) {
+            wp_die(__('Permission denied', 'wceventsfp'), '', ['response' => 403]);
+        }
+        
+        $place_id = sanitize_text_field($_POST['place_id'] ?? '');
+        $api_key = get_option('wcefp_google_places_api_key', '');
+        
+        if (empty($place_id)) {
+            wp_send_json_error(__('Place ID richiesto', 'wceventsfp'));
+        }
+        
+        if (empty($api_key)) {
+            wp_send_json_error(__('Google Places API Key non configurata. Controllare le impostazioni del plugin.', 'wceventsfp'));
+        }
+        
+        // Test Google Places API call
+        $url = add_query_arg([
+            'place_id' => $place_id,
+            'key' => $api_key,
+            'fields' => 'name,rating,user_ratings_total,formatted_address,place_id'
+        ], 'https://maps.googleapis.com/maps/api/place/details/json');
+        
+        $response = wp_remote_get($url, [
+            'timeout' => 10,
+            'user-agent' => 'WCEventsFP/' . WCEFP_VERSION
+        ]);
+        
+        if (is_wp_error($response)) {
+            wp_send_json_error(__('Errore di connessione: ', 'wceventsfp') . $response->get_error_message());
+        }
+        
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+        
+        if (empty($data['status'])) {
+            wp_send_json_error(__('Risposta API non valida', 'wceventsfp'));
+        }
+        
+        switch ($data['status']) {
+            case 'OK':
+                $result = $data['result'] ?? [];
+                wp_send_json_success([
+                    'message' => __('✅ Connessione riuscita!', 'wceventsfp'),
+                    'place_data' => [
+                        'name' => $result['name'] ?? '',
+                        'address' => $result['formatted_address'] ?? '',
+                        'rating' => $result['rating'] ?? 0,
+                        'reviews_count' => $result['user_ratings_total'] ?? 0
+                    ]
+                ]);
+                break;
+                
+            case 'INVALID_REQUEST':
+                wp_send_json_error(__('❌ Place ID non valido', 'wceventsfp'));
+                break;
+                
+            case 'NOT_FOUND':
+                wp_send_json_error(__('❌ Place ID non trovato', 'wceventsfp'));
+                break;
+                
+            case 'OVER_QUERY_LIMIT':
+                wp_send_json_error(__('❌ Limite quota API superato', 'wceventsfp'));
+                break;
+                
+            case 'REQUEST_DENIED':
+                wp_send_json_error(__('❌ Richiesta negata. Verificare API Key', 'wceventsfp'));
+                break;
+                
+            default:
+                wp_send_json_error(__('❌ Errore sconosciuto: ', 'wceventsfp') . $data['status']);
+        }
     }
 }
