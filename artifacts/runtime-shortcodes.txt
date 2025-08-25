@@ -1,0 +1,36 @@
+# WCEventsFP Runtime Shortcodes Detection
+# This would be populated by WP-CLI command in a WordPress environment
+# 
+# Expected command:
+# wp eval '
+# global $shortcode_tags;
+# foreach ($shortcode_tags as $tag => $cb) {
+#   if (strpos($tag, "wcefp") !== false || is_array($cb) && is_object($cb[0]) && strpos(get_class($cb[0]), "WCEFP") !== false) {
+#     $cbstr = is_array($cb)
+#       ? ((is_object($cb[0]) ? get_class($cb[0]) : $cb[0]) . "::" . $cb[1])
+#       : (is_string($cb) ? $cb : gettype($cb));
+#     echo $tag . "\t" . $cbstr . PHP_EOL;
+#   }
+# }'
+#
+# Sample output based on static analysis:
+wcefp_events	WCEFP\Frontend\ShortcodeManager::events_list_shortcode
+wcefp_event	WCEFP\Frontend\ShortcodeManager::single_event_shortcode
+wcefp_booking_form	WCEFP\Frontend\ShortcodeManager::booking_form_shortcode
+wcefp_search	WCEFP\Frontend\ShortcodeManager::search_events_shortcode
+wcefp_featured_events	WCEFP\Frontend\ShortcodeManager::featured_events_shortcode
+wcefp_upcoming_events	WCEFP\Frontend\ShortcodeManager::upcoming_events_shortcode
+wcefp_event_calendar	WCEFP\Frontend\ShortcodeManager::event_calendar_shortcode
+wcefp_user_bookings	WCEFP\Frontend\ShortcodeManager::user_bookings_shortcode
+wcefp_booking_status	WCEFP\Frontend\ShortcodeManager::booking_status_shortcode
+wcefp_google_reviews	WCEFP\Frontend\ShortcodeManager::google_reviews_shortcode
+wcefp_conversion_optimizer	WCEFP\Frontend\ShortcodeManager::conversion_optimizer_shortcode
+wcefp_availability	WCEFP\Frontend\ShortcodeManager::availability_checker_shortcode
+wcefp_price_calculator	WCEFP\Frontend\ShortcodeManager::price_calculator_shortcode
+wcefp_booking	WCEFP\Frontend\BookingWidget::render_booking_widget
+wcefp_booking_widget_v2	WCEFP\Frontend\BookingWidgetV2::render_booking_widget_v2
+wcefp_voucher_status	WCEFP\Features\Communication\VoucherManager::voucher_status_shortcode
+wcefp_voucher_redeem	WCEFP\Features\Communication\VoucherManager::enhanced_redeem_shortcode
+wcefp_add_to_calendar	WCEFP\Features\DataIntegration\CalendarIntegrationManager::add_to_calendar_shortcode
+wcefp_trust_elements	WCEFP\Frontend\TrustNudgesManager::trust_elements_shortcode
+wcefp_google_reviews_v2	WCEFP\Frontend\GoogleReviewsManager::google_reviews_shortcode
