@@ -10,6 +10,9 @@
 
 namespace WCEFP\Features\DataIntegration;
 
+use WCEFP\API\ApiVersionManager; // T-04: Centralized API version management
+use WCEFP\Utils\DiagnosticLogger;
+
 class GutenbergManager {
     
     /**
@@ -192,7 +195,7 @@ class GutenbergManager {
         
         // Localize script with data for block editor
         wp_localize_script('wcefp-block-editor', 'wcefpBlocks', [
-            'apiUrl' => rest_url('wcefp/v1/'),
+            'apiUrl' => rest_url(ApiVersionManager::get_current_namespace() . '/'), // T-04: Use centralized version
             'nonce' => wp_create_nonce('wp_rest'),
             'strings' => [
                 'selectEvent' => __('Select an event', 'wceventsfp'),
@@ -253,20 +256,20 @@ class GutenbergManager {
      * Register REST API routes for block editor
      */
     public function register_rest_routes() {
-        register_rest_route('wcefp/v1', '/events', [
+        register_rest_route(ApiVersionManager::get_current_namespace(), '/events', [ // T-04: Updated to current version
             'methods' => 'GET',
             'callback' => [$this, 'get_events_for_blocks'],
             'permission_callback' => [$this, 'check_block_permissions'],
         ]);
         
-        register_rest_route('wcefp/v1', '/events/(?P<id>\d+)', [
+        register_rest_route(ApiVersionManager::get_current_namespace(), '/events/(?P<id>\d+)', [ // T-04: Updated to current version
             'methods' => 'GET',
             'callback' => [$this, 'get_event_for_block'],
             'permission_callback' => [$this, 'check_block_permissions'],
         ]);
         
         // Add experiences endpoint for the catalog block
-        register_rest_route('wcefp/v1', '/experiences', [
+        register_rest_route(ApiVersionManager::get_current_namespace(), '/experiences', [ // T-04: Updated to current version
             'methods' => 'GET',
             'callback' => [$this, 'get_experiences_for_block'],
             'permission_callback' => [$this, 'check_block_permissions'],
