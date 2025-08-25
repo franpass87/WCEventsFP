@@ -307,7 +307,7 @@ class CapacityService {
     }
     
     /**
-     * Check if capacity is available for booking
+     * Check availability with enhanced hold consideration
      * 
      * @param int $product_id Product ID
      * @param string $slot_datetime Slot datetime
@@ -339,40 +339,55 @@ class CapacityService {
             ];
         }
         
-        // Check basic availability
-        if ($target_slot['available'] < $requested_quantity) {
-            // Check if overbooking is enabled
-            if ($config['overbooking_enabled']) {
-                $max_with_overbooking = ceil($target_slot['capacity'] * ($config['overbooking_percentage'] / 100));
-                $total_would_be = $target_slot['booked'] + $requested_quantity;
+        // Enhanced capacity check including current holds
+        $hold_manager = new StockHoldManager();
+        $occurrence_id = $this->get_occurrence_id_for_slot($product_id, $slot_datetime);
+        
+        if ($occurrence_id) {
+            // Use hold manager's accurate capacity calculation
+            $available_with_holds = $hold_manager->get_available_capacity($occurrence_id, 'adult'); // Default ticket type
+            
+            if ($available_with_holds < $requested_quantity) {
+                // Check if overbooking is enabled
+                if ($config['overbooking_enabled']) {
+                    $max_with_overbooking = ceil($target_slot['capacity'] * ($config['overbooking_percentage'] / 100));
+                    $total_would_be = $target_slot['booked'] + $requested_quantity;
+                    
+                    if ($total_would_be <= $max_with_overbooking) {
+                        return [
+                            'available' => true,
+                            'overbooking' => true,
+                            'message' => __('Available with overbooking.', 'wceventsfp'),
+                            'capacity_info' => array_merge($target_slot, [
+                                'available_with_holds' => $available_with_holds,
+                                'overbooking_threshold' => $max_with_overbooking
+                            ])
+                        ];
+                    }
+                }
                 
-                if ($total_would_be <= $max_with_overbooking) {
+                // Check if waitlist is enabled
+                if ($config['waitlist_enabled']) {
                     return [
-                        'available' => true,
-                        'overbooking' => true,
-                        'message' => __('Available with overbooking.', 'wceventsfp'),
-                        'capacity_info' => $target_slot
+                        'available' => false,
+                        'waitlist_available' => true,
+                        'reason' => 'capacity_full',
+                        'message' => __('Fully booked. Join the waitlist?', 'wceventsfp'),
+                        'capacity_info' => array_merge($target_slot, [
+                            'available_with_holds' => $available_with_holds
+                        ])
                     ];
                 }
-            }
-            
-            // Check if waitlist is enabled
-            if ($config['waitlist_enabled']) {
+                
                 return [
                     'available' => false,
-                    'waitlist_available' => true,
                     'reason' => 'capacity_full',
-                    'message' => __('Fully booked. Join the waitlist?', 'wceventsfp'),
-                    'capacity_info' => $target_slot
+                    'message' => __('Sorry, this time slot is fully booked.', 'wceventsfp'),
+                    'capacity_info' => array_merge($target_slot, [
+                        'available_with_holds' => $available_with_holds
+                    ])
                 ];
             }
-            
-            return [
-                'available' => false,
-                'reason' => 'capacity_full',
-                'message' => __('Sorry, this time slot is fully booked.', 'wceventsfp'),
-                'capacity_info' => $target_slot
-            ];
         }
         
         // Check minimum capacity requirements
@@ -559,5 +574,108 @@ class CapacityService {
         }
         
         return $recommendations;
+    }
+    
+    /**
+     * Get occurrence ID for a slot datetime
+     * 
+     * @param int $product_id Product ID
+     * @param string $slot_datetime Slot datetime
+     * @return int|null Occurrence ID
+     */
+    private function get_occurrence_id_for_slot($product_id, $slot_datetime) {
+        global $wpdb;
+        
+        $occurrences_table = $wpdb->prefix . 'wcefp_occurrences';
+        
+        return $wpdb->get_var($wpdb->prepare("
+            SELECT id FROM {$occurrences_table}
+            WHERE product_id = %d
+            AND start_local = %s
+            AND status = 'active'
+        ", $product_id, $slot_datetime));
+    }
+    
+    /**
+     * Get real-time capacity statistics with hold information
+     * 
+     * @param int $product_id Product ID
+     * @param string $date_filter Optional date filter
+     * @return array Enhanced capacity statistics
+     */
+    public function get_realtime_capacity_stats($product_id, $date_filter = null) {
+        global $wpdb;
+        
+        $occurrences_table = $wpdb->prefix . 'wcefp_occurrences';
+        $holds_table = $wpdb->prefix . 'wcefp_stock_holds';
+        
+        $date_condition = '';
+        $params = [$product_id];
+        
+        if ($date_filter) {
+            $date_condition = ' AND DATE(o.start_local) = %s';
+            $params[] = $date_filter;
+        }
+        
+        $results = $wpdb->get_results($wpdb->prepare("
+            SELECT 
+                o.id,
+                o.start_local,
+                o.capacity,
+                o.booked,
+                o.held as held_confirmed,
+                COALESCE(h.held_pending, 0) as held_pending,
+                (o.capacity - o.booked - COALESCE(h.held_pending, 0)) as available_now
+            FROM {$occurrences_table} o
+            LEFT JOIN (
+                SELECT 
+                    occurrence_id,
+                    SUM(quantity) as held_pending
+                FROM {$holds_table}
+                WHERE expires_at > NOW()
+                GROUP BY occurrence_id
+            ) h ON o.id = h.occurrence_id
+            WHERE o.product_id = %d
+            AND o.status = 'active'
+            {$date_condition}
+            ORDER BY o.start_local
+        ", $params));
+        
+        $stats = [
+            'total_occurrences' => count($results),
+            'total_capacity' => 0,
+            'total_booked' => 0,
+            'total_held_confirmed' => 0,
+            'total_held_pending' => 0,
+            'total_available' => 0,
+            'occurrences' => []
+        ];
+        
+        foreach ($results as $row) {
+            $stats['total_capacity'] += $row->capacity;
+            $stats['total_booked'] += $row->booked;
+            $stats['total_held_confirmed'] += $row->held_confirmed;
+            $stats['total_held_pending'] += $row->held_pending;
+            $stats['total_available'] += $row->available_now;
+            
+            $stats['occurrences'][] = [
+                'occurrence_id' => $row->id,
+                'start_time' => $row->start_local,
+                'capacity' => (int) $row->capacity,
+                'booked' => (int) $row->booked,
+                'held_confirmed' => (int) $row->held_confirmed,
+                'held_pending' => (int) $row->held_pending,
+                'available_now' => (int) $row->available_now,
+                'utilization_pct' => $row->capacity > 0 ? round(($row->booked / $row->capacity) * 100, 1) : 0
+            ];
+        }
+        
+        if ($stats['total_capacity'] > 0) {
+            $stats['overall_utilization_pct'] = round(($stats['total_booked'] / $stats['total_capacity']) * 100, 1);
+        } else {
+            $stats['overall_utilization_pct'] = 0;
+        }
+        
+        return $stats;
     }
 }

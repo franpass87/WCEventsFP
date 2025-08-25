@@ -24,9 +24,9 @@ if (!defined('ABSPATH')) {
 class StockHoldManager {
     
     /**
-     * Hold duration in minutes
+     * Default hold duration in minutes
      */
-    const HOLD_DURATION = 15;
+    const DEFAULT_HOLD_DURATION = 15;
     
     /**
      * Maximum holds per session
@@ -34,7 +34,12 @@ class StockHoldManager {
     const MAX_HOLDS_PER_SESSION = 10;
     
     /**
-     * Create a stock hold for capacity
+     * Concurrency lock timeout in seconds
+     */
+    const LOCK_TIMEOUT = 5;
+    
+    /**
+     * Create a stock hold for capacity with enhanced concurrency protection
      * 
      * @param int $occurrence_id Occurrence ID
      * @param string $ticket_key Ticket type key
@@ -51,37 +56,68 @@ class StockHoldManager {
         
         // Validate parameters
         if (!$this->validate_hold_request($occurrence_id, $ticket_key, $quantity, $session_id)) {
+            Logger::log('warning', 'Invalid hold request parameters', [
+                'occurrence_id' => $occurrence_id,
+                'ticket_key' => $ticket_key,
+                'quantity' => $quantity,
+                'session_id' => $session_id
+            ]);
             return ['success' => false, 'error' => 'invalid_parameters'];
         }
         
-        // Check available capacity
-        $available_capacity = $this->get_available_capacity($occurrence_id, $ticket_key);
-        if ($available_capacity < $quantity) {
-            return [
-                'success' => false, 
-                'error' => 'insufficient_capacity',
-                'available' => $available_capacity
-            ];
+        // Enhanced concurrency protection with database locks
+        $lock_name = "wcefp_hold_{$occurrence_id}_{$ticket_key}";
+        $lock_acquired = $this->acquire_lock($lock_name);
+        
+        if (!$lock_acquired) {
+            Logger::log('warning', 'Failed to acquire hold lock - high concurrency detected', [
+                'lock_name' => $lock_name,
+                'session_id' => $session_id
+            ]);
+            return ['success' => false, 'error' => 'lock_timeout'];
         }
-        
-        // Check session hold limits
-        if ($this->get_session_holds_count($session_id) >= self::MAX_HOLDS_PER_SESSION) {
-            return ['success' => false, 'error' => 'max_holds_exceeded'];
-        }
-        
-        $holds_table = DatabaseManager::get_table_name('stock_holds');
-        $expires_at = $this->calculate_expiry_time();
-        
-        // Start transaction
-        $wpdb->query('START TRANSACTION');
         
         try {
+            // Double-check available capacity under lock
+            $available_capacity = $this->get_available_capacity($occurrence_id, $ticket_key);
+            if ($available_capacity < $quantity) {
+                Logger::log('info', 'Insufficient capacity detected', [
+                    'occurrence_id' => $occurrence_id,
+                    'ticket_key' => $ticket_key,
+                    'requested' => $quantity,
+                    'available' => $available_capacity,
+                    'session_id' => $session_id
+                ]);
+                return [
+                    'success' => false, 
+                    'error' => 'insufficient_capacity',
+                    'available' => $available_capacity
+                ];
+            }
+            
+            // Check session hold limits
+            if ($this->get_session_holds_count($session_id) >= self::MAX_HOLDS_PER_SESSION) {
+                Logger::log('warning', 'Session hold limit exceeded', [
+                    'session_id' => $session_id,
+                    'current_holds' => $this->get_session_holds_count($session_id)
+                ]);
+                return ['success' => false, 'error' => 'max_holds_exceeded'];
+            }
+            
+            $holds_table = DatabaseManager::get_table_name('stock_holds');
+            $expires_at = $this->calculate_expiry_time();
+            
+            // Start transaction with isolation level for better concurrency
+            $wpdb->query('START TRANSACTION');
+            $wpdb->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+            
             // Check if hold already exists for this session/occurrence/ticket
             $existing_hold = $wpdb->get_row($wpdb->prepare("
                 SELECT id, quantity, expires_at 
                 FROM {$holds_table}
                 WHERE session_id = %s AND occurrence_id = %d AND ticket_key = %s
                 AND expires_at > NOW()
+                FOR UPDATE
             ", $session_id, $occurrence_id, $ticket_key));
             
             if ($existing_hold) {
@@ -89,10 +125,19 @@ class StockHoldManager {
                 $new_quantity = $existing_hold->quantity + $quantity;
                 $new_expires_at = max($existing_hold->expires_at, $expires_at);
                 
-                // Check total capacity again with new quantity
+                // Triple-check capacity with existing hold excluded
                 $total_available = $this->get_available_capacity($occurrence_id, $ticket_key, $existing_hold->id);
                 if ($total_available < $new_quantity) {
                     $wpdb->query('ROLLBACK');
+                    Logger::log('warning', 'Insufficient capacity for hold update', [
+                        'occurrence_id' => $occurrence_id,
+                        'ticket_key' => $ticket_key,
+                        'existing_quantity' => $existing_hold->quantity,
+                        'additional_quantity' => $quantity,
+                        'total_requested' => $new_quantity,
+                        'available' => $total_available,
+                        'session_id' => $session_id
+                    ]);
                     return [
                         'success' => false, 
                         'error' => 'insufficient_capacity_for_update',
@@ -104,14 +149,16 @@ class StockHoldManager {
                     $holds_table,
                     [
                         'quantity' => $new_quantity,
-                        'expires_at' => $new_expires_at
+                        'expires_at' => $new_expires_at,
+                        'updated_at' => current_time('mysql', true)
                     ],
                     ['id' => $existing_hold->id],
-                    ['%d', '%s'],
+                    ['%d', '%s', '%s'],
                     ['%d']
                 );
                 
                 $hold_id = $existing_hold->id;
+                $operation = 'updated';
             } else {
                 // Create new hold
                 $result = $wpdb->insert(
@@ -122,12 +169,15 @@ class StockHoldManager {
                         'user_id' => get_current_user_id() ?: null,
                         'ticket_key' => $ticket_key,
                         'quantity' => $quantity,
-                        'expires_at' => $expires_at
+                        'expires_at' => $expires_at,
+                        'created_at' => current_time('mysql', true),
+                        'ip_address' => $this->get_client_ip()
                     ],
-                    ['%d', '%s', '%d', '%s', '%d', '%s']
+                    ['%d', '%s', '%d', '%s', '%d', '%s', '%s', '%s']
                 );
                 
                 $hold_id = $wpdb->insert_id;
+                $operation = 'created';
             }
             
             if ($result === false) {
@@ -136,7 +186,9 @@ class StockHoldManager {
                     'occurrence_id' => $occurrence_id,
                     'session_id' => $session_id,
                     'ticket_key' => $ticket_key,
-                    'quantity' => $quantity
+                    'quantity' => $quantity,
+                    'operation' => $operation,
+                    'db_error' => $wpdb->last_error
                 ]);
                 return ['success' => false, 'error' => 'database_error'];
             }
@@ -146,40 +198,61 @@ class StockHoldManager {
             // Schedule cleanup job
             $this->schedule_cleanup();
             
-            Logger::log('info', 'Stock hold created/updated successfully', [
+            Logger::log('info', "Stock hold {$operation} successfully", [
                 'hold_id' => $hold_id,
                 'occurrence_id' => $occurrence_id,
                 'session_id' => $session_id,
                 'ticket_key' => $ticket_key,
                 'quantity' => $quantity,
-                'expires_at' => $expires_at
+                'expires_at' => $expires_at,
+                'operation' => $operation,
+                'remaining_capacity' => $this->get_available_capacity($occurrence_id, $ticket_key)
             ]);
+            
+            // Trigger action for analytics/monitoring
+            do_action('wcefp_stock_hold_created', $hold_id, $occurrence_id, $ticket_key, $quantity, $session_id);
             
             return [
                 'success' => true,
                 'hold_id' => $hold_id,
                 'expires_at' => $expires_at,
-                'remaining_capacity' => $this->get_available_capacity($occurrence_id, $ticket_key)
+                'remaining_capacity' => $this->get_available_capacity($occurrence_id, $ticket_key),
+                'operation' => $operation
             ];
             
         } catch (\Exception $e) {
             $wpdb->query('ROLLBACK');
-            Logger::log('error', 'Stock hold transaction failed: ' . $e->getMessage());
+            Logger::log('error', 'Stock hold transaction failed: ' . $e->getMessage(), [
+                'occurrence_id' => $occurrence_id,
+                'session_id' => $session_id,
+                'ticket_key' => $ticket_key,
+                'quantity' => $quantity,
+                'exception' => $e->getTrace()
+            ]);
             return ['success' => false, 'error' => 'transaction_failed'];
+        } finally {
+            // Always release the lock
+            $this->release_lock($lock_name);
         }
     }
     
     /**
-     * Release a specific hold
+     * Release a specific hold with enhanced logging
      * 
      * @param int $hold_id Hold ID
      * @param string|null $session_id Session ID for verification
+     * @param string $reason Release reason for logging
      * @return bool Success status
      */
-    public function release_hold($hold_id, $session_id = null) {
+    public function release_hold($hold_id, $session_id = null, $reason = 'manual') {
         global $wpdb;
         
         $holds_table = DatabaseManager::get_table_name('stock_holds');
+        
+        // Get hold details before deletion for logging
+        $hold_details = $wpdb->get_row($wpdb->prepare("
+            SELECT * FROM {$holds_table} WHERE id = %d
+        ", $hold_id));
         
         $where_clause = ['id' => $hold_id];
         $where_format = ['%d'];
@@ -191,8 +264,25 @@ class StockHoldManager {
         
         $result = $wpdb->delete($holds_table, $where_clause, $where_format);
         
-        if ($result !== false) {
-            Logger::log('info', 'Stock hold released', ['hold_id' => $hold_id, 'session_id' => $session_id]);
+        if ($result !== false && $hold_details) {
+            Logger::log('info', 'Stock hold released', [
+                'hold_id' => $hold_id, 
+                'session_id' => $session_id,
+                'occurrence_id' => $hold_details->occurrence_id,
+                'ticket_key' => $hold_details->ticket_key,
+                'quantity' => $hold_details->quantity,
+                'reason' => $reason,
+                'was_expired' => strtotime($hold_details->expires_at) < time()
+            ]);
+            
+            // Trigger action for analytics/monitoring
+            do_action('wcefp_stock_hold_released', $hold_id, $hold_details, $reason);
+        } elseif ($result === false) {
+            Logger::log('warning', 'Failed to release stock hold', [
+                'hold_id' => $hold_id,
+                'session_id' => $session_id,
+                'reason' => $reason
+            ]);
         }
         
         return $result !== false;
@@ -438,12 +528,82 @@ class StockHoldManager {
     }
     
     /**
-     * Calculate hold expiry time
+     * Calculate hold expiry time with configurable duration
      * 
      * @return string MySQL datetime format
      */
     private function calculate_expiry_time() {
-        return gmdate('Y-m-d H:i:s', time() + (self::HOLD_DURATION * 60));
+        $hold_duration = $this->get_hold_duration();
+        return gmdate('Y-m-d H:i:s', time() + ($hold_duration * 60));
+    }
+    
+    /**
+     * Get configurable hold duration
+     * 
+     * @return int Hold duration in minutes
+     */
+    private function get_hold_duration() {
+        $options = get_option('wcefp_options', []);
+        $duration = (int) ($options['stock_hold_duration'] ?? self::DEFAULT_HOLD_DURATION);
+        
+        // Ensure reasonable limits (5 minutes to 2 hours)
+        return max(5, min(120, $duration));
+    }
+    
+    /**
+     * Acquire a database lock for concurrency protection
+     * 
+     * @param string $lock_name Lock name
+     * @return bool Success status
+     */
+    private function acquire_lock($lock_name) {
+        global $wpdb;
+        
+        $result = $wpdb->get_var($wpdb->prepare("
+            SELECT GET_LOCK(%s, %d)
+        ", $lock_name, self::LOCK_TIMEOUT));
+        
+        return $result === '1';
+    }
+    
+    /**
+     * Release a database lock
+     * 
+     * @param string $lock_name Lock name
+     * @return bool Success status
+     */
+    private function release_lock($lock_name) {
+        global $wpdb;
+        
+        $result = $wpdb->get_var($wpdb->prepare("
+            SELECT RELEASE_LOCK(%s)
+        ", $lock_name));
+        
+        return $result === '1';
+    }
+    
+    /**
+     * Get client IP address for logging
+     * 
+     * @return string IP address
+     */
+    private function get_client_ip() {
+        $ip_keys = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'];
+        
+        foreach ($ip_keys as $key) {
+            if (!empty($_SERVER[$key])) {
+                $ip = $_SERVER[$key];
+                // Handle comma-separated IPs (forwarded headers)
+                if (strpos($ip, ',') !== false) {
+                    $ip = trim(explode(',', $ip)[0]);
+                }
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                    return $ip;
+                }
+            }
+        }
+        
+        return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     }
     
     /**
@@ -525,5 +685,148 @@ class StockHoldManager {
         ", $product_id, $ticket_key));
         
         return (float) ($price ?: 0);
+    }
+    
+    /**
+     * Test concurrency handling by simulating multiple simultaneous holds
+     * 
+     * @param int $occurrence_id Occurrence ID
+     * @param string $ticket_key Ticket key
+     * @param int $quantity Quantity per request
+     * @param int $concurrent_requests Number of concurrent requests to simulate
+     * @return array Test results
+     */
+    public function test_concurrency($occurrence_id, $ticket_key, $quantity, $concurrent_requests = 5) {
+        if (!defined('WCEFP_TESTING_MODE') || !WCEFP_TESTING_MODE) {
+            return ['error' => 'Testing mode not enabled'];
+        }
+        
+        $results = [];
+        $successful_holds = 0;
+        $failed_holds = 0;
+        
+        // Get initial capacity
+        $initial_capacity = $this->get_available_capacity($occurrence_id, $ticket_key);
+        
+        Logger::log('info', 'Starting concurrency test', [
+            'occurrence_id' => $occurrence_id,
+            'ticket_key' => $ticket_key,
+            'quantity_per_request' => $quantity,
+            'concurrent_requests' => $concurrent_requests,
+            'initial_capacity' => $initial_capacity
+        ]);
+        
+        // Simulate concurrent requests
+        for ($i = 1; $i <= $concurrent_requests; $i++) {
+            $session_id = "test_session_{$i}_" . uniqid();
+            $result = $this->create_hold($occurrence_id, $ticket_key, $quantity, $session_id);
+            
+            $results[] = [
+                'session_id' => $session_id,
+                'request_num' => $i,
+                'result' => $result
+            ];
+            
+            if ($result['success']) {
+                $successful_holds++;
+            } else {
+                $failed_holds++;
+            }
+        }
+        
+        $final_capacity = $this->get_available_capacity($occurrence_id, $ticket_key);
+        
+        $test_summary = [
+            'initial_capacity' => $initial_capacity,
+            'final_capacity' => $final_capacity,
+            'capacity_held' => $initial_capacity - $final_capacity,
+            'successful_holds' => $successful_holds,
+            'failed_holds' => $failed_holds,
+            'expected_capacity_held' => $successful_holds * $quantity,
+            'concurrency_test_passed' => ($initial_capacity - $final_capacity) === ($successful_holds * $quantity),
+            'details' => $results
+        ];
+        
+        Logger::log('info', 'Concurrency test completed', $test_summary);
+        
+        return $test_summary;
+    }
+    
+    /**
+     * Get comprehensive hold statistics for monitoring
+     * 
+     * @return array Hold statistics
+     */
+    public function get_hold_statistics() {
+        global $wpdb;
+        
+        $holds_table = DatabaseManager::get_table_name('stock_holds');
+        
+        $stats = [
+            'active_holds' => (int) $wpdb->get_var("
+                SELECT COUNT(*) FROM {$holds_table} WHERE expires_at > NOW()
+            "),
+            'expired_holds' => (int) $wpdb->get_var("
+                SELECT COUNT(*) FROM {$holds_table} WHERE expires_at <= NOW()
+            "),
+            'holds_by_session' => $wpdb->get_results("
+                SELECT session_id, COUNT(*) as hold_count, SUM(quantity) as total_quantity
+                FROM {$holds_table} 
+                WHERE expires_at > NOW()
+                GROUP BY session_id
+                ORDER BY hold_count DESC
+                LIMIT 10
+            "),
+            'holds_by_occurrence' => $wpdb->get_results("
+                SELECT occurrence_id, ticket_key, COUNT(*) as hold_count, SUM(quantity) as total_quantity
+                FROM {$holds_table} 
+                WHERE expires_at > NOW()
+                GROUP BY occurrence_id, ticket_key
+                ORDER BY total_quantity DESC
+                LIMIT 10
+            "),
+            'average_hold_duration' => $this->get_hold_duration(),
+            'cleanup_needed' => (int) $wpdb->get_var("
+                SELECT COUNT(*) FROM {$holds_table} WHERE expires_at <= NOW()
+            ")
+        ];
+        
+        return $stats;
+    }
+    
+    /**
+     * Create table for stock holds with enhanced schema
+     * 
+     * @return void
+     */
+    public static function create_tables() {
+        global $wpdb;
+        
+        $holds_table = DatabaseManager::get_table_name('stock_holds');
+        $charset_collate = $wpdb->get_charset_collate();
+        
+        $sql = "CREATE TABLE {$holds_table} (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            occurrence_id bigint(20) UNSIGNED NOT NULL,
+            session_id varchar(128) NOT NULL,
+            user_id bigint(20) UNSIGNED NULL,
+            ticket_key varchar(50) NOT NULL,
+            quantity int(11) NOT NULL DEFAULT 1,
+            expires_at datetime NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT NULL,
+            ip_address varchar(45) DEFAULT NULL,
+            PRIMARY KEY (id),
+            KEY occurrence_ticket (occurrence_id, ticket_key),
+            KEY session_id (session_id),
+            KEY expires_at (expires_at),
+            KEY user_id (user_id),
+            UNIQUE KEY unique_active_hold (occurrence_id, ticket_key, session_id, expires_at)
+        ) {$charset_collate};";
+        
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
+        
+        Logger::log('info', 'Stock holds table created/updated');
     }
 }
