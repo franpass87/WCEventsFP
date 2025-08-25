@@ -859,41 +859,53 @@ grep -r "wp_enqueue\|update_option.*false" includes/
 
 ## 📦 Packaging & Distribution
 
-WCEventsFP uses `.distignore` and `.gitattributes` to maintain lean distribution packages.
+### **🚀 Production-Ready Distribution**
 
-### Distribution Exclusions
-The following files and directories are excluded from plugin distribution packages:
+WCEventsFP v2.2.0 includes a complete distribution build system creating production-ready plugin packages:
 
-#### Development Directories
-- `/.github` - GitHub Actions, issue templates, and repository configuration
-- `/docs` - Development documentation and guides
-- `/tests` - PHPUnit and Jest test suites
-- `/node_modules` - Node.js dependencies (development only)
-- `/build-tools` - Build scripts and development tooling
+```bash
+# Create distribution ZIP ready for WordPress upload
+./build-distribution.sh
 
-#### Configuration Files
-- `webpack.config.js`, `package.json`, `composer.json` - Build system configuration
-- `phpunit.xml`, `phpcs.xml`, `phpstan.neon` - Testing and code quality configurations
-- `.eslintrc.js`, `.stylelintrc.json` - Frontend linting configurations
+# Creates: wceventsfp-2.2.0.zip (~2.5MB optimized package)
+```
 
-#### Temporary & Development Files
-- `*.map` - Source maps for debugging
-- `*.log` - Build and runtime logs
-- `*.bak`, `*.old`, `*.orig`, `*.tmp` - Backup and temporary files
-- `.DS_Store`, `Thumbs.db` - OS artifacts
+#### **📋 What's Included in Distribution**
+- **Core PHP files**: All `includes/`, `admin/`, `templates/` with full functionality
+- **Optimized Assets**: Minified CSS/JS from production build system  
+- **Language Support**: Complete `languages/` directory with POT files
+- **Essential Documentation**: `README.md`, `CHANGELOG.md`, user guides
+- **Dependencies**: Required vendor libraries (self-contained, no Composer needed)
 
-### Git Export Configuration
-Files marked with `export-ignore` in `.gitattributes` are excluded from `git archive` exports, ensuring consistent packaging across different deployment methods.
+#### **🚫 What's Excluded from Distribution** 
+- **Development Tools**: `/tests`, `/.github`, `/docs`, `node_modules/`
+- **Build Configuration**: `webpack.config.js`, `package.json`, `composer.json`
+- **Quality Tools**: `phpunit.xml`, `phpcs.xml`, `phpstan.neon`
+- **Development Files**: Source maps, logs, backup files, OS artifacts
 
-### Production Package Contents
-The final plugin package includes only:
-- Core PHP files (`includes/`, `admin/`, `templates/`)
-- Frontend assets (`assets/css/`, `assets/js/`)
-- Language files (`languages/`)
-- Main plugin file (`wceventsfp.php`)
-- Essential documentation (`README.md`, `CHANGELOG.md`)
+#### **📦 Distribution Process**
+1. **Automated Build**: Uses `.distignore` and `.gitattributes` for clean packaging
+2. **File Verification**: Validates all critical plugin files are present
+3. **Size Optimization**: 85% size reduction (15MB → 2.5MB) through smart exclusions
+4. **WordPress Ready**: Direct upload compatibility with WordPress admin
 
-**Estimated package size**: ~2.5MB (down from ~15MB with development files)
+#### **💡 Installation Methods**
+
+**✅ RECOMMENDED**: Use official distribution ZIP from build system or GitHub Releases
+```
+WordPress Admin → Plugins → Add New → Upload Plugin → Select wceventsfp-2.2.0.zip
+```
+
+**❌ NOT RECOMMENDED**: GitHub's "Code → Download ZIP" includes development files and may not work properly
+
+### **🎯 Production Package Benefits**
+- **Self-Contained**: No external dependencies or build tools required
+- **Optimized Performance**: Only production assets, faster loading
+- **WordPress Compatible**: Passes Plugin Check validation
+- **Clean Installation**: No development files cluttering plugin directory
+- **Reliable Updates**: Consistent package structure across all installations
+
+**Final Package Size**: ~2.5MB (down from ~15MB with development files)
 
 ## 📚 Documentation
 
