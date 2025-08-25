@@ -47,6 +47,9 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
         
         // Register Phase 4: API & Developer Experience features
         $this->register_api_developer_experience_services();
+        
+        // Register Phase 1 Overhaul: Visibility & Gating features
+        $this->register_visibility_services();
     }
     
     /**
@@ -111,6 +114,19 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
     }
     
     /**
+     * Register Phase 1 Overhaul: Visibility & Gating features
+     */
+    private function register_visibility_services() {
+        // Load visibility classes
+        require_once __DIR__ . '/Visibility/ExperienceGating.php';
+        
+        // Register Experience Gating service
+        $this->container->singleton('features.experience_gating', function() {
+            return new \WCEFP\Features\Visibility\ExperienceGating();
+        });
+    }
+    
+    /**
      * Boot services
      * 
      * @return void
@@ -140,6 +156,9 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
         
         // Boot Phase 4: API & Developer Experience features
         $this->boot_api_developer_experience_services();
+        
+        // Boot Phase 1 Overhaul: Visibility & Gating features
+        $this->boot_visibility_services();
     }
     
     /**
@@ -170,5 +189,13 @@ class FeaturesServiceProvider extends \WCEFP\Core\ServiceProvider {
             $api_dev_provider = $this->container->get('api_dev_provider');
             $api_dev_provider->boot();
         }
+    }
+    
+    /**
+     * Boot Phase 1 Overhaul: Visibility & Gating services
+     */
+    private function boot_visibility_services() {
+        // Initialize Experience Gating feature
+        \WCEFP\Features\Visibility\ExperienceGating::init();
     }
 }

@@ -1902,6 +1902,44 @@ class RestApiManager {
         return $d && $d->format('Y-m-d') === $date;
     }
     
+    // T-04: Legacy endpoint implementations with deprecation headers
+    
+    /**
+     * Get bookings (legacy v1 endpoint)
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function get_bookings_legacy(WP_REST_Request $request) {
+        // Add deprecation headers
+        $response = $this->get_bookings($request);
+        
+        if ($response instanceof WP_REST_Response) {
+            $response->header('X-WP-Deprecated', 'This API version is deprecated. Please use v2.');
+            $response->header('X-WP-Deprecated-New', rest_url('wcefp/v2/bookings'));
+        }
+        
+        return $response;
+    }
+    
+    /**
+     * Get events (legacy v1 endpoint)  
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function get_events_legacy(WP_REST_Request $request) {
+        // Add deprecation headers
+        $response = $this->get_events($request);
+        
+        if ($response instanceof WP_REST_Response) {
+            $response->header('X-WP-Deprecated', 'This API version is deprecated. Please use v2.');
+            $response->header('X-WP-Deprecated-New', rest_url('wcefp/v2/events'));
+        }
+        
+        return $response;
+    }
+    
     /**
      * Get bookings endpoint arguments with sanitization
      * 
