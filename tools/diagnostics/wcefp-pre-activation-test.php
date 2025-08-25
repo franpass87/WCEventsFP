@@ -289,7 +289,7 @@ if ($test_passed && empty($critical_errors)) {
     echo "**DO NOT ACTIVATE THE PLUGIN** until these issues are resolved.\n\n";
     echo "**Troubleshooting Steps:**\n";
     echo "1. Fix all critical errors listed above\n";
-    echo "2. Ensure PHP version is 7.4 or higher\n";
+    echo "2. Ensure PHP version is 8.0 or higher\n";
     echo "3. Install missing PHP extensions\n";
     echo "4. Verify all plugin files are uploaded correctly\n";
     echo "5. Run this test again until it passes\n\n";
