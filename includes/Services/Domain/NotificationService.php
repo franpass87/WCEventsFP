@@ -201,12 +201,12 @@ class NotificationService {
             'booking_id' => $data['booking_id'] ?? '',
             'meeting_point' => $data['meeting_point'] ?? '',
             'contact_phone' => $data['contact_phone'] ?? '',
-            'site_name' => get_bloginfo('name'),
-            'site_url' => home_url()
+            'site_name' => get_bloginfo('name') ?: '',
+            'site_url' => home_url() ?: ''
         ];
         
         foreach ($variables as $key => $value) {
-            $template = str_replace('{' . $key . '}', $value, $template);
+            $template = \WCEFP\Support\safe_str_replace('{' . $key . '}', $value, $template);
         }
         
         return $template;

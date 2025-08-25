@@ -120,6 +120,12 @@ class WCEventsFP {
                 $this->load_core_classes();
             }
             
+            // Load string safety functions for PHP 8.1 compatibility
+            $strings_path = WCEFP_PLUGIN_DIR . 'includes/Support/strings.php';
+            if (file_exists($strings_path)) {
+                require_once $strings_path;
+            }
+            
             return true;
             
         } catch (Exception $e) {
