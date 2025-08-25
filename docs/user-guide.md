@@ -188,6 +188,124 @@ Assign resources to events:
 
 ---
 
+## 🎨 Frontend v2 - Marketplace Experience (NEW)
+
+Transform your website into a professional booking platform with GetYourGuide-style experiences catalog and individual experience pages.
+
+### 🗂️ Experiences Catalog Shortcode
+
+Display your experiences in a filterable, searchable catalog with professional marketplace styling.
+
+#### Basic Usage
+```html
+[wcefp_experiences]
+```
+
+#### Advanced Configuration
+```html
+[wcefp_experiences 
+    filters="location,duration,price,rating,date,category" 
+    view="grid" 
+    columns="3" 
+    limit="12" 
+    show_map="no"]
+```
+
+#### Available Parameters
+| Parameter | Options | Default | Description |
+|-----------|---------|---------|-------------|
+| `filters` | Comma-separated list | `location,duration,price,rating,category` | Which filters to show |
+| `view`/`layout` | `grid`, `list`, `masonry` | `grid` | Display layout |
+| `columns` | `1`, `2`, `3`, `4` | `3` | Columns in grid mode |
+| `limit`/`per_page` | Number | `12` | Experiences per page |
+| `show_filters` | `yes`, `no` | `yes` | Show filter bar |
+| `show_map`/`map` | `yes`/`on`, `no`/`off` | `no` | Display map (requires Google Maps API) |
+| `orderby` | `date`, `popularity`, `rating`, `price`, `title` | `date` | Default sorting |
+| `order` | `ASC`, `DESC` | `DESC` | Sort direction |
+| `category` | Category slug | - | Filter by specific category |
+| `ajax` | `yes`, `no` | `yes` | Enable AJAX pagination |
+| `skeleton` | `yes`, `no` | `yes` | Show loading animation |
+
+#### Filter Types Available
+- **🔍 Search** - Text search across titles and descriptions
+- **📂 Category** - Product categories dropdown
+- **📍 Location** - Meeting point locations
+- **⏰ Duration** - Time ranges (0-2h, 2-4h, 4-8h, 8h+)
+- **💰 Price** - Price ranges with currency symbols
+- **⭐ Rating** - Star rating minimums (2+, 3+, 4+)
+- **📅 Date** - Available date selection
+
+### 📄 Individual Experience Page
+
+Create dedicated landing pages for each experience with complete booking functionality.
+
+#### Complete Experience Page
+```html
+[wcefp_experience_page_v2 
+    show_hero="yes" 
+    show_gallery="yes"
+    show_booking_widget="yes" 
+    show_reviews="yes" 
+    show_faq="yes" 
+    show_schema="yes"]
+```
+
+#### Page Sections Available
+- **🦸 Hero Section** - Title, rating, trust badges, social proof
+- **🖼️ Gallery Slider** - Image carousel with thumbnails
+- **✨ Highlights** - Key selling points with checkmarks
+- **📝 Description** - Full product description
+- **✅ Included/Excluded** - What's covered and what's not
+- **🗺️ Itinerary** - Step-by-step timeline
+- **📍 Meeting Point** - Location with map integration
+- **💳 Booking Widget** - Sticky sidebar booking form
+- **⭐ Reviews** - Combined WooCommerce + Google reviews
+- **❓ FAQ** - Expandable questions and answers
+- **📜 Policies** - Cancellation and terms
+- **🏷️ Schema.org** - Structured data for SEO
+
+### 🧩 Gutenberg Block
+
+Use the visual block editor for easy catalog placement.
+
+#### Using the Block
+1. Edit your page/post in WordPress
+2. Add new block → WCEventsFP → **Catalogo Esperienze**
+3. Configure options in the block sidebar
+4. See live preview in the editor
+5. Publish the page
+
+#### Block Features
+- 📱 **Visual preview** in editor
+- ⚙️ **Settings panel** with all shortcode options
+- 📊 **Real-time data** from your experiences
+- 🎨 **Style customization** options
+
+### 🎯 Trust Elements Integration
+
+All Frontend v2 components automatically display trust elements:
+
+- **🏆 Best Seller** badges on popular experiences
+- **✅ Free Cancellation** indicators
+- **⚡ Instant Confirmation** badges
+- **🔥 Limited Availability** warnings (only when genuine)
+- **👥 Social Proof** ("X people booked yesterday" - real data only)
+- **⭐ Google Reviews** integration with star ratings
+
+### 📊 Analytics Integration
+
+Frontend v2 includes comprehensive GA4 enhanced ecommerce tracking:
+
+- **`view_item_list`** - Catalog page views
+- **`select_item`** - Experience clicks with position data
+- **`view_item`** - Individual experience page views
+- **`add_to_cart`** - Booking button clicks
+- **`begin_checkout`** - Checkout process starts
+
+All events include proper ecommerce data (currency, value, items array) for accurate conversion tracking.
+
+---
+
 ## 📅 Managing Bookings
 
 ### Booking Workflow
@@ -318,6 +436,88 @@ Track booking performance with enhanced ecommerce:
 - **Conversion Funnels**: See where customers drop off
 - **Revenue Attribution**: Which marketing drives bookings
 - **Custom Dimensions**: Event-specific data tracking
+
+### 🌟 Google Reviews Integration (NEW in v2.2)
+
+Display authentic Google Reviews on your experience pages to build trust and improve conversions.
+
+#### Setup Google Places API
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable **Places API**
+4. Create credentials (API Key) with Places API access
+5. Configure API Key restrictions (recommended)
+
+#### Configure in WordPress Admin
+1. Navigate to **WCEventsFP → Settings → Integrations**
+2. Scroll to **Google Reviews** section
+3. Enter your **Google Places API Key**
+4. Save settings
+
+#### Add Place ID to Meeting Points
+1. Go to **Meeting Points → Edit** (or create new)
+2. Find **Google Place ID** field
+3. Enter your business Place ID ([How to find Place ID](https://developers.google.com/maps/documentation/places/web-service/place-id))
+4. Click **Test Place ID** to verify connection
+5. Save meeting point
+
+#### Display Reviews on Experience Pages
+Reviews automatically display when:
+- Meeting Point has valid Place ID
+- Experience is linked to that Meeting Point
+- Google Places API key is configured
+
+**Features:**
+- ⭐ **Aggregate rating** with star display
+- 👤 **Recent reviews** with reviewer photos
+- 🔄 **Smart caching** (rating: 12 hours, reviews: 6 hours)
+- 📱 **Mobile responsive** design
+- 🎨 **Tab system** (WooCommerce reviews + Google reviews)
+
+#### Schema.org Integration
+Google Reviews data automatically enhances your SEO with:
+- `AggregateRating` markup
+- `Review` objects with author and rating
+- Enhanced search result snippets
+
+### 🛡️ Trust Elements & Social Proof (NEW in v2.2)
+
+Build credibility with ethical trust signals that boost conversions without misleading customers.
+
+#### Available Trust Elements
+- **🏆 Best Seller Badge** - Based on actual sales data
+- **✅ Free Cancellation** - Configurable cancellation policy
+- **⚡ Instant Confirmation** - Immediate booking confirmation
+- **🔒 Secure Payment** - SSL and payment security indicators
+- **💰 Money Back Guarantee** - Satisfaction guarantee display
+- **🔥 Limited Availability** - Only when genuinely limited (stock <10)
+- **👥 Social Proof** - Real booking counts ("X people booked yesterday")
+- **🎯 Authority Badges** - Certifications and satisfied customer counts
+
+#### Configuration
+1. Go to **Products → Edit Experience**
+2. Scroll to **Experience Details** meta box
+3. Configure individual trust elements:
+   - Enable **Best Seller** (if applicable)
+   - Enable **Free Cancellation** 
+   - Enable **Instant Confirmation**
+   - Add **Certifications** list
+
+#### Global Trust Settings
+1. Navigate to **WCEventsFP → Settings → Trust & Social Proof**
+2. Configure global defaults:
+   - **Secure Payment** messaging
+   - **Money Back Guarantee** policy
+   - **Social Proof** display rules
+
+#### Ethical Guidelines
+WCEventsFP follows ethical practices:
+- ✅ **Real data only** - Social proof based on actual bookings
+- ✅ **Genuine scarcity** - Limited availability only when stock truly low
+- ✅ **Honest claims** - All trust elements must be factually accurate
+- ✅ **Graceful fallbacks** - No display when data unavailable
+- ❌ **No fake urgency** - No artificial countdown timers
+- ❌ **No false claims** - No exaggerated social proof
 
 #### Meta Pixel (Facebook)
 Optimize Facebook and Instagram advertising:
